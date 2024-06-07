@@ -15,6 +15,7 @@ export default function useSelection(params) {
 
     if (!container) return {};
     const containerBounds = container.getBoundingClientRect();
+
     return {
       top: Number((containerBounds.top - parentBounds.top).toFixed(3)),
       left: Number((containerBounds.left - parentBounds.left).toFixed(3)),

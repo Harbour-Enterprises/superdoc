@@ -66,9 +66,10 @@ const getStyle = (conversation) => {
   const { selection } = conversation
   const containerBounds = selection.getContainerLocation(props.parent)
   const placement = conversation.selection.selectionBounds;
+  const top = parseFloat(placement.top) + containerBounds.top;
   return {
     position: 'absolute',
-    top: placement.top + containerBounds.top + 'px',
+    top: top + 'px',
     left: placement.left + 'px',
     width: placement.right - placement.left + 'px',
     height: placement.bottom - placement.top + 'px',

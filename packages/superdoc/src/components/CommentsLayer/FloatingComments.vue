@@ -28,20 +28,33 @@ const props = defineProps({
   },
 });
 
+/**
+ * Floating comments layer
+ * 
+ * This component works by first sorting through all comments in order top-to-bottom
+ * Then rendering each comment one at a time, checking for potential comment overlaps as each
+ * new comment is added.
+ */
+
 const floatingCommentsContainer = ref(null);
+
 const handleDialogReady = (dialogId, elementRef) => {
+  // Called when a dialog has mounted
+  // We must check for collisions against the previous dialog and adjust location if necessary
+
   const dialogIndex = sortedConversations.value.findIndex((c) => c.conversationId === dialogId);
   if (dialogIndex === -1 || dialogIndex >= sortedConversations.length - 1) return;
 
+  // This is our current comment
   const dialog = visibleConversations.value[dialogIndex]
   if (!dialog) return;
 
-  const containerBounds = floatingCommentsContainer.value.getBoundingClientRect();
+ // Need to calculate the exact position of the dialog
   const selectionBounds = dialog.conversation.selection.getContainerLocation(props.parent)
   const position = elementRef.value.getBoundingClientRect();
   const selection = dialog.conversation.selection.selectionBounds;
-  const top = selection.top + position.top + selectionBounds.top - containerBounds.top;
-  const left = selection.left + position.left;
+  const top = parseFloat(selection.top) + selectionBounds.top;
+  const left = parseFloat(selection.left) + position.left;
   dialog.position = {
     top,
     left,
@@ -49,13 +62,18 @@ const handleDialogReady = (dialogId, elementRef) => {
     right: left + position.width,
   };
 
+  // Check for collisions
   const resultingPosition = checkCollisions({ ...dialog.position }, dialogIndex);
   if (dialogIndex > 0) dialog.position = resultingPosition;
 
+  // Render the next dialog
   nextTick(() => renderDialog(sortedConversations.value[dialogIndex + 1]));
 }
 
 const checkCollisions = (proposedPosition, dialogIndex) => {
+  // Checks for collisions between the current dialog position and the previous one 
+  // Important: this only works if the list is sorted to begin with
+
   const updatedPosition = { ...proposedPosition };
   if (dialogIndex === 0) return updatedPosition;
 
@@ -66,7 +84,7 @@ const checkCollisions = (proposedPosition, dialogIndex) => {
 
   if (topComparison) {
     const height = proposedPosition.bottom - proposedPosition.top;
-    const newTop = previousPosition.bottom + 2;
+    const newTop = previousPosition.bottom + 5;
     currentItem.offset = newTop - proposedPosition.top;
     updatedPosition.top = newTop;
     updatedPosition.bottom = updatedPosition.top + height;
@@ -80,12 +98,13 @@ const checkCollisions = (proposedPosition, dialogIndex) => {
 
 const renderDialog = (data) => {
   if (!data) return;
-
   const nextConvo = useFloatingConverasation(data);
   visibleConversations.value.push(nextConvo);
 }
 
 const sortByLocation = (a, b) => {
+  // Sort comments by page and by position first
+
   const pageA = a.selection.page;
   const pageB = b.selection.page;
   if (pageA !== pageB) return pageA - pageB;
@@ -105,11 +124,9 @@ const initializeConvos = () => {
   const conversations = [...firstDoc.conversations];
   sortedConversations.value = conversations.sort(sortByLocation);
   visibleConversations.value.push(useFloatingConverasation(sortedConversations.value[0]));
-
-  if (!activeComment.value) floatingCommentsOffset.value = 0;
 }
 
-const getPosition = (convo) => {
+const getCommentPosition = (convo) => {
   return {
     top: convo.position.top + 'px',
   }
@@ -121,28 +138,27 @@ const getFloatingSidebarStyle = computed(() => {
   }
 })
 
-watch(documentsWithConverations, (newVal) => {
-  if (!newVal.length) return;
-  initialize();
-})
-
+// Update the floating comments when the conversations change
+watch(documentsWithConverations, (newVal) => (newVal.length && initialize()));
 onMounted(() => {
   initialize();
 });
+
 </script>
 
 <template>
   <div class="section-wrapper" v-if="visibleConversations.length" ref="floatingCommentsContainer">
     <div :style="getFloatingSidebarStyle" class="sidebar-container">
-      <CommentDialog
-            class="floating-comment"
-            v-for="floatingConversation in visibleConversations"
-            @ready="handleDialogReady"
-            @dialog-exit="initialize"
-            :style="getPosition(floatingConversation)"
-            :data="floatingConversation.conversation"
-            :current-document="currentDocument"
-            :user="user" />
+      <div v-for="floatingConversation in visibleConversations">
+        <CommentDialog
+              class="floating-comment"
+              @ready="handleDialogReady"
+              @dialog-exit="initialize"
+              :style="getCommentPosition(floatingConversation)"
+              :data="floatingConversation.conversation"
+              :current-document="currentDocument"
+              :user="user" />
+        </div>
     </div>
   </div>
 </template>

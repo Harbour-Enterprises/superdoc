@@ -140,74 +140,72 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-<div>
-  <div class="superdoc">
-    <div class="layers" ref="layers">
+<div class="superdoc">
+  <div class="layers" ref="layers">
 
-      <div
-          v-if="toolsMenuPosition && !getConfig?.readOnly" 
-          class="tools"
-          :style="toolsMenuPosition">
-        <i class="fas fa-comment-alt-lines" data-id="is-tool" @click.stop.prevent="handleToolClick('comments')"></i>
-      </div>
-
-      <div
-          v-if="!getConfig?.readOnly && selectionPosition"
-          :style="selectionPosition" class="sd-highlight sd-initial-highlight">
-      </div>
-
-      <div class="document">
-        <!-- Fields layer -->
-        <HrbrFieldsLayer
-            v-if="'hrbr-fields' in modules && layers"
-            :fields="modules['hrbr-fields']"
-            class="comments-layer"
-            style="z-index: 5; background-color: blue;"
-            ref="hrbrFieldsLayer" />
-
-        <!-- On-document comments layer -->
-        <CommentsLayer
-            class="comments-layer"
-            v-if="isReady && 'comments' in modules && layers"
-            style="z-index: 3;"
-            ref="commentsLayer"
-            :parent="layers"
-            :user="user"
-            @highlight-click="handleHighlightClick" />
-
-        <div class="sub-document" v-for="doc in documents" ref="documentContainers">
-          <!-- PDF renderer -->
-          <PdfViewer
-              v-if="doc.type === 'pdf'"
-              :document-data="doc"
-              @selection-change="handleSelectionChange"
-              @selection-drag="handleSelectionDrag"
-              @selection-drag-end="handleSelectionDragEnd"
-              @ready="handlePdfReady" 
-              @page-loaded="handlePageReady" />
-
-          <!-- DOCX Renderer -->
-          <DocumentEditor
-              v-if="doc.type === 'docx'"
-              :document-data="doc"
-              @ready="handlePdfReady" />
-        </div>
-      </div>
+    <div
+        v-if="toolsMenuPosition && !getConfig?.readOnly" 
+        class="tools"
+        :style="toolsMenuPosition">
+      <i class="fas fa-comment-alt-lines" data-id="is-tool" @click.stop.prevent="handleToolClick('comments')"></i>
     </div>
 
-    <div class="right-sidebar" v-if="(pendingComment || documentsWithConverations.length) && layers && isReady">
-      <CommentDialog
-          v-if="pendingComment"
-          :data="pendingComment"
-          :current-document="getDocument(pendingComment.documentId)"
-          :user="user" 
-          :parent="layers" />
+    <div
+        v-if="!getConfig?.readOnly && selectionPosition"
+        :style="selectionPosition" class="sd-highlight sd-initial-highlight">
+    </div>
 
-      <FloatingComments
-          v-for="doc in documentsWithConverations"
+    <div class="document">
+      <!-- Fields layer -->
+      <HrbrFieldsLayer
+          v-if="'hrbr-fields' in modules && layers"
+          :fields="modules['hrbr-fields']"
+          class="comments-layer"
+          style="z-index: 5; background-color: blue;"
+          ref="hrbrFieldsLayer" />
+
+      <!-- On-document comments layer -->
+      <CommentsLayer
+          class="comments-layer"
+          v-if="isReady && 'comments' in modules && layers"
+          style="z-index: 3;"
+          ref="commentsLayer"
           :parent="layers"
-          :current-document="doc" />
+          :user="user"
+          @highlight-click="handleHighlightClick" />
+
+      <div class="sub-document" v-for="doc in documents" ref="documentContainers">
+        <!-- PDF renderer -->
+        <PdfViewer
+            v-if="doc.type === 'pdf'"
+            :document-data="doc"
+            @selection-change="handleSelectionChange"
+            @selection-drag="handleSelectionDrag"
+            @selection-drag-end="handleSelectionDragEnd"
+            @ready="handlePdfReady" 
+            @page-loaded="handlePageReady" />
+
+        <!-- DOCX Renderer -->
+        <DocumentEditor
+            v-if="doc.type === 'docx'"
+            :document-data="doc"
+            @ready="handlePdfReady" />
+      </div>
     </div>
+  </div>
+
+  <div class="right-sidebar" v-if="(pendingComment || documentsWithConverations.length) && layers && isReady">
+    <CommentDialog
+        v-if="pendingComment"
+        :data="pendingComment"
+        :current-document="getDocument(pendingComment.documentId)"
+        :user="user" 
+        :parent="layers" />
+
+    <FloatingComments
+        v-for="doc in documentsWithConverations"
+        :parent="layers"
+        :current-document="doc" />
   </div>
 </div>
 </template>
@@ -248,7 +246,6 @@ onBeforeUnmount(() => {
 }
 .layers {
   position: relative;
-  display: inline-block;
 }
 
 /* Document Styles */

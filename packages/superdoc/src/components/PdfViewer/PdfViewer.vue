@@ -264,7 +264,7 @@ onMounted(async () => {
 
   .pdf-page {
     border: 1px solid #DFDFDF;
-    margin: 20px 0;
+    margin: 0 0 20px 0;
     position: relative;
   }
 

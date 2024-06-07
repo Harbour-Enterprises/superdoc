@@ -9,7 +9,7 @@ import Avatar from '@/components/general/Avatar.vue';
 const superdocStore = useSuperdocStore();
 const commentsStore = useCommentsStore();
 const { COMMENT_EVENTS } = commentsStore;
-const { getConfig, activeComment, pendingComment } = storeToRefs(commentsStore);
+const { getConfig, activeComment, pendingComment, floatingCommentsOffset } = storeToRefs(commentsStore);
 const { areDocumentsReady } = superdocStore;
 const { selectionPosition } = storeToRefs(superdocStore);
 const { proxy } = getCurrentInstance();
@@ -117,6 +117,8 @@ const cleanConversations = () => {
 
 const handleClickOutside = (e) => {
   if (activeComment.value === props.data.conversationId) {
+    floatingCommentsOffset.value = 0;
+
     emit('dialog-exit');
     if (e.target.dataset.id) activeComment.value = e.target.dataset.id;
     else activeComment.value = null;
