@@ -57,7 +57,8 @@ const handlePdfReady = (documentId, container) => {
 // Document selections
 const handleSelectionChange = (selection) => {
   if (!selection.selectionBounds) return;
-  activeSelection.value = selection;
+  
+  activeSelection.value = selection
 
   // Place the tools menu at the level of the selection
   const containerBounds = selection.getContainerLocation(layers.value)
@@ -74,11 +75,11 @@ const handleSelectionChange = (selection) => {
   };
 }
 
-const handleSelectionDrag = (selection, e) => {
-  if (!selection.selectionBounds) return;
-  const containerBounds = selection.getContainerLocation(layers.value)
+const setSelectionPosition = (selection) => {
+  activeSelection.value = selection;
 
-  // Place the tools menu at the level of the selection
+  const containerBounds = selection.getContainerLocation(layers.value)
+  
   let left = selection.selectionBounds.left;
   let top = selection.selectionBounds.top + containerBounds.top;
 
@@ -98,8 +99,13 @@ const handleSelectionDrag = (selection, e) => {
     height: Math.abs(selection.selectionBounds.bottom - selection.selectionBounds.top) + 'px',
     borderRadius: '4px',
   };
-  activeSelection.value = selection;
 }
+  
+const handleSelectionDrag = (selection, e) => {
+  if (!selection.selectionBounds) return;
+  setSelectionPosition(selection);
+}
+
 const handleSelectionDragEnd = () => {
   if (!selectionPosition.value) return;
   selectionPosition.value.border = '1px solid transparent';
@@ -111,7 +117,8 @@ const handleToolClick = (tool) => {
   }
 
   if (tool in toolOptions) {
-    toolOptions[tool](activeSelection.value, selectionPosition.value)
+    setSelectionPosition(activeSelection.value);
+    toolOptions[tool](activeSelection.value, selectionPosition.value);
   }
 
   activeSelection.value = null;
@@ -119,12 +126,16 @@ const handleToolClick = (tool) => {
 }
 
 const handleDocumentMouseDown = (e) => {
+  if (pendingComment.value) return;
   selectionPosition.value = null;;
-  document.removeEventListener('mousedown', handleDocumentMouseDown);
 }
 
 const handleHighlightClick = () => {
   toolsMenuPosition.value = null;
+}
+
+const cancelPendingComment = () => {
+  selectionPosition.value = null;
 }
 
 onMounted(() => {
@@ -200,7 +211,8 @@ onBeforeUnmount(() => {
         :data="pendingComment"
         :current-document="getDocument(pendingComment.documentId)"
         :user="user" 
-        :parent="layers" />
+        :parent="layers"
+        v-click-outside="cancelPendingComment" />
 
     <FloatingComments
         v-for="doc in documentsWithConverations"

@@ -109,6 +109,7 @@ const getSidebarCommentStyle = computed(() => {
 
 const cleanConversations = () => {
   if (props.data.comments.length) return;
+  if (pendingComment.value) selectionPosition.value = null;
   const id = props.data.conversationId;
   pendingComment.value = null;
   props.currentDocument.removeConversation(id);
