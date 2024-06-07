@@ -78,11 +78,13 @@ const getStyle = (conversation) => {
 
 const setFloatingCommentOffset = (conversation, e) => {
   const floatingConvo = visibleConversations.value.find((c) => c.id === conversation.conversationId);
+  const convoTop = conversation.selection.getContainerLocation(props.parent).top;
+
   const parentTop = props.parent.getBoundingClientRect().top;
   const top = floatingConvo.position.top;
   const eTop = e.target.getBoundingClientRect().top;
 
-  floatingCommentsOffset.value = top - eTop + parentTop;
+  floatingCommentsOffset.value = conversation.selection.selectionBounds.top; //top - eTop + parentTop;
 }
 
 const handleHighlightClick = (conversation, e) => {

@@ -36,6 +36,7 @@ const props = defineProps({
  * new comment is added.
  */
 
+let offset = 0;
 const floatingCommentsContainer = ref(null);
 
 const handleDialogReady = (dialogId, elementRef) => {
@@ -82,6 +83,7 @@ const checkCollisions = (proposedPosition, dialogIndex) => {
   const previousPosition = previousItem.position;
   const topComparison = proposedPosition.top < previousPosition.bottom;
 
+  // If we have a collision, adjust the top and bottom positions
   if (topComparison) {
     const height = proposedPosition.bottom - proposedPosition.top;
     const newTop = previousPosition.bottom + 5;
@@ -92,6 +94,10 @@ const checkCollisions = (proposedPosition, dialogIndex) => {
 
   if (currentItem.id === activeComment.value) {
     floatingCommentsOffset.value += currentItem.offset;
+    offset = updatedPosition.top;
+    
+    const diff = updatedPosition.top - proposedPosition.top;
+    floatingCommentsOffset.value += diff;
   }
   return updatedPosition
 }
@@ -140,6 +146,14 @@ const getFloatingSidebarStyle = computed(() => {
 
 // Update the floating comments when the conversations change
 watch(documentsWithConverations, (newVal) => (newVal.length && initialize()));
+watch(activeComment, (newVal) => {
+  setTimeout(() => {
+    if (!activeComment.value) {
+      floatingCommentsOffset.value = 0;
+      initialize();
+    }
+  })
+});
 onMounted(() => {
   initialize();
 });

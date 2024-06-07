@@ -3,6 +3,7 @@ import { computed, toRefs, ref, getCurrentInstance, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useCommentsStore } from '@/stores/comments-store';
 import { useSuperdocStore } from '@/stores/superdoc-store';
+import useSelection from '@/helpers/use-selection';
 import useComment from '@/components/CommentsLayer/use-comment';
 import Avatar from '@/components/general/Avatar.vue';
 
@@ -53,6 +54,20 @@ const addComment = () => {
   // If this conversation is pending addition, add to the document first
   if (pendingComment.value && pendingComment.value.conversationId === props.data.conversationId) {
     const newConversation = { ...pendingComment.value }
+
+    const selection = pendingComment.value.selection.getValues();
+    const bounds = selection.selectionBounds;
+    if (bounds.top > bounds.bottom) {
+      const temp = bounds.top;
+      bounds.top = bounds.bottom;
+      bounds.bottom = temp;
+    } 
+    if (bounds.left > bounds.right) {
+      const temp = bounds.left;
+      bounds.left = bounds.right;
+      bounds.right = temp;
+    }
+    newConversation.selection = useSelection(selection)
 
      // Remove the pending comment
      pendingComment.value = null;
