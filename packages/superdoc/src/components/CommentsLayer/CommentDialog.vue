@@ -51,7 +51,7 @@ const addComment = () => {
   });
 
   // If this conversation is pending addition, add to the document first
-  if (pendingComment.value.conversationId === props.data.conversationId) {
+  if (pendingComment.value && pendingComment.value.conversationId === props.data.conversationId) {
     const newConversation = { ...pendingComment.value }
 
      // Remove the pending comment
