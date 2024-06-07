@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useCommentsStore } from '@/stores/comments-store';
 import CommentDialog from '@/components/CommentsLayer/CommentDialog.vue';
@@ -53,7 +53,9 @@ const getSidebarCommentStyle = computed(() => {
 
 const isExpanded = ref(false);
 const getNumberOfConversations = computed(() => props.data.length);
-const handleClick = () => isExpanded.value = !isExpanded.value;
+const handleClick = () => {
+  isExpanded.value = !isExpanded.value;
+}
 const handleClickOutside = (e) => {
   const dialogClasses = ['group-collapsed', 'number-bubble'];
   if (dialogClasses.some((c) => e.target.classList.contains(c))) return;
@@ -103,6 +105,7 @@ const getVisibleComments = computed(() => {
 .group-collapsed {
   position: relative;
   display: inline;
+  width: 50px;
 }
 .comments-icon {
   font-size: 20px;
@@ -120,7 +123,6 @@ const getVisibleComments = computed(() => {
   pointer-events: none;
 }
 .number-bubble {
-  background-color: #1355FF;
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -140,6 +142,7 @@ const getVisibleComments = computed(() => {
   position: absolute;
   border-radius: 12px;
   transition: background-color 250ms ease;
+  width: 51px;
 }
 .comments-icon:hover {
   background-color: #E2E9FB99;
@@ -148,5 +151,6 @@ const getVisibleComments = computed(() => {
   flex-direction: column;
   background-color: #EDEDED;
   z-index: 11;
+  width: 300px;
 }
 </style>

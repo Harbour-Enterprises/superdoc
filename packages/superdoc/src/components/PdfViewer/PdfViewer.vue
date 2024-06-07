@@ -2,9 +2,8 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import * as pdfjsViewer from 'pdfjs-dist/web/pdf_viewer';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min?raw';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, reactive } from 'vue';
 import useSelection from '@/helpers/use-selection';
-
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
   new Blob([pdfjsWorker], {
@@ -30,6 +29,7 @@ const props = defineProps({
 
 const id = props.documentData.id;
 const pdfData = props.documentData.data;
+const selectionBounds = reactive({})
 
 const getOriginalPageSize = (page) => {
   const viewport = page.getViewport({ scale: 1 });
@@ -82,55 +82,9 @@ async function renderPages(pdfDocument) {
       // Emit page information
       emit('page-loaded', id, i, containerBounds);
 
-      container.addEventListener('mousedown', (e) => {
-        const { target } = e;
-        if (target.tagName !== 'SPAN') {
-          isDragging = true;
-          mouseDrag.startX = e.offsetX;
-          mouseDrag.startY = e.offsetY;
-
-          enableTextLayer(container, false);
-        }
-      });
-
-      container.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        mouseDrag.endX = e.offsetX;
-        mouseDrag.endY = e.offsetY;
-        const boundingBox = {
-          left: mouseDrag.startX, 
-          top: mouseDrag.startY, 
-          right: mouseDrag.endX, 
-          bottom: mouseDrag.endY
-        }
-        const selection = useSelection({
-          selectionBounds: boundingBox,
-          page: container.dataset.pageNumber,
-          documentId: id,
-        });
-        emit('selection-drag', selection, e)
-      });
-
-      container.addEventListener('mouseup', (e) => {
-        enableTextLayer(container, true);
-        const boundingBox = getSelectedTextBoundingBox(container) || {};
-        if (isDragging) {
-          boundingBox.left = mouseDrag.startX;
-          boundingBox.top = mouseDrag.startY;
-          boundingBox.right = mouseDrag.endX;
-          boundingBox.bottom = mouseDrag.endY;
-        }
-        
-        const selection = useSelection({
-          selectionBounds: boundingBox,
-          page: container.dataset.pageNumber,
-          documentId: id,
-        });
-        
-        if (isDragging) emit('selection-drag-end', selection, containerBounds);
-        emit('selection-change', selection, container);
-        isDragging = false;
-      });
+      // Highlight event listeners
+      // container.addEventListener('touchstart', (e) => onTouchStart(e, container), { passive: false });
+      container.addEventListener('mousedown', (e) => onDragStart(e, container), { passive: false });
     }
 
     emit('ready', id, viewer)
@@ -160,7 +114,7 @@ function getSelectedTextBoundingBox(container) {
     bottom: firstRect.bottom,
     right: firstRect.right
   };
-  
+
   for (let i = 1; i < boundingRects.length; i++) {
     const rect = boundingRects[i];
     if (rect.width === 0 || rect.height === 0) {
@@ -185,9 +139,99 @@ function getSelectedTextBoundingBox(container) {
 }
 
 let isDragging = false;
-let mouseDrag = {
-  startX: 0, startY: 0, endX: 0, endY: 0
+
+const onDragStart = (e, container) => {
+  const { target } = e;
+  if (target.tagName !== 'SPAN') {
+    isDragging = true;
+    selectionBounds.left = e.offsetX;
+    selectionBounds.top = e.offsetY;
+    enableTextLayer(container, false);
+  }
+
+  const onDragMoveWrapper = (e) => onDragMove(e, container);
+  const onDragEndWrapper = (e) => {
+    document.removeEventListener('mouseup', onDragEndWrapper);
+    document.removeEventListener('mousemove', onDragMoveWrapper);
+    onDragEnd(e, container);
+  }
+
+  document.addEventListener('mouseup', onDragEndWrapper);
+  document.addEventListener('mousemove', onDragMoveWrapper);
+};
+
+const onDragEnd = (e, container) => {
+  let boundingBox = getSelectedTextBoundingBox(container) || {};
+  if (isDragging) boundingBox = selectionBounds;
+
+  const selection = useSelection({
+    selectionBounds: boundingBox,
+    page: container.dataset.pageNumber,
+    documentId: id,
+  });
+
+  const containerBounds = container.getBoundingClientRect();
+  if (isDragging) emit('selection-drag-end', selection, containerBounds);
+  emit('selection-change', selection, container);
+
+  isDragging = false;
+  enableTextLayer(container, true);
 }
+
+const onDragMove = (e, container) => {
+  if (!isDragging) return;
+  selectionBounds.right = e.offsetX;
+  selectionBounds.bottom = e.offsetY;
+  const selection = useSelection({
+    selectionBounds: selectionBounds,
+    page: container.dataset.pageNumber,
+    documentId: id,
+  });
+  emit('selection-drag', selection, e)
+}
+
+const onTouchStart = (e, container) => {
+  isDragging = true;
+
+  document.addEventListener('touchend', (e) => onTouchEnd(e, container));
+  document.addEventListener('touchmove', (e) => onTouchMove(e, container));
+
+  const touch = e.touches[0];
+  const containerBounds = container.getBoundingClientRect();
+  selectionBounds.left = touch.clientX;
+  selectionBounds.top = touch.clientY - containerBounds.top;
+};
+
+const onTouchMove = (e, container) => {
+  if (!isDragging || !container) return;
+
+  const touch = e.touches[0];
+  const containerBounds = container.getBoundingClientRect();
+  selectionBounds.right = touch.clientX - containerBounds.left;
+  selectionBounds.bottom = touch.clientY - containerBounds.top;
+  const selection = useSelection({
+    selectionBounds: selectionBounds,
+    page: container.dataset.pageNumber,
+    documentId: id,
+  });
+
+  emit('selection-drag', selection, e)
+};
+
+const onTouchEnd = (e, container) => {
+  isDragging = false;
+  document.removeEventListener('touchend', onTouchEnd);
+  document.removeEventListener('touchmove', onTouchMove);
+
+  const selection = useSelection({
+    selectionBounds: selectionBounds,
+    page: container.dataset.pageNumber,
+    documentId: id,
+  });
+  const containerBounds = container.getBoundingClientRect();
+  emit('selection-drag-end', selection, containerBounds);
+  emit('selection-change', selection, container);
+};
 
 onMounted(async () => {
   const doc = await loadPDF(pdfData);
@@ -199,12 +243,14 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div
-      class="superdoc-viewer"
-      ref="viewer"
-      id="viewerId"
-      @mousedown="onMouseDown"
-      @mousemove="onMouseMove">
+  <div>
+    <div
+        class="superdoc-viewer"
+        ref="viewer"
+        id="viewerId"
+        @mousedown="onMouseDown"
+        @mousemove="onMouseMove">
+    </div>
   </div>
 </template>
 
@@ -213,12 +259,13 @@ onMounted(async () => {
   @nested-import 'pdfjs-dist/web/pdf_viewer.css';
   
   position: relative;
+  display: flex;
+  flex-direction: column;
 
   .pdf-page {
-    position: relative;
     border: 1px solid #DFDFDF;
-    margin-bottom: var(--page-spacing);
-    width: fit-content;
+    margin: 20px 0;
+    position: relative;
   }
 
   .textLayer {

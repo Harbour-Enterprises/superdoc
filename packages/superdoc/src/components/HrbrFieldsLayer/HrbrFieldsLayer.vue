@@ -18,9 +18,18 @@ const props = defineProps({
 
 const getStyle = computed(() => (entry) => {
   const { coordinates, field } = entry;
+
+  // Adjust for padding
+  const adjustTypes = ['TEXTINPUT', 'SELECT']
+  if (adjustTypes.includes(field.fieldType)) {
+    const top = coordinates.top.split('px')[0];
+    const newTop = top - 13;
+    coordinates.top = `${newTop}px`;
+  }
+
   return {
     position: 'absolute',
-    field,
+    //field,
     ...coordinates,
   }
 });
@@ -40,10 +49,10 @@ const getAnnotationWithField = computed(() => {
 </script>
 
 <template>
-  <div>
-    <div v-for="entry in getAnnotationWithField" :style="getStyle(entry)">
+  <div class="main-container">
+    <div v-for="entry in getAnnotationWithField" :style="getStyle(entry)" class="field-container">
       <component
-          class="field-container"
+          class="field-component"
           :is="fieldComponentsMap[entry.field.fieldType]"
           :field="entry.field"
           :style-override="entry.style"
@@ -56,7 +65,7 @@ const getAnnotationWithField = computed(() => {
 <style scoped>
 .field-container {
   border-radius: 2px;
-  background-color: #EFD0F0;
+  background-color: #EFD0F0 !important;
   border: 2px solid #B015B3;
 }
 </style>

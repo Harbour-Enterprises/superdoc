@@ -34,6 +34,5 @@ const getStyle = computed(() => {
 <style scoped>
 .select-container {
   padding: 1px;
-  margin-top: -13px;
 }
 </style>

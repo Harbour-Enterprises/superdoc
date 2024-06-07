@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia';
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, unref } from 'vue';
 import { comments_module_events } from '@common/event-types.js';
 import { useSuperdocStore } from '@/stores/superdoc-store';
+import useConversation from '../components/CommentsLayer/use-conversation';
 
 export const useCommentsStore = defineStore('comments', () => {
   const superdocStore = useSuperdocStore();
@@ -18,6 +19,31 @@ export const useCommentsStore = defineStore('comments', () => {
   const commentDialogs = ref([]);
   const overlappingComments = ref([]);
   const overlappedIds = new Set([]);
+
+  // Floating comments
+  const floatingCommentsOffset = ref(0);
+  const sortedConversations = ref([]);
+  const visibleConversations = ref([]);
+
+  const pendingComment = ref(null);
+  const getPendingComment = (selection) => {
+    return useConversation({
+      documentId: selection.documentId,
+      creatorEmail: superdocStore.user.email,
+      creatorName: superdocStore.user.name,
+      comments: [],
+      selection,
+    });
+  };
+
+  const showAddComment = () => {
+    // Need to fully unref the selection before applying it to the new object
+    const selection = { ...superdocStore.activeSelection };
+    selection.selectionBounds = { ...selection.selectionBounds };
+
+    pendingComment.value = getPendingComment(selection);
+    activeComment.value = pendingComment.value.conversationId;
+  };
 
   const hasOverlapId = (id) => overlappedIds.includes(id);
   const documentsWithConverations = computed(() => {
@@ -110,7 +136,7 @@ export const useCommentsStore = defineStore('comments', () => {
           // Then this is a group
           const groupIndex = d.dataset.index;
           const group = overlappingComments.value[groupIndex];
-          group.unshift(dialog);
+          group?.unshift(dialog);
         } else {
           let dialogObject = dialog.doc?.conversations?.find((c) => c.conversationId === d.dataset.id);
           if (!dialogObject) dialogObject = doc.conversations.find((c) => c.conversationId === d.dataset.id);
@@ -143,6 +169,12 @@ export const useCommentsStore = defineStore('comments', () => {
     commentDialogs,
     overlappingComments,
     overlappedIds,
+    pendingComment,
+
+    // Floating comments
+    floatingCommentsOffset,
+    sortedConversations,
+    visibleConversations,
 
     // Getters
     getConfig,
@@ -155,6 +187,8 @@ export const useCommentsStore = defineStore('comments', () => {
     getCommentLocation,
     hasOverlapId,
     checkOverlaps,
-    initialCheck
+    initialCheck,
+    getPendingComment,
+    showAddComment,
   }
 });

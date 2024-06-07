@@ -13,6 +13,9 @@ export const useSuperdocStore = defineStore('superdoc', () => {
 
   const user = reactive({ name: null, email: null });
   const modules = reactive({});
+  
+  const activeSelection = ref(null);
+  const selectionPosition = ref(null);
 
   const init = (config) => {
     const { documents: docs, modules: configModules, user: configUser } = config;
@@ -70,7 +73,10 @@ export const useSuperdocStore = defineStore('superdoc', () => {
     documentContainers,
     documentBounds,
     pages,
-    
+
+    selectionPosition,
+    activeSelection,
+
     isReady,
 
     user,

@@ -33,7 +33,6 @@ const getStyle = computed(() => {
 
 <style scoped>
   .paragraph-field {
-    overflow: hidden;
     margin: 0;
     padding: 1px;
   }

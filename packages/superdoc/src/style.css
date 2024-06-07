@@ -71,8 +71,9 @@ body {
 
 .sd-highlight {
   position: absolute;
-  border-radius: px;
+  border-radius: 3px;
   background-color: #FFD70044;
+  cursor: pointer;
 }
 .comment-box {
   width: 300px;
@@ -80,4 +81,7 @@ body {
 .superdoc {
   min-height: 100%;
   display: flex;
+}
+@media (max-width: 768px) {
+
 }

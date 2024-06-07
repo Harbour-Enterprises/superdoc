@@ -540,8 +540,9 @@ export const fields = [
   }
 ]
 
-export const conversations = [{
-  "conversationId": "384db7b4-d95c-478e-bd3e-03bacaed6fc5",
+export const conversations = [
+    {
+  "conversationId": "convo-1",
   "documentId": "456",
   "creatorEmail": "nick@harbourshare.com",
   "creatorName": "Nick Bernal",
@@ -567,8 +568,45 @@ export const conversations = [{
   },
   "markedDone": null,
   "isFocused": true
-},{
-    "conversationId": "384db7b4-d95c-478e-bd3e-ABC",
+},
+{
+    "conversationId": "convo-2",
+    "documentId": "456",
+    "creatorEmail": "nick@harbourshare.com",
+    "creatorName": "Nick Bernal",
+    "comments": [
+        {
+            "comment": "initial top COMMENT",
+            "user": {
+                "name": "Nick Bernal",
+                "email": "nick@harbourshare.com"
+            },
+            "timestamp": "2024-05-31T19:18:25.522Z"
+        },
+        {
+            "comment": "comment in thread",
+            "user": {
+                "name": "Nick Bernal",
+                "email": "nick@harbourshare.com"
+            },
+            "timestamp": "2024-05-31T19:20:25.522Z"
+        }
+    ],
+    "selection": {
+        "documentId": "456",
+        "page": "1",
+        "selectionBounds": {
+            "top": 0.296875,
+            "left": 500.91461181640625,
+            "bottom": 200.296875,
+            "right": 550.99163818359375
+        }
+    },
+    "markedDone": null,
+    "isFocused": true
+  },
+  {
+    "conversationId": "convo-3",
     "documentId": "456",
     "creatorEmail": "nick@harbourshare.com",
     "creatorName": "Nick Bernal",
@@ -594,7 +632,36 @@ export const conversations = [{
     },
     "markedDone": null,
     "isFocused": true
-  }]
+  },
+  {
+    "conversationId": "convo-4-page2",
+    "documentId": "456",
+    "creatorEmail": "nick@harbourshare.com",
+    "creatorName": "Nick Bernal",
+    "comments": [
+        {
+            "comment": "pg1 - 1",
+            "user": {
+                "name": "Nick Bernal",
+                "email": "nick@harbourshare.com"
+            },
+            "timestamp": "2024-05-31T19:18:25.522Z"
+        }
+    ],
+    "selection": {
+        "documentId": "456",
+        "page": "2",
+        "selectionBounds": {
+            "top": 105.296875,
+            "left": 413.91461181640625,
+            "bottom": 125.296875,
+            "right": 487.99163818359375
+        }
+    },
+    "markedDone": null,
+    "isFocused": true
+  },
+]
 
 
 export const annotations = [
