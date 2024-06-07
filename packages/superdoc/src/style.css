@@ -71,8 +71,19 @@ body {
 
 .sd-highlight {
   position: absolute;
-  border-radius: 3px;
-  background-color: #FFD70044;
+  border-radius: 33px;
+  background-color: #DDAF0955;
+  mix-blend-mode: multiply;
+  transition: background-color 250ms ease;
+}
+.sd-initial-highlight {
+  background-color: #1355ff7F;
+}
+.sd-highlight:hover {
+  background-color: #DDAF0999;
+}
+.sd-highlight-active {
+  background-color: #1355ff7F;
   cursor: pointer;
 }
 .comment-box {

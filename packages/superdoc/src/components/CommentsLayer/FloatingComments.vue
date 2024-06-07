@@ -59,13 +59,21 @@ const checkCollisions = (proposedPosition, dialogIndex) => {
   const updatedPosition = { ...proposedPosition };
   if (dialogIndex === 0) return updatedPosition;
 
+  const currentItem = visibleConversations.value[dialogIndex];
   const previousItem = visibleConversations.value[dialogIndex - 1];
   const previousPosition = previousItem.position;
   const topComparison = proposedPosition.top < previousPosition.bottom;
+
   if (topComparison) {
     const height = proposedPosition.bottom - proposedPosition.top;
-    updatedPosition.top = previousPosition.bottom + 2;
+    const newTop = previousPosition.bottom + 2;
+    currentItem.offset = newTop - proposedPosition.top;
+    updatedPosition.top = newTop;
     updatedPosition.bottom = updatedPosition.top + height;
+  }
+
+  if (currentItem.id === activeComment.value) {
+    floatingCommentsOffset.value += currentItem.offset;
   }
   return updatedPosition
 }

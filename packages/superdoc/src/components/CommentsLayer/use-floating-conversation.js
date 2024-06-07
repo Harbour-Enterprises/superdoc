@@ -9,10 +9,12 @@ export default function useFloatingConveration(params) {
     right: 0,
     bottom: 0,
   });
+  const offset = ref(0);
 
   return {
     id,
     conversation,
-    position
+    position,
+    offset
   }
 }

@@ -75,15 +75,12 @@ const getStyle = (conversation) => {
   }
 }
 
-const handleHighlightHover = (conversation, e) => {
-  floatingCommentsOffset.value = 0;
-}
-
 const setFloatingCommentOffset = (conversation, e) => {
   const floatingConvo = visibleConversations.value.find((c) => c.id === conversation.conversationId);
   const parentTop = props.parent.getBoundingClientRect().top;
   const top = floatingConvo.position.top;
   const eTop = e.target.getBoundingClientRect().top;
+
   floatingCommentsOffset.value = top - eTop + parentTop;
 }
 
@@ -110,6 +107,7 @@ defineExpose({
   <div class="comments-container" id="commentsContainer">
     <div class="comments-layer">
       <div
+          :class="{ 'sd-highlight-active': activeComment === conversation.conversationId }"
           v-for="conversation in getAllConversations"
           class="comment-anchor sd-highlight"
           @click="(e) => handleHighlightClick(conversation, e)"
@@ -132,9 +130,6 @@ defineExpose({
   z-index: 3;
   border-radius: 4px;
   transition: background-color 250ms ease;
-}
-.comment-anchor:hover {
-  background-color: #FFD70099;
 }
 .comments-container {
   /* pointer-events: none;  */

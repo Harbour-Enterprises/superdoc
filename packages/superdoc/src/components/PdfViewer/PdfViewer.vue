@@ -270,6 +270,12 @@ onMounted(async () => {
 
   .textLayer {
     z-index: 2;
+    position: absolute;
+  }
+
+  .textLayer ::selection {
+    background-color: #1355ff66;
+    mix-blend-mode: difference;
   }
 }
 </style>

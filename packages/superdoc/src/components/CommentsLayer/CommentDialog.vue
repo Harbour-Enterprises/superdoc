@@ -98,6 +98,8 @@ const getSidebarCommentStyle = computed(() => {
   if (!props.data.comments.length && currentElement.value) {
     const selectionBounds = props.data.selection.getContainerLocation(props.parent)
     const bounds = props.data.selection.selectionBounds;
+    const parentTop = props.parent.getBoundingClientRect().top;
+    const currentBounds = currentElement.value.getBoundingClientRect();
     style.top = bounds.top + selectionBounds.top + 'px';
     style.width = 300 + 'px';
   }

@@ -119,7 +119,7 @@ const handleToolClick = (tool) => {
 }
 
 const handleDocumentMouseDown = (e) => {
-  selectionPosition.value = null;
+  selectionPosition.value = null;;
   document.removeEventListener('mousedown', handleDocumentMouseDown);
 }
 
@@ -143,17 +143,17 @@ onBeforeUnmount(() => {
 <div>
   <div class="superdoc">
     <div class="layers" ref="layers">
+
       <div
           v-if="toolsMenuPosition && !getConfig?.readOnly" 
           class="tools"
-          :style="toolsMenuPosition"
-          @click.stop.prevent>
+          :style="toolsMenuPosition">
         <i class="fas fa-comment-alt-lines" data-id="is-tool" @click.stop.prevent="handleToolClick('comments')"></i>
       </div>
 
       <div
           v-if="!getConfig?.readOnly && selectionPosition"
-          :style="selectionPosition" class="sd-highlight">
+          :style="selectionPosition" class="sd-highlight sd-initial-highlight">
       </div>
 
       <div class="document">
@@ -195,7 +195,7 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <div class="right-sidebar" v-if="documentsWithConverations.length && layers && isReady">
+    <div class="right-sidebar" v-if="(pendingComment || documentsWithConverations.length) && layers && isReady">
       <CommentDialog
           v-if="pendingComment"
           :data="pendingComment"
@@ -218,6 +218,7 @@ onBeforeUnmount(() => {
   width: 320px;
   padding: 0 10px;
   min-height: 100%;
+  position: relative;
 }
 
 /* General Styles */
