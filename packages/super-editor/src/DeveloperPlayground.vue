@@ -22,6 +22,9 @@ const handleNewFile = (file) => {
 <template>
   <div class="dev-app">
     <div class="header">
+      <div class="title">
+        <h2>Super Editor Dev Area</h2>
+      </div>
       <div>
         Upload docx
         <BasicUpload @file-change="handleNewFile" />
@@ -40,6 +43,7 @@ const handleNewFile = (file) => {
 }
 .header {
   display: flex;
+  flex-direction: column;
   background-color: rgb(222, 237, 243);
   padding: 20px;
   margin-bottom: 20px;
