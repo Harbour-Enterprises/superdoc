@@ -4,5 +4,13 @@
   "private": true,
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "scripts": {
+    "reinstall": "rm -rf node_modules package-lock.json; npm install;",
+    "dev:superdoc": "cd packages/superdoc && npm run dev",
+    "dev:super-editor": "cd packages/super-editor && npm run dev"
+  },
+  "dependencies": {
+    "eventemitter3": "^5.0.1"
+  }
 }

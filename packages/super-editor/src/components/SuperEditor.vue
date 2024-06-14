@@ -6,7 +6,8 @@ import ProseMirror from '@components/docx-editor/ProseMirror.vue'
 const props = defineProps({
   mode: {
     type: String,
-    default: 'text'
+    default: 'text',
+    validator: (value) => ['text', 'docx'].includes(value),
   },
 
   dataUrl: {
