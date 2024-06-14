@@ -10,6 +10,8 @@ import HrbrFieldsLayer from '@/components/HrbrFieldsLayer/HrbrFieldsLayer.vue';
 import { useSuperdocStore } from '@/stores/superdoc-store';
 import { useCommentsStore } from '@/stores/comments-store';
 
+import { SuperEditor } from 'super';
+
 // Stores
 const superdocStore = useSuperdocStore();
 const commentsStore = useCommentsStore();
@@ -196,14 +198,15 @@ onBeforeUnmount(() => {
             @ready="handlePdfReady" 
             @page-loaded="handlePageReady" />
 
-        <!-- DOCX Renderer -->
-        <DocumentEditor
-            v-if="doc.type === 'docx'"
-            :document-data="doc"
-            @ready="handlePdfReady" />
+          <SuperEditor
+              class="docx-editor"
+              v-if="doc.type === 'docx'"
+              mode="docx"
+              :data-url="doc.data" />
+
+        </div>
       </div>
     </div>
-  </div>
 
   <div class="right-sidebar" v-if="(pendingComment || documentsWithConverations.length) && layers && isReady">
     <CommentDialog
@@ -229,6 +232,9 @@ onBeforeUnmount(() => {
   padding: 0 10px;
   min-height: 100%;
   position: relative;
+}
+.docx-editor {
+  margin-bottom: 20px;
 }
 
 /* General Styles */
