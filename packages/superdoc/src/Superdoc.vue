@@ -10,6 +10,8 @@ import HrbrFieldsLayer from '@/components/HrbrFieldsLayer/HrbrFieldsLayer.vue';
 import { useSuperdocStore } from '@/stores/superdoc-store';
 import { useCommentsStore } from '@/stores/comments-store';
 
+import { SuperEditor } from 'super';
+
 // Stores
 const superdocStore = useSuperdocStore();
 const commentsStore = useCommentsStore();
@@ -136,6 +138,7 @@ onBeforeUnmount(() => {
 
 <template>
 <div>
+
   <div class="superdoc" @mousedown="selectionPosition = null">
     <div class="layers" ref="layers">
       <div
@@ -177,10 +180,12 @@ onBeforeUnmount(() => {
               @ready="handlePdfReady" 
               @page-loaded="handlePageReady" />
 
-          <DocumentEditor
+          <SuperEditor
+              class="docx-editor"
               v-if="doc.type === 'docx'"
-              :document-data="doc"
-              @ready="handlePdfReady" />
+              mode="docx"
+              :data-url="doc.data" />
+
         </div>
       </div>
     </div>
@@ -215,6 +220,9 @@ onBeforeUnmount(() => {
   width: 320px;
   padding: 10px;
   position: relative;
+}
+.docx-editor {
+  margin-bottom: 20px;
 }
 
 /* General Styles */

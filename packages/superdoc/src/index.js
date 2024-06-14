@@ -6,7 +6,6 @@ import { useSuperdocStore } from './stores/superdoc-store';
 import clickOutside from '@/helpers/v-click-outside';
 import App from './Superdoc.vue'
 
-
 const createMyApp = () => {
   const app = createApp(App);
   const pinia = createPinia()

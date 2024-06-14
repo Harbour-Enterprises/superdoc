@@ -9,7 +9,7 @@ export default defineConfig((data) => {
       vue(),
     ],
     build: {
-      target: 'es2022',
+      target: 'es2020',
       lib: {
         entry: "src/index.js",
         formats: ['es', 'cjs'],
@@ -24,7 +24,7 @@ export default defineConfig((data) => {
     },
     optimizeDeps: {
       esbuildOptions: {
-        target: 'es2022',
+        target: 'es2020',
       },
     },
     rollupOptions: {
