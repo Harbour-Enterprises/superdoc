@@ -5,6 +5,7 @@ import xmljs from 'xml-js';
  * Class to translate from DOCX XML to Prose Mirror Schema and back
  * 
  * Will need to be updated as we find new docx tags.
+ * 
  */
 class SuperConverter {
 
@@ -18,6 +19,10 @@ class SuperConverter {
     // Formatting only
     'w:sectPr': 'sectionProperties',
     'w:rPr': 'runProperties',
+
+    // Comments
+    // 'w:commentRangeStart': 'commentRangeStart',
+    // 'w:commentRangeEnd': 'commentRangeEnd',
   });
 
   constructor(params = null) {
@@ -85,7 +90,7 @@ class SuperConverter {
       this.log('[convertToJson] Missing name', element)
       return null
     }
-    
+  
     // Start with the basic schema
     const item = {
       type: name,
@@ -96,16 +101,14 @@ class SuperConverter {
       }
     }
 
-    if (name === 'text') {
-      if (!element.elements) return null;
-      item.text = element.elements[0]?.text;
-    }
     element.attributes && (item.attrs.attributes = element.attributes);
 
     // Special handling for some elements
     if (item.type === 'text') {
-      item.content = element.elements;
-      return item;
+      if (!element.elements) return null;
+
+      item.text = element.elements[0].text;
+      delete item.content;
     }
   
     if (element.elements && element.elements.length > 0) {
@@ -230,85 +233,96 @@ class SuperConverter {
   }
 
 
-
-/**
- * 
- * Converting from JSON to DOCX XML
- * 
- */
-  generateTag(element) {
-    let tag = `<${element.name}`;
-    for (let key in element.attributes) {
-      tag += ` ${key}="${element.attributes[key]}"`;
-    }
-
-    if (element.name === 'w:t') {
-      tag += ' xml:space="preserve"'
-    }
-    tag += '>';
-    return tag;
+  /**
+   * Convert to XML from SCHEMA
+   */
+  schemaToXml(data) {
+    const result = this._generate_xml_as_list(data);
+    return result.join('');
   }
 
-  /**
-   * Recursively process elements into XML tags manually
-   */
-  processElement(elements) {
-    let tags = '';
+  _generate_xml_as_list(data) {
+    const json = JSON.parse(JSON.stringify(data));
+    const firstElement = json.doc;
+    const declaration = this.declaration.attributes;
+    const xmlTag = `<?xml${Object.entries(declaration).map(([key, value]) => ` ${key}="${value}"`).join('')}?>`;
+    const result = this._generateXml(firstElement);
+    return [xmlTag, ...result];
+  }
+
+  _processRunProperties(properties) {
+    const { elements } = properties;
+    return `<w:rPr>${elements.map(element => `<${element.name}/>`).join('')}</w:rPr>`;
+  }
   
+  _processSectionProperties(properties) {
+    const { elements } = properties;
+    const { attributesString } = this._processAttrs(properties);
+    const sectionPrTag = `<w:sectPr${attributesString}>`;
+
+    let tags = [sectionPrTag];
     for (let element of elements) {
-      
-      // Extract properties if present
-      let properties = '';
-      if (element.attributes?.properties) {
-        properties = element.attributes.properties;
-        delete element.attributes.properties;
-      }
-  
-      // Generate the opening tag
-      const tag = this.generateTag(element);
-  
-      // Add the opening tag to the result
-      tags += tag;
-  
-      if (element.type === 'text') {
-        this.log('Text:', element);
-        tags += element.text;
-      }
-
-      // Process child elements if any
-      if (element.elements?.length > 0) {
-        tags += this.processElement(element.elements);
-      }
-  
-      // Add the closing tag
-      const closingTag = `</${element.name}>`;
-      tags += closingTag;
-
+      const { attributesString } = this._processAttrs(element);
+      tags.push(`<${element.name}${attributesString}/>`);
     }
-  
+    tags.push('</w:sectPr>');
     return tags;
   }
 
-  /**
-   * Convert to XML from JSON
-   */
-  jsonToXml(data) {
-    this.log('\n\n XML DATA', data)
-    let xmlTag = `<?xml`;
-    for (let key in this.declaration.attributes) {
-      xmlTag += ` ${key}="${this.declaration.attributes[key]}"`;
-    }
-    xmlTag += '?>';
+  _processAttrs(attrs) {
+    let attributesString = '';
+    const { attributes } = attrs;
 
-    // Document tag
-    let documentTag = `<w:document`;
-    for (let key in data.elements[0].attributes) {
-      documentTag += ` ${key}="${data.elements[0].attributes[key]}"`;
-    }
-    documentTag += '>';
-    const result = this.processElement(data.elements[0].elements);
+    const sectionProperties = attributes.sectionProperties;
+    delete attributes.sectionProperties;
+    let processedSectionProperties;
+    if (sectionProperties) processedSectionProperties = this._processSectionProperties(sectionProperties);
 
-    return xmlTag + documentTag + result + '</w:document>';
+    const runProperties = attributes.runProperties;
+    delete attributes.runProperties;
+    let processedRunProperties;
+    if (runProperties) processedRunProperties =this._processRunProperties(runProperties)
+
+    for (let key in attributes) {
+      attributesString += ` ${key}="${attributes[key]}"`;
+    }
+    return {
+      attributesString,
+      processedRunProperties,
+      processedSectionProperties
+    }
+  }
+
+  _generateXml(node) {
+    const { type, content, attrs } = node;
+    const name = this.getTagName(type);
+
+    let tag = `<${name}`;
+
+    const { attributesString, processedRunProperties, processedSectionProperties } = this._processAttrs(attrs);
+    tag += attributesString;
+    tag += '>';
+    let tags = [tag];
+
+    // Add run properties if present - these go before the children
+    if (processedRunProperties) tags.push(processedRunProperties);
+
+    if (type === 'text') {
+      tags.push(node.text);
+    }
+
+    // Recursively add the children
+    if (content) {
+      for (let child of content) {
+        tags.push(...this._generateXml(child));
+      }
+    }
+
+    // Add section properties if present - these go after the content
+    if (processedSectionProperties) tags.push(...processedSectionProperties);
+  
+    tags.push(`</${name}>`);
+    return tags;
   }
 }
 
