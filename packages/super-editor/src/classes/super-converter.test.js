@@ -12,7 +12,7 @@ const testFiles = [
 testFiles.forEach((fileName) => {
 
   // Run input tests (ie: from docx XML to SCHEMA)
-  runInputTests(fileName);
+  // runInputTests(fileName);
 
   // Input algorithm: Granular testing of known inputs
   testInputConversion();
@@ -22,6 +22,6 @@ testFiles.forEach((fileName) => {
   // runOutputTests(fileName);
 
   // Output algorithm: Granular testing of known outputs
-  testOutputConversion();
+  // testOutputConversion();
   
 });

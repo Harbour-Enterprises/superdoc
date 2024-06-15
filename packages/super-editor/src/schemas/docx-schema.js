@@ -7,6 +7,59 @@ import { Schema } from "prosemirror-model"
 const DocxSchema = new Schema({
   nodes: {
   
+
+    /**
+     * ❗️ TODO: Implement a custom node view for run nodes that are children of list types
+     */
+    unorderedList: {
+      content: "text*",
+      inline: false,
+      group: "block",
+      toDOM() { return ["ol", 0]; },
+      parseDOM: [{ tag: "ol" }],
+      attrs: {
+        attributes: { default: {} },
+        type: { default: null },
+      },
+    },
+
+    commentRangeStart: {
+      content: "text*",
+      inline: true,
+      group: "inline",
+      toDOM() { return ["commentRangeStart", 0]; },
+      parseDOM: [{ tag: "commentRangeStart" }],
+      attrs: {
+        attributes: { default: {} },
+        type: { default: null },
+      },
+    },
+
+    commentRangeEnd: {
+      content: "text*",
+      inline: true,
+      group: "inline",
+      toDOM() { return ["commentRangeEnd", 0]; },
+      parseDOM: [{ tag: "commentRangeEnd" }],
+      attrs: {
+        attributes: { default: {} },
+        type: { default: null },
+      },
+    },
+
+    commentReference: {
+      content: "text*",
+      inline: true,
+      group: "inline",
+      toDOM() { return ["commentReference", 0]; },
+      parseDOM: [{ tag: "commentReference" }],
+      attrs: {
+        attributes: { default: {} },
+        type: { default: null },
+      },
+    },
+    
+
     text: {
       inline: true,
       group: "inline",
@@ -37,7 +90,7 @@ const DocxSchema = new Schema({
     },
   
     body: {
-      content: "paragraph+",
+      content: "(paragraph+ | unorderedList*)",
       toDOM() { return ["body", 0]; },
       attrs: {
         attributes: { default: {} },

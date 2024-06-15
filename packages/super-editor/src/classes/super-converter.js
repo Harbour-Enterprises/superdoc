@@ -21,9 +21,17 @@ class SuperConverter {
     'w:rPr': 'runProperties',
 
     // Comments
-    // 'w:commentRangeStart': 'commentRangeStart',
-    // 'w:commentRangeEnd': 'commentRangeEnd',
+    'w:commentRangeStart': 'commentRangeStart',
+    'w:commentRangeEnd': 'commentRangeEnd',
+    'w:commentReference': 'commentReference',
   });
+
+  static propertyTypes = Object.freeze({
+    'w:pPr': 'paragraphProperties',
+    'w:rPr': 'runProperties',
+    'w:sectPr': 'sectionProperties',
+  });
+
 
   constructor(params = null) {
     // Suppress logging when true
@@ -67,9 +75,9 @@ class SuperConverter {
   getSchema() {
     const json = JSON.parse(JSON.stringify(this.initialJSON));
     const startElements = json.elements;
-    const result = this.convertToJson(startElements[0]);
+    const result = this.convertToSchema(startElements[0]);
 
-    this.log('\nSchema updated:', result)
+    // this.log('\nSchema updated:', JSON.stringify(result, null, 2))
     return result;
   }
 
@@ -84,157 +92,167 @@ class SuperConverter {
    *    Do we have special handling?
    *    Append it to the tree
    */
-  convertToJson(element) {
-    const name = this.getElementName(element);
-    if (!name) {
-      this.log('[convertToJson] Missing name', element)
-      return null
-    }
+
+
+
+
+
+  convertToSchema(node) {
+    if (!node) return;
   
-    // Start with the basic schema
-    const item = {
-      type: name,
-      content: [],
-      attrs: {
-        type: element.type,
-        attributes: {},
-      }
-    }
+    /* We will build a prose mirror ready schema node from XML node */
+    let schemaNode;
+    const { name: outerNodeName } = node;
+    let { elements = [] } = node;
 
-    element.attributes && (item.attrs.attributes = element.attributes);
+    /**
+     * Who am I?
+     * It isn't always clear what node we have from the outer element.
+     * Nodes such as lists are paragraphs but contain a list element somewhere.
+     */
+    //this.log('Who am I?', node.name)
 
-    // Special handling for some elements
-    if (item.type === 'text') {
-      if (!element.elements) return null;
+    /* Standard nodes known to need no special handling */
+    const standardNodes = ['w:document', 'w:body', 'w:commentRangeStart', 'w:commentRangeEnd', 'w:commentReference'];
+    if (standardNodes.includes(outerNodeName)) schemaNode = this._handleStandardNode(node);
 
-      item.text = element.elements[0].text;
-      delete item.content;
-    }
-  
-    if (element.elements && element.elements.length > 0) {
+    /* w:p: If I am a paragraph, I might be a list item, or possibly other special case */
+    if (outerNodeName === 'w:p') {
 
-      const currentElements = element.elements;
-      const sectionPropertiesIndex = currentElements.findIndex(el => el.name === 'w:sectPr');
-      const runPropertiesIndex = currentElements.findIndex(el => el.name === 'w:rPr');
+      /* Special cases of w:p based on paragraph properties */
+      const pPr = elements.find(el => el.name === 'w:pPr')
+      if (pPr) {
+        const paragraphStyle = pPr.elements.find(el => el.name === 'w:pStyle');
 
-      // Spcial handling for section properties
-      if (sectionPropertiesIndex > -1) {
-        const properties = currentElements[sectionPropertiesIndex];
-        item.attrs.attributes.sectionProperties = properties;
-        currentElements.splice(sectionPropertiesIndex, 1);
+        /* If I am a list item... */
+        if (paragraphStyle?.attributes['w:val'] === 'ListParagraph') schemaNode = this._handleListNode(node);
       }
       
-      // Handle elements that are really run properties
-      // This should be moved out to its own function/functions as we will get more complex
-      if (runPropertiesIndex > -1) {
-        const properties = currentElements[runPropertiesIndex];
-        item.attrs.attributes.runProperties = properties;
-        currentElements.splice(runPropertiesIndex, 1);
-
-        const marks = [];
-        for (let mark of properties.elements) {
-          const { name } = mark;
-
-          // For now, let's manually handle bold and italic
-          if (name === 'w:b') marks.push({ type: 'strong' });
-          else if (name === 'w:i') marks.push({ type: 'em' });
-        }
-
-        if (marks.length) item.marks = marks;
-        this.log('Run Properties:', properties)
-      }
-
-      currentElements.forEach(child => {
-        const newChild = this.convertToJson(child)
-        if (newChild && Array.isArray(newChild)) {
-          item.content.push(...newChild);
-        } else if (newChild) {
-          item.content.push(newChild);
-        }
-      });
+      /* I am a standard paragraph tag */
+      if (!schemaNode) schemaNode = this._handleStandardNode(node);
     }
-    return item;
+
+    /* w:r: If I am a run... */
+    if (outerNodeName === 'w:r') {
+      schemaNode = this._handleStandardNode(node);
+    }
+
+    /* w:t: If I am a text node... */
+    if (outerNodeName === 'w:t') schemaNode = this._handleTextNode(node);
+
+    /* Watch for unknown nodes as we build more functionality here */
+    if (!schemaNode) console.debug('No schema node:', node);
+
+    return schemaNode;
   }
+
+
+  _handleListNode(node) {
+    /**
+     * ❗️❗️ TOOD: We need to get the list type from numbering.xml
+     * This will involve having access to additional files here. TBD.
+     * Hard coding this for now
+     */
+    const listType = 'unorderedList';
+
+    // Parse properties
+    const { attributes, elements } = this._parseProperties(node);
+
+    // Iterate through the children and build the schemaNode content
+    const content = [];
+    for (const element of elements) {
+      if (element.name === 'w:p') element.name = 'listItem';
+      const schemaNode = this.convertToSchema(element);
+      if (schemaNode) content.push(schemaNode);
+    }
+
+    return {
+      type: listType,
+      content,
+      attrs: {
+        type: node.type,
+        attributes: attributes || {},
+        dataId: 'test'
+      }
+    }
+  }
+
+
+  _handleStandardNode(node) {
+    const { name, type } = node;
+
+    // Parse properties
+    const { attributes, elements } = this._parseProperties(node);
+
+    // Iterate through the children and build the schemaNode content
+    const content = [];
+    if (elements && elements.length) {
+      for (const element of elements) {
+        const schemaNode = this.convertToSchema(element);
+        if (schemaNode) content.push(schemaNode);
+      }
+    }
+
+    return {
+      type: this.getElementName(node),
+      content,
+      attrs: { type, attributes: attributes || {}, }
+    };
+  }
+
+
+  _handleTextNode(node) {
+    const { type } = node;
+
+    // Parse properties
+    const { attributes, elements } = this._parseProperties(node);
+
+    // Text nodes have no children. Only text.
+    const text = elements[0].text;
+
+    return {
+      type: this.getElementName(node),
+      text: text,
+      attrs: { type, attributes: attributes || {}, }
+    };
+  }
+
+
+  _parseProperties(node) {
+      /**
+       * What does it mean for a node to have a properties element?
+       * It would have a child element that is: w:pPr, w:rPr, w:sectPr
+       */
+      const { attributes = {}, elements = [] } = node;
+      const [nodes, properties] = this._splitElementsAndProperties(elements);
+      if (properties.length) {
+        properties.forEach(property => {
+          const propType = SuperConverter.propertyTypes[property.name];
+          attributes[propType] = property;
+        }); 
+      }
+      return { elements: nodes, attributes }
+  }
+
+
+  _splitElementsAndProperties(elements) {
+    return elements.reduce(
+      ([els, props], el) => {
+        if (SuperConverter.propertyTypes[el.name]) props.push(el);
+        else els.push(el);
+        return [els, props];
+      }, [[], []]
+    );
+  }
+
+
+
 
   /**
-   * 
-   * Interim conversion from prose mirror schema to original JSON
-   * 
-   */
-  schemaToXmlJson(data) {
-    // Remove selection for now
-    const json = JSON.parse(JSON.stringify(data));
-    delete json.selection;
-
-    const firstElement = json.doc;
-    const result = this.convertElementToJsonXml(firstElement);
-
-    this.log('\n\n XML', result, '\n\n')
-    return { 
-      declaration: this.declaration,
-      elements: [result],
-    }
-  }
-
-  convertElementToJsonXml(element) {
-    const currentType = element.type;
-    const name = this.getTagName(currentType);
-    const reversedElement = {
-      type: currentType,
-      name,
-    }
-
-    if (element.type === 'text') {
-      reversedElement.text = element.text;
-    }
-
-    const hasElements = element.content && element.content.length > 0;
-    if (hasElements) reversedElement.elements = [];
-  
-    // This restores the original attributes, which likely contain formatting / marks
-    // TODO: Need to actually get the marks on the document as well for export
-    // Which would be available in a list of element.marks, if any
-    if (element.attrs?.attributes) {
-      const runProperties = element.attrs.attributes.runProperties;
-      if (runProperties && hasElements) {
-        delete element.attrs.attributes.runProperties;
-        reversedElement.elements.push(runProperties);
-      }
-
-      if (element.marks) {
-        // If a text element gets a mark, then we need to bump up that mark to the run level? 
-  
-        //const runProps = reversedElement.elements.find(el => el.name === 'w:rPr');
-        //this.log('Run runProps (output):', runProps, element);
-
-        // for (let mark of element.marks) {
-        //   const { type } = mark;
-        //   this.log('Mark:', type)
-
-        //   if (type === 'strong') reversedElement.elements.unshift({ name: 'w:b', type: 'element' });
-        //   else if (type === 'em') reversedElement.elements.unshift({ name: 'w:i', type: 'element' });
-        // }
-      }
-
-      const sectionProperties = element.attrs.attributes.properties;
-      if (sectionProperties) {
-        delete element.attrs.attributes.properties;
-        reversedElement.elements.push(sectionProperties);
-      }
-      reversedElement.attributes = { ...element.attrs.attributes };
-    }
-
-    if (hasElements) {
-      reversedElement.elements.push(...element.content.map(this.convertElementToJsonXml.bind(this)));
-    }
-
-    this.log('Reversed Element:', reversedElement)
-    return reversedElement;
-  }
-
-
-  /**
+   * Output section
+   *
    * Convert to XML from SCHEMA
+   * ❗️ TODO: Much to do here. Anything to do with marks added inside the editor is not yet implemented
    */
   schemaToXml(data) {
     const result = this._generate_xml_as_list(data);

@@ -43,6 +43,7 @@ const initData = () => {
 
   const converter = new SuperConverter({ xml });
   documentData.value = converter.getSchema();
+  console.debug('\nSCHEMA', documentData.value, '\n')
 }
 
 // Editor initialization
