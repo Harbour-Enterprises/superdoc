@@ -3,8 +3,8 @@ import { runOutputTests, testOutputConversion } from './super-converter-tests/ou
 
 // Available test files
 const testFiles = [
-  // 'sample',
-  // 'fake-contract',
+  'sample',
+  'fake-contract',
   'comments'
 ];
 
@@ -12,16 +12,16 @@ const testFiles = [
 testFiles.forEach((fileName) => {
 
   // Run input tests (ie: from docx XML to SCHEMA)
-  // runInputTests(fileName);
+  runInputTests(fileName);
 
   // Input algorithm: Granular testing of known inputs
   testInputConversion();
 
   // Run output tests (ie: from SCHEMA to docx XML)
   // TODO
-  // runOutputTests(fileName);
+  runOutputTests(fileName);
 
   // Output algorithm: Granular testing of known outputs
-  // testOutputConversion();
+  testOutputConversion();
   
 });

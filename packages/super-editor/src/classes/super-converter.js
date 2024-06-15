@@ -208,7 +208,8 @@ class SuperConverter {
     const { attributes, elements } = this._parseProperties(node);
 
     // Text nodes have no children. Only text.
-    const text = elements[0].text;
+    let text;
+    if (elements.length === 1) text = elements[0].text;
 
     return {
       type: this.getElementName(node),

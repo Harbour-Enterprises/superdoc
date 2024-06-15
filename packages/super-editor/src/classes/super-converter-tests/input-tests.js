@@ -27,44 +27,44 @@ export function runInputTests(fileName) {
       const schema = parser.getSchema();
     });
 
-    // it('can parse docx XML into SCHEMA', () => {
-    //   expect(parser).toBeTruthy();
-    //   expect(parser).toBeInstanceOf(SuperConverter);
+    it('can parse docx XML into SCHEMA', () => {
+      expect(parser).toBeTruthy();
+      expect(parser).toBeInstanceOf(SuperConverter);
 
-    //   const schema = parser.getSchema();
-    //   expect(schema).toBeTruthy();
+      const schema = parser.getSchema();
+      expect(schema).toBeTruthy();
       
-    //   // The schema begins with some expected properties
-    //   expect(schema).toHaveProperty('content');
-    //   expect(schema).toHaveProperty('type');
-    //   expect(schema).toHaveProperty('attrs');
-    //   expect(schema.type).toBe('doc');
-    // });
+      // The schema begins with some expected properties
+      expect(schema).toHaveProperty('content');
+      expect(schema).toHaveProperty('type');
+      expect(schema).toHaveProperty('attrs');
+      expect(schema.type).toBe('doc');
+    });
 
-    // it('correctly parses the docx body', () => {
-    //   const schema = parser.getSchema();
-    //   expect(schema.content).toHaveLength(1);
+    it('correctly parses the docx body', () => {
+      const schema = parser.getSchema();
+      expect(schema.content).toHaveLength(1);
 
-    //   const body = schema.content[0];
-    //   expect(body.type).toBe('body');
-    //   expect(body).toHaveProperty('content');
-    //   expect(body).toHaveProperty('attrs');
+      const body = schema.content[0];
+      expect(body.type).toBe('body');
+      expect(body).toHaveProperty('content');
+      expect(body).toHaveProperty('attrs');
 
-    //   const attrs = body.attrs;
-    //   expect(attrs).toHaveProperty('type');
-    //   expect(attrs.type).toBe('element');
-    //   expect(attrs).toHaveProperty('attributes');
+      const attrs = body.attrs;
+      expect(attrs).toHaveProperty('type');
+      expect(attrs.type).toBe('element');
+      expect(attrs).toHaveProperty('attributes');
 
-    //   // Attributes are the main page details, which should always be present
-    //   // This comes from the <w:sectPr> tag, which we place under the sectionProperties key
-    //   const attributes = attrs.attributes.sectionProperties;
-    //   expect(attributes).toHaveProperty('type');
-    //   expect(attributes).toHaveProperty('elements');
+      // Attributes are the main page details, which should always be present
+      // This comes from the <w:sectPr> tag, which we place under the sectionProperties key
+      const attributes = attrs.attributes.sectionProperties;
+      expect(attributes).toHaveProperty('type');
+      expect(attributes).toHaveProperty('elements');
 
-    //   // The properties are inside teh elements array
-    //   const properties = attributes.elements;
-    //   expect(properties).toBeTruthy();
-    // });
+      // The properties are inside teh elements array
+      const properties = attributes.elements;
+      expect(properties).toBeTruthy();
+    });
   });
 }
 
@@ -344,38 +344,8 @@ export function testInputConversion() {
       const c = new SuperConverter({ debug: true });
       c.initialJSON = xml;
       const schema = c.getSchema();
-      // console.debug('\n\n SCHEMA', JSON.stringify(schema, null, 2));
 
-      // // Here we check against the third paragraph first
-      // const bodyElements = schema.content[0].content;
-      // const runs = bodyElements[0].content;
-
-      // // Check the xml:space attr in the first run
-      // const run1 = runs[0]
-      // expect(run1).toHaveProperty('content');
-      // expect(run1).toHaveProperty('attrs')
-
-      // // Check the text item
-      // const text1 = run1.content[0];
-      // expect(text1.attrs).toHaveProperty('attributes');
-      // expect(text1.attrs.attributes).toHaveProperty('xml:space');
-      
-      // // Check run #2
-      // const run2 = runs[1];
-      // expect(run2).toHaveProperty('attrs');
-      // expect(run2.attrs).toHaveProperty('attributes');
-      // expect(run2.attrs.attributes).toHaveProperty('w:rsidRPr');
-      // expect(run2.attrs.attributes['w:rsidRPr']).toBe('00746728');
-
-      // // Check run 2 run properties
-      // const run2Pr = run2.attrs.attributes.runProperties;
-      // expect(run2Pr).toHaveProperty('type');
-      // expect(run2Pr.name).toBe('w:rPr');
-      // expect(run2Pr.elements).toHaveLength(2);
-      
-      // const runProps = run2Pr.elements;
-      // expect(runProps[0].name).toBe('w:b');
-      // expect(runProps[1].name).toBe('w:bCs');
+      // TODO: Finish this test
     });
 
 
