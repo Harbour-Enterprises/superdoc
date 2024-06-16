@@ -26,6 +26,11 @@ class SuperConverter {
     'w:commentReference': 'commentReference',
   });
 
+  static markTypes = Object.freeze({
+    'w:b': 'strong',
+    'w:i': 'em',
+  });
+
   static propertyTypes = Object.freeze({
     'w:pPr': 'paragraphProperties',
     'w:rPr': 'runProperties',
@@ -48,9 +53,10 @@ class SuperConverter {
     this.json = params?.json;
 
     // Parse the initial XML, if provided
-    this.log('Original XML:', this.xml)
+    // this.log('Original XML:', this.xml)
     if (this.xml) this.parseFromXml();
   }
+
 
   log(...args) {
     if (this.debug) console.debug(...args);
@@ -74,6 +80,8 @@ class SuperConverter {
 
   getSchema() {
     const json = JSON.parse(JSON.stringify(this.initialJSON));
+    // console.debug('Initial JSON:', json);
+
     const startElements = json.elements;
     const result = this.convertToSchema(startElements[0]);
 
@@ -92,11 +100,6 @@ class SuperConverter {
    *    Do we have special handling?
    *    Append it to the tree
    */
-
-
-
-
-
   convertToSchema(node) {
     if (!node) return;
   
@@ -141,7 +144,10 @@ class SuperConverter {
     if (outerNodeName === 'w:t') schemaNode = this._handleTextNode(node);
 
     /* Watch for unknown nodes as we build more functionality here */
-    if (!schemaNode) console.debug('No schema node:', node);
+    if (!schemaNode) {
+      const ignore = ['w:t'];
+      if (!ignore.includes(outerNodeName)) console.debug('No schema node:', node);
+    }
 
     return schemaNode;
   }
@@ -156,7 +162,7 @@ class SuperConverter {
     const listType = 'unorderedList';
 
     // Parse properties
-    const { attributes, elements } = this._parseProperties(node);
+    const { attributes, elements, marks = [] } = this._parseProperties(node);
 
     // Iterate through the children and build the schemaNode content
     const content = [];
@@ -173,7 +179,8 @@ class SuperConverter {
         type: node.type,
         attributes: attributes || {},
         dataId: 'test'
-      }
+      },
+      marks,
     }
   }
 
@@ -182,7 +189,7 @@ class SuperConverter {
     const { name, type } = node;
 
     // Parse properties
-    const { attributes, elements } = this._parseProperties(node);
+    const { attributes, elements, marks = [] } = this._parseProperties(node);
 
     // Iterate through the children and build the schemaNode content
     const content = [];
@@ -196,7 +203,8 @@ class SuperConverter {
     return {
       type: this.getElementName(node),
       content,
-      attrs: { type, attributes: attributes || {}, }
+      attrs: { type, attributes: attributes || {}, },
+      marks,
     };
   }
 
@@ -205,17 +213,32 @@ class SuperConverter {
     const { type } = node;
 
     // Parse properties
-    const { attributes, elements } = this._parseProperties(node);
+    const { attributes, elements, marks = [] } = this._parseProperties(node);
 
     // Text nodes have no children. Only text.
     let text;
     if (elements.length === 1) text = elements[0].text;
+    else return null;
 
     return {
       type: this.getElementName(node),
-      text: text,
-      attrs: { type, attributes: attributes || {}, }
+      text: text || '',
+      attrs: { type, attributes: attributes || {}, },
+      marks,
     };
+  }
+
+
+  _parseMarks(property) {
+    const marks = [];
+    property.elements.forEach((element) => {
+      const mark = SuperConverter.markTypes[element.name];
+      if (!mark) return;
+      marks.push({ type: mark });
+    });
+
+    // if (marks.length) console.debug('Marks:', marks )
+    return marks;
   }
 
 
@@ -224,15 +247,20 @@ class SuperConverter {
        * What does it mean for a node to have a properties element?
        * It would have a child element that is: w:pPr, w:rPr, w:sectPr
        */
+      let marks = [];
       const { attributes = {}, elements = [] } = node;
       const [nodes, properties] = this._splitElementsAndProperties(elements);
+
+      /* ❗️ TODO: Add marks */
       if (properties.length) {
         properties.forEach(property => {
           const propType = SuperConverter.propertyTypes[property.name];
           attributes[propType] = property;
+
+          marks = this._parseMarks(property);
         }); 
       }
-      return { elements: nodes, attributes }
+      return { elements: nodes, attributes, marks }
   }
 
 

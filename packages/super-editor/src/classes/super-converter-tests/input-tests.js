@@ -87,7 +87,8 @@ export function testInputConversion() {
       const expectedResult = {
         type: 'doc',
         content: [],
-        attrs: { type: 'element', attributes: { 'xmlns:cx1': 'fake-ck1' } }
+        attrs: { type: 'element', attributes: { 'xmlns:cx1': 'fake-ck1' } },
+        marks: [],
       };
       expect(schema).toBeTruthy();
       expect(schema).toEqual(expectedResult);
@@ -299,8 +300,6 @@ export function testInputConversion() {
       const c = new SuperConverter({ xml });
       const schema = c.getSchema();
 
-      // console.debug('\n\n SCHEMA', JSON.stringify(schema, null, 2));
-
       // Here we check against the third paragraph first
       const bodyElements = schema.content[0].content;
       const runs = bodyElements[0].content;
@@ -334,21 +333,64 @@ export function testInputConversion() {
 
     });
 
-
     it('can parse list items', () => {
 
-      // This test uses a longer XML string taken from the comments.docx fixture
-      const pathName = `../../tests/fixtures/comments/initial-json.json`;
-      const xml = JSON.parse(readFileSync(pathName));
+      // TODO
 
-      const c = new SuperConverter({ debug: true });
-      c.initialJSON = xml;
-      const schema = c.getSchema();
-
-      // TODO: Finish this test
     });
-
-
   });
 
+
+  // Tests with sample.docx for basic marks
+  describe(`Marks tests`, () => {
+
+    let c;
+    beforeEach(() => {
+      c = new SuperConverter({ debug: true });
+    });
+
+    const getSchema = (pathName) => {
+      const initialJSON = JSON.parse(readFileSync(pathName));
+      c.initialJSON = initialJSON;
+      return c.getSchema();
+    }
+
+    it('can parse bold mark', () => {
+      const pathName = `../../tests/fixtures/sample/initial-json.json`;
+      const schema = getSchema(pathName)
+      const body = schema.content[0];
+      const p1 = body.content[0];
+      const run = p1.content[1];
+      const marks = run.marks;
+
+      expect(marks).toHaveLength(1);
+      expect(marks[0].type).toBe('strong');
+    });
+
+    it('can parse em mark', () => {
+      const pathName = `../../tests/fixtures/sample/initial-json.json`;
+      const schema = getSchema(pathName)
+      const body = schema.content[0];
+      const p1 = body.content[0];
+      const run = p1.content[3];
+      const marks = run.marks;
+
+      expect(marks).toHaveLength(1);
+      expect(marks[0].type).toBe('em');
+    });
+
+    it('can parse em and bold together', () => {
+      const pathName = `../../tests/fixtures/sample/initial-json.json`;
+      const schema = getSchema(pathName)
+      const body = schema.content[0];
+      const p3 = body.content[2];
+      const run = p3.content[3];
+      const marks = run.marks;
+
+      expect(marks).toHaveLength(2);
+      expect(marks[0].type).toBe('strong');
+      expect(marks[1].type).toBe('em');
+    });
+
+  });
 }
