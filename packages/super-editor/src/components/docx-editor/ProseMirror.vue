@@ -41,7 +41,7 @@ const initData = () => {
   const xml = props.data.find((f) => f.name === 'word/document.xml')?.content;
   if (!xml) return;
 
-  const converter = new SuperConverter({ xml });
+  const converter = new SuperConverter({ docx: props.data });
   documentData.value = converter.getSchema();
   console.debug('\nSCHEMA', documentData.value, '\n')
 }

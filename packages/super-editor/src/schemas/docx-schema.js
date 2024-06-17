@@ -15,6 +15,18 @@ const DocxSchema = new Schema({
       content: "text*",
       inline: false,
       group: "block",
+      toDOM() { return ["ul", 0]; },
+      parseDOM: [{ tag: "ul" }],
+      attrs: {
+        attributes: { default: {} },
+        type: { default: null },
+      },
+    },
+
+    orderedList: {
+      content: "text*",
+      inline: false,
+      group: "block",
       toDOM() { return ["ol", 0]; },
       parseDOM: [{ tag: "ol" }],
       attrs: {

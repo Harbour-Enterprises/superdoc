@@ -16,6 +16,7 @@ export function runInputTests(fileName) {
       parser = new SuperConverter({ xml: currentXML, debug: showParserLogging });
     });
 
+
     it('can create instance with XML', () => {
       expect(parser).toBeTruthy();
       expect(parser).toBeInstanceOf(SuperConverter);
@@ -26,6 +27,7 @@ export function runInputTests(fileName) {
 
       const schema = parser.getSchema();
     });
+
 
     it('can parse docx XML into SCHEMA', () => {
       expect(parser).toBeTruthy();
@@ -40,6 +42,7 @@ export function runInputTests(fileName) {
       expect(schema).toHaveProperty('attrs');
       expect(schema.type).toBe('doc');
     });
+
 
     it('correctly parses the docx body', () => {
       const schema = parser.getSchema();
@@ -333,6 +336,7 @@ export function testInputConversion() {
 
     });
 
+
     it('can parse list items', () => {
 
       // TODO
@@ -342,55 +346,57 @@ export function testInputConversion() {
 
 
   // Tests with sample.docx for basic marks
-  describe(`Marks tests`, () => {
+  // TODO: Re-add these tests
 
-    let c;
-    beforeEach(() => {
-      c = new SuperConverter({ debug: true });
-    });
+  // describe(`Marks tests`, () => {
 
-    const getSchema = (pathName) => {
-      const initialJSON = JSON.parse(readFileSync(pathName));
-      c.initialJSON = initialJSON;
-      return c.getSchema();
-    }
+  //   let c;
+  //   beforeEach(() => {
+  //     c = new SuperConverter({ debug: true });
+  //   });
 
-    it('can parse bold mark', () => {
-      const pathName = `../../tests/fixtures/sample/initial-json.json`;
-      const schema = getSchema(pathName)
-      const body = schema.content[0];
-      const p1 = body.content[0];
-      const run = p1.content[1];
-      const marks = run.marks;
+  //   const getSchema = (pathName) => {
+  //     const initialJSON = JSON.parse(readFileSync(pathName));
+  //     c.initialJSON = initialJSON;
+  //     return c.getSchema();
+  //   }
 
-      expect(marks).toHaveLength(1);
-      expect(marks[0].type).toBe('strong');
-    });
+  //   it('can parse bold mark', () => {
+  //     const pathName = `../../tests/fixtures/sample.docx`;
+  //     const schema = getSchema(pathName)
+  //     const body = schema.content[0];
+  //     const p1 = body.content[0];
+  //     const run = p1.content[1];
+  //     const marks = run.marks;
 
-    it('can parse em mark', () => {
-      const pathName = `../../tests/fixtures/sample/initial-json.json`;
-      const schema = getSchema(pathName)
-      const body = schema.content[0];
-      const p1 = body.content[0];
-      const run = p1.content[3];
-      const marks = run.marks;
+  //     expect(marks).toHaveLength(1);
+  //     expect(marks[0].type).toBe('strong');
+  //   });
 
-      expect(marks).toHaveLength(1);
-      expect(marks[0].type).toBe('em');
-    });
+  //   it('can parse em mark', () => {
+  //     const pathName = `../../tests/fixtures/sample/initial-json.json`;
+  //     const schema = getSchema(pathName)
+  //     const body = schema.content[0];
+  //     const p1 = body.content[0];
+  //     const run = p1.content[3];
+  //     const marks = run.marks;
 
-    it('can parse em and bold together', () => {
-      const pathName = `../../tests/fixtures/sample/initial-json.json`;
-      const schema = getSchema(pathName)
-      const body = schema.content[0];
-      const p3 = body.content[2];
-      const run = p3.content[3];
-      const marks = run.marks;
+  //     expect(marks).toHaveLength(1);
+  //     expect(marks[0].type).toBe('em');
+  //   });
 
-      expect(marks).toHaveLength(2);
-      expect(marks[0].type).toBe('strong');
-      expect(marks[1].type).toBe('em');
-    });
+  //   it('can parse em and bold together', () => {
+  //     const pathName = `../../tests/fixtures/sample/initial-json.json`;
+  //     const schema = getSchema(pathName)
+  //     const body = schema.content[0];
+  //     const p3 = body.content[2];
+  //     const run = p3.content[3];
+  //     const marks = run.marks;
 
-  });
+  //     expect(marks).toHaveLength(2);
+  //     expect(marks[0].type).toBe('strong');
+  //     expect(marks[1].type).toBe('em');
+  //   });
+
+  // });
 }

@@ -35,6 +35,7 @@ class SuperConverter {
     'w:pPr': 'paragraphProperties',
     'w:rPr': 'runProperties',
     'w:sectPr': 'sectionProperties',
+    'w:numPr': 'numberingProperties',
   });
 
 
@@ -42,6 +43,10 @@ class SuperConverter {
     // Suppress logging when true
     this.debug = params?.debug || false;
 
+    // The docx as a list of files
+    this.convertedXml = {};
+    this.docx = params?.docx || [];
+  
     // XML inputs
     this.xml = params?.xml;
     this.declaration = null;
@@ -54,7 +59,7 @@ class SuperConverter {
 
     // Parse the initial XML, if provided
     // this.log('Original XML:', this.xml)
-    if (this.xml) this.parseFromXml();
+    if (this.docx.length || this.xml) this.parseFromXml();
   }
 
 
@@ -68,8 +73,13 @@ class SuperConverter {
   }
 
   parseFromXml() {
-    const result = xmljs.xml2json(this.xml, null, 2);
-    this.initialJSON = JSON.parse(result);
+    this.docx.forEach(file => {
+      this.convertedXml[file.name] = JSON.parse(xmljs.xml2json(file.content, null, 2));
+    });
+    
+    this.initialJSON = this.convertedXml['word/document.xml'];
+
+    if (!this.initialJSON) this.initialJSON = JSON.parse(xmljs.xml2json(this.xml, null, 2));
     this.declaration = this.initialJSON.declaration;
   }
 
@@ -80,8 +90,6 @@ class SuperConverter {
 
   getSchema() {
     const json = JSON.parse(JSON.stringify(this.initialJSON));
-    // console.debug('Initial JSON:', json);
-
     const startElements = json.elements;
     const result = this.convertToSchema(startElements[0]);
 
@@ -153,16 +161,55 @@ class SuperConverter {
   }
 
 
+  _getNodeListType(attributes) {
+    const def = this.convertedXml['word/numbering.xml'];
+    if (!def) return {};
+
+    const { paragraphProperties } = attributes;
+    const { elements: listStyles } = paragraphProperties;
+    const numPr = listStyles.find(style => style.name === 'w:numPr');
+    
+    // Get the indent level
+    const ilvlTag = numPr.elements.find(style => style.name === 'w:ilvl');
+    const ilvl = ilvlTag.attributes['w:val'];
+
+    // Get the list style id
+    const numIdTag = numPr.elements.find(style => style.name === 'w:numId');
+    const numId = numIdTag.attributes['w:val'];
+    const numberingElements = def.elements[0].elements;
+
+    // Get the list styles
+    const abstractDefinitions = numberingElements.filter(style => style.name === 'w:abstractNum')
+    const numDefinitions = numberingElements.filter(style => style.name === 'w:num')
+    const numDefinition = numDefinitions.find(style => style.attributes['w:numId'] === numId);
+    const abstractNumId = numDefinition.elements[0].attributes['w:val']
+    const abstractNum = abstractDefinitions.find(style => style.attributes['w:abstractNumId'] === abstractNumId);
+
+    const currentLevelDef = abstractNum.elements.find(style => style.name === 'w:lvl');
+    const currentLevel = currentLevelDef.elements.find(style => style.name === 'w:numFmt')
+    // const currentNumFmt = currentLevelDef.elements.find(style => style.name === 'w:numFmt')
+    console.debug('current level', currentLevelDef, currentLevel)
+
+    const listTypeDef = currentLevel.attributes['w:val'];
+    let listType;
+    if (listTypeDef === 'bullet') listType = 'unorderedList';
+    if (listTypeDef === 'decimal') listType = 'orderedList';
+    return { listType, ilvl, numId, abstractNum };
+  }
+
+
   _handleListNode(node) {
     /**
      * ❗️❗️ TOOD: We need to get the list type from numbering.xml
      * This will involve having access to additional files here. TBD.
      * Hard coding this for now
      */
-    const listType = 'unorderedList';
 
     // Parse properties
     const { attributes, elements, marks = [] } = this._parseProperties(node);
+
+    // Get the list styles
+    const { listType, ilvl, numId, abstractNum } = this._getNodeListType(attributes);
 
     // Iterate through the children and build the schemaNode content
     const content = [];
@@ -178,7 +225,10 @@ class SuperConverter {
       attrs: {
         type: node.type,
         attributes: attributes || {},
-        dataId: 'test'
+        listType,
+        indentLevel: ilvl,
+        styleId: numId,
+        listStyles: abstractNum,
       },
       marks,
     }
@@ -251,7 +301,6 @@ class SuperConverter {
       const { attributes = {}, elements = [] } = node;
       const [nodes, properties] = this._splitElementsAndProperties(elements);
 
-      /* ❗️ TODO: Add marks */
       if (properties.length) {
         properties.forEach(property => {
           const propType = SuperConverter.propertyTypes[property.name];
@@ -267,6 +316,7 @@ class SuperConverter {
   _splitElementsAndProperties(elements) {
     return elements.reduce(
       ([els, props], el) => {
+        console.debug('-- prop', el.name)
         if (SuperConverter.propertyTypes[el.name]) props.push(el);
         else els.push(el);
         return [els, props];
