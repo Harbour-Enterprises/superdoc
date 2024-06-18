@@ -7,7 +7,7 @@ import xmljs from 'xml-js';
  * Will need to be updated as we find new docx tags.
  * 
  */
-class SuperConverter {
+export class SuperConverter {
 
   static allowedElements = Object.freeze({
     'w:document': 'doc',
@@ -197,9 +197,9 @@ class SuperConverter {
     const currentLevel = currentLevelDef.elements.find(style => style.name === 'w:numFmt')
     const listTypeDef = currentLevel.attributes['w:val'];
     let listType;
-    if (listTypeDef === 'bullet') listType = 'unorderedList';
+    if (listTypeDef === 'bullet') listType = 'bulletList';
     else if (listTypeDef === 'decimal') listType = 'orderedList';
-    else if (listTypeDef === 'lowerLetter') listType = 'unorderedList';
+    else if (listTypeDef === 'lowerLetter') listType = 'bulletList';
 
     // Check for unknown list types, there will be some
     if (!listType) console.debug('_getNodeListType: No list type:', listTypeDef, attributes)
@@ -425,5 +425,3 @@ class SuperConverter {
     return tags;
   }
 }
-
-export default SuperConverter;
