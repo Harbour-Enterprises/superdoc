@@ -5,6 +5,7 @@ import { EditorView } from "prosemirror-view"
 import { history } from "prosemirror-history"
 
 import { DocxSchema } from '@schemas/docx-schema';
+import { initComments } from '@extensions/comments/comments';
 import generateKeyMap from './keymap';
 import SuperConverter from '@classes/super-converter';
 
@@ -21,6 +22,7 @@ import SuperConverter from '@classes/super-converter';
 // DOCX
 // We will need all relevant data passed in. This includes multiple files from the docx zip.
 
+const emit = defineEmits(['comments-loaded']);
 const props = defineProps({
   mode: {
     type: String,
@@ -34,16 +36,14 @@ const props = defineProps({
 
 const editor = ref(null);
 let editorView, editorState;
+const loadedComments = ref([]);
+const converter = new SuperConverter({ docx: props.data });
 
 // Document data
 const documentData = ref(null);
 const initData = () => {
-  const xml = props.data.find((f) => f.name === 'word/document.xml')?.content;
-  if (!xml) return;
-
-  const converter = new SuperConverter({ docx: props.data });
   documentData.value = converter.getSchema();
-  console.debug('\nSCHEMA', documentData.value, '\n')
+  console.debug('\nSCHEMA', JSON.stringify(documentData.value, null, 2), '\n')
 }
 
 // Editor initialization
@@ -65,7 +65,7 @@ const initEditor = () => {
     plugins: [
       history(),
       generateKeyMap(),
-    ],        
+    ],
   });
 
   // Initialize the editor
@@ -73,12 +73,19 @@ const initEditor = () => {
     state: editorState,
     dispatchTransaction: handleTransaction,
   });
+
+  const { comments } = initComments(editorView, converter);
+  loadedComments.value = comments;
+
+  // Let super doc know we have comments
+  emit('comments-loaded', loadedComments.value);
 };
 
 onMounted(() => {
   if (props.data) initData();
   initEditor();
 })
+
 </script>
 
 <template>

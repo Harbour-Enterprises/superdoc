@@ -185,11 +185,9 @@ class SuperConverter {
     const abstractNumId = numDefinition.elements[0].attributes['w:val']
     const abstractNum = abstractDefinitions.find(style => style.attributes['w:abstractNumId'] === abstractNumId);
 
+    // Determine list type
     const currentLevelDef = abstractNum.elements.find(style => style.name === 'w:lvl');
     const currentLevel = currentLevelDef.elements.find(style => style.name === 'w:numFmt')
-    // const currentNumFmt = currentLevelDef.elements.find(style => style.name === 'w:numFmt')
-    console.debug('current level', currentLevelDef, currentLevel)
-
     const listTypeDef = currentLevel.attributes['w:val'];
     let listType;
     if (listTypeDef === 'bullet') listType = 'unorderedList';
@@ -199,16 +197,11 @@ class SuperConverter {
 
 
   _handleListNode(node) {
-    /**
-     * ❗️❗️ TOOD: We need to get the list type from numbering.xml
-     * This will involve having access to additional files here. TBD.
-     * Hard coding this for now
-     */
-
     // Parse properties
     const { attributes, elements, marks = [] } = this._parseProperties(node);
 
-    // Get the list styles
+    // Get the list styles - this is delegated to a helper function
+    // Since it isn't trivial, and it involves a separate numbering.xml file
     const { listType, ilvl, numId, abstractNum } = this._getNodeListType(attributes);
 
     // Iterate through the children and build the schemaNode content
@@ -316,7 +309,6 @@ class SuperConverter {
   _splitElementsAndProperties(elements) {
     return elements.reduce(
       ([els, props], el) => {
-        console.debug('-- prop', el.name)
         if (SuperConverter.propertyTypes[el.name]) props.push(el);
         else els.push(el);
         return [els, props];
