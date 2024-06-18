@@ -1,5 +1,5 @@
-import { createApp } from 'vue'
-import './style.css'
-import DeveloperPlayground from './DeveloperPlayground.vue'
+import { createApp } from 'vue';
+import './dev/style.css';
+import DeveloperPlayground from './dev/components/DeveloperPlayground.vue';
 
-createApp(DeveloperPlayground).mount('#app')
+createApp(DeveloperPlayground).mount('#app');

@@ -42,10 +42,9 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
-        '@classes': fileURLToPath(new URL('./src/classes', import.meta.url)),
-        '@components': fileURLToPath(new URL('./src/components', import.meta.url)),
-        '@schemas': fileURLToPath(new URL('./src/schemas', import.meta.url)),
+        '@core': fileURLToPath(new URL('./src/core', import.meta.url)),
         '@extensions': fileURLToPath(new URL('./src/extensions', import.meta.url)),
+        '@components': fileURLToPath(new URL('./src/components', import.meta.url)),
       },
       extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json'],
     },

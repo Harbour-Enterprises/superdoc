@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { readFileSync } from './helpers';
-import SuperConverter from '../super-converter';
+import SuperConverter from '../../SuperConverter';
 
 const showParserLogging = false;
 
@@ -11,7 +11,7 @@ export function runInputTests(fileName) {
     let currentXML;
 
     beforeEach(() => {
-      const pathName = `../../tests/fixtures/${currentTestFile}/${currentTestFile}/word/document.xml`;
+      const pathName = `../../../tests/fixtures/${currentTestFile}/${currentTestFile}/word/document.xml`;
       currentXML = readFileSync(pathName);
       parser = new SuperConverter({ xml: currentXML, debug: showParserLogging });
     });
@@ -362,7 +362,7 @@ export function testInputConversion() {
   //   }
 
   //   it('can parse bold mark', () => {
-  //     const pathName = `../../tests/fixtures/sample.docx`;
+  //     const pathName = `../../../tests/fixtures/sample.docx`;
   //     const schema = getSchema(pathName)
   //     const body = schema.content[0];
   //     const p1 = body.content[0];
@@ -374,7 +374,7 @@ export function testInputConversion() {
   //   });
 
   //   it('can parse em mark', () => {
-  //     const pathName = `../../tests/fixtures/sample/initial-json.json`;
+  //     const pathName = `../../../tests/fixtures/sample/initial-json.json`;
   //     const schema = getSchema(pathName)
   //     const body = schema.content[0];
   //     const p1 = body.content[0];
@@ -386,7 +386,7 @@ export function testInputConversion() {
   //   });
 
   //   it('can parse em and bold together', () => {
-  //     const pathName = `../../tests/fixtures/sample/initial-json.json`;
+  //     const pathName = `../../../sample/initial-json.json`;
   //     const schema = getSchema(pathName)
   //     const body = schema.content[0];
   //     const p3 = body.content[2];

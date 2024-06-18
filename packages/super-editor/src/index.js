@@ -1,5 +1,5 @@
-import SuperConverter from "@classes/super-converter";
-import DocxZipper from '@classes/docx-zipper';
+import SuperConverter from "@core/SuperConverter";
+import DocxZipper from '@core/DocxZipper';
 import SuperEditor from '@components/SuperEditor.vue';
 
 /**

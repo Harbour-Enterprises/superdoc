@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { readFileSync } from './helpers';
-import SuperConverter from '../super-converter';
+import SuperConverter from '../../SuperConverter';
 import source1 from './output-tests-source';
 
 const showParserLogging = false;
