@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "eventemitter3": "^5.0.1",
-    "super": "file:../super-editor",
+    "super-editor": "file:../super-editor",
     "pdfjs-dist": "^4.3.136",
     "pinia": "^2.1.7",
     "vue": "^3.4.21"

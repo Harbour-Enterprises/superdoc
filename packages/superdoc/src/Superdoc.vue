@@ -10,7 +10,8 @@ import HrbrFieldsLayer from '@/components/HrbrFieldsLayer/HrbrFieldsLayer.vue';
 import { useSuperdocStore } from '@/stores/superdoc-store';
 import { useCommentsStore } from '@/stores/comments-store';
 
-import { SuperEditor } from 'super';
+import { SuperEditor } from 'super-editor';
+import useConversation from './components/CommentsLayer/use-conversation';
 
 // Stores
 const superdocStore = useSuperdocStore();
@@ -150,6 +151,14 @@ onBeforeUnmount(() => {
   document.removeEventListener('mousedown', handleDocumentMouseDown);
 });
 
+const receiveDocxComments = (data, doc) => {
+  data.forEach((c, index) => {
+    const convo = useConversation(c);
+    const doc = getDocument(c.documentId);
+    doc.conversations.push(convo);
+  })
+  isReady.value = true
+}
 </script>
 
 <template>
@@ -180,7 +189,7 @@ onBeforeUnmount(() => {
       <!-- On-document comments layer -->
       <CommentsLayer
           class="comments-layer"
-          v-if="isReady && 'comments' in modules && layers"
+          v-if="isReady && 'comments' in modules && layers && isReady"
           style="z-index: 3;"
           ref="commentsLayer"
           :parent="layers"
@@ -202,7 +211,9 @@ onBeforeUnmount(() => {
               class="docx-editor"
               v-if="doc.type === 'docx'"
               mode="docx"
-              :data-url="doc.data" />
+              :data-url="doc.data"
+              :document-id="doc.id"
+              @comments-loaded="receiveDocxComments($event, doc)" />
 
         </div>
       </div>
@@ -235,6 +246,7 @@ onBeforeUnmount(() => {
 }
 .docx-editor {
   margin-bottom: 20px;
+  min-width: 600px;
 }
 
 /* General Styles */

@@ -2,6 +2,8 @@ import './style.css';
 import fw4 from './assets/sample.pdf?url'
 import pdfUrl from './assets/lucygoose.pdf?url'
 import docxUrl from './assets/sample.docx?url'
+import docxWithComments from './assets/lists_and_comments.docx?url'
+
 import { fields, annotations, conversations } from './assets/test-data';
 import Superdoc from './index.js';
 
@@ -15,24 +17,24 @@ const initializeApp = async () => {
       email: 'nick@harbourshare.com',
     },
     documents: [
-      {
-        id: '456',
-        type: 'pdf',
-        data: pdfUrl,
-        fields,
-        annotations,
-        conversations,
-      },
       // {
-      //   type: 'docx',
-      //   data: docxUrl,
-      //   id: '123',
+      //   id: '456',
+      //   type: 'pdf',
+      //   data: pdfUrl,
+      //   fields,
+      //   annotations,
+      //   conversations,
       // },
       {
-        id: '789',
-        type: 'pdf',
-        data: fw4,
-      }
+        type: 'docx',
+        data: docxWithComments,
+        id: '123',
+      },
+      // {
+      //   id: '789',
+      //   type: 'pdf',
+      //   data: fw4,
+      // }
     ],
     modules: {
       'comments': {

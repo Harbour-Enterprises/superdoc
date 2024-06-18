@@ -57,6 +57,17 @@ const parseCommentsForSuperdoc = (comments, documentId) => {
     const docId = documentId;
     const creatorName = c.comment.attributes['w:author'];
 
+    const selection = {
+      documentId: docId,
+      page: 1,
+      selectionBounds: {
+        top: c.start.top,
+        left: c.start.left,
+        bottom: c.end.bottom,
+        right: c.end.right,
+      }
+    };
+  
     const comment = _getCommentTextFromNode(c);
     const convo = {
       thread: c.id,
@@ -64,7 +75,9 @@ const parseCommentsForSuperdoc = (comments, documentId) => {
       documentId: docId,
       creatorName,
       comments: [comment],
-    }
+      selection,
+    };
+
     conversations.push(convo);
   })
   return conversations;

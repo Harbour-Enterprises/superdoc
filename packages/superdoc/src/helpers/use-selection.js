@@ -13,8 +13,11 @@ export default function useSelection(params) {
     const parentBounds = parentContainer.getBoundingClientRect();
     const container = document.getElementById(getContainerId());
 
-    if (!container) return {};
-    const containerBounds = container.getBoundingClientRect();
+    let containerBounds = {
+      top: 0,
+      left: 0,
+    }
+    if (container) containerBounds = container.getBoundingClientRect();
 
     return {
       top: Number((containerBounds.top - parentBounds.top).toFixed(3)),
