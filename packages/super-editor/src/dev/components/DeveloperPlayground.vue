@@ -7,13 +7,13 @@
 
 <script setup>
 import { nextTick, ref } from 'vue';
-import BasicUpload from './dev-components/BasicUpload.vue';
+import BasicUpload from './BasicUpload.vue';
 
 // Import the component the same you would in your app
 import { SuperEditor } from '@/index';
 
 // For testing a file from URL
-import sampleDocxUrl from './tests/fixtures/sample/sample.docx?url';
+import sampleDocxUrl from '../../tests/fixtures/sample/sample.docx?url';
 
 const currentFile = ref(null);
 const handleNewFile = (file) => {

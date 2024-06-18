@@ -4,10 +4,10 @@ import { EditorState } from "prosemirror-state"
 import { EditorView } from "prosemirror-view"
 import { history } from "prosemirror-history"
 
-import { DocxSchema } from '@schemas/docx-schema';
-import { initComments } from '@extensions/comments/comments';
-import generateKeyMap from './keymap';
-import SuperConverter from '@classes/super-converter';
+import { DocxSchema } from '@core/schema/DocxSchema';
+import { initComments } from '@extensions/Comments/comments';
+import { buildKeymap } from '@core/shortcuts/buildKeymap';
+import SuperConverter from '@core/SuperConverter';
 
 // The editor needs to be agnostic to the data source
 // It should be able to work with any DOCX, plain text, and HTML.
@@ -69,7 +69,7 @@ const initEditor = () => {
     doc: getEditorData(),
     plugins: [
       history(),
-      generateKeyMap(),
+      buildKeymap(),
     ],
   });
 

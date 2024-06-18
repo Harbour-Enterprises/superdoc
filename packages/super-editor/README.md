@@ -20,7 +20,7 @@ npm install && npm run dev
 
 ## Key files
 
-### src/classes/super-converter.js
+### src/core/SuperConverter.js
 This handles converting from XML document to prose mirror schema, and back.
 
 Note: This is very much an experimental / POC version of this file. I want to make several improvements and abstractions here but use it as an example of how tags need to be processed in and out of the docx.
@@ -28,11 +28,11 @@ Note: This is very much an experimental / POC version of this file. I want to ma
 * When converting from XML to Schema, We need to make sure all xml tags are correctly handled here. 
 * When converting from Schema back to XML, we have to handle various special cases. Need to figure out how to abstract as much of this as possible.
 
-### src/classes/docx-zipper.js
+### src/core/DocxZipper.js
 This util handles extracting a .docx file and returning a list of its xml files.
 It can also handle creating a new .docx file from updated xml files
 
-### src/schemas/docx-schema.js
+### src/core/schema/DocxSchema.js
 This file defines the prose mirror schema.
 
 * Need to add 'marks' for style tags. ie: ```<w:b>``` becomes a ```strong``` mark.

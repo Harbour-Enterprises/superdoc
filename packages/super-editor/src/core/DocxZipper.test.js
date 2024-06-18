@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import { describe, it, expect } from 'vitest';
-import DocxZipper from './docx-zipper';
+import DocxZipper from './DocxZipper';
 
 async function readFileAsBuffer(filePath) {
   const resolvedPath = path.resolve(__dirname, filePath);

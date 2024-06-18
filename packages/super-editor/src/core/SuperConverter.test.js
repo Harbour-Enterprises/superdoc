@@ -1,5 +1,5 @@
-import { runInputTests, testInputConversion } from './super-converter-tests/input-tests';
-import { runOutputTests, testOutputConversion } from './super-converter-tests/output-tests';
+import { runInputTests, testInputConversion } from './tests/super-converter/input-tests';
+import { runOutputTests, testOutputConversion } from './tests/super-converter/output-tests';
 
 // Available test files
 const testFiles = [

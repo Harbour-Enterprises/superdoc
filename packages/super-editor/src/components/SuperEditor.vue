@@ -1,7 +1,7 @@
 <script setup>
-import DocxZipper from '@classes/docx-zipper';
+import DocxZipper from '@core/DocxZipper';
 import { onMounted, ref } from 'vue';
-import ProseMirror from '@components/docx-editor/ProseMirror.vue'
+import ProseMirror from '@components/ProseMirror.vue'
 
 const emit = defineEmits(['comments-loaded']);
 const props = defineProps({
