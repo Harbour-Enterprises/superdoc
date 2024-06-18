@@ -13,6 +13,8 @@ export function buildKeymap() {
       "Mod-y": redo,
       "Mod-b": toggleMark(DocxSchema.marks.strong),
       "Mod-i": toggleMark(DocxSchema.marks.em),
+      "Mod-u": toggleMark(DocxSchema.marks.underline),
+      "Mod-Shift-S": toggleMark(DocxSchema.marks.strikethrough),
       "Enter": chainCommands(Commands.enter),
 
       // Just as an example
