@@ -29,6 +29,11 @@ const props = defineProps({
     default: 'text'
   },
 
+  documentId: {
+    type: String,
+    required: false,
+  },
+
   data: {
     type: Object,
   }
@@ -43,7 +48,7 @@ const converter = new SuperConverter({ docx: props.data });
 const documentData = ref(null);
 const initData = () => {
   documentData.value = converter.getSchema();
-  console.debug('\nSCHEMA', JSON.stringify(documentData.value, null, 2), '\n')
+  // console.debug('\nSCHEMA', JSON.stringify(documentData.value, null, 2), '\n')
 }
 
 // Editor initialization
@@ -74,7 +79,7 @@ const initEditor = () => {
     dispatchTransaction: handleTransaction,
   });
 
-  const { comments } = initComments(editorView, converter);
+  const comments = initComments(editorView, converter, props.documentId);
   loadedComments.value = comments;
 
   // Let super doc know we have comments

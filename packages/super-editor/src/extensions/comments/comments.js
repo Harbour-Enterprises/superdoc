@@ -1,4 +1,7 @@
+import { v4 as uuidv4 } from 'uuid';
+import { conversation, comment } from '../../../../superdoc/src/components/CommentsLayer/comment-schemas';
 
+console.debug('Comments:', conversation, comment);
 const commentsFiles = {};
 
 // Comments
@@ -23,7 +26,51 @@ const getComment = (id) => {
   return comment;
 }
 
-const initComments = (editorView, converter) => {
+const _getCommentTextFromNode = (c) => {
+  const elements = c.comment.elements;
+  const commentElements = elements[0]?.elements;
+  const textElement = commentElements[1]?.elements.find((item) => item.name === 'w:t');
+  const text = textElement.elements[0].text;
+
+  return {
+    comment: text,
+    user: { name: c.comment.attributes['w:author'] },
+    timestamp: c.comment.attributes['w:date'],
+  }
+}
+
+const parseCommentsForSuperdoc = (comments, documentId) => {
+  const conversations = [];
+  comments.forEach((c) => {
+    console.debug('Comment:', c);
+
+    // If this is a child comment, append to the parent conversation
+    const parentThread = conversations.find((item) => item.thread === c.parentThread);
+    if (parentThread) {
+      const comment = _getCommentTextFromNode(c);
+      parentThread.comments.push(comment);
+      return
+    }
+
+    // If it is not a child comment, create a new conversation
+    const conversationId = uuidv4();
+    const docId = documentId;
+    const creatorName = c.comment.attributes['w:author'];
+
+    const comment = _getCommentTextFromNode(c);
+    const convo = {
+      thread: c.id,
+      conversationId,
+      documentId: docId,
+      creatorName,
+      comments: [comment],
+    }
+    conversations.push(convo);
+  })
+  return conversations;
+}
+
+const initComments = (editorView, converter, documentId) => {
   const comments = [];
 
   // Get the doc state
@@ -56,8 +103,7 @@ const initComments = (editorView, converter) => {
     }
   });
 
-  console.debug('Loaded comments', comments)
-  return comments
+  return parseCommentsForSuperdoc(comments, documentId);
 }
 
 export {

@@ -47,7 +47,7 @@ const handleNewFile = (file) => {
     <div class="content" v-if="currentFile">
 
       <!-- SuperEditor expects its data to be a URL -->
-      <SuperEditor mode="docx" :data-url="currentFile" />
+      <SuperEditor mode="docx" :data-url="currentFile" documentId="ID-123" />
 
     </div>
   </div>

@@ -3,11 +3,17 @@ import DocxZipper from '@classes/docx-zipper';
 import { onMounted, ref } from 'vue';
 import ProseMirror from '@components/docx-editor/ProseMirror.vue'
 
+const emit = defineEmits(['comments-loaded']);
 const props = defineProps({
   mode: {
     type: String,
     default: 'text',
     validator: (value) => ['text', 'docx'].includes(value),
+  },
+
+  documentId: {
+    type: String,
+    required: false,
   },
 
   dataUrl: {
@@ -37,6 +43,11 @@ const init = async () => {
   isReady.value = true;
 }
 
+const handleCommentsReady = (comments) => {
+  console.debug('Comments ready', comments);
+  emit('comments-loaded', comments);
+}
+
 onMounted(() => {
   init();
 });
@@ -44,7 +55,7 @@ onMounted(() => {
 
 <template>
   <div v-if="isReady">
-    <ProseMirror :mode="mode" :data="xmlFiles" />
+    <ProseMirror :mode="mode" :data="xmlFiles" @comments-loaded="handleCommentsReady" :documentId="documentId" />
   </div>
 </template>
 
