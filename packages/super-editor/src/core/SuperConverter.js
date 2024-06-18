@@ -190,7 +190,7 @@ class SuperConverter {
     const currentLevel = currentLevelDef.elements.find(style => style.name === 'w:numFmt')
     const listTypeDef = currentLevel.attributes['w:val'];
     let listType;
-    if (listTypeDef === 'bullet') listType = 'unorderedList';
+    if (listTypeDef === 'bullet') listType = 'bulletList';
     if (listTypeDef === 'decimal') listType = 'orderedList';
     return { listType, ilvl, numId, abstractNum };
   }
