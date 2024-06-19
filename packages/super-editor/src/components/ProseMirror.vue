@@ -36,7 +36,7 @@ const props = defineProps({
 const editorElem = ref(null);
 
 const onCommentsLoaded = ({ comments }) => {
-  console.log({ comments });
+  // console.log({ comments });
   // Let super doc know we have comments
   emit('comments-loaded', comments);
 };
@@ -49,11 +49,13 @@ const initEditor = () => {
     onCommentsLoaded,
   });
 
-  editor.on('transaction', ({ transaction }) => {
-    console.log({ transaction });
+  editor.on('create', ({ editor }) => {
+    emit('editor-ready', props.documentId, editor);
   });
-
-  emit('editor-ready', props.documentId, editor);
+  
+  editor.on('update', ({ editor, transaction }) => {
+    console.log({ editor, transaction });
+  });
 };
 
 onMounted(() => {
