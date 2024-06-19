@@ -138,6 +138,22 @@ const DocxSchema = new Schema({
         { style: "font-style=normal", clearMark: m => m.type.name == "em" }
       ],
       toDOM() { return ["em", 0]; }
+    },
+    underline: {
+      parseDOM: [
+        { tag: "u" },
+        { style: "text-decoration=underline" },
+        { style: "text-decoration=auto", clearMark: m => m.type.name == "u" }
+      ],
+      toDOM() { return ["u", 0]; }
+    },
+    strikethrough: {
+      parseDOM: [
+        { tag: "s" },
+        { style: "text-decoration=line-through" },
+        { style: "text-decoration=auto", clearMark: m => m.type.name == "s" }
+      ],
+      toDOM() { return ["s", 0]; }
     }
   }
 });
