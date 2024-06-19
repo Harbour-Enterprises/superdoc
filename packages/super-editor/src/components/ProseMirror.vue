@@ -5,7 +5,7 @@ import { EditorView } from "prosemirror-view"
 import { history } from "prosemirror-history"
 
 import { DocxSchema } from '@core/schema/DocxSchema';
-import { initComments } from '@extensions/Comments/comments';
+import { initComments } from '@extensions/comments/comments';
 import { buildKeymap } from '@core/shortcuts/buildKeymap';
 import SuperConverter from '@core/SuperConverter';
 
@@ -42,13 +42,13 @@ const props = defineProps({
 const editor = ref(null);
 let editorView, editorState;
 const loadedComments = ref([]);
-const converter = new SuperConverter({ docx: props.data });
+const converter = new SuperConverter({ docx: props.data, debug: true });
 
 // Document data
 const documentData = ref(null);
 const initData = () => {
   documentData.value = converter.getSchema();
-  // console.debug('\nSCHEMA', JSON.stringify(documentData.value, null, 2), '\n')
+  console.debug('\nSCHEMA', JSON.stringify(documentData.value, null, 2), '\n')
 }
 
 // Editor initialization

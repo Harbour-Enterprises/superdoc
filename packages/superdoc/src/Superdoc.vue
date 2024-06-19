@@ -7,6 +7,9 @@ import DocumentEditor from './components/DocumentEditor/DocumentEditor.vue';
 import CommentDialog from '@/components/CommentsLayer/CommentDialog.vue';
 import FloatingComments from '@/components/CommentsLayer/FloatingComments.vue';
 import HrbrFieldsLayer from '@/components/HrbrFieldsLayer/HrbrFieldsLayer.vue';
+import docxWithComments from './assets/lists_and_comments.docx?url'
+import useDocument from '@/composables/use-document';
+
 import { useSuperdocStore } from '@/stores/superdoc-store';
 import { useCommentsStore } from '@/stores/comments-store';
 
@@ -152,6 +155,7 @@ onBeforeUnmount(() => {
 });
 
 const receiveDocxComments = (data, doc) => {
+  console.debug('receiveDocxComments', data, doc);
   data.forEach((c, index) => {
     const convo = useConversation(c);
     const doc = getDocument(c.documentId);
@@ -165,7 +169,7 @@ const receiveDocxComments = (data, doc) => {
 <div class="superdoc">
   <div class="layers" ref="layers">
 
-    <div
+    <div 
         v-if="toolsMenuPosition && !getConfig?.readOnly" 
         class="tools"
         :style="toolsMenuPosition">
@@ -178,6 +182,7 @@ const receiveDocxComments = (data, doc) => {
     </div>
 
     <div class="document">
+
       <!-- Fields layer -->
       <HrbrFieldsLayer
           v-if="'hrbr-fields' in modules && layers"
@@ -190,7 +195,7 @@ const receiveDocxComments = (data, doc) => {
       <CommentsLayer
           class="comments-layer"
           v-if="isReady && 'comments' in modules && layers && isReady"
-          style="z-index: 3;"
+          style="z-index: 3; margin-left: -20px;"
           ref="commentsLayer"
           :parent="layers"
           :user="user"
@@ -247,6 +252,7 @@ const receiveDocxComments = (data, doc) => {
 .docx-editor {
   margin-bottom: 20px;
   min-width: 600px;
+  border: 1px solid #dbdbdb;
 }
 
 /* General Styles */

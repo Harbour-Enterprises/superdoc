@@ -1,6 +1,7 @@
 import SuperConverter from "@core/SuperConverter";
 import DocxZipper from '@core/DocxZipper';
 import SuperEditor from '@components/SuperEditor.vue';
+import BasicUpload from './dev/components/BasicUpload.vue';
 
 /**
  * Exported classes and components.
@@ -15,5 +16,6 @@ export {
   DocxZipper,
 
   // Components
-  SuperEditor
+  SuperEditor,
+  BasicUpload
 }

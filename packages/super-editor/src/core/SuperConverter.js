@@ -122,6 +122,7 @@ class SuperConverter {
      * Nodes such as lists are paragraphs but contain a list element somewhere.
      */
     //this.log('Who am I?', node.name)
+    // this.log('Node', node);
 
     /* Standard nodes known to need no special handling */
     const standardNodes = ['w:document', 'w:body', 'w:commentRangeStart', 'w:commentRangeEnd', 'w:commentReference'];
@@ -133,10 +134,12 @@ class SuperConverter {
       /* Special cases of w:p based on paragraph properties */
       const pPr = elements.find(el => el.name === 'w:pPr')
       if (pPr) {
-        const paragraphStyle = pPr.elements.find(el => el.name === 'w:pStyle');
 
-        /* If I am a list item... */
-        if (paragraphStyle?.attributes['w:val'] === 'ListParagraph') schemaNode = this._handleListNode(node);
+        // There are two ways (so far) to identify a list: w:pStyle and w:numPr
+        const paragraphStyle = pPr.elements.find(el => el.name === 'w:pStyle');
+        const isList = paragraphStyle?.attributes['w:val'] === 'ListParagraph';
+        const hasNumPr = pPr.elements.find(el => el.name === 'w:numPr');
+        if (isList || hasNumPr) schemaNode = this._handleListNode(node);
       }
       
       /* I am a standard paragraph tag */
@@ -153,10 +156,14 @@ class SuperConverter {
 
     /* Watch for unknown nodes as we build more functionality here */
     if (!schemaNode) {
+      console.debug('No schema:', node);
       const ignore = ['w:t'];
       if (!ignore.includes(outerNodeName)) console.debug('No schema node:', node);
-    }
+    } else if (!['text','run','paragraph','doc','body','orderedList'].includes(schemaNode.type)) {
 
+      // Watch for unknown list types or other undefined types
+      console.debug('Schema node:', schemaNode);
+    }
     return schemaNode;
   }
 
@@ -191,7 +198,11 @@ class SuperConverter {
     const listTypeDef = currentLevel.attributes['w:val'];
     let listType;
     if (listTypeDef === 'bullet') listType = 'unorderedList';
-    if (listTypeDef === 'decimal') listType = 'orderedList';
+    else if (listTypeDef === 'decimal') listType = 'orderedList';
+    else if (listTypeDef === 'lowerLetter') listType = 'unorderedList';
+
+    // Check for unknown list types, there will be some
+    if (!listType) console.debug('_getNodeListType: No list type:', listTypeDef, attributes)
     return { listType, ilvl, numId, abstractNum };
   }
 
@@ -211,7 +222,7 @@ class SuperConverter {
       const schemaNode = this.convertToSchema(element);
       if (schemaNode) content.push(schemaNode);
     }
-
+  
     return {
       type: listType,
       content,

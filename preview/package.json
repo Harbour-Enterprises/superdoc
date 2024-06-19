@@ -1,0 +1,23 @@
+{
+  "name": "preview",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run build:superdoc && npm run build:super-editor && vite build",
+    "preview": "vite preview",
+    "build:superdoc": "cd ../packages/superdoc && npm run build && cd ../..",
+    "build:super-editor": "cd ../packages/super-editor && npm run build && cd ../..",
+    "deploy": "npm run build && gsutil -m cp -r dist/* gs://superdoc-preview"
+  },
+  "dependencies": {
+    "super-editor": "file:../packages/super-editor/dist/super-editor.cjs.js",
+    "@harbour-enterprises/superdoc": "file:../packages/superdoc/dist/superdoc.cjs.js",
+    "vue": "^3.4.21"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "vite": "^5.2.0"
+  }
+}
