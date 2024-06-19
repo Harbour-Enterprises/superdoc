@@ -1,5 +1,7 @@
 import { Schema } from "prosemirror-model"
 
+const olDOM = ["ol", 0], ulDOM = ["ul", 0], liDOM = ["li", 0];
+
 /**
  * Custom schema for docx files with prose mirror
  * Reference: https://github.com/ProseMirror/prosemirror-schema-basic/blob/master/src/schema-basic.ts
@@ -7,32 +9,30 @@ import { Schema } from "prosemirror-model"
 const DocxSchema = new Schema({
   nodes: {
   
-
-    /**
-     * ❗️ TODO: Implement a custom node view for run nodes that are children of list types
-     */
-    unorderedList: {
-      content: "text*",
-      inline: false,
-      group: "block",
-      toDOM() { return ["ul", 0]; },
+    bulletList: {
+      content: "listItem+",
+      group: "block list",
       parseDOM: [{ tag: "ul" }],
-      attrs: {
-        attributes: { default: {} },
-        type: { default: null },
-      },
+      toDOM() { return ulDOM; },
     },
 
     orderedList: {
-      content: "text*",
-      inline: false,
-      group: "block",
-      toDOM() { return ["ol", 0]; },
-      parseDOM: [{ tag: "ol" }],
-      attrs: {
-        attributes: { default: {} },
-        type: { default: null },
+      content: "listItem+",
+      group: "block list",
+      parseDOM: [{tag: "ol", getAttrs(dom) {
+        return {order: dom.hasAttribute("start") ? +dom.getAttribute("start") : 1};
+      }}],
+      toDOM(node) {
+        return node.attrs.order === 1 ? olDOM : ["ol", {start: node.attrs.order}, 0];
       },
+      attrs: {order: {default: 1}},
+    },
+    
+    listItem: {
+      content: "paragraph block*",
+      parseDOM: [{tag: "li"}],
+      toDOM() { return liDOM },
+      defining: true,
     },
 
     commentRangeStart: {
@@ -102,7 +102,7 @@ const DocxSchema = new Schema({
     },
   
     body: {
-      content: "(paragraph+ | unorderedList*)",
+      content: "(paragraph+ | bulletList* | orderedList*)",
       toDOM() { return ["body", 0]; },
       attrs: {
         attributes: { default: {} },

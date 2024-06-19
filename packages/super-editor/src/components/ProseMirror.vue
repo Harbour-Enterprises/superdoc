@@ -1,13 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { EditorState } from "prosemirror-state"
-import { EditorView } from "prosemirror-view"
-import { history } from "prosemirror-history"
-
-import { DocxSchema } from '@core/schema/DocxSchema';
-import { initComments } from '@extensions/comments/comments';
-import { buildKeymap } from '@core/shortcuts/buildKeymap';
-import SuperConverter from '@core/SuperConverter';
+import { Editor } from '@core/Editor';
 
 // The editor needs to be agnostic to the data source
 // It should be able to work with any DOCX, plain text, and HTML.
@@ -23,6 +16,7 @@ import SuperConverter from '@core/SuperConverter';
 // We will need all relevant data passed in. This includes multiple files from the docx zip.
 
 const emit = defineEmits(['comments-loaded']);
+
 const props = defineProps({
   mode: {
     type: String,
@@ -36,66 +30,38 @@ const props = defineProps({
 
   data: {
     type: Object,
-  }
+  },
 });
 
-const editor = ref(null);
-let editorView, editorState;
-const loadedComments = ref([]);
-const converter = new SuperConverter({ docx: props.data, debug: true });
+const editorElem = ref(null);
 
-// Document data
-const documentData = ref(null);
-const initData = () => {
-  documentData.value = converter.getSchema();
-  console.debug('\nSCHEMA', JSON.stringify(documentData.value, null, 2), '\n')
-}
-
-// Editor initialization
-const handleTransaction = (transaction) => {
-  console.debug('Transaction', transaction)
-  const state = editorView.state.apply(transaction);
-  editorView.updateState(state);
-}
-
-const getEditorData = () => {
-  if (documentData.value) return DocxSchema.nodeFromJSON(documentData.value)
-  return DocxSchema.topNodeType.createAndFill()
-}
+const onCommentsLoaded = ({ comments }) => {
+  console.log({ comments });
+  // Let super doc know we have comments
+  emit('comments-loaded', comments);
+};
 
 const initEditor = () => {
-  // Initialize the document state, either from xmlDocument.value or blank
-  editorState = EditorState.create({
-    doc: getEditorData(),
-    plugins: [
-      history(),
-      buildKeymap(),
-    ],
+  const editor  = new Editor({
+    element: editorElem.value,
+    content: props.data,
+    documentId: props.documentId,
+    onCommentsLoaded,
   });
 
-  // Initialize the editor
-  editorView = new EditorView(editor.value, {
-    state: editorState,
-    dispatchTransaction: handleTransaction,
+  editor.on('transaction', ({ transaction }) => {
+    console.log({ transaction });
   });
-
-  const comments = initComments(editorView, converter, props.documentId);
-  loadedComments.value = comments;
-
-  // Let super doc know we have comments
-  emit('comments-loaded', loadedComments.value);
 };
 
 onMounted(() => {
-  if (props.data) initData();
   initEditor();
-})
-
+});
 </script>
 
 <template>
   <div class="super-editor" v-if="props.data">
-    <div ref="editor" class="editor"></div>
+    <div ref="editorElem" class="editor"></div>
   </div>
 </template>
 
