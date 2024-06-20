@@ -24,11 +24,14 @@ export class SuperConverter {
     'w:commentRangeStart': 'commentRangeStart',
     'w:commentRangeEnd': 'commentRangeEnd',
     'w:commentReference': 'commentReference',
+
   });
 
   static markTypes = Object.freeze({
     'w:b': 'strong',
     'w:i': 'em',
+    'w:u': 'underline',
+    'w:strike': 'strikethrough',
   });
 
   static propertyTypes = Object.freeze({
@@ -78,6 +81,7 @@ export class SuperConverter {
     });
     
     this.initialJSON = this.convertedXml['word/document.xml'];
+    console.debug('Initial JSON:', this.initialJSON);
 
     if (!this.initialJSON) this.initialJSON = JSON.parse(xmljs.xml2json(this.xml, null, 2));
     this.declaration = this.initialJSON.declaration;
@@ -138,22 +142,20 @@ export class SuperConverter {
        * in order to combine list item nodes into list nodes.
        */
       if (this._testForList(node)) {
-
-        // We need to get all siblings that are also list items but haven't yet been processed.
-        const siblings = [...parent.elements.filter(el => !el.seen)];
+        // Get all siblings that are list items and haven't been processed yet.
+        const siblings = parent.elements.filter(el => !el.seen);
         const listItems = [];
-
-        // Iterate each item until we find the end of the list (a non-list item)
-        // Then send to the list handler for processing.
-        let possibleList = siblings?.shift();
-        let isList = possibleList?.elements && this._testForList(possibleList);
-        while (possibleList && isList) {
+      
+        // Iterate each item until we find the end of the list (a non-list item),
+        // then send to the list handler for processing.
+        let possibleList = siblings.shift();
+        while (possibleList && this._testForList(possibleList)) {
           listItems.push(possibleList);
-          possibleList = siblings?.shift();
-          isList = this._testForList(possibleList);
+          possibleList = siblings.shift();
         }
+      
         schemaNode = this.#handleListNode(node, listItems);
-      }
+      }      
       
       /* I am a standard paragraph tag */
       if (!schemaNode) schemaNode = this._handleStandardNode(node);
@@ -236,7 +238,8 @@ export class SuperConverter {
 
 
   /**
-   * Handles the processing of list nodes.
+   * List Nodes
+   * 
    * This recursive function takes the current node (the first list item detected in the current array)
    * and all list items that follow it.
    * 
@@ -290,7 +293,7 @@ export class SuperConverter {
         }
 
         // TODO: Depending on the list structure (see above), we can move this outside else for option 1 instead
-        parsedListItems.push(this.#createListItem(content, marks));
+        parsedListItems.push(this.#createListItem(content, attributes, marks));
       }
     }
 
@@ -308,11 +311,11 @@ export class SuperConverter {
    * @param {Array} marks - The marks associated with the list item.
    * @returns {Object} The created list item node.
    */
-  #createListItem(content, marks) {
+  #createListItem(content, attrs, marks) {
     return {
       type: 'listItem',
       content,
-      attrs: {},
+      attrs,
       marks,
     };
   }
@@ -407,6 +410,74 @@ export class SuperConverter {
       }, [[], []]
     );
   }
+
+
+
+
+
+
+  outputToJson(data) {
+    console.debug('[SuperConverter] outputToJSON:', data);
+    const firstElement = data.doc;
+    const result = {
+      declaration: this.declaration,
+      elements: this.#outputNodeToJson(firstElement),
+    }
+    console.debug('Result:', result);
+  }
+
+  #outputNodeToJson(node, parent = null) {
+    let name = this.getTagName(node.type);
+    console.debug('Output node:', node.type, node.name, name);
+    
+    const elements = [];
+    const { content, attrs } = node;
+
+    // Nodes that can't be mapped back to a name tag need special handling. ie: list nodes
+    if (node.type === 'listItem') name = 'w:r';
+
+    if (!name) {
+      const isList = ['orderedList', 'bulletList'].includes(node.type);
+      if (isList) { 
+        console.debug('List node:', node.type);
+        
+        const listElements = [];
+        for (let child of content) {
+          const processedChild = {
+            name: 'w:p',
+            elements: this.#outputNodeToJson(child, node),
+            attributes: {}
+          }
+          console.debug('Processed child:', processedChild);
+          listElements.push(processedChild);
+        }
+        console.debug('List elements:', listElements);
+        return listElements;
+      }
+    }
+    
+    // Standard handling of nodes
+    else {
+      if (content) {
+        for (let child of content) {
+          const processedChild = this.#outputNodeToJson(child, node);
+          if (Array.isArray(processedChild)) elements.push(...processedChild);
+          else elements.push(processedChild)
+        }
+      }
+    }
+
+    return {
+      name,
+      elements,
+      attributes: attrs?.attributes || {}
+    }
+  }
+
+    #outputHandleListNode(node) {
+
+    }
+
 
 
 

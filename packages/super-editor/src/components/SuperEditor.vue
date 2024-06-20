@@ -2,6 +2,7 @@
 import DocxZipper from '@core/DocxZipper';
 import { onMounted, ref } from 'vue';
 import ProseMirror from '@components/ProseMirror.vue'
+import { SuperConverter } from '@core/SuperConverter';
 
 const emit = defineEmits(['editor-ready', 'comments-loaded']);
 const props = defineProps({
@@ -54,8 +55,9 @@ onMounted(() => {
 
 const editorRef = ref(null);
 const save = () => {
-  console.debug('[super-editor] Saving... ');
-  editorRef.value.save();
+  const converter = new SuperConverter();
+  const doc = { doc: editorRef.value.state.doc.toJSON() }
+  converter.outputToJson(doc);
 }
 
 const dataReady = (id, editor) => {
@@ -67,7 +69,6 @@ const dataReady = (id, editor) => {
 
 <template>
   <div v-if="isReady">
-    <button @click="save">save</button>
     <ProseMirror
         :mode="mode"
         :data="xmlFiles"
