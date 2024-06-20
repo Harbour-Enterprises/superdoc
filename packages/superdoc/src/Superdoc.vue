@@ -259,7 +259,6 @@ const handleEditorReady = (id, editor) => {
 .docx-editor {
   margin-bottom: 20px;
   min-width: 600px;
-  border: 1px solid #dbdbdb;
 }
 
 /* General Styles */

@@ -57,10 +57,10 @@ const save = () => {
       </div>
 
       <div style="display: flex; align-items: flex-end;">
-        <button @click="save" class="save-button" v-if="currentFile">
+        <!-- <button @click="save" class="save-button" v-if="currentFile">
           <i class="fal fa-file-download"></i>
           Save
-        </button>
+        </button> -->
       </div>
     </div>
 

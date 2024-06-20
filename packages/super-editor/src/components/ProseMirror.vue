@@ -69,22 +69,5 @@ onMounted(() => {
   </div>
 </template>
 
-<style>
-.super-editor .ProseMirror {
-  min-height: 400px;
-  border: 1px solid #999;
-  border-radius: 8px;
-  white-space: pre-wrap;
-  color: black !important;
-  padding: 20px;
-  width: 600px;
-}
-.super-editor .ProseMirror > * {
-  color: black;
-  font-family: 'Arial', sans-serif;
-  font-size: 12px !important;
-}
-</style>
-
 <style scoped>
 </style>

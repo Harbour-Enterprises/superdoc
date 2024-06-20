@@ -274,10 +274,10 @@ export class SuperConverter {
         const sublist = this.#handleListNode(item, listItems, listLevel + 1);
 
         // TODO: We append here to content if we want to keep the structure as: <ol><li><ul><li>...</li></ul></li>
-        // content.push(sublist);
+        content.push(sublist);
 
         // TODO: But we can also make it: <ul><li></li><ul><li></li></ul></ul>
-        parsedListItems.push(sublist);
+        // parsedListItems.push(sublist);
       } 
       
       // Standard processing: we parse the element and add it to the content
@@ -291,10 +291,8 @@ export class SuperConverter {
           const schemaNode = this.convertToSchema(element);
           if (schemaNode) content.push(schemaNode);
         }
-
-        // TODO: Depending on the list structure (see above), we can move this outside else for option 1 instead
-        parsedListItems.push(this.#createListItem(content, attributes, marks));
       }
+      parsedListItems.push(this.#createListItem(content, attributes, marks));
     }
 
     node.seen = true;
