@@ -28,8 +28,9 @@ export default class Superdoc extends EventEmitter {
     this.pinia = pinia;
     this.app.config.globalProperties.$config = config;
     this.app.config.globalProperties.$superdoc = this;
+    this.superdocStore = superdocStore;
 
-    superdocStore.init(config);
+    this.superdocStore.init(config);
 
     // Directives
     this.app.mount(config.selector);
@@ -38,6 +39,15 @@ export default class Superdoc extends EventEmitter {
   broadcastComments(type, data) {
     console.debug('[comments] Broadcasting:', type, data);
     this.emit('comments-update', type, data);
+  }
+
+  saveAll() {
+    console.debug('[superdoc] Saving all');
+    const documents = this.superdocStore.documents;
+    documents.forEach((doc) => {
+      console.debug('[superdoc] Saving:', doc.id, doc.core);
+      doc.core.save();
+    })
   }
 
   destroy() {

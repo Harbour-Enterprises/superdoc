@@ -7,7 +7,7 @@ const onFileChange = (event) => {
 
 <template>
 <div>
-  <input type="file" @change="onFileChange" accept=".docx" />
+  <input type="file" id="fileInput" @change="onFileChange" accept=".docx" />
 </div>
 </template>
 

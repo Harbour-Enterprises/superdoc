@@ -1,6 +1,10 @@
+import path from 'path';
+import fs from 'fs';
+
 import { describe, it, expect, beforeEach } from 'vitest';
 import { readFileSync } from './helpers';
 import { SuperConverter } from '../../SuperConverter';
+import DocxZipper from '../../DocxZipper';
 
 const showParserLogging = false;
 
@@ -67,6 +71,49 @@ export function runInputTests(fileName) {
       // The properties are inside teh elements array
       const properties = attributes.elements;
       expect(properties).toBeTruthy();
+    });
+  });
+}
+
+export function testLists() {
+  async function readFileAsBuffer(filePath) {
+    const resolvedPath = path.resolve(__dirname, filePath);
+    return new Promise((resolve, reject) => {
+      fs.readFile(resolvedPath, (err, data) => {
+        if (err) {
+          reject(err);
+        } else {
+          // Convert file content to a Buffer
+          const buffer = Buffer.from(data);
+          resolve(buffer);
+        }
+      });
+    });
+  }
+
+  describe('List parsing tests', () => {
+
+    it('works', async () => {
+
+      const zip = new DocxZipper();
+      const pathName = `../../../tests/fixtures/list1/list1.docx`;
+      const fileContent = await readFileAsBuffer(pathName);
+      const fileObject = Buffer.from(fileContent);
+      const docx = await zip.getXmlData(fileObject);
+
+      const c = new SuperConverter({ docx, debug: true });
+      const initialJSON = c.initialJSON;
+      const schema = c.getSchema();
+
+      expect(schema).toBeTruthy();
+      
+      const initialParent = initialJSON.elements[0].elements[0]
+      const parent = schema.content[0];
+      
+      const test = c.convertToSchema(initialParent)
+
+      // console.debug('LIST1', JSON.stringify(test, null, 2));
+      
     });
   });
 }

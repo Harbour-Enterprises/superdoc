@@ -155,13 +155,19 @@ onBeforeUnmount(() => {
 });
 
 const receiveDocxComments = (data, doc) => {
-  console.debug('receiveDocxComments', data, doc);
+  console.debug('[superdoc] receiveDocxComments', data, doc);
   data.forEach((c, index) => {
     const convo = useConversation(c);
     const doc = getDocument(c.documentId);
     doc.conversations.push(convo);
   })
   isReady.value = true
+}
+
+const handleEditorReady = (id, editor) => {
+  console.debug('[superdoc] Editor ready', id, editor);
+  const doc = getDocument(id);
+  doc.core = editor;
 }
 </script>
 
@@ -218,6 +224,7 @@ const receiveDocxComments = (data, doc) => {
               mode="docx"
               :data-url="doc.data"
               :document-id="doc.id"
+              @editor-ready="handleEditorReady"
               @comments-loaded="receiveDocxComments($event, doc)" />
 
         </div>

@@ -108,13 +108,13 @@ export class SuperConverter {
    *    Do we have special handling?
    *    Append it to the tree
    */
-  convertToSchema(node) {
-    if (!node) return;
+  convertToSchema(node, parent = null) {
+    if (!node || node.seen) return;
   
     /* We will build a prose mirror ready schema node from XML node */
     let schemaNode;
     const { name: outerNodeName } = node;
-    let { elements = [] } = node;
+    console.debug('current node', node.name, node);
 
     /**
      * Who am I?
@@ -131,15 +131,28 @@ export class SuperConverter {
     /* w:p: If I am a paragraph, I might be a list item, or possibly other special case */
     if (outerNodeName === 'w:p') {
 
-      /* Special cases of w:p based on paragraph properties */
-      const pPr = elements.find(el => el.name === 'w:pPr')
-      if (pPr) {
+      /**
+       * Special cases of w:p based on paragraph properties
+       * 
+       * If we detect a list node, we need to get all nodes that are also lists and process them together
+       * in order to combine list item nodes into list nodes.
+       */
+      if (this._testForList(node)) {
 
-        // There are two ways (so far) to identify a list: w:pStyle and w:numPr
-        const paragraphStyle = pPr.elements.find(el => el.name === 'w:pStyle');
-        const isList = paragraphStyle?.attributes['w:val'] === 'ListParagraph';
-        const hasNumPr = pPr.elements.find(el => el.name === 'w:numPr');
-        if (isList || hasNumPr) schemaNode = this._handleListNode(node);
+        // We need to get all siblings that are also list items but haven't yet been processed.
+        const siblings = [...parent.elements.filter(el => !el.seen)];
+        const listItems = [];
+
+        // Iterate each item until we find the end of the list (a non-list item)
+        // Then send to the list handler for processing.
+        let possibleList = siblings?.shift();
+        let isList = possibleList?.elements && this._testForList(possibleList);
+        while (possibleList && isList) {
+          listItems.push(possibleList);
+          possibleList = siblings?.shift();
+          isList = this._testForList(possibleList);
+        }
+        schemaNode = this.#handleListNode(node, listItems);
       }
       
       /* I am a standard paragraph tag */
@@ -156,17 +169,31 @@ export class SuperConverter {
 
     /* Watch for unknown nodes as we build more functionality here */
     if (!schemaNode) {
-      console.debug('No schema:', node);
+      // console.debug('No schema:', node);
       const ignore = ['w:t'];
       if (!ignore.includes(outerNodeName)) console.debug('No schema node:', node);
     } else if (!['text','run','paragraph','doc','body','orderedList'].includes(schemaNode.type)) {
 
       // Watch for unknown list types or other undefined types
-      console.debug('Schema node:', schemaNode);
+      // console.debug('Schema node:', schemaNode);
     }
+
+    console.debug('Schema node:', schemaNode)
+    node.seen = true;
     return schemaNode;
   }
 
+
+  _testForList(node) {
+    const { elements } = node;
+    const pPr = elements?.find(el => el.name === 'w:pPr')
+    if (!pPr) return false;
+
+    const paragraphStyle = pPr.elements.find(el => el.name === 'w:pStyle');
+    const isList = paragraphStyle?.attributes['w:val'] === 'ListParagraph';
+    const hasNumPr = pPr.elements.find(el => el.name === 'w:numPr');
+    return isList || hasNumPr;
+  }
 
   _getNodeListType(attributes) {
     const def = this.convertedXml['word/numbering.xml'];
@@ -207,36 +234,90 @@ export class SuperConverter {
   }
 
 
-  _handleListNode(node) {
-    // Parse properties
-    const { attributes, elements, marks = [] } = this._parseProperties(node);
 
-    // Get the list styles - this is delegated to a helper function
-    // Since it isn't trivial, and it involves a separate numbering.xml file
-    const { listType, ilvl, numId, abstractNum } = this._getNodeListType(attributes);
+  /**
+   * Handles the processing of list nodes.
+   * This recursive function takes the current node (the first list item detected in the current array)
+   * and all list items that follow it.
+   * 
+   * It begins with listLevel = 0, and if we find an indented node, we call this function again and increase the level.
+   * with the same set of list items (as we do not know the node levels until we process them).
+   *
+   * @param {Object} node - The current node being processed.
+   * @param {Array} listItems - Array of list items to process.
+   * @param {number} [listLevel=0] - The current indentation level of the list.
+   * @returns {Object} The processed list node with structured content.
+   */
+  #handleListNode(node, listItems, listLevel = 0) {
+    const parsedListItems = [];
+    let overallListType;
 
-    // Iterate through the children and build the schemaNode content
-    const content = [];
-    for (const element of elements) {
-      if (element.name === 'w:p') element.name = 'listItem';
-      const schemaNode = this.convertToSchema(element);
-      if (schemaNode) content.push(schemaNode);
+    for (let item of listItems) {
+      if (item.seen) continue;
+
+      const { attributes, elements, marks = [] } = this._parseProperties(item);
+      const { listType, ilvl } = this._getNodeListType(attributes);
+      const intLevel = parseInt(ilvl);
+
+      // Since this function is recursive, but at any depth we are iterating over the same items
+      // We need to skip any items that are below the current level (as they will be processed by a higher level)
+      if (listLevel > intLevel) continue;
+
+      const content = [];
+
+      // If we have found a new indentation level, we will go a level deeper and call this function again,
+      // The result becomes the content of the current list item.
+      if (listLevel < intLevel) {
+        const sublist = this.#handleListNode(item, listItems, listLevel + 1);
+
+        // TODO: We append here to content if we want to keep the structure as: <ol><li><ul><li>...</li></ul></li>
+        // content.push(sublist);
+
+        // TODO: But we can also make it: <ul><li></li><ul><li></li></ul></ul>
+        parsedListItems.push(sublist);
+      } 
+      
+      // Standard processing: we parse the element and add it to the content
+      else {
+        overallListType = listType;
+        item.seen = true;
+
+        for (const element of elements) {
+          // We replace the w:r here for a w:p for the sake of the schema which prefers <li><p>...</p></li>
+          if (element.name === 'w:r') element.name = 'w:p';
+          const schemaNode = this.convertToSchema(element);
+          if (schemaNode) content.push(schemaNode);
+        }
+
+        // TODO: Depending on the list structure (see above), we can move this outside else for option 1 instead
+        parsedListItems.push(this.#createListItem(content, marks));
+      }
     }
-  
+
+    node.seen = true;
     return {
-      type: listType,
-      content,
-      attrs: {
-        type: node.type,
-        attributes: attributes || {},
-        listType,
-        indentLevel: ilvl,
-        styleId: numId,
-        listStyles: abstractNum,
-      },
-      marks,
-    }
+      type: overallListType || 'bulletList',
+      content: parsedListItems,
+    };
   }
+
+  /**
+   * Creates a list item node with specified content and marks.
+   *
+   * @param {Array} content - The content of the list item.
+   * @param {Array} marks - The marks associated with the list item.
+   * @returns {Object} The created list item node.
+   */
+  #createListItem(content, marks) {
+    return {
+      type: 'listItem',
+      content,
+      attrs: {},
+      marks,
+    };
+  }
+
+
 
 
   _handleStandardNode(node) {
@@ -249,7 +330,7 @@ export class SuperConverter {
     const content = [];
     if (elements && elements.length) {
       for (const element of elements) {
-        const schemaNode = this.convertToSchema(element);
+        const schemaNode = this.convertToSchema(element, node);
         if (schemaNode) content.push(schemaNode);
       }
     }
@@ -337,6 +418,7 @@ export class SuperConverter {
    * ❗️ TODO: Much to do here. Anything to do with marks added inside the editor is not yet implemented
    */
   schemaToXml(data) {
+    console.debug('[SuperConverter] schemaToXml:', data);
     const result = this._generate_xml_as_list(data);
     return result.join('');
   }
@@ -345,7 +427,10 @@ export class SuperConverter {
     const json = JSON.parse(JSON.stringify(data));
     const firstElement = json.doc;
     const declaration = this.declaration.attributes;
+    console.debug('Declaration:', declaration);
+    
     const xmlTag = `<?xml${Object.entries(declaration).map(([key, value]) => ` ${key}="${value}"`).join('')}?>`;
+    console.debug('Xml tag', xmlTag)
     const result = this._generateXml(firstElement);
     return [xmlTag, ...result];
   }
@@ -395,7 +480,17 @@ export class SuperConverter {
 
   _generateXml(node) {
     const { type, content, attrs } = node;
-    const name = this.getTagName(type);
+    let name = this.getTagName(type);
+
+    if (!name) {
+      console.debug('Custom tag', type);
+      const lists = ['orderedList', 'bulletList'];
+      if (lists.includes(type)) {
+        console.debug('\n\n LIST NODE', node, '\n\n')
+        name = 'w:p'
+      }
+      return [];
+    }
 
     let tag = `<${name}`;
 

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:superdoc && npm run build:super-editor && vite build",
+    "build": "npm run build:superdoc && npm run build:super-editor && npm update && vite build",
     "preview": "vite preview",
     "build:superdoc": "cd ../packages/superdoc && npm run build && cd ../..",
     "build:super-editor": "cd ../packages/super-editor && npm run build && cd ../..",

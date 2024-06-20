@@ -15,7 +15,7 @@ import { Editor } from '@core/Editor';
 // DOCX
 // We will need all relevant data passed in. This includes multiple files from the docx zip.
 
-const emit = defineEmits(['comments-loaded']);
+const emit = defineEmits(['editor-ready', 'comments-loaded']);
 
 const props = defineProps({
   mode: {
@@ -52,6 +52,8 @@ const initEditor = () => {
   editor.on('transaction', ({ transaction }) => {
     console.log({ transaction });
   });
+
+  emit('editor-ready', props.documentId, editor);
 };
 
 onMounted(() => {

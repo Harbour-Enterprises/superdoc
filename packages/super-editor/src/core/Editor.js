@@ -14,7 +14,7 @@ import { buildKeymap } from '@core/shortcuts/buildKeymap';
 import { DocxSchema } from '@core/schema/DocxSchema';
 import { SuperConverter } from '@core/SuperConverter';
 import { EventEmitter } from './EventEmitter.js';
-import { initComments as initCommentsExt } from '@extensions/Comments/comments';
+import { initComments as initCommentsExt } from '@extensions/comments/comments';
 
 export class Editor extends EventEmitter {
   schema;
@@ -83,7 +83,7 @@ export class Editor extends EventEmitter {
     
     try {
       const docData = this.converter.getSchema();
-      // console.debug('\nSCHEMA', JSON.stringify(docData, null, 2), '\n');
+      console.debug('\nSCHEMA', JSON.stringify(docData, null, 2), '\n');
       if (docData) {
         doc = this.schema.nodeFromJSON(docData);
       } else {
@@ -123,5 +123,14 @@ export class Editor extends EventEmitter {
       this.options.documentId,
     );
     this.emit('comments-loaded', { comments });
+  }
+  
+  save() {
+    console.debug('EDITOR CLASS SAVE - TODO', this.state.doc.toJSON());
+    // const converter = new SuperConverter();
+    console.debug('new converter', this.converter, this.converter.declaration)
+
+    const xml = this.converter.schemaToXml({ doc: this.state.doc.toJSON() });
+    console.debug('XML', xml);
   }
 }

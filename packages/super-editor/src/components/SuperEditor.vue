@@ -3,7 +3,7 @@ import DocxZipper from '@core/DocxZipper';
 import { onMounted, ref } from 'vue';
 import ProseMirror from '@components/ProseMirror.vue'
 
-const emit = defineEmits(['comments-loaded']);
+const emit = defineEmits(['editor-ready', 'comments-loaded']);
 const props = defineProps({
   mode: {
     type: String,
@@ -51,11 +51,29 @@ const handleCommentsReady = (comments) => {
 onMounted(() => {
   init();
 });
+
+const editorRef = ref(null);
+const save = () => {
+  console.debug('[super-editor] Saving... ');
+  editorRef.value.save();
+}
+
+const dataReady = (id, editor) => {
+  editorRef.value = editor;
+  emit('editor-ready', id, editor);
+}
+
 </script>
 
 <template>
   <div v-if="isReady">
-    <ProseMirror :mode="mode" :data="xmlFiles" @comments-loaded="handleCommentsReady" :documentId="documentId" />
+    <button @click="save">save</button>
+    <ProseMirror
+        :mode="mode"
+        :data="xmlFiles"
+        :documentId="documentId"
+        @editor-ready="dataReady"
+        @comments-loaded="handleCommentsReady" />
   </div>
 </template>
 

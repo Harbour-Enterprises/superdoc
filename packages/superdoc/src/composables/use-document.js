@@ -18,6 +18,8 @@ export default function useDocument(params) {
   const annotations = ref(params.annotations || []);
   const conversations = ref(params.conversations?.map((c) => useConversation(c)) || []);
 
+  const core = ref(null);
+
   const removeConversation = (conversationId) => {
     const index = conversations.value.findIndex((c) => c.conversationId === conversationId);
     if (index > -1) conversations.value.splice(index, 1);
@@ -27,6 +29,8 @@ export default function useDocument(params) {
     id,
     data,
     type,
+
+    core,
 
     // Placement
     container,
