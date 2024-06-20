@@ -14,7 +14,7 @@ import { buildKeymap } from './shortcuts/buildKeymap.js';
 import { DocxSchema } from './schema/DocxSchema.js';
 import { SuperConverter } from './SuperConverter.js';
 import { EventEmitter } from './EventEmitter.js';
-import { initComments } from '@extensions/Comments/comments.js';
+import { initComments } from '@extensions/comments/comments.js';
 import { createDocument } from './helpers/createDocument.js';
 import { createStyleTag } from './utilities/createStyleTag.js';
 import { style } from './style.js';
