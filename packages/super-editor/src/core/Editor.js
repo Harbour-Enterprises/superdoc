@@ -9,12 +9,13 @@ import {
 } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { history } from "prosemirror-history";
+import { toggleMark } from "prosemirror-commands";
 
 import { buildKeymap } from './shortcuts/buildKeymap.js';
 import { DocxSchema } from './schema/DocxSchema.js';
 import { SuperConverter } from './SuperConverter.js';
 import { EventEmitter } from './EventEmitter.js';
-import { initComments } from '@extensions/comments/comments.js';
+import { initComments } from '@extensions/Comments/comments.js';
 import { createDocument } from './helpers/createDocument.js';
 import { createStyleTag } from './utilities/createStyleTag.js';
 import { style } from './style.js';
@@ -208,13 +209,81 @@ export class Editor extends EventEmitter {
       }),
     });
 
+    const icon = (text, name) => {
+      let button = document.createElement("div")
+      let buttonInner = document.createElement("span")
+      buttonInner.textContent = text
+      button.appendChild(buttonInner)
+      button.className = "menuicon " + name
+      button.title = name
+      return button
+    }
+
+    const addToolbar = (items) => {
+      return new Plugin({
+        view(editorView) {
+          const toolbar = document.createElement('div');
+          toolbar.className = 'super-editor-toolbar';
+          editorView.dom.parentNode.prepend(toolbar);
+          items.forEach(({command, dom}) => {
+            console.log('editorView', editorView.state)
+            console.log('editorView marks', editorView.state.selection.$head.marks())
+            let active = command(editorView.state, null, editorView)
+            console.log('active', active)
+            dom.style.display = active ? "" : "none"
+            // add cursor pointer
+            dom.style.cursor = "pointer"
+            // add click handler
+            dom.addEventListener("mousedown", e => {
+              e.preventDefault()
+              command(editorView.state, editorView.dispatch, editorView)
+              let {$from, to, node} = editorView.state.selection
+              console.log('NODE', node)
+              // if (node) return node.hasMarkup(nodeType, options.attrs)
+              // return to <= $from.end() && $from.parent.hasMarkup(nodeType, options.attrs)
+              editorView.focus()
+            })
+            toolbar.appendChild(dom)
+          })
+          return {
+            update(view) {
+              const marks = view.state.selection.$head.marks();
+              // get all buttons
+              const buttons = toolbar.querySelectorAll('.menuicon');
+              // remove active class from all buttons
+              buttons.forEach(button => button.classList.remove('active'));
+              marks.forEach(mark => {
+                const name = mark.type.name;
+                const button = toolbar.querySelector(`.${name}`);
+                if (button) {
+                  button.classList.add('active');
+                }
+              });
+            }
+          }
+        }
+      });
+    }
+    const items = [
+      {command: toggleMark(DocxSchema.marks.strong), dom: icon("B", "strong")},
+      {command: toggleMark(DocxSchema.marks.em), dom: icon("i", "em")},
+      {command: toggleMark(DocxSchema.marks.underline), dom: icon("u", "underline")},
+      {command: toggleMark(DocxSchema.marks.strikethrough), dom: icon("s", "strikethrough")},
+
+      // {command: setBlockType(schema.nodes.paragraph), dom: icon("p", "paragraph")},
+      // heading(1), heading(2), heading(3),
+      // {command: wrapIn(schema.nodes.blockquote), dom: icon(">", "blockquote")}
+    ]
+
     const newState = this.state.reconfigure({
       plugins: [ // Get plugins from extension service?
         history(),
         buildKeymap(),
+        addToolbar(items)
       ],
     });
     this.view.updateState(newState);
+
 
     // Create Node Views?
 

@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuidv4';
 import { conversation, comment } from '../../../../superdoc/src/components/CommentsLayer/comment-schemas';
 
 console.debug('Comments:', conversation, comment);
