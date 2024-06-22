@@ -1,32 +1,53 @@
+/**
+ * EventEmitter class is used to emit and subscribe to events.
+ */
 export class EventEmitter {
-  #callbacks = new Map();
+  #events = new Map();
 
-  on(event, fn) {
-    const callbacks = this.#callbacks.get(event);
+  /**
+   * Subscribe to the event.
+   * @param name Event name.
+   * @param fn Callback.
+   */
+  on(name, fn) {
+    const callbacks = this.#events.get(name);
     if (callbacks) callbacks.push(fn);
-    else this.#callbacks.set(event, [fn]);
+    else this.#events.set(name, [fn]);
   }
 
-  emit(event, ...args) {
-    const callbacks = this.#callbacks.get(event);
+  /**
+   * Emit event.
+   * @param name Event name.
+   * @param args Arguments.
+   */
+  emit(name, ...args) {
+    const callbacks = this.#events.get(name);
     if (!callbacks) return;
     for (const fn of callbacks) {
-      fn(...args);
-      // fn.apply(this, args);
+      fn.apply(this, args);
     }
   }
 
-  off(event, fn) {
-    const callbacks = this.#callbacks.get(event);
+  /**
+   * Remove a specific callback from event 
+   * or all event subscriptions.
+   * @param name Event name.
+   * @param fn Callback.
+   */
+  off(name, fn) {
+    const callbacks = this.#events.get(name);
     if (!callbacks) return;
     if (fn) {
-      this.#callbacks.set(event, callbacks.filter((cb) => cb !== fn));
+      this.#events.set(name, callbacks.filter((cb) => cb !== fn));
     } else {
-      this.#callbacks.delete(event);
+      this.#events.delete(name);
     }
   }
 
+  /**
+   * Remove all registered events and subscriptions.
+   */
   removeAllListeners() {
-    this.#callbacks = new Map();
+    this.#events = new Map();
   }
 }

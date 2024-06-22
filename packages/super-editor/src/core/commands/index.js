@@ -1,7 +1,2 @@
-import { enter } from './enter.js';
-
-const Commands = {
-  enter,
-};
-
-export { Commands };
+export * from './enter.js';
+export * from './toggleMark.js';

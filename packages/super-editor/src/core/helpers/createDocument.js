@@ -1,4 +1,10 @@
-
+/**
+ * Creates the document to pass to EditorState.
+ * @param {*} converter SuperConverter instance.
+ * @param {*} schema Schema.
+ * @param {*} parseOptions Parse options (not used now).
+ * @returns Document.
+ */
 export function createDocument(
   converter,
   schema,

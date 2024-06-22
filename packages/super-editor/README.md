@@ -32,7 +32,5 @@ Note: This is very much an experimental / POC version of this file. I want to ma
 This util handles extracting a .docx file and returning a list of its xml files.
 It can also handle creating a new .docx file from updated xml files
 
-### src/core/schema/DocxSchema.js
-This file defines the prose mirror schema.
 
 * Need to add 'marks' for style tags. ie: ```<w:b>``` becomes a ```strong``` mark.
