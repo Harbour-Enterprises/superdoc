@@ -1,6 +1,7 @@
-export const enter = (state, dispatch) => {
+// TODO
+export const enter = () => ({ state, dispatch }) => {
   const { $from, $to } = state.selection;
-  
+
   // Check if selection is empty and within the same parent node
   if (!state.selection.empty || !$from.sameParent($to)) return false;
 
@@ -10,7 +11,7 @@ export const enter = (state, dispatch) => {
   const splitNode = (pos) => {
     if (dispatch) {
       const tr = state.tr.split(pos);
-      dispatch(tr.scrollIntoView());
+      tr.scrollIntoView()
     }
   };
 

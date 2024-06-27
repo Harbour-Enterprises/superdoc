@@ -417,7 +417,7 @@ export function testInputConversion() {
   //     const marks = run.marks;
 
   //     expect(marks).toHaveLength(1);
-  //     expect(marks[0].type).toBe('strong');
+  //     expect(marks[0].type).toBe('bold');
   //   });
 
   //   it('can parse em mark', () => {
@@ -441,7 +441,7 @@ export function testInputConversion() {
   //     const marks = run.marks;
 
   //     expect(marks).toHaveLength(2);
-  //     expect(marks[0].type).toBe('strong');
+  //     expect(marks[0].type).toBe('bold');
   //     expect(marks[1].type).toBe('em');
   //   });
 

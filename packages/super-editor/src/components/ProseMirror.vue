@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { Editor } from '@core/Editor';
+import { Editor } from '@core/index.js';
+import * as extensions from '@extensions/index.js';
 
 // The editor needs to be agnostic to the data source
 // It should be able to work with any DOCX, plain text, and HTML.
@@ -45,6 +46,7 @@ const initEditor = () => {
   const editor  = new Editor({
     element: editorElem.value,
     content: props.data,
+    extensions: Object.values(extensions),
     documentId: props.documentId,
     onCommentsLoaded,
   });
@@ -69,5 +71,4 @@ onMounted(() => {
   </div>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

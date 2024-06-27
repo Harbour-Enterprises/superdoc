@@ -1,8 +1,13 @@
+/**
+ * Creates style tag and append it to head.
+ * @param {*} style Style string.
+ * @param {*} suffix Suffix to add to data attribute (Optional).
+ */
 export function createStyleTag(style, suffix) {
-  const hrbrStyleTag = document.querySelector(`style[data-supereditor-style${suffix ? `-${suffix}` : ''}]`);
+  const styleTag = document.querySelector(`style[data-supereditor-style${suffix ? `-${suffix}` : ''}]`);
 
-  if (hrbrStyleTag !== null) {
-    return hrbrStyleTag;
+  if (styleTag !== null) {
+    return styleTag;
   }
 
   const styleNode = document.createElement('style');

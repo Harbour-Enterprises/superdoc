@@ -1,24 +1,20 @@
-import {
-  MarkType,
-  Node as ProseMirrorNode,
-  NodeType,
-  Schema,
-} from 'prosemirror-model';
-import {
-  EditorState, Plugin, PluginKey, Transaction,
-} from 'prosemirror-state';
+import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { history } from "prosemirror-history";
+import { history } from 'prosemirror-history';
 
-import { buildKeymap } from './shortcuts/buildKeymap.js';
-import { DocxSchema } from './schema/DocxSchema.js';
-import { SuperConverter } from './SuperConverter.js';
 import { EventEmitter } from './EventEmitter.js';
-import { initComments } from '@extensions/comments/comments.js';
+import { ExtensionService } from './ExtensionService.js';
+import { CommandService } from './CommandService.js';
+import { SuperConverter } from './SuperConverter.js';
+import { Commands, Keymap, Editable } from './extensions/index.js';
 import { createDocument } from './helpers/createDocument.js';
 import { createStyleTag } from './utilities/createStyleTag.js';
-import { style } from './style.js';
+import { initComments } from '@features/index.js';
+import { style } from './config/style.js';
 
+/**
+ * Editor main class.
+ */
 export class Editor extends EventEmitter {
   #commandService;
 
@@ -42,9 +38,6 @@ export class Editor extends EventEmitter {
     editorProps: {},
     parseOptions: {},
     coreExtensionOptions: {},
-    enableInputRules: true,
-    enablePasteRules: true,
-    enableCoreExtensions: true,
     onBeforeCreate: () => null,
     onCreate: () => null,
     onUpdate: () => null,
@@ -80,7 +73,7 @@ export class Editor extends EventEmitter {
     this.on('focus', this.options.onFocus);
     this.on('blur', this.options.onBlur);
     this.on('destroy', this.options.onDestroy);
-    this.on('comments-loaded', this.options.onCommentsLoaded);
+    this.on('commentsLoaded', this.options.onCommentsLoaded);
 
     this.#loadComments();
 
@@ -90,22 +83,45 @@ export class Editor extends EventEmitter {
     }, 0);
   }
 
+  /**
+   * Get the editor state.
+   */
   get state() {
     return this.view.state;
   }
 
-  get store() {
+  /**
+   * Get the editor storage.
+   */
+  get storage() {
     return this.extensionStorage;
   }
 
+  /**
+   * Get object of registered commands.
+   */
+  get commands() {
+    return this.#commandService.commands;
+  }
+
+  /**
+   * Check if the editor is editable.
+   */
   get isEditable() {
     return this.options.editable && this.view && this.view.editable;
   }
 
+  /**
+   * Check if editor is destroyed.
+   */
   get isDestroyed() {
-    return !this.view?.docView;
+    return this.view.isDestroyed;
   }
 
+  /**
+   * Set editor options and update state.
+   * @param options List of options.
+   */
   setOptions(options) {
     this.options = {
       ...this.options,
@@ -123,6 +139,11 @@ export class Editor extends EventEmitter {
     this.view.updateState(this.state);
   }
 
+  /**
+   * Updates editable state.
+   * @param editable Editable value.
+   * @param emitUpdate Emit 'update' event or not.
+   */
   setEditable(editable, emitUpdate = true) {
     this.setOptions({ editable });
 
@@ -131,6 +152,11 @@ export class Editor extends EventEmitter {
     }
   }
 
+  /**
+   * Register PM plugin.
+   * @param plugin PM plugin.
+   * @param handlePlugins Optional function for handling plugin merge.
+   */
   registerPlugin(plugin, handlePlugins) {
     const plugins = typeof handlePlugins === 'function' 
       ? handlePlugins(plugin, [...this.state.plugins])
@@ -141,7 +167,10 @@ export class Editor extends EventEmitter {
     this.view.updateState(state);
   }
 
-
+  /**
+   * Unregister PM plugin.
+   * @param nameOrPluginKey Plugin name.
+   */
   unregisterPlugin(nameOrPluginKey) {
     if (this.isDestroyed) {
       return;
@@ -158,16 +187,46 @@ export class Editor extends EventEmitter {
     this.view.updateState(state);
   }
 
+  /**
+   * Inject PM css styles.
+   */
   #injectCSS() {
     if (this.options.injectCSS && document) {
       this.#css = createStyleTag(style);
     }
   }
 
-  #createExtensionService() {}
+  /**
+   * Creates extension service.
+   */
+  #createExtensionService() {
+    const allowedExtensions = ['extension', 'node', 'mark'];
 
-  #createCommandService() {}
+    const coreExtensions = [
+      Editable,
+      Commands,
+      Keymap,
+    ];
+    const allExtensions = [
+      ...coreExtensions, 
+      ...this.options.extensions,
+    ].filter((e) => allowedExtensions.includes(e?.type));
 
+    this.extensionService = ExtensionService.create(allExtensions, this);
+  }
+
+  /**
+   * Creates a command service.
+   */
+  #createCommandService() {
+    this.#commandService = CommandService.create({
+      editor: this,
+    });
+  }
+
+  /**
+   * Creates a SuperConverter.
+   */
   #createConverter() {
     this.converter = new SuperConverter({ 
       docx: this.options.content, 
@@ -175,11 +234,16 @@ export class Editor extends EventEmitter {
     });
   }
 
-  // Build schema from extensions?
+  /**
+   * Creates PM schema.
+   */
   #createSchema() {
-    this.schema = DocxSchema;
+    this.schema = this.extensionService.schema;
   }
 
+  /**
+   * Creates PM View.
+   */
   #createView() {
     let doc;
 
@@ -196,8 +260,6 @@ export class Editor extends EventEmitter {
         editor: this,
         error: err,
       });
-
-      // Here we can try to create document again.
     }
 
     this.view = new EditorView(this.options.element, {
@@ -209,19 +271,22 @@ export class Editor extends EventEmitter {
     });
 
     const newState = this.state.reconfigure({
-      plugins: [ // Get plugins from extension service?
-        history(),
-        buildKeymap(),
+      plugins: [
+        history(), // TODO:Artem - Create history extension.
+        ...this.extensionService.plugins,
       ],
     });
-    this.view.updateState(newState);
 
-    // Create Node Views?
+    this.view.updateState(newState);
 
     const dom = this.view.dom;
     dom.editor = this;
   }
 
+  /**
+   * The callback which is used to intercept View transactions.
+   * @param {*} transaction State transaction.
+   */
   #dispatchTransaction(transaction) {
     if (this.view.isDestroyed) {
       return;
@@ -253,19 +318,28 @@ export class Editor extends EventEmitter {
     });
   }
 
+  /**
+   * Load the document comments.
+   */
   #loadComments() {
     const comments = initComments(
       this.view, 
       this.converter, 
       this.options.documentId,
     );
-    this.emit('comments-loaded', { comments });
+    this.emit('commentsLoaded', { comments });
   }
 
+  /**
+   * Get the document as JSON.
+   */
   getJSON() {
     return this.state.doc.toJSON();
   }
 
+  /**
+   * TODO: add description.
+   */
   save() {
     console.debug('EDITOR CLASS SAVE - TODO', this.state.doc.toJSON());
     // const converter = new SuperConverter();
@@ -275,6 +349,9 @@ export class Editor extends EventEmitter {
     console.debug('XML', xml);
   }
 
+  /**
+   * Destroy the editor.
+   */
   destroy() {
     this.emit('destroy');
     if (this.view) this.view.destroy();

@@ -1,6 +1,9 @@
 // https://github.com/ProseMirror/prosemirror-view/blob/master/style/prosemirror.css
 // https://github.com/ueberdosis/tiptap/blob/main/packages/core/src/style.ts
 
+/**
+ * Basic ProseMirror styles.
+ */
 export const style = `.ProseMirror {
   position: relative;
 }

@@ -28,10 +28,10 @@ export class SuperConverter {
   });
 
   static markTypes = Object.freeze({
-    'w:b': 'strong',
-    'w:i': 'em',
+    'w:b': 'bold',
+    'w:i': 'italic',
     'w:u': 'underline',
-    'w:strike': 'strikethrough',
+    'w:strike': 'strike',
   });
 
   static propertyTypes = Object.freeze({

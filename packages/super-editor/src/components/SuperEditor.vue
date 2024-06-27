@@ -1,8 +1,8 @@
 <script setup>
-import DocxZipper from '@core/DocxZipper';
+import { DocxZipper } from '@core/index.js';
 import { onMounted, ref } from 'vue';
 import ProseMirror from '@components/ProseMirror.vue'
-import { SuperConverter } from '@core/SuperConverter';
+import { SuperConverter } from '@core/index.js';
 
 const emit = defineEmits(['editor-ready', 'comments-loaded']);
 const props = defineProps({

@@ -60,7 +60,7 @@ export default {
               },
               "marks": [
                 {
-                  "type": "strong"
+                  "type": "bold"
                 }
               ]
             },
