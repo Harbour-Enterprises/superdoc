@@ -85,7 +85,7 @@ const DocxSchema = new Schema({
       group: "inline",
       attrs: {
         attributes: { default: {} },
-        type: { default: null },
+                type: { default: null },
       },
     },
   
@@ -123,7 +123,7 @@ const DocxSchema = new Schema({
   },
   marks: {
     strong: {
-      parseDOM: [
+            parseDOM: [
         { tag: "strong" },
         { tag: "b", getAttrs: (node) => node.style.fontWeight != "normal" && null },
         { style: "font-weight=400", clearMark: m => m.type.name == "strong" },
@@ -154,6 +154,24 @@ const DocxSchema = new Schema({
         { style: "text-decoration=auto", clearMark: m => m.type.name == "s" }
       ],
       toDOM() { return ["s", 0]; }
+    },
+    span: {
+      attrs: {
+        style: { default: "font-weight: normal;" },
+        attributes: { default: {} },
+      },
+      parseDOM: [
+        { tag: "span" },
+        { getAttrs: (node) => {
+          return {
+            style: node.style,
+            attributes: node.attributes,
+          }
+        } }
+      ],
+      toDOM(node) {
+        return ["span", node.attrs.attributes, 0];
+      }
     }
   }
 });
