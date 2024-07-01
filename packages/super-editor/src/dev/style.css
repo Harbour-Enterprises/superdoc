@@ -29,45 +29,88 @@ body, html {
   padding: .5em;
 }
 
-.super-editor .super-editor-toolbar .menuicon {
+.super-editor .super-editor-toolbar .button {
   margin: 0 .25em;
   cursor: pointer;
   /* padding: .5em 1em; */
   width: 25px;
   height: 25px;
-  border: solid 1px gainsboro;
   border-radius: 10%;
   background-color: white;
   position: relative;
 }
 
-.super-editor .super-editor-toolbar .menuicon span {
+.super-editor .super-editor-toolbar .button.option {
+  margin: 0;
+  cursor: pointer;
+  /* padding: .5em 1em; */
+  width: 100px;
+  height: 25px;
+  border: none;
+  border-top: solid 1px gainsboro;
+  /* border-bottom: solid 1px gainsboro; */
+  border-radius: 5%;
+  background-color: white;
+  position: relative;
+  font-size: .75em;
+}
+
+
+.super-editor .super-editor-toolbar .separator {
+  border-right: solid 1px lightgrey;
+  margin: 0 .5em;
+}
+
+.super-editor .super-editor-toolbar .button span {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
 }
 
-.super-editor .super-editor-toolbar .menuicon:hover {
+.super-editor .super-editor-toolbar .button:hover {
   background-color: #f0f0f0;  
 }
 
-.super-editor .super-editor-toolbar .menuicon.active {
+.super-editor .super-editor-toolbar .button.active {
   background-color: #d6d1d1;
 }
 
-.super-editor .super-editor-toolbar .menuicon.strong span {
+.super-editor .super-editor-toolbar .button.strong span {
   font-weight: bold;
 }
 
-.super-editor .super-editor-toolbar .menuicon.em span {
+.super-editor .super-editor-toolbar .button.em span {
   font-style: italic;
 }
 
-.super-editor .super-editor-toolbar .menuicon.underline span {
+.super-editor .super-editor-toolbar .button.underline span {
   text-decoration: underline;
 }
 
-.super-editor .super-editor-toolbar .menuicon.strikethrough span {
+.super-editor .super-editor-toolbar .button.strikethrough span {
   text-decoration: line-through;
 }
+
+.toolbar-dropdown-ctn {
+  cursor: pointer;
+  user-select: none;
+  width: 100px;
+}
+
+.toolbar-dropdown-ctn .toolbar-dropdown-trigger.active {
+  background-color: #d6d1d1;
+}
+
+.toolbar-dropdown-ctn .toolbar-dropdown-options {
+  display: none;
+  position: absolute;
+  z-index: 1;
+  background-color: white;
+  width: 100px;
+}
+
+.toolbar-dropdown-ctn .toolbar-dropdown-options.visible {
+  display: initial;
+}
+

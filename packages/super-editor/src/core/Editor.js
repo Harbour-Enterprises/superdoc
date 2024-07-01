@@ -203,18 +203,56 @@ export class Editor extends EventEmitter {
       }),
     });
 
-    const icon = (text, name, attrs = {}) => {
+    const createDropdown = (trigger, items, editorView) => {
+      const dropdownCtn = document.createElement("div")
+      dropdownCtn.className = "toolbar-dropdown-ctn";
+
+      const dropdownTrigger = document.createElement("div")
+      dropdownTrigger.className = "toolbar-dropdown-trigger";
+      dropdownTrigger.textContent = "Default"
+      dropdownCtn.appendChild(dropdownTrigger)
+
+      const dropdownOptions = document.createElement("div")
+      dropdownOptions.className = "toolbar-dropdown-options";
+      
+      items.forEach(item => {
+        const option = document.createElement("div")
+        option.className = "toolbar-dropdown-option";
+        option.appendChild(item.dom)
+        dropdownOptions.appendChild(option)
+        item.dom.addEventListener("click", e => {
+          e.stopPropagation()
+          item.command(editorView.state, editorView.dispatch, editorView)
+          dropdownOptions.classList.toggle("visible")
+        })
+      })
+      dropdownCtn.appendChild(dropdownOptions)
+
+      // add event listener to trigger
+      dropdownTrigger.addEventListener("click", e => {
+        console.log("click")
+        dropdownOptions.classList.toggle("visible")
+      })
+
+      return dropdownCtn
+    }
+
+    const separator = () => {
+      let separator = document.createElement("div")
+      separator.className = "separator"
+      return separator
+    }
+
+    const button = (innerContent, name, classes=[]) => {
       let button = document.createElement("div")
       let buttonInner = document.createElement("span")
-      buttonInner.textContent = text
+      buttonInner.textContent = innerContent
       button.appendChild(buttonInner)
-      button.className = "menuicon " + name
+      button.className = ["button", name, ...classes].join(" ")
       button.title = name
-      for (let key in attrs) {
-        button.setAttribute(key, attrs[key])
-      }
       return button
     }
+    
 
     const addToolbar = (items) => {
       return new Plugin({
@@ -222,42 +260,70 @@ export class Editor extends EventEmitter {
           const toolbar = document.createElement('div');
           toolbar.className = 'super-editor-toolbar';
           editorView.dom.parentNode.prepend(toolbar);
-          items.forEach(({command, dom}) => {
-            dom.style.cursor = "pointer"
-            dom.addEventListener("mousedown", e => {
-              e.preventDefault()
+          items.forEach((item) => {
+            if (item.type === 'dropdown') {
+              
+              const button = item.dom;
+              const options = item.options;
+              console.log("options", options)
 
-              // const mark = DocxSchema.marks.span.create({
-              //   attributes: {
-              //     style: "background-color: red;"
-              //   }
-              // });
-              // const range = editorView.state.selection.ranges[0];
-              // const frag = editorView.state.doc.cut(range.$from.pos, range.$to.pos)
-              // const content = frag.content.firstChild.textContent;
+              const dropdown = createDropdown(button, options, editorView)
 
-              // const textNode = editorView.state.schema.text(content, [mark]);
+              toolbar.appendChild(dropdown)
+              return;
+            }
 
-              // editorView.dispatch(
-              //   editorView.state.tr.replaceSelectionWith(textNode, false)
-              // );
+            if (item.type === 'separator') {
+              const sep = item.dom;
+              toolbar.appendChild(sep)
+              return;
+            }
 
-              command(editorView.state, editorView.dispatch, editorView)
-
-              editorView.focus()
-            })
-            toolbar.appendChild(dom)
+            if (item.type === 'button') {
+              const button = item.dom;
+              button.style.cursor = "pointer"
+              button.addEventListener("mousedown", e => {
+                e.preventDefault()
+                item.command(editorView.state, editorView.dispatch, editorView)
+                editorView.focus()
+              })
+              toolbar.appendChild(button)
+              return;
+            }
           })
 
           return {
             update(view) {
               const marks = view.state.selection.$head.marks();
+              const trigger = toolbar.querySelector(`.toolbar-dropdown-trigger`);
+              const colorBtn = toolbar.querySelector(`.color`);
+              // reset font dropdown
+              trigger.innerText = "Default";
+              trigger.classList.remove('active')
+
+              // reset color button
+              colorBtn.setAttribute("style", null)
+
               // get all buttons
-              const buttons = toolbar.querySelectorAll('.menuicon');
+              const buttons = toolbar.querySelectorAll('.button');
               // remove active class from all buttons
               buttons.forEach(button => button.classList.remove('active'));
               marks.forEach(mark => {
                 const name = mark.type.name;
+                if (name === "font") {
+                  const currentFont = mark.attrs.fontName;
+                  trigger.innerText = currentFont;
+                  trigger.classList.add('active')
+                  return;
+                }
+                if (name === "color") {
+                  const currentStyleArray = mark.attrs.attributes.style;
+                  const currentColorRule = currentStyleArray.find(i => i.startsWith("color"))
+                  if (currentColorRule) {
+                    colorBtn.setAttribute("style", currentColorRule)
+                  }
+                  return;
+                }
                 const button = toolbar.querySelector(`.${name}`);
                 if (button) {
                   button.classList.add('active');
@@ -269,13 +335,18 @@ export class Editor extends EventEmitter {
       });
     }
 
-    const setAttributes = (editorView, attrs) => {
+    const setAttributes = (editorView, attrs, _mark=null) => {
       return () => {
-      const mark = DocxSchema.marks.span.create({
+      const mark = _mark || DocxSchema.marks.span.create({
         attributes: {...attrs}
       });
       const range = editorView.state.selection.ranges[0];
-      const frag = editorView.state.doc.cut(range.$from.pos, range.$to.pos)
+
+      const fromPos = range.$from.pos;
+      const toPos = range.$to.pos;
+      if (fromPos === toPos) return;
+
+      const frag = editorView.state.doc.cut(fromPos, toPos)
       const firstChild = frag.content.firstChild || null;
       if (!firstChild) return;
 
@@ -287,19 +358,95 @@ export class Editor extends EventEmitter {
       );
       }
     }
+  
+    const makeFontItem = (editorView, fontFamily, buttonText=null) => {
+      const text = buttonText || fontFamily;
+      const attributeDict = {
+        fontName: fontFamily,
+        attributes: {
+          style: `font-family: ${fontFamily};`,
+          fontName: fontFamily
+        }
+      }
+      return {
+        type: "button", 
+        // command: setAttributes(editorView, {style: `font-family: ${fontFamily};`}), 
+        command: toggleMark(DocxSchema.marks.font, attributeDict), 
+        dom: button(text, text, ["option"])
+      }
+    }
+
+    const makeStyleAttrs = (styleDict) => {
+      const styleString = Object.entries(styleDict).map(([key, value]) => {return `${key}: ${value};`});
+      return {
+        attributes: {style: styleString}
+      }
+    }
 
     const items = [
-      {command: toggleMark(DocxSchema.marks.strong, {style: "background-color: red;"}), dom: icon("B", "strong")},
-      {command: toggleMark(DocxSchema.marks.em), dom: icon("i", "em")},
-      {command: toggleMark(DocxSchema.marks.underline), dom: icon("u", "underline")},
-      {command: setAttributes(this.view, {style: "background-color: red;"}), dom: icon("f1", "font1")},
-      {command: setAttributes(this.view, {style: "background-color: green;"}), dom: icon("f2", "font1")},
-      {command: toggleMark(DocxSchema.marks.strikethrough), dom: icon("s", "strikethrough")},
+      // font
+      {type: "dropdown", options: [
+        // {type: "button", command: setAttributes(this.view, {style: "font-family: courier;"}), dom: button("Courier", "font1", ["option"])},
+        makeFontItem(this.view, "Courier"),
+        makeFontItem(this.view, "Serif"),
+        makeFontItem(this.view, "Sans-serif"),
 
-      // {command: setBlockType(schema.nodes.paragraph), dom: icon("p", "paragraph")},
-      // heading(1), heading(2), heading(3),
-      // {command: wrapIn(schema.nodes.blockquote), dom: icon(">", "blockquote")}
+      ], dom: button("A", "font")},
+
+      // separator
+      {type: "separator", dom: separator()},
+
+      // font size
+      {type: "button", command: toggleMark(DocxSchema.marks.span, makeStyleAttrs({"font-size": "2em"})), dom: button("+", "increase-size")},
+      {type: "button", command: toggleMark(DocxSchema.marks.span, makeStyleAttrs({"font-size": ".5em"})), dom: button("-", "decrease-size")},
+
+      // separator
+      {type: "separator", dom: separator()},
+
+      // bold
+      {type: "button", command: toggleMark(DocxSchema.marks.strong), dom: button("B", "strong")},
+
+      // italic
+      {type: "button", command: toggleMark(DocxSchema.marks.em), dom: button("i", "em")},
+
+      // underline
+      {type: "button", command: toggleMark(DocxSchema.marks.underline), dom: button("u", "underline")},
+
+      // text color
+      // TODO
+      {type: "button", command: toggleMark(DocxSchema.marks.color, makeStyleAttrs({color: "blue"})), dom: button("A", "color")},
+
+      // separator
+      {type: "separator", dom: separator()},
+
+      // link
+      // {type: "button", command: setAttributes(this.view, {href: "google.com"}, DocxSchema.marks.anchor), dom: button("link", "color")},
+      {type: "button", command: toggleMark(DocxSchema.marks.anchor, {attributes: {href: 'https://google.com'}}), dom: button("link", "color")},
+      
+      // image
+      {type: "button", command: toggleMark(DocxSchema.marks.em), dom: button("img", "color")},
+
+      // separator  
+      {type: "separator", dom: separator()},
+
+      // paragraph
+
+      // bullet list
+
+      // ordered list
+
+      // decrease indent
+
+      // increase indent
+
+      // overflow
+
+      // suggesting
+
+      // {type: "button", command: toggleMark(DocxSchema.marks.strikethrough), dom: button("s", "strikethrough")},
+
     ]
+
 
     const newState = this.state.reconfigure({
       plugins: [ // Get plugins from extension service?

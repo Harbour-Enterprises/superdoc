@@ -172,7 +172,62 @@ const DocxSchema = new Schema({
       toDOM(node) {
         return ["span", node.attrs.attributes, 0];
       }
-    }
+    },
+    font: {
+      attrs: {
+        style: { default: "font-weight: normal;" },
+        fontName: { default: "Font" },
+        attributes: { default: {} },
+      },
+      parseDOM: [
+        { tag: "span" },
+        { getAttrs: (node) => {
+          return {
+            style: node.style,
+            attributes: node.attributes,
+          }
+        } }
+      ],
+      toDOM(node) {
+        return ["span", node.attrs.attributes, 0];
+      }
+    },
+    color: {
+      attrs: {
+        style: { default: null },
+        attributes: { default: {} },
+      },
+      parseDOM: [
+        { tag: "span" },
+        { getAttrs: (node) => {
+          return {
+            style: node.style,
+            attributes: node.attributes,
+          }
+        } }
+      ],
+      toDOM(node) {
+        return ["span", node.attrs.attributes, 0];
+      }
+    },
+    anchor: {
+      attrs: {
+        href: { default: null },
+        attributes: { default: {} },
+      },
+      inclusive: false,
+      parseDOM: [
+        { tag: "a", getAttrs: (node) => {
+          return {
+            href: node.getAttribute("href"),
+            attributes: node.attributes,
+          }
+        } }
+      ],
+      toDOM(node) {
+        return ["a", node.attrs.attributes, 0];
+      }
+    },
   }
 });
 
