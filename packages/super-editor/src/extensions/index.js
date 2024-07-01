@@ -1,4 +1,5 @@
 // Extensions
+export { ToolbarMenu } from './toolbar-menu/index.js';
 
 // Nodes extensions
 export { Document } from './document/index.js';
