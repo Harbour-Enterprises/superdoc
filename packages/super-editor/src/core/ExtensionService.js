@@ -1,6 +1,7 @@
 
 import { keymap } from 'prosemirror-keymap';
 import { Schema } from './Schema.js';
+import { Attribute } from './Attribute.js';
 import { getExtensionConfigField } from './helpers/getExtensionConfigField.js';
 import { getSchemaTypeByName } from './helpers/getSchemaTypeByName.js'
 
@@ -140,7 +141,7 @@ export class ExtensionService {
    * @returns Array of attributes.
    */
   get attributes() {
-    return Schema.getAttributesFromExtensions(this.extensions);
+    return Attribute.getAttributesFromExtensions(this.extensions);
   }
 
   /**
