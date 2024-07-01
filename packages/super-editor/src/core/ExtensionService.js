@@ -85,7 +85,7 @@ export class ExtensionService {
   }
 
   /**
-   * TODO: Add input and paste rules.
+   * TODO:Artem Add input and paste rules.
    * 
    * Get all PM plugins defined in the extensions.
    * And also keyboard shortcuts.

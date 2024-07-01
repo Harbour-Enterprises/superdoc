@@ -1,4 +1,5 @@
 // Extensions
+export { History } from './history/history.js';
 
 // Nodes extensions
 export { Document } from './document/index.js';

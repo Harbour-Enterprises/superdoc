@@ -1,4 +1,5 @@
-// TODO
+// TODO: Need to handle "enter" command properly.
+
 export const enter = () => ({ state, dispatch }) => {
   const { $from, $to } = state.selection;
 
