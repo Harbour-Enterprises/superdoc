@@ -1,9 +1,8 @@
 import { Schema as PmSchema } from 'prosemirror-model';
+import { Attribute } from './Attribute.js';
 import { getExtensionConfigField } from './helpers/getExtensionConfigField.js';
 import { cleanSchemaItem } from './helpers/cleanSchemaItem.js';
 import { callOrGet } from './utilities/callOrGet.js';
-
-// TODO:Artem - Add support for attributes.
 
 /**
  * Schema class is used to create and work with schema. 
@@ -23,7 +22,7 @@ export class Schema {
     };
     const topNode = nodeExtensions.find((e) => getExtensionConfigField(e, 'topNode'))?.name;
 
-    const attributes = Schema.getAttributesFromExtensions(extensions);
+    const attributes = Attribute.getAttributesFromExtensions(extensions);
     const nodes = Schema.#createNodesSchema(nodeExtensions, attributes, editor);
     const marks = Schema.#createMarksSchema(markExtensions, attributes, editor);
     const schema = { topNode, nodes, marks };
@@ -62,11 +61,17 @@ export class Schema {
 
       const parseDOM = callOrGet(getExtensionConfigField(extension, 'parseDOM', context));
       if (parseDOM) {
-        schema.parseDOM = parseDOM;
+        schema.parseDOM = parseDOM.map((parseRule) => {
+          return Attribute.insertExtensionAttrsToParseRule(parseRule, extensionAttributes);
+        });
       }
+
       const renderDOM = getExtensionConfigField(extension, 'renderDOM', context);
       if (renderDOM) {
-        schema.toDOM = (node) => renderDOM({ node });
+        schema.toDOM = (node) => renderDOM({ 
+          node,
+          htmlAttributes: Attribute.getAttributesToRender(node, extensionAttributes), 
+        });
       }
 
       return [extension.name, schema];
@@ -102,11 +107,16 @@ export class Schema {
 
       const parseDOM = callOrGet(getExtensionConfigField(extension, 'parseDOM', context));
       if (parseDOM) {
-        schema.parseDOM = parseDOM;
+        schema.parseDOM = parseDOM.map((parseRule) => {
+          return Attribute.insertExtensionAttrsToParseRule(parseRule, extensionAttributes);
+        });
       }
       const renderDOM = getExtensionConfigField(extension, 'renderDOM', context);
       if (renderDOM) {
-        schema.toDOM = (mark) => renderDOM({ mark });
+        schema.toDOM = (mark) => renderDOM({ 
+          mark,
+          htmlAttributes: Attribute.getAttributesToRender(mark, extensionAttributes),  
+        });
       }
 
       return [extension.name, schema];
@@ -114,116 +124,6 @@ export class Schema {
 
     const marks = Object.fromEntries(markEntries);
     return marks;
-  }
-
-  /**
-   * Get a list of all attributes defined in the extensions.
-   * @param extensions List of all extensions.
-   * @returns Extension attributes.
-   */
-  static getAttributesFromExtensions(extensions) {
-    const extensionAttributes = [];
-    const defaultAttribute = {
-      default: null,
-      rendered: true,
-      renderDOM: null,
-      parseDOM: null,
-    };
-    
-    const globalAttributes = Schema.#getGlobalAttributes(extensions, defaultAttribute);
-    const nodeAndMarksAttributes = Schema.#getNodeAndMarksAttributes(extensions, defaultAttribute);
-
-    extensionAttributes.push(
-      ...globalAttributes, 
-      ...nodeAndMarksAttributes
-    );
-
-    return extensionAttributes;
-  }
-
-  /**
-   * Get a list of global attributes defined in the extensions.
-   * @param extensions List of all extensions.
-   * @param defaultAttribute Default attribute.
-   * @returns Global extension attributes.
-   */
-  static #getGlobalAttributes(extensions, defaultAttribute) {
-    const extensionAttributes = [];
-
-    for (const extension of extensions) {
-      const context = createExtensionContext(extension);
-      const addGlobalAttributes = getExtensionConfigField(
-        extension, 
-        'addGlobalAttributes', 
-        context,
-      );
-
-      if (!addGlobalAttributes) continue;
-
-      const globalAttributes = addGlobalAttributes();
-
-      for (const globalAttr of globalAttributes) {
-        for (const type of globalAttr.types) {
-          const entries = Object.entries(globalAttr.attributes);
-          for (const [name, attribute] of entries) {
-            extensionAttributes.push({
-              type, 
-              name,
-              attribute: {
-                ...defaultAttribute,
-                ...attribute,
-              },
-            });
-          }
-        }
-      }
-    }
-
-    return extensionAttributes;
-  }
-
-  /**
-   * Get a list of attributes defined in the Node and Mark extensions.
-   * @param {*} extensions List of all extensions.
-   * @param {*} defaultAttribute Default attribute.
-   * @returns Node and Mark extension attributes.
-   */
-  static #getNodeAndMarksAttributes(extensions, defaultAttribute) {
-    const extensionAttributes = [];
-    const nodeAndMarkExtensions = extensions.filter((e) => {
-      return e.type === 'node' || e.type === 'mark';
-    });
-    
-    for (const extension of nodeAndMarkExtensions) {
-      const context = createExtensionContext(extension);
-      const addAttributes = getExtensionConfigField(
-        extension, 
-        'addAttributes', 
-        context,
-      );
-
-      if (!addAttributes) continue;
-
-      const attributes = addAttributes();
-      for (const [name, attribute] of Object.entries(attributes)) {
-        const merged = {
-          ...defaultAttribute,
-          ...attribute,
-        };
-
-        if (typeof merged.default === 'function') {
-          merged.default = merged.default();
-        }
-
-        extensionAttributes.push({
-          type: extension.name,
-          name,
-          attribute: merged,
-        });
-      }
-    }
-
-    return extensionAttributes;
   }
 }
 

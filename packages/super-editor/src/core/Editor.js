@@ -1,6 +1,5 @@
 import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { history } from 'prosemirror-history';
 
 import { EventEmitter } from './EventEmitter.js';
 import { ExtensionService } from './ExtensionService.js';
@@ -271,10 +270,7 @@ export class Editor extends EventEmitter {
     });
 
     const newState = this.state.reconfigure({
-      plugins: [
-        history(), // TODO:Artem - Create history extension.
-        ...this.extensionService.plugins,
-      ],
+      plugins: this.extensionService.plugins,
     });
 
     this.view.updateState(newState);
