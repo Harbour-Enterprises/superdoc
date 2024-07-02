@@ -97,7 +97,8 @@ const initComments = (editorView, converter, documentId) => {
   // Load comments from the schema
   doc.descendants((node, pos) => {
     if (node.type.name === 'commentRangeStart') {
-      const id = parseInt(node.attrs.attributes['w:id']);
+      if (!node.attrs?.attributes || !('w:id' in node.attrs.attributes)) return
+      const id = parseInt(node?.attrs?.attributes['w:id']);
       const coords = editorView.coordsAtPos(pos);
       const parentThread = getParentCommentId(id);
       const comment = getComment(id);
@@ -109,7 +110,8 @@ const initComments = (editorView, converter, documentId) => {
         comment,
       });
     } else if (node.type.name === 'commentRangeEnd') {
-      const id = parseInt(node.attrs.attributes['w:id']);
+      if (!node.attrs?.attributes || !('w:id' in node.attrs.attributes)) return
+      const id = parseInt(node?.attrs?.attributes['w:id']);
       const match = comments.find(item => item.id === id);
       const coords = editorView.coordsAtPos(pos);
       match.end = coords;

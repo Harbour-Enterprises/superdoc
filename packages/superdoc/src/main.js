@@ -38,11 +38,11 @@ const initializeApp = async () => {
       // }
     ],
     modules: {
-      'comments': {
-        // readOnly: true,
-        // allowResolve: false,
-      },
-      'hrbr-fields': {},
+      // 'comments': {
+      //   // readOnly: true,
+      //   // allowResolve: false,
+      // },
+      // 'hrbr-fields': {},
     }
   }
   new Superdoc(config);

@@ -1,4 +1,4 @@
-import Superdoc from 'https://unpkg.com/@harbour-enterprises/superdoc@1.0.0-alpha.26/dist/superdoc.es.js'
+import Superdoc from 'https://unpkg.com/@harbour-enterprises/superdoc@1.0.0-alpha.27/dist/superdoc.es.js'
 
 const updateFileName = (name) => {
   const nameParts = name.split('.');

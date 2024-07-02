@@ -255,7 +255,7 @@ export class SuperConverter {
     const parsedListItems = [];
     let overallListType;
 
-    for (let item of listItems) {
+    for (let [index, item] of listItems.entries()) {
       if (item.seen) continue;
 
       const { attributes, elements, marks = [] } = this._parseProperties(item);
@@ -267,17 +267,12 @@ export class SuperConverter {
       if (listLevel > intLevel) continue;
 
       const content = [];
+      const sublist = {};
 
       // If we have found a new indentation level, we will go a level deeper and call this function again,
       // The result becomes the content of the current list item.
       if (listLevel < intLevel) {
-        const sublist = this.#handleListNode(item, listItems, listLevel + 1);
-
-        // TODO: We append here to content if we want to keep the structure as: <ol><li><ul><li>...</li></ul></li>
-        content.push(sublist);
-
-        // TODO: But we can also make it: <ul><li></li><ul><li></li></ul></ul>
-        // parsedListItems.push(sublist);
+        Object.assign(sublist, this.#handleListNode(item, listItems, listLevel + 1));
       } 
       
       // Standard processing: we parse the element and add it to the content
@@ -292,7 +287,15 @@ export class SuperConverter {
           if (schemaNode) content.push(schemaNode);
         }
       }
-      parsedListItems.push(this.#createListItem(content, attributes, marks));
+
+      // If we have a sublist, then insert it into the previous node's content
+      // Otherwise, create a new list item node.
+      if (Object.keys(sublist).length) {
+        const item = parsedListItems[index - 1]
+        item?.content.push(sublist);
+      } else {
+        parsedListItems.push(this.#createListItem(content, attributes, marks));
+      }
     }
 
     node.seen = true;
