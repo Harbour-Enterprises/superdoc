@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <script>
+        const process = {
+          env: {}
+        };
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SuperDoc</title>
+    <script src=" https://unpkg.com/@harbour-enterprises/superdoc@1.0.0-alpha.25" type="module"></script>
+    <script src="https://kit.fontawesome.com/c76a46cfde.js"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦋️</text></svg>">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+
+    <!-- demo header -->
+    <header>
+
+        <!-- document logo -->
+        <div class="header-item header-item-logo" onclick="window.location.reload()">
+            <i id="header-item-logo-icon" class="fa-duotone fa-file-pen" aria-hidden="true"></i>
+        </div>
+
+        <!-- document title -->
+        <div class="header-item header-item-title">
+            <span id="header-item-title-text" contenteditable="true" onclick="document.execCommand('selectAll',false,null)">
+                Sample document
+            </span>
+        </div>
+
+        <!-- document cloud save -->
+        <div class="header-item header-item-cloudsave">
+            <span title="Saved to cloud">
+                <i class="fa-light fa-cloud-check"></i>
+            </span>
+        </div>
+
+        <!-- document co-presence -->
+        <div class="header-item header-item-grow">
+            <div class="header-item-copresence">
+                <div class="header-item-copresence-profile">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="header-item-copresence-profile">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="header-item-copresence-profile">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- document upload button -->
+        <div class="header-item">
+            <div class="header-item-button header-item-button-primary" onClick="handleFileUpload()">
+              <input type="file" style="display: none" id="fileUpload" onChange="handleFileSelected(event)" accept=".docx" />
+                Upload file
+            </div>
+        </div>
+
+    </header>
+
+    <!-- SuperDoc toolbar controls -->
+    <section>
+        <div id="superdoc-controls">
+            <div id="superdoc-controls-bar">
+                <div class="superdoc-controls-bar-item superdoc-controls-bar-item-mobileoptional superdoc-floatingcontrol-bar-item-editable">
+                    <div class="toolbar-editable">
+                        <span>80%</span>
+                        <i class="fa-solid fa-triangle toolbar-editable-icon"></i>
+                    </div>
+                </div>
+                <div class="superdoc-controls-bar-item superdoc-controls-bar-item-mobileoptional superdoc-floatingcontrol-bar-item-editable-slim"><i class="fa-regular fa-undo"></i></div>
+                <div class="superdoc-controls-bar-item superdoc-controls-bar-item-mobileoptional superdoc-floatingcontrol-bar-item-editable-slim"><i class="fa-regular fa-redo"></i></div>
+                <div class="superdoc-controls-bar-item superdoc-controls-bar-item-separator">|</div>
+                <div class="superdoc-controls-bar-item superdoc-controls-bar-item-mobileoptional superdoc-floatingcontrol-bar-item-editable">
+                    <div class="toolbar-editable">
+                        <span>Arial</span>
+                        <i class="fa-solid fa-triangle toolbar-editable-icon"></i>
+                    </div>
+                </div>
+                <div class="superdoc-controls-bar-item superdoc-controls-bar-item-mobileoptional superdoc-floatingcontrol-bar-item-editable">
+                    <div class="toolbar-editable">
+                        <span>11px</span>
+                        <i class="fa-solid fa-triangle toolbar-editable-icon"></i>
+                    </div>
+                </div>
+                <div class="superdoc-controls-bar-item"><i class="fa-regular fa-bold"></i></div>
+                <div class="superdoc-controls-bar-item"><i class="fa-regular fa-italic"></i></div>
+                <div class="superdoc-controls-bar-item superdoc-controls-bar-item-mobileoptional"><i class="fa-regular fa-underline"></i></div>
+                <div class="superdoc-controls-bar-item superdoc-controls-bar-item-mobileoptional"><i class="fa-regular fa-palette"></i></div>
+                <div class="superdoc-controls-bar-item superdoc-controls-bar-item-separator">|</div>
+                <div class="superdoc-controls-bar-item superdoc-controls-bar-item-mobileoptional"><i class="fa-regular fa-link-simple"></i></div>
+                <div class="superdoc-controls-bar-item superdoc-controls-bar-item-mobileoptional"><i class="fa-regular fa-image"></i></div>
+                <div class="superdoc-controls-bar-item superdoc-controls-bar-item-separator">|</div>
+                <div class="superdoc-controls-bar-item superdoc-controls-bar-item-mobileoptional"><i class="fa-regular fa-align-left"></i></div>
+                <div class="superdoc-controls-bar-item superdoc-controls-bar-item-mobileoptional"><i class="fa-regular fa-list-ul"></i></div>
+                <div class="superdoc-controls-bar-item superdoc-controls-bar-item-mobileoptional"><i class="fa-regular fa-list-ol"></i></div>
+                <div class="superdoc-controls-bar-item"><i class="fa-regular fa-indent"></i></div>
+                <div class="superdoc-controls-bar-item"><i class="fa-regular fa-outdent"></i></div>
+                <div class="superdoc-controls-bar-item superdoc-controls-bar-item-separator">|</div>
+                <div class="superdoc-controls-bar-item"><i class="fa-regular fa-magnifying-glass"></i></div>
+                <div class="superdoc-controls-bar-item superdoc-controls-bar-item-overflow"><i class="fa-regular fa-ellipsis-vertical"></i></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SuperDoc floating controls -->
+    <div class="superdoc-floatingcontrol superdoc-floatingcontrol-fields" onclick="document.querySelector('.superdoc-sidepanel-left').style.transform = 'translateX(0%)'">
+        <div>
+            <i class="fa-regular fa-signature"></i>
+            <span class="superdoc-floatingcontrol-fields-label">
+                Add fields
+            </span>
+        </div>
+    </div>
+    <div class="superdoc-floatingcontrol superdoc-floatingcontrol-bar" onclick="document.querySelector('.superdoc-sidepanel-right').style.transform = 'translateX(0%)'">
+        <div class="superdoc-floatingcontrol-bar-item">
+            <i class="fa-regular fa-comment"></i>
+        </div>
+        <div class="superdoc-floatingcontrol-bar-item">
+            <i class="fa-regular fa-gear"></i>
+        </div>
+        <div class="superdoc-floatingcontrol-bar-item">
+            <i class="fa-regular fa-clock-rotate-left"></i>
+        </div>
+    </div>
+
+    <!-- SuperDoc document -->
+    <section>
+        <div class="superdoc-container">
+          <div id="superdoc-document">
+            <div id="superdoc-document-pages">
+              <div id="superdoc" class="superdoc-document-page"></div>
+              </div>
+          </div>
+        </div>
+    </section>
+
+    <!-- SuperDoc sidepanel left (place fields) -->
+    <aside class="superdoc-sidepanel superdoc-sidepanel-left" onclick="document.querySelector('.superdoc-sidepanel-left').style.transform = 'translateX(-100%)'">
+        <div class="superdoc-sidepanel-header">
+            <i class="fa-solid fa-signature superdoc-sidepanel-header-icon"></i>
+            <span>Add fields</span>
+            <div class="superdoc-sidepanel-header-close">
+                <i class="fa-light fa-xmark"></i>
+            </div>
+        </div>
+    </aside>
+
+    <!-- SuperDoc sidepanel right (comments, settings, revision history) -->
+    <aside class="superdoc-sidepanel superdoc-sidepanel-right" onclick="document.querySelector('.superdoc-sidepanel-right').style.transform = 'translateX(200%)'">
+        <div class="superdoc-sidepanel-header">
+            <i class="fa-light fa-comment superdoc-sidepanel-header-icon"></i>
+            <span>Comments</span>
+            <div class="superdoc-sidepanel-header-close">
+                <i class="fa-light fa-xmark"></i>
+            </div>
+        </div>
+    </aside>
+</body>
+<script type="module" src="app.js"></script>
