@@ -5,7 +5,7 @@ import { EventEmitter } from './EventEmitter.js';
 import { ExtensionService } from './ExtensionService.js';
 import { CommandService } from './CommandService.js';
 import { SuperConverter } from './SuperConverter.js';
-import { Commands, Keymap, Editable } from './extensions/index.js';
+import { Commands, Keymap, Editable, EditorFocus } from './extensions/index.js';
 import { createDocument } from './helpers/createDocument.js';
 import { createStyleTag } from './utilities/createStyleTag.js';
 import { initComments } from '@features/index.js';
@@ -24,6 +24,8 @@ export class Editor extends EventEmitter {
   schema;
 
   view;
+
+  isFocused = false;
 
   #css;
 
@@ -204,6 +206,7 @@ export class Editor extends EventEmitter {
     const coreExtensions = [
       Editable,
       Commands,
+      EditorFocus,
       Keymap,
     ];
     const allExtensions = [
@@ -302,6 +305,23 @@ export class Editor extends EventEmitter {
         editor: this,
         transaction
       });
+    }
+
+    const focus = transaction.getMeta('focus');
+    if (focus) {
+      this.emit('focus', {
+        editor: this,
+        event: focus.event,
+        transaction,
+      })
+    }
+    const blur = transaction.getMeta('blur');
+    if (blur) {
+      this.emit('blur', {
+        editor: this,
+        event: blur.event,
+        transaction,
+      })
     }
 
     if (!transaction.docChanged) {

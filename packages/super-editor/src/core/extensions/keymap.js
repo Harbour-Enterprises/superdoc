@@ -1,6 +1,6 @@
 import { Extension } from '../Extension.js';
 
-// TODO:Artem - Need to create Keymap extension from scratch.
+// TODO:Artem - Need to handle keymap properly.
 
 export const Keymap = Extension.create({
   name: 'keymap',
