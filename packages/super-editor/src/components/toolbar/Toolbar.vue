@@ -1,12 +1,19 @@
 <script setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { ref } from 'vue';
 import ToolbarButton from './ToolbarButton.vue';
 
+/**
+ * The toolbar should be completly decoupled from the editor.
+ * It shouldn't be dependant on Editor.js or vice-versa.
+ * One toolbar should work for many editors.
+*/
+
 const emit = defineEmits(['command']);
-const toolbarItems = [
-  { type: 'button', command: 'toggleBold', icon: 'fa fa-bold' },
-  { type: 'button', command: 'toggleItalic', icon: 'fa fa-italic' },
-]
+const toolbarItems = ref([
+  { type: 'button', name: 'bold', command: 'toggleBold', icon: 'fa fa-bold', active: false },
+  { type: 'button', name: 'italic', command: 'toggleItalic', icon: 'fa fa-italic', active: false },
+])
 
 const isButton = (item) => item.type === 'button';
 
@@ -15,6 +22,20 @@ const handleCommand = (command) => {
   emit('command', command);
 }
 
+const onSelectionChange = ({ editor, transaction }) => {
+  const { selection } = editor.view.state;
+  const marks = selection.$head.marks();
+
+  toolbarItems.value.forEach((item) => {
+    const hasActiveMark = marks.find((mark) => mark.type.name === item.name);
+    if (hasActiveMark) item.active = true;
+    else item.active = false;
+  });
+}
+
+defineExpose({
+  onSelectionChange
+});
 </script>
 
 <template>
@@ -24,41 +45,16 @@ const handleCommand = (command) => {
       <!-- Toolbar button -->
       <ToolbarButton
           v-if="isButton" :command="item.command"
+          :active="item.active"
           @command="handleCommand">
           <font-awesome-icon :icon="item.icon" />
       </ToolbarButton>
-      
+
     </div>
   </div>
 </template>
 
 <style scoped>
-.toolbar-button {
-  height: 32px;
-  padding-left: 12px;
-  padding-right: 12px;
-  border-radius: 6px;
-  margin-top: 3.5px;
-  margin-bottom: 4px;
-  text-overflow: ellipsis;
-  overflow-y: visible;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #47484a;
-  transition: all 0.2s ease-out;
-  user-select: none;
-  overflow: hidden;
-}
-.toolbar-button:hover {
-  color: black;
-  background-color: #d8dee5;
-}
-.toolbar-button:active {
-  background-color: #c8d0d8;
-}
-
 .toolbar {
   width: 100%;
   height: 39px;

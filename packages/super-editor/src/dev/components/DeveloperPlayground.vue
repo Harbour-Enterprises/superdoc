@@ -18,6 +18,7 @@ import sampleDocxUrl from '../../tests/fixtures/sample/sample.docx?url';
 
 let activeEditor = null;
 
+const toolbar = ref(null);
 const currentFile = ref(null);
 const handleNewFile = (file) => {
   currentFile.value = null;
@@ -40,6 +41,7 @@ const handleToolbarCommand = (command) => {
 const handleSelectionUpdate = ({ editor, transaction }) => {
   console.debug('[SuperEditor dev] Selection update');
   activeEditor = editor;
+  toolbar.value.onSelectionChange({ editor, transaction })
 }
 </script>
 
@@ -62,7 +64,7 @@ const handleSelectionUpdate = ({ editor, transaction }) => {
     </div>
     <div class="content" v-if="currentFile">
 
-      <Toolbar @command="handleToolbarCommand" />
+      <Toolbar @command="handleToolbarCommand" ref="toolbar" />
 
       <!-- SuperEditor expects its data to be a URL -->
       <SuperEditor
