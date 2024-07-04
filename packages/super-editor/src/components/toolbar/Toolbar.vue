@@ -20,17 +20,15 @@ const handleCommand = (command) => {
 <template>
   <div class="toolbar">
     <div v-for="item, index in toolbarItems" :key="index">
+
+      <!-- Toolbar button -->
       <ToolbarButton
           v-if="isButton" :command="item.command"
           @command="handleCommand">
           <font-awesome-icon :icon="item.icon" />
       </ToolbarButton>
+      
     </div>
-      <!-- <ToolbarButton :button-type="item.command">
-        <font-awesome-icon :icon="item.icon" />
-      </ToolbarButton>
-    <ToolbarButton :button-type="bold"><font-awesome-icon icon="fa fa-bold" /></ToolbarButton>
-    <ToolbarButton :button-type="bold"><font-awesome-icon icon="fa fa-italic" /></ToolbarButton> -->
   </div>
 </template>
 
