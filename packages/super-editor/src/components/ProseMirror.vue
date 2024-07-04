@@ -16,7 +16,11 @@ import * as extensions from '@extensions/index.js';
 // DOCX
 // We will need all relevant data passed in. This includes multiple files from the docx zip.
 
-const emit = defineEmits(['editor-ready', 'comments-loaded']);
+const emit = defineEmits([
+  'editor-ready',
+  'comments-loaded',
+  'selection-update'
+]);
 
 const props = defineProps({
   mode: {
@@ -42,6 +46,10 @@ const onCommentsLoaded = ({ comments }) => {
   emit('comments-loaded', comments);
 };
 
+const onSelectionUpdate = ({ editor, transaction }) => {
+  emit('selection-update', { editor, transaction });
+};
+
 const initEditor = () => {
   const editor  = new Editor({
     element: editorElem.value,
@@ -49,6 +57,7 @@ const initEditor = () => {
     extensions: Object.values(extensions),
     documentId: props.documentId,
     onCommentsLoaded,
+    onSelectionUpdate,
   });
 
   editor.on('create', ({ editor }) => {

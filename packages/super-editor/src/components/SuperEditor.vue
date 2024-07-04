@@ -4,7 +4,7 @@ import { onMounted, ref } from 'vue';
 import ProseMirror from '@components/ProseMirror.vue'
 import { SuperConverter } from '@core/index.js';
 
-const emit = defineEmits(['editor-ready', 'comments-loaded']);
+const emit = defineEmits(['editor-ready', 'comments-loaded', 'selection-update']);
 const props = defineProps({
   mode: {
     type: String,
@@ -65,6 +65,9 @@ const dataReady = (id, editor) => {
   emit('editor-ready', id, editor);
 }
 
+const handleSelectionUpdated = ({ editor, transaction }) => {
+  emit('selection-update', { editor, transaction });
+}
 </script>
 
 <template>
@@ -73,6 +76,7 @@ const dataReady = (id, editor) => {
         :mode="mode"
         :data="xmlFiles"
         :documentId="documentId"
+        @selection-update="handleSelectionUpdated"
         @editor-ready="dataReady"
         @comments-loaded="handleCommentsReady" />
   </div>

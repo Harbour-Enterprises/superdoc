@@ -19,6 +19,7 @@ import useConversation from './components/CommentsLayer/use-conversation';
 // Stores
 const superdocStore = useSuperdocStore();
 const commentsStore = useCommentsStore();
+const emit = defineEmits(['selection-update']);
 
 const {
   documents,
@@ -169,6 +170,9 @@ const handleEditorReady = (id, editor) => {
   const doc = getDocument(id);
   doc.core = editor;
 }
+const handleSelectionUpdated = (params) => {
+  proxy.$superdoc.onSelectionUpdate(params);
+}
 </script>
 
 <template>
@@ -225,6 +229,7 @@ const handleEditorReady = (id, editor) => {
               :data-url="doc.data"
               :document-id="doc.id"
               @editor-ready="handleEditorReady"
+              @selection-update="handleSelectionUpdated"
               @comments-loaded="receiveDocxComments($event, doc)" />
 
         </div>

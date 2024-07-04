@@ -31,6 +31,7 @@ export default class Superdoc extends EventEmitter {
     this.superdocStore = superdocStore;
 
     this.superdocStore.init(config);
+    this.activeEditor = null;
 
     // Directives
     this.app.mount(config.selector);
@@ -39,6 +40,11 @@ export default class Superdoc extends EventEmitter {
   broadcastComments(type, data) {
     console.debug('[comments] Broadcasting:', type, data);
     this.emit('comments-update', type, data);
+  }
+
+  onSelectionUpdate({ editor, transaction }) {
+    this.activeEditor = editor;
+    this.emit('selection-update', { editor, transaction });
   }
 
   saveAll() {

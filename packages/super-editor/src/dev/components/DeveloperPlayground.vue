@@ -10,10 +10,13 @@ import { nextTick, ref } from 'vue';
 import BasicUpload from './BasicUpload.vue';
 
 // Import the component the same you would in your app
-import { SuperEditor } from '@/index';
+import { SuperEditor, Toolbar } from '@/index';
 
 // For testing a file from URL
 import sampleDocxUrl from '../../tests/fixtures/sample/sample.docx?url';
+
+
+let activeEditor = null;
 
 const currentFile = ref(null);
 const handleNewFile = (file) => {
@@ -24,6 +27,19 @@ const handleNewFile = (file) => {
   nextTick(() => {
     currentFile.value = fileUrl;
   });
+}
+
+const handleToolbarCommand = (command) => {
+  console.debug('[SuperEditor dev] Toolbar command', command, activeEditor?.commandService.commands);
+  const commands = activeEditor?.commandService.commands;
+  if (!!commands && command in commands){
+    activeEditor?.commandService.commands[command]();
+  }
+}
+
+const handleSelectionUpdate = ({ editor, transaction }) => {
+  console.debug('[SuperEditor dev] Selection update');
+  activeEditor = editor;
 }
 </script>
 
@@ -46,8 +62,14 @@ const handleNewFile = (file) => {
     </div>
     <div class="content" v-if="currentFile">
 
+      <Toolbar @command="handleToolbarCommand" />
+
       <!-- SuperEditor expects its data to be a URL -->
-      <SuperEditor mode="docx" :data-url="currentFile" documentId="ID-123" />
+      <SuperEditor
+          mode="docx"
+          documentId="ID-122"
+          :data-url="currentFile" 
+          @selection-update="handleSelectionUpdate" />
 
     </div>
   </div>
@@ -67,6 +89,8 @@ const handleNewFile = (file) => {
 }
 .content {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
 }
 </style>
