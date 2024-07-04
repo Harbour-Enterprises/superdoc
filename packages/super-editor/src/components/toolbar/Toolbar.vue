@@ -22,13 +22,9 @@ const handleCommand = (command) => {
   emit('command', command);
 }
 
-const onSelectionChange = ({ editor, transaction }) => {
-  const { selection } = editor.view.state;
-  const marks = selection.$head.marks();
-
+const onSelectionChange = (marks) => {
   toolbarItems.value.forEach((item) => {
-    const hasActiveMark = marks.find((mark) => mark.type.name === item.name);
-    if (hasActiveMark) item.active = true;
+    if (marks.includes(item.name)) item.active = true;
     else item.active = false;
   });
 }

@@ -41,7 +41,12 @@ const handleToolbarCommand = (command) => {
 const handleSelectionUpdate = ({ editor, transaction }) => {
   console.debug('[SuperEditor dev] Selection update');
   activeEditor = editor;
-  toolbar.value.onSelectionChange({ editor, transaction })
+
+  // This logic should maybe be inside the Editor.js rather than here?
+  const { selection } = editor.view.state;
+  const marks = selection.$head.marks();
+  const markNames = marks.map((mark) => mark.type.name);
+  toolbar.value.onSelectionChange(markNames);
 }
 </script>
 
