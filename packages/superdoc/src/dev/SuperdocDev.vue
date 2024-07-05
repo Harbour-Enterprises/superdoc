@@ -44,7 +44,7 @@ const initializeApp = async () => {
       // 'hrbr-fields': {},
     }
   }
-  const superdoc = new Superdoc(config);
+  const superdoc = new Superdoc(config);  
   superdoc.on('selection-update', ({ editor, transaction }) => {
     console.debug('[Superdoc] Selection update', editor, transaction);
     activeEditor = editor;
@@ -52,10 +52,10 @@ const initializeApp = async () => {
 }
 
 const handleToolbarCommand = (command) => {
-  console.debug('[SuperEditor dev] Toolbar command', command, activeEditor?.commandService.commands);
-  const commands = activeEditor?.commandService.commands;
+  console.debug('[SuperEditor dev] Toolbar command', command, activeEditor?.commands);
+  const commands = activeEditor?.commands;
   if (!!commands && command in commands){
-    activeEditor?.commandService.commands[command]();
+    activeEditor?.commands[command]();
   }
 }
 

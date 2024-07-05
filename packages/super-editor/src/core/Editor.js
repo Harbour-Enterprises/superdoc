@@ -15,7 +15,7 @@ import { style } from './config/style.js';
  * Editor main class.
  */
 export class Editor extends EventEmitter {
-  commandService;
+  #commandService;
 
   extensionService;
 
@@ -102,7 +102,7 @@ export class Editor extends EventEmitter {
    * Get object of registered commands.
    */
   get commands() {
-    return this.commandService.commands;
+    return this.#commandService.commands;
   }
 
   /**
@@ -221,7 +221,7 @@ export class Editor extends EventEmitter {
    * Creates a command service.
    */
   #createCommandService() {
-    this.commandService = CommandService.create({
+    this.#commandService = CommandService.create({
       editor: this,
     });
   }
