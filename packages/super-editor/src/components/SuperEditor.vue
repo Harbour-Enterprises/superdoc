@@ -1,15 +1,31 @@
 <script setup>
-import { DocxZipper } from '@core/index.js';
-import { onMounted, ref } from 'vue';
-import ProseMirror from '@components/ProseMirror.vue'
-import { SuperConverter } from '@core/index.js';
+import { ref, onMounted } from 'vue';
+import { Editor } from '@core/index.js';
+import * as extensions from '@extensions/index.js';
 
-const emit = defineEmits(['editor-ready', 'comments-loaded', 'selection-update']);
+// The editor needs to be agnostic to the data source
+// It should be able to work with any DOCX, plain text, and HTML.
+// This means, that we need to set certain flags for mode of operation
+// And specify a schema.
+
+// The editor can be collaborative / online, or single-user.
+// This changes where the data comes from. This should likely be handled outside of this component.
+// This also means this component needs to emit changes, for saving elsewhere.
+// NOTE: How does this work with prose mirror version control/history?
+
+// DOCX
+// We will need all relevant data passed in. This includes multiple files from the docx zip.
+
+const emit = defineEmits([
+  'editor-ready',
+  'comments-loaded',
+  'selection-update'
+]);
+
 const props = defineProps({
   mode: {
     type: String,
-    default: 'text',
-    validator: (value) => ['text', 'docx'].includes(value),
+    default: 'docx'
   },
 
   documentId: {
@@ -17,71 +33,39 @@ const props = defineProps({
     required: false,
   },
 
-  dataUrl: {
-    type: String,
+  fileSource: {
+    type: File,
     required: false,
-  }
+  },
+
+  options: {
+    type: Object,
+    required: false,
+    default: () => ({}),
+  },
 });
 
-const isReady = ref(false);
-const xmlFiles = ref([]);
+const editorElem = ref(null);
 
-const getXmlData = async (url) => {
-  const file = await getDocxFromUrl(url);
-
-  const zipper = new DocxZipper();
-  xmlFiles.value = await zipper.getXmlData(file);
-}
-
-const getDocxFromUrl = async (url) => {
-  const response = await fetch(url);
-  const blob = await response.blob();
-  return new File([blob], 'docx-file.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-}
-
-const init = async () => {
-  if (props.dataUrl) await getXmlData(props.dataUrl);
-  isReady.value = true;
-}
-
-const handleCommentsReady = (comments) => {
-  console.debug('Comments ready', comments);
-  emit('comments-loaded', comments);
-}
+const initEditor = () => {
+  const editor  = new Editor({
+    element: editorElem.value,
+    fileSource: props.fileSource,
+    extensions: Object.values(extensions),
+    documentId: props.documentId,
+    ...props.options,
+  });
+};
 
 onMounted(() => {
-  init();
+  initEditor();
 });
-
-const editorRef = ref(null);
-const save = () => {
-  const converter = new SuperConverter();
-  const doc = { doc: editorRef.value.state.doc.toJSON() }
-  converter.outputToJson(doc);
-}
-
-const dataReady = (id, editor) => {
-  editorRef.value = editor;
-  emit('editor-ready', id, editor);
-}
-
-const handleSelectionUpdated = ({ editor, transaction }) => {
-  emit('selection-update', { editor, transaction });
-}
 </script>
 
 <template>
-  <div v-if="isReady">
-    <ProseMirror
-        :mode="mode"
-        :data="xmlFiles"
-        :documentId="documentId"
-        @selection-update="handleSelectionUpdated"
-        @editor-ready="dataReady"
-        @comments-loaded="handleCommentsReady" />
+  <div class="super-editor" v-if="props.fileSource">
+    <div ref="editorElem" class="editor"></div>
   </div>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

@@ -6,39 +6,34 @@
 -->
 
 <script setup>
-import { nextTick, ref } from 'vue';
+import { ref } from 'vue';
 import BasicUpload from './BasicUpload.vue';
 
 // Import the component the same you would in your app
 import { SuperEditor, Toolbar } from '@/index';
 
-// For testing a file from URL
-import sampleDocxUrl from '../../tests/fixtures/sample/sample.docx?url';
-
-
 let activeEditor = null;
-
 const toolbar = ref(null);
 const currentFile = ref(null);
-const handleNewFile = (file) => {
+const handleNewFile = async (file) => {
   currentFile.value = null;
 
   // Generate a file url
   const fileUrl = URL.createObjectURL(file);
-  nextTick(() => {
-    currentFile.value = fileUrl;
-  });
+  const response = await fetch(fileUrl);
+  const blob = await response.blob();
+  currentFile.value = new File([blob], 'docx-file.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
 }
 
 const handleToolbarCommand = (command) => {
   console.debug('[SuperEditor dev] Toolbar command', command, activeEditor?.commands);
   const commands = activeEditor?.commands;
-  if (!!commands && command in commands){
+  if (!!commands && command in commands) {
     activeEditor?.commands[command]();
   }
 }
 
-const handleSelectionUpdate = ({ editor, transaction }) => {
+const onSelectionUpdate = ({ editor, transaction }) => {
   console.debug('[SuperEditor dev] Selection update');
   activeEditor = editor;
 
@@ -48,23 +43,43 @@ const handleSelectionUpdate = ({ editor, transaction }) => {
   const markNames = marks.map((mark) => mark.type.name);
   toolbar.value.onSelectionChange(markNames);
 }
+
+const onCreate = ({ editor }) => {
+  console.debug('[Dev] Editor created', editor);
+  activeEditor = editor;
+}
+
+const editorOptions = {
+  onCreate,
+  onSelectionUpdate
+}
+
+const exportDocx = () => {
+  activeEditor?.exportDocx();
+}
 </script>
 
 <template>
   <div class="dev-app">
     <div class="header">
-      <div class="title">
-        <h2>Super Editor Dev Area</h2>
+      <div class="left-side">
+        <div class="title">
+          <h2>Super Editor Dev Area</h2>
+        </div>
+
+        <!--
+            A user using SuperEditor is expected to handle file uplodas and data sources on their own.
+            SuperEditor just expects a URL to a docx file. This basic uploader is here for testing.
+            You can also replace currentFile directly with a URL (ie: sampleDocxUrl).
+        -->
+        <div>
+          Upload docx
+          <BasicUpload @file-change="handleNewFile" />
+        </div>
       </div>
 
-      <!--
-          A user using SuperEditor is expected to handle file uplodas and data sources on their own.
-          SuperEditor just expects a URL to a docx file. This basic uploader is here for testing.
-          You can also replace currentFile directly with a URL (ie: sampleDocxUrl).
-      -->
-      <div>
-        Upload docx
-        <BasicUpload @file-change="handleNewFile" />
+      <div class="right-side">
+        <button @click="exportDocx">Export</button>
       </div>
     </div>
     <div class="content" v-if="currentFile">
@@ -75,8 +90,8 @@ const handleSelectionUpdate = ({ editor, transaction }) => {
       <SuperEditor
           mode="docx"
           documentId="ID-122"
-          :data-url="currentFile" 
-          @selection-update="handleSelectionUpdate" />
+          :file-source="currentFile" 
+          :options="editorOptions" />
 
     </div>
   </div>
@@ -88,11 +103,19 @@ const handleSelectionUpdate = ({ editor, transaction }) => {
   flex-direction: column;
 }
 .header {
-  display: flex;
-  flex-direction: column;
   background-color: rgb(222, 237, 243);
+  display: flex;
+  justify-content: space-between;
   padding: 20px;
   margin-bottom: 20px;
+}
+.left-side {
+  display: flex;
+  flex-direction: column;
+}
+.right-side {
+  display: flex;
+  align-items: flex-end;
 }
 .content {
   display: flex;
