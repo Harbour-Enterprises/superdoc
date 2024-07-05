@@ -354,15 +354,14 @@ export class Editor extends EventEmitter {
   }
 
   /**
-   * TODO: add description.
+   * Export the editor document to DOCX.
+   * TODO: This is a WIP
    */
-  save() {
-    console.debug('EDITOR CLASS SAVE - TODO', this.state.doc.toJSON());
-    // const converter = new SuperConverter();
-    console.debug('new converter', this.converter, this.converter.declaration)
-
-    const xml = this.converter.schemaToXml({ doc: this.state.doc.toJSON() });
-    console.debug('XML', xml);
+  exportDocx() {
+    const doc = { doc: this.state.doc.toJSON() };
+    const json = this.converter.outputToJson(doc);
+    // const xml = this.converter.schemaToXml({ doc: this.state.doc.toJSON() });
+    // console.debug('XML', xml);
   }
 
   /**

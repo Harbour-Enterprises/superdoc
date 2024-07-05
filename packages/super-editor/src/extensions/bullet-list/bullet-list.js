@@ -14,4 +14,10 @@ export const BulletList = Node.create({
   renderDOM() {
     return ['ul', 0];
   },
+
+  addAttributes() {
+    return {
+      attributes: {},
+    };
+  },
 });

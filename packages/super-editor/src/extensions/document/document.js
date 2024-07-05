@@ -14,4 +14,10 @@ export const Document = Node.create({
   renderDOM() {
     return ['doc', 0];
   },
+
+  addAttributes() {
+    return {
+      attributes: {},
+    };
+  },
 });

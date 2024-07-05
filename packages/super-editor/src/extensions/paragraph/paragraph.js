@@ -16,4 +16,10 @@ export const Paragraph = Node.create({
   renderDOM() {
     return ['p', 0];
   },
+
+  addAttributes() {
+    return {
+      attributes: {},
+    };
+  },
 });

@@ -16,4 +16,10 @@ export const RunItem = Node.create({
   renderDOM() {
     return ['run', 0];
   },
+  
+  addAttributes() {
+    return {
+      attributes: {},
+    };
+  },
 });
