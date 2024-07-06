@@ -237,10 +237,13 @@ export class Editor extends EventEmitter {
    * Creates a SuperConverter.
    */
   #createConverter() {
-    this.converter = new SuperConverter({ 
-      docx: this.options.content, 
-      debug: true,
-    });
+    if (this.options.converter) this.converter = this.options.converter;
+    else {
+        this.converter = new SuperConverter({ 
+        docx: this.options.content, 
+        debug: true,
+      });
+    }
   }
 
   /**

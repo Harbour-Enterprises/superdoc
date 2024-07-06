@@ -49,7 +49,7 @@ export class SuperConverter {
     // The docx as a list of files
     this.convertedXml = {};
     this.docx = params?.docx || [];
-  
+
     // XML inputs
     this.xml = params?.xml;
     this.declaration = null;
@@ -76,15 +76,17 @@ export class SuperConverter {
   }
 
   parseFromXml() {
-    this.docx.forEach(file => {
-      this.convertedXml[file.name] = JSON.parse(xmljs.xml2json(file.content, null, 2));
+    this.docx?.forEach(file => {
+      this.convertedXml[file.name] = this.parseXmlToJson(file.content);
     });
-    
     this.initialJSON = this.convertedXml['word/document.xml'];
-    console.debug('Initial JSON:', this.initialJSON);
 
-    if (!this.initialJSON) this.initialJSON = JSON.parse(xmljs.xml2json(this.xml, null, 2));
-    this.declaration = this.initialJSON.declaration;
+    if (!this.initialJSON) this.initialJSON = this.parseXmlToJson(this.xml);
+    this.declaration = this.initialJSON?.declaration;
+  }
+  
+  parseXmlToJson(xml) {
+    return JSON.parse(xmljs.xml2json(xml, null, 2))
   }
 
   getElementName(element) {
@@ -103,7 +105,7 @@ export class SuperConverter {
 
 
   /** 
-   * convertToJson
+   * convertToSchema
    * 
    * Start with the first element. It is the <w:document> element
    * 
@@ -419,12 +421,14 @@ export class SuperConverter {
 
   outputToJson(data) {
     console.debug('[SuperConverter] outputToJSON:', data);
-    const firstElement = data.doc;
+    const firstElement = data;
     const result = {
       declaration: this.declaration,
-      elements: this.#outputNodeToJson(firstElement),
+      elements: [this.#outputNodeToJson(firstElement)],
     }
     console.debug('Result:', result);
+    console.debug('Original', this.initialJSON);
+    return result;
   }
 
   #outputNodeToJson(node, parent = null) {
@@ -433,6 +437,8 @@ export class SuperConverter {
     
     const elements = [];
     const { content, attrs } = node;
+
+    const sectionProperties = attrs?.attributes?.sectionProperties;
 
     // Nodes that can't be mapped back to a name tag need special handling. ie: list nodes
     if (node.type === 'listItem') name = 'w:r';
@@ -456,7 +462,7 @@ export class SuperConverter {
         return listElements;
       }
     }
-    
+
     // Standard handling of nodes
     else {
       if (content) {
@@ -468,10 +474,16 @@ export class SuperConverter {
       }
     }
 
+    let attributes = attrs?.attributes || {};
+    if (sectionProperties) {
+      delete attrs.attributes.sectionProperties;
+      elements.push(sectionProperties)
+    }
+    
     return {
       name,
       elements,
-      attributes: attrs?.attributes || {}
+      attributes: Object.keys(attributes).length ? attributes : undefined
     }
   }
 
