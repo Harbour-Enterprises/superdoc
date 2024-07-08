@@ -9,6 +9,7 @@ import FloatingComments from '@/components/CommentsLayer/FloatingComments.vue';
 import HrbrFieldsLayer from '@/components/HrbrFieldsLayer/HrbrFieldsLayer.vue';
 import { useSuperdocStore } from '@/stores/superdoc-store';
 import { useCommentsStore } from '@/stores/comments-store';
+import fasMessageLinesIcon from '@/assets/fontawesome/solid/message-lines.svg?raw';
 
 // Stores
 const superdocStore = useSuperdocStore();
@@ -180,7 +181,11 @@ onBeforeUnmount(() => {
       v-if="toolsMenuPosition && !getConfig?.readOnly" 
       class="tools"
       :style="toolsMenuPosition">
-    <i class="fas fa-comment-alt-lines" data-id="is-tool" @click.stop.prevent="handleToolClick('comments')"></i>
+    <div 
+      class="tools__icon" 
+      data-id="is-tool" 
+      @click.stop.prevent="handleToolClick('comments')" 
+      v-html="fasMessageLinesIcon"></div>
   </div>
 
   <div class="layers" ref="layers" @scroll="handleScroll">
@@ -259,7 +264,7 @@ onBeforeUnmount(() => {
 .box-sizing, .layers {
   box-sizing: border-box;
 }
-.cursor-pointer, .tools i, .toolbar-item {
+.cursor-pointer, .toolbar-item {
   cursor: pointer;
 }
 .flex {
@@ -324,12 +329,22 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
 }
-.tools i {
-  font-size: 20px;
+
+.tools__icon {
+  width: 20px;
+  height: 20px;
   border-radius: 12px;
   border: none;
   outline: none;
   background-color: #DBDBDB;
+  cursor: pointer;
+}
+
+.tools__icon :deep(svg) {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+  fill: currentColor;
 }
 
 .layers {

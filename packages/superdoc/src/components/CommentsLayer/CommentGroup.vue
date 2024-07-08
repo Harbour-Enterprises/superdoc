@@ -79,7 +79,9 @@ const getVisibleComments = computed(() => {
       v-if="!isExpanded && !isActiveGroup">
     <div class="group-collapsed">
       <div class="number-bubble">{{ getNumberOfConversations }}</div>
-      <i class="fal fa-comment comments-icon"></i>
+      <!-- TODO
+      <i class="fal fa-comment comments-icon"></i> 
+      -->
     </div>
   </div>
 

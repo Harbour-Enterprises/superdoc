@@ -6,6 +6,7 @@ import { useSuperdocStore } from '@/stores/superdoc-store';
 import useSelection from '@/helpers/use-selection';
 import useComment from '@/components/CommentsLayer/use-comment';
 import Avatar from '@/components/general/Avatar.vue';
+import falCheckIcon from '@/assets/fontawesome/light/check.svg?raw';
 
 const superdocStore = useSuperdocStore();
 const commentsStore = useCommentsStore();
@@ -194,12 +195,12 @@ onMounted(() => {
           </div>
         </div>
         <div class="overflow-menu">
-          <i
-              v-if="index === 0 && getConfig.allowResolve"
-              class="fal fa-check"
-              @click.stop.prevent="markDone"
-              title="Mark done and hide comment thread">
-          </i>
+          <div class="overflow-menu__icon" 
+            v-if="index === 0 && getConfig.allowResolve"
+            @click.stop.prevent="markDone"
+            v-html="falCheckIcon"
+            title="Mark done and hide comment thread">
+          </div>
         </div>
       </div>
       <div class="card-section comment-body">
@@ -251,7 +252,8 @@ onMounted(() => {
   flex-shrink: 1;
   display: flex;
 }
-.overflow-menu i {
+
+.overflow-menu__icon {
   width: 20px;
   height: 20px;
   display: flex;
@@ -260,11 +262,20 @@ onMounted(() => {
   border-radius: 50%;
   cursor: pointer;
   transition: all 250ms ease;
+  padding: 3px;
   margin-left: 2px;
   cursor: pointer;
 }
-.overflow-menu i:hover {
+
+.overflow-menu__icon:hover {
   background-color: #DBDBDB;
+}
+
+.overflow-menu__icon :deep(svg) {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+  fill: currentColor;
 }
 
 .comment-entry {
