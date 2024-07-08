@@ -5,12 +5,13 @@ import { EventEmitter } from './EventEmitter.js';
 import { ExtensionService } from './ExtensionService.js';
 import { CommandService } from './CommandService.js';
 import { SuperConverter } from './SuperConverter.js';
-import { DocxZipper } from '@core/index.js';
 import { Commands, Keymap, Editable, EditorFocus } from './extensions/index.js';
 import { createDocument } from './helpers/createDocument.js';
 import { createStyleTag } from './utilities/createStyleTag.js';
 import { initComments } from '@features/index.js';
 import { style } from './config/style.js';
+import DocxZipper from '@core/DocxZipper.js';
+
 
 /**
  * Editor main class.
