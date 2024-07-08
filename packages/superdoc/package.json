@@ -1,22 +1,24 @@
 {
   "name": "@harbour-enterprises/superdoc",
   "type": "module",
-  "version": "1.0.0-alpha.27",
+  "version": "1.0.0-alpha.28",
   "files": [
     "dist"
   ],
   "exports": {
     ".": {
       "import": "./dist/superdoc.es.js",
-      "require": "./dist/superdoc.cjs.js"
+      "require": "./dist/superdoc.cjs.js",
+      "umd": "./dist/superdoc.umd.js"
     },
     "./style.css": "./dist/style.css"
   },
   "main": "./dist/superdoc.cjs.js",
   "module": "./dist/superdoc.es.js",
+  "umd": "./dist/superdoc.umd.js",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && cp -r ./dist/ ../../examples/helloworld/dist/",
     "deploy": "npm version prerelease && npm run build && npm publish"
   },
   "dependencies": {

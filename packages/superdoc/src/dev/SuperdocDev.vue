@@ -3,15 +3,26 @@ import "super-editor/style.css";
 import Superdoc from '@/index';
 import docxWithComments from '../assets/lists_and_comments.docx?url'
 import { onMounted } from 'vue';
-import { Toolbar } from 'super-editor';
+import SuperToolbar from '@/components/SuperToolbar/SuperToolbar.vue';
 
 
 let activeEditor = null;
 
 /* For local dev */
+
+const getFileObject = async () => {
+  // Generate a file url
+  const fileUrl = docxWithComments;
+  const response = await fetch(docxWithComments);
+  const blob = await response.blob();
+  return new File([blob], 'docx-file.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+}
+
 const initializeApp = async () => {
+  const docx = await getFileObject();
   const config = {
     selector: '#superdoc',
+    toolbar: 'toolbar',
     user: {
       name: 'Nick Bernal',
       email: 'nick@harbourshare.com',
@@ -27,7 +38,7 @@ const initializeApp = async () => {
       // },
       {
         type: 'docx',
-        data: docxWithComments,
+        data: docx,
         id: '123',
       },
       // {
@@ -44,7 +55,7 @@ const initializeApp = async () => {
       // 'hrbr-fields': {},
     }
   }
-  const superdoc = new Superdoc(config);  
+  const superdoc = new Superdoc(config);
   superdoc.on('selection-update', ({ editor, transaction }) => {
     console.debug('[Superdoc] Selection update', editor, transaction);
     activeEditor = editor;
@@ -68,7 +79,7 @@ onMounted(() => {
   <div class="dev-container">
 
     <!-- Import the toolbar from the super editor -->
-    <Toolbar class="toolbar" @command="handleToolbarCommand"/>
+     <div id="toolbar"></div>
 
     <!-- Render the document here -->
     <div id="superdoc"></div>

@@ -165,14 +165,23 @@ const receiveDocxComments = (data, doc) => {
   isReady.value = true
 }
 
-const handleEditorReady = (id, editor) => {
-  console.debug('[superdoc] Editor ready', id, editor);
-  const doc = getDocument(id);
-  doc.core = editor;
+const onCreate = ({ editor }) => {
+  // const doc = getDocument(id);
+  // doc.core = editor;
 }
-const handleSelectionUpdated = (params) => {
-  proxy.$superdoc.onSelectionUpdate(params);
+const onSelectionUpdate = ({ editor, transaction }) => {
+  const { selection } = editor.view.state;
+  const marks = selection.$head.marks();
+  const markNames = marks.map((mark) => mark.type.name);
+  proxy.$superdoc.toolbar.onSelectionChange(markNames);
+  proxy.$superdoc.onSelectionUpdate({ editor, transaction });
 }
+
+const editorOptions = {
+  onCreate,
+  onSelectionUpdate
+}
+
 </script>
 
 <template>
@@ -226,11 +235,9 @@ const handleSelectionUpdated = (params) => {
               class="docx-editor"
               v-if="doc.type === 'docx'"
               mode="docx"
-              :data-url="doc.data"
-              :document-id="doc.id"
-              @editor-ready="handleEditorReady"
-              @selection-update="handleSelectionUpdated"
-              @comments-loaded="receiveDocxComments($event, doc)" />
+              :file-source="doc.data"
+              :document-id="doc.id" 
+              :options="editorOptions" />
 
         </div>
       </div>

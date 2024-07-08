@@ -1,5 +1,3 @@
-import Superdoc from 'https://unpkg.com/@harbour-enterprises/superdoc@1.0.0-alpha.27/dist/superdoc.es.js'
-
 const updateFileName = (name) => {
   const nameParts = name.split('.');
   if (nameParts.length > 1) nameParts.pop();
@@ -22,27 +20,39 @@ function handleFileSelected(event) {
   loadSuperDoc(fileUrl);
 }
 
-const loadSuperDoc = (fileURL) => {
-  new Superdoc({
+let superdoc;
+let activeEditor;
+const loadSuperDoc = async (fileURL) => {
+
+  const getFileObject = async (fileURL) => {
+    // Generate a file url
+    const response = await fetch(fileURL);
+    const blob = await response.blob();
+    return new File([blob], 'docx-file.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  }
+
+  // Generate file object
+  const data = await getFileObject(fileURL);
+
+  // Destroy the previous Superdoc instance, if any
+  if (superdoc) superdoc.destroy();
+
+  // Load the new Superdoc instance from CDN library
+  const Superdoc = window.SuperDoc;
+  superdoc = new Superdoc({
     selector: '#superdoc',
+    toolbar: 'superdoc-toolbar',
     documents: [
       {
         id: 'test-doc',
         type: 'docx',
-        data: fileURL,
+        data,
       }
     ],
-  })
+  });
 }
 
 window.onload = () => {
+  // Initialize with a blank docx
   loadSuperDoc('./data/blank.docx');
-}
-
-window.handleFileUpload = handleFileUpload;
-window.handleFileSelected = handleFileSelected;
-
-export {
-  handleFileUpload,
-  handleFileSelected,
 }

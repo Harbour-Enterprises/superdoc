@@ -48,6 +48,7 @@ const props = defineProps({
 const editorElem = ref(null);
 
 const initEditor = () => {
+  console.debug('[super-editor] Loading file...', props.fileSource);
   const editor  = new Editor({
     element: editorElem.value,
     fileSource: props.fileSource,

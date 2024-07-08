@@ -12,7 +12,7 @@ export default defineConfig((data) => {
       target: 'es2020',
       lib: {
         entry: "src/index.js",
-        formats: ['es', 'cjs'],
+        formats: ['es', 'cjs', 'umd'],
         name: "SuperDoc",
         fileName: (format) => `superdoc.${format}.js`
       },
