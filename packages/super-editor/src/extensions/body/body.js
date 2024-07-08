@@ -11,7 +11,9 @@ export const Body = Node.create({
 
   addAttributes() {
     return {
-      attributes: {},
+      attributes: {
+        rendered: false,
+      },
     };
   },
 
