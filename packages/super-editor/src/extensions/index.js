@@ -17,3 +17,4 @@ export { Bold } from './bold/index.js';
 export { Italic } from './italic/index.js';
 export { Underline } from './underline/index.js';
 export { Strike } from './strike/index.js';
+export { Color } from './color/index.js';

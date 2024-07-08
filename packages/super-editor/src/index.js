@@ -5,9 +5,38 @@ import BasicUpload from './dev/components/BasicUpload.vue';
 import Toolbar from '@components/toolbar/Toolbar.vue';
 
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faItalic, faUnderline, faStrikethrough, faBold } from '@fortawesome/free-solid-svg-icons'
+import {
+  faItalic,
+  faUnderline,
+  faStrikethrough,
+  faBold,
+  faGripLinesVertical,
+  faFont,
+  faLink,
+  faImage,
+  faAlignLeft,
+  faIndent,
+  faEllipsisVertical,
+  faList,
+  faListNumeric
+} from '@fortawesome/free-solid-svg-icons';
 
-library.add(faBold, faItalic, faUnderline, faStrikethrough);
+
+library.add(
+  faBold,
+  faItalic,
+  faUnderline,
+  faStrikethrough,
+  faGripLinesVertical,
+  faFont,
+  faLink,
+  faImage,
+  faAlignLeft,
+  faIndent,
+  faEllipsisVertical,
+  faList,
+  faListNumeric
+);
 
 /**
  * Exported classes and components.
