@@ -10,6 +10,8 @@ import { createDocument } from './helpers/createDocument.js';
 import { createStyleTag } from './utilities/createStyleTag.js';
 import { initComments } from '@features/index.js';
 import { style } from './config/style.js';
+import DocxZipper from '@core/DocxZipper.js';
+
 
 /**
  * Editor main class.
@@ -32,6 +34,7 @@ export class Editor extends EventEmitter {
   options = {
     element: document.createElement('div'),
     content: '',
+    fileSource: null,
     documentId: null,
     injectCSS: true,
     extensions: [],
@@ -53,11 +56,16 @@ export class Editor extends EventEmitter {
 
   constructor(options) {
     super();
+    this.#initialize(options);
+  }
 
+  async #initialize(options) {
     this.setOptions(options);
     this.#createExtensionService();
     this.#createCommandService();
     this.#createSchema();
+
+    await this.#loadData();
     this.#createConverter();
 
     this.on('beforeCreate', this.options.onBeforeCreate);
@@ -230,10 +238,27 @@ export class Editor extends EventEmitter {
    * Creates a SuperConverter.
    */
   #createConverter() {
-    this.converter = new SuperConverter({ 
-      docx: this.options.content, 
-      debug: true,
-    });
+    if (this.options.converter) this.converter = this.options.converter;
+    else {
+        this.converter = new SuperConverter({ 
+        docx: this.options.content, 
+        debug: true,
+      });
+    }
+  }
+
+  /**
+   * Load the data from DOCX to be used in the schema.
+   * Expects a DOCX file.
+   */
+  async #loadData() {
+    if (!this.options.fileSource) return;
+    else if (!(this.options.fileSource instanceof File)) {
+      throw new Error('Content source must be a File object.');
+    };
+
+    const zipper = new DocxZipper();
+    this.options.content = await zipper.getXmlData(this.options.fileSource);
   }
 
   /**
