@@ -19,7 +19,9 @@ export const Paragraph = Node.create({
 
   addAttributes() {
     return {
-      attributes: {},
+      attributes: {
+        rendered: false,
+      },
     };
   },
 });

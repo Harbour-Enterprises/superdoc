@@ -19,7 +19,9 @@ export const RunItem = Node.create({
   
   addAttributes() {
     return {
-      attributes: {},
+      attributes: {
+        rendered: false,
+      },
     };
   },
 });

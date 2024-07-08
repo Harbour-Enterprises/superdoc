@@ -15,7 +15,9 @@ export const ListItem = Node.create({
   
   addAttributes() {
     return {
-      attributes: {},
+      attributes: {
+        rendered: false,
+      },
     };
   },
 

@@ -17,7 +17,9 @@ export const Document = Node.create({
 
   addAttributes() {
     return {
-      attributes: {},
+      attributes: {
+        rendered: false,
+      },
     };
   },
 });

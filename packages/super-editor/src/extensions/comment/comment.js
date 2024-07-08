@@ -19,7 +19,9 @@ export const CommentRangeStart = Node.create({
 
   addAttributes() {
     return {
-      attributes: {},
+      attributes: {
+        rendered: false,
+      },
     };
   },
 });
@@ -43,7 +45,9 @@ export const CommentRangeEnd = Node.create({
 
   addAttributes() {
     return {
-      attributes: {},
+      attributes: {
+        rendered: false,
+      },
     };
   },
 });
@@ -67,7 +71,9 @@ export const CommentReference = Node.create({
 
   addAttributes() {
     return {
-      attributes: {},
+      attributes: {
+        rendered: false,
+      },
     };
   },
 });
