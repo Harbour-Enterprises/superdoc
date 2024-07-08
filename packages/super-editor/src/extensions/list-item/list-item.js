@@ -12,6 +12,14 @@ export const ListItem = Node.create({
   renderDOM() {
     return ['li', 0];
   },
+  
+  addAttributes() {
+    return {
+      attributes: {
+        rendered: false,
+      },
+    };
+  },
 
   defining: true,
 });

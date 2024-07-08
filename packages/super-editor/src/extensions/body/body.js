@@ -8,4 +8,13 @@ export const Body = Node.create({
   renderDOM() {
     return ['body', 0];
   },
+
+  addAttributes() {
+    return {
+      attributes: {
+        rendered: false,
+      },
+    };
+  },
+
 });

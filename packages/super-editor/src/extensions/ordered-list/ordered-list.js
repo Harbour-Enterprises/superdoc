@@ -29,9 +29,8 @@ export const OrderedList = Node.create({
         },
       },
 
-      // for testing
-      'data-ordered-list': {
-        default: 'true',
+      attributes: {
+        rendered: false,
       },
     };
   },
