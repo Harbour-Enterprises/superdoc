@@ -6,8 +6,8 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>SuperDoc</title>
-        <!-- <script src="dist/superdoc.umd.js"></script> -->
-        <script src="https://unpkg.com/@harbour-enterprises/superdoc@1.0.0-alpha.28/dist/superdoc.umd.js"></script>
+        <script src="dist/superdoc.umd.js"></script>
+        <!-- <script src="https://unpkg.com/@harbour-enterprises/superdoc@1.0.0-alpha.28/dist/superdoc.umd.js"></script> -->
         <script src="https://kit.fontawesome.com/c76a46cfde.js"></script>
         <link rel="icon"
             href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦋️</text></svg>">
@@ -61,6 +61,11 @@
                     <input type="file" style="display: none" id="fileUpload" onChange="handleFileSelected(event)"
                         accept=".docx" />
                     Upload file
+                </div>
+                <div class="header-item-button" onClick="exportDocx()">
+                    <input type="file" style="display: none" id="fileUpload" onChange="handleFileSelected(event)"
+                        accept=".docx" />
+                    Save DOCX
                 </div>
             </div>
 

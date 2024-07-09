@@ -1,7 +1,6 @@
 <script setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { ref, onMounted } from 'vue';
-import { Toolbar } from './toolbar.js';
 import ToolbarButton from './ToolbarButton.vue';
 
 /**

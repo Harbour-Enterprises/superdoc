@@ -1,4 +1,4 @@
-import JSZip from 'jszip';
+import JSZip, { file } from 'jszip';
 
 /**
  * Class to handle unzipping and zipping of docx files
@@ -51,24 +51,28 @@ class DocxZipper {
     return zip;
   }
 
-  async updateZip(originalZip, newDocumentXmlContent) {
+  async updateZip(originalDocx, newDocumentXmlContent) {
     const updatedZip = new JSZip();
+    const unzippedOriginalDocx = await this.unzip(originalDocx);
 
     // Create an array of promises to read all files
     const filePromises = [];
 
-    originalZip.forEach((relativePath, zipEntry) => {
-      const promise = zipEntry.async("uint8array").then((content) => {
+    // Iterate through all files from the original docx, and copy them to a new docx
+    unzippedOriginalDocx.forEach((relativePath, zipEntry) => {
+      const promise = zipEntry.async("string").then((content) => {
         updatedZip.file(zipEntry.name, content);
       });
       filePromises.push(promise);
     });
-  
     // Wait for all promises to resolve
     await Promise.all(filePromises);
   
-    updatedZip.file("word/document.xml", newDocumentXmlContent);
-    return updatedZip;
+    // Replace the document file in the new zip
+    unzippedOriginalDocx.file("word/document.xml", newDocumentXmlContent);
+
+    // Zip it up again and return
+    return await unzippedOriginalDocx.generateAsync({ type: "blob" })
   }
 }
 
