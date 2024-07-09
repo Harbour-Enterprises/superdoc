@@ -41,6 +41,13 @@ export class SuperConverter {
     'w:numPr': 'numberingProperties',
   });
 
+  static elements = new Set([
+    'w:document',
+    'w:body',
+    'w:p',
+    'w:r',
+    'w:t',
+  ])
 
   constructor(params = null) {
     // Suppress logging when true
@@ -120,7 +127,6 @@ export class SuperConverter {
     /* We will build a prose mirror ready schema node from XML node */
     let schemaNode;
     const { name: outerNodeName } = node;
-    console.debug('current node', node.name, node);
 
     /**
      * Who am I?
@@ -182,7 +188,6 @@ export class SuperConverter {
       // console.debug('Schema node:', schemaNode);
     }
 
-    console.debug('Schema node:', schemaNode)
     node.seen = true;
     return schemaNode;
   }
@@ -420,51 +425,46 @@ export class SuperConverter {
 
 
   outputToJson(data) {
-    console.debug('[SuperConverter] outputToJSON:', data);
+    // console.debug('[SuperConverter] outputToJSON:', data);
     const firstElement = data;
     const result = {
       declaration: this.declaration,
       elements: [this.#outputNodeToJson(firstElement)],
     }
-    console.debug('Result:', result);
-    console.debug('Original', this.initialJSON);
     return result;
   }
 
   #outputNodeToJson(node, parent = null) {
-    let name = this.getTagName(node.type);
-    console.debug('Output node:', node.type, node.name, name);
-    
+    let name = this.getTagName(node.type);    
     const elements = [];
     const { content, attrs } = node;
-
-    const sectionProperties = attrs?.attributes?.sectionProperties;
+    let attributes = attrs?.attributes || {};
 
     // Nodes that can't be mapped back to a name tag need special handling. ie: list nodes
     if (node.type === 'listItem') name = 'w:r';
 
     if (!name) {
-      const isList = ['orderedList', 'bulletList'].includes(node.type);
-      if (isList) { 
-        console.debug('List node:', node.type);
+      // const isList = ['orderedList', 'bulletList'].includes(node.type);
+      // if (isList) { 
+      //   // console.debug('List node:', node.type);
         
-        const listElements = [];
-        for (let child of content) {
-          const processedChild = {
-            name: 'w:p',
-            elements: this.#outputNodeToJson(child, node),
-            attributes: {}
-          }
-          console.debug('Processed child:', processedChild);
-          listElements.push(processedChild);
-        }
-        console.debug('List elements:', listElements);
-        return listElements;
-      }
+      //   const listElements = [];
+      //   for (let child of content) {
+      //     const processedChild = {
+      //       name: 'w:p',
+      //       elements: this.#outputNodeToJson(child, node),
+      //       attributes: {}
+      //     }
+      //     // console.debug('Processed child:', processedChild);
+      //     listElements.push(processedChild);
+      //   }
+      //   // console.debug('List elements:', listElements);
+      //   return listElements;
+      // }
     }
 
     // Standard handling of nodes
-    else {
+    else if (node.type !== 'text') {
       if (content) {
         for (let child of content) {
           const processedChild = this.#outputNodeToJson(child, node);
@@ -474,29 +474,52 @@ export class SuperConverter {
       }
     }
 
-    let attributes = attrs?.attributes || {};
+    // Text nodes have special handling because our Schema requires them to have no attrs and the strucutre
+    // is different, so we restore the expected export structure here.
+    else if (node.type === 'text') {
+      // Add xml:space attribute to text nodes where needed
+      const hasWhitespace = /^\s|\s$/.test(node.text);
+      if (hasWhitespace) attributes['xml:space'] = 'preserve';
+      elements.push({
+        text: node.text,
+        type: 'text',
+      });
+    }
+
+    const sectionProperties = attrs?.attributes?.sectionProperties;
+    const runProperties = attrs?.attributes?.runProperties;
+    const paragraphProperties = attrs?.attributes?.paragraphProperties;
+
+    // console.debug('paragraphProperties:', paragraphProperties);
+    // if (paragraphProperties) {
+    //   delete attrs.attributes.paragraphProperties;
+    //   elements.push(paragraphProperties)
+    // }
+    // if (runProperties) {
+    //   delete attrs.attributes.runProperties;
+    //   elements.push(runProperties)
+    // }
     if (sectionProperties) {
       delete attrs.attributes.sectionProperties;
       elements.push(sectionProperties)
     }
-    
-    return {
+
+    const resultingNode = {
       name,
       elements,
       attributes: Object.keys(attributes).length ? attributes : undefined
     }
+
+    if (SuperConverter.elements.has(name)) resultingNode.type = 'element';
+    return resultingNode;
   }
 
-    #outputHandleListNode(node) {
+  #outputHandleListNode(node) {
 
-    }
-
-
-
-
+  }
 
   /**
-   * Output section
+   * XML Output section
    *
    * Convert to XML from SCHEMA
    * ❗️ TODO: Much to do here. Anything to do with marks added inside the editor is not yet implemented
@@ -509,98 +532,40 @@ export class SuperConverter {
 
   _generate_xml_as_list(data) {
     const json = JSON.parse(JSON.stringify(data));
-    const firstElement = json.doc;
-    const declaration = this.declaration.attributes;
-    console.debug('Declaration:', declaration);
-    
+    const firstElement = json.elements[0];
+    const declaration = this.declaration.attributes;    
     const xmlTag = `<?xml${Object.entries(declaration).map(([key, value]) => ` ${key}="${value}"`).join('')}?>`;
-    console.debug('Xml tag', xmlTag)
     const result = this._generateXml(firstElement);
-    return [xmlTag, ...result];
-  }
-
-  _processRunProperties(properties) {
-    const { elements } = properties;
-    return `<w:rPr>${elements.map(element => `<${element.name}/>`).join('')}</w:rPr>`;
-  }
-  
-  _processSectionProperties(properties) {
-    const { elements } = properties;
-    const { attributesString } = this._processAttrs(properties);
-    const sectionPrTag = `<w:sectPr${attributesString}>`;
-
-    let tags = [sectionPrTag];
-    for (let element of elements) {
-      const { attributesString } = this._processAttrs(element);
-      tags.push(`<${element.name}${attributesString}/>`);
-    }
-    tags.push('</w:sectPr>');
-    return tags;
-  }
-
-  _processAttrs(attrs) {
-    let attributesString = '';
-    const { attributes } = attrs;
-
-    const sectionProperties = attributes.sectionProperties;
-    delete attributes.sectionProperties;
-    let processedSectionProperties;
-    if (sectionProperties) processedSectionProperties = this._processSectionProperties(sectionProperties);
-
-    const runProperties = attributes.runProperties;
-    delete attributes.runProperties;
-    let processedRunProperties;
-    if (runProperties) processedRunProperties =this._processRunProperties(runProperties)
-
-    for (let key in attributes) {
-      attributesString += ` ${key}="${attributes[key]}"`;
-    }
-    return {
-      attributesString,
-      processedRunProperties,
-      processedSectionProperties
-    }
+    const final = [xmlTag, ...result];
+    return final;
   }
 
   _generateXml(node) {
-    const { type, content, attrs } = node;
-    let name = this.getTagName(type);
-
-    if (!name) {
-      console.debug('Custom tag', type);
-      const lists = ['orderedList', 'bulletList'];
-      if (lists.includes(type)) {
-        console.debug('\n\n LIST NODE', node, '\n\n')
-        name = 'w:p'
-      }
-      return [];
-    }
-
+    const { name, elements, attributes } = node;
     let tag = `<${name}`;
 
-    const { attributesString, processedRunProperties, processedSectionProperties } = this._processAttrs(attrs);
-    tag += attributesString;
-    tag += '>';
-    let tags = [tag];
-
-    // Add run properties if present - these go before the children
-    if (processedRunProperties) tags.push(processedRunProperties);
-
-    if (type === 'text') {
-      tags.push(node.text);
+    for (let attr in attributes) {
+      tag += ` ${attr}="${attributes[attr]}"`;
     }
 
-    // Recursively add the children
-    if (content) {
-      for (let child of content) {
-        tags.push(...this._generateXml(child));
+    const selfClosing = !elements || !elements.length;
+    if (selfClosing) tag += ' />';
+    else tag += '>';
+    let tags = [tag];
+
+    if (name === 'w:t') {
+      tags.push(elements[0].text);
+    } else {
+
+      // Recursively add the children
+      if (elements) {
+        for (let child of elements) {
+          tags.push(...this._generateXml(child));
+        }
       }
     }
 
-    // Add section properties if present - these go after the content
-    if (processedSectionProperties) tags.push(...processedSectionProperties);
-  
-    tags.push(`</${name}>`);
+    if (!selfClosing) tags.push(`</${name}>`);
     return tags;
   }
 }

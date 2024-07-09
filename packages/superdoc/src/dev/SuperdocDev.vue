@@ -3,13 +3,11 @@ import "super-editor/style.css";
 import Superdoc from '@/index';
 import docxWithComments from '../assets/lists_and_comments.docx?url'
 import { onMounted } from 'vue';
-import SuperToolbar from '@/components/SuperToolbar/SuperToolbar.vue';
 
-
-let activeEditor = null;
 
 /* For local dev */
-
+let activeEditor = null;
+let superdoc = null;
 const getFileObject = async () => {
   // Generate a file url
   const fileUrl = docxWithComments;
@@ -55,7 +53,7 @@ const initializeApp = async () => {
       // 'hrbr-fields': {},
     }
   }
-  const superdoc = new Superdoc(config);
+  superdoc = new Superdoc(config);
   superdoc.on('selection-update', ({ editor, transaction }) => {
     console.debug('[Superdoc] Selection update', editor, transaction);
     activeEditor = editor;
@@ -73,10 +71,21 @@ const handleToolbarCommand = (command) => {
 onMounted(() => {
   initializeApp();
 });
+
+const exportDocx = async () => {
+  const result = await superdoc.activeEditor.exportDocx();
+  const blob = new Blob([result], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'exported.docx';
+  a.click();
+}
 </script>
 
 <template>
   <div class="dev-container">
+    <button @click="exportDocx">export</button>
 
     <!-- Import the toolbar from the super editor -->
      <div id="toolbar"></div>

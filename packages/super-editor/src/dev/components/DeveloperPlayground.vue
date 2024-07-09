@@ -54,8 +54,14 @@ const editorOptions = {
   onSelectionUpdate
 }
 
-const exportDocx = () => {
-  activeEditor?.exportDocx();
+const exportDocx = async () => {
+  const result = await activeEditor?.exportDocx();
+  const blob = new Blob([result], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'exported.docx';
+  a.click();
 }
 </script>
 

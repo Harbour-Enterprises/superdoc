@@ -1,9 +1,5 @@
-import path from 'path';
-import fs from 'fs';
-
 import { describe, it, expect, beforeEach } from 'vitest';
-import { SuperConverter } from '../../SuperConverter';
-import DocxZipper from '../../DocxZipper';
+import { SuperConverter } from '../../SuperConverter.js';
 import { Editor } from '../../Editor.js';
 import * as extensions from '@extensions/index.js';
 
@@ -13,14 +9,15 @@ export function runInputOutputTests() {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  describe('Input/Output tests', async () => {
-
-    it('can parse the correct declaration', async () => {
+  /**
+   * This test uses a known XML input, uses Editor.js to parse the Schema, and then uses
+   * Editor.js' exportDocx method to convert the schema back to a docx document. 
+   */
+  describe('Editor.js and SuperConverter input/output conversion', async () => {
+    it('exports the expected output after importing xml, passing through the ProseMirror Schema and exported again', async () => {
       const input = `
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-        <w:document 
-          xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
-          xmlns:cx="http://schemas.microsoft.com/office/drawing/2014/chartex">
+        <w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:cx="http://schemas.microsoft.com/office/drawing/2014/chartex">
           <w:body>
             <w:p w14:paraId="44621174" w14:textId="6D5C378D" w:rsidR="003C58BC" w:rsidRDefault="00746728">
               <w:r>
@@ -29,8 +26,7 @@ export function runInputOutputTests() {
             </w:p>
             <w:sectPr w:rsidR="00746728">
               <w:pgSz w:w="12240" w:h="15840" />
-              <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720"
-                w:footer="720" w:gutter="0" />
+              <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0" />
               <w:cols w:space="720" />
               <w:docGrid w:linePitch="360" />
             </w:sectPr>
@@ -45,7 +41,6 @@ export function runInputOutputTests() {
       expect(converter.declaration).toEqual(expectedDeclaration);
 
       const initialJSON = { ...converter.initialJSON };
-
       const containerDiv = document.createElement('div');
       const schema = converter.getSchema();
       const editor = new Editor({
@@ -59,7 +54,8 @@ export function runInputOutputTests() {
 
       // Delay to wait for the editor to be ready
       await delay(250);
-      const output = editor.exportDocx();
+      const doc = editor.getJSON();
+      const output = converter.outputToJson(doc);
       expect(initialJSON.declaration).toEqual(output.declaration);
 
       // Check the doc element. Names and attributes should match.
@@ -70,12 +66,47 @@ export function runInputOutputTests() {
       expect(inputDocElement.elements.length).toEqual(outputDocElement.elements.length);
 
       // Check the body element. Names and attributes should match.
+      // Elements length should match
       const inputBody = inputDocElement.elements[0];
       const outputBody = outputDocElement.elements[0];
       expect(inputBody.name).toEqual(outputBody.name);
-      expect(inputBody.attributes).toEqual(outputBody.attributes);
-  
+      expect(inputBody.attributes).toEqual(outputBody.attributes); 
+      expect(inputBody.elements.length).toEqual(outputBody.elements.length);
+
+      const inputBodyElements = inputBody.elements;
+      const outputBodyElements = outputBody.elements;
+      
+      // Check the first element in the result. Expects to find the original paragraph.
+      expect(inputBodyElements[0].name).toEqual('w:p');
+      expect(inputBodyElements[0].name).toEqual(outputBodyElements[0].name);
+      expect(inputBodyElements[0].attributes).toEqual(outputBodyElements[0].attributes);
+      expect(inputBodyElements[0].elements.length).toEqual(outputBodyElements[0].elements.length);
+
+      // The second element expects to find the sectPr
+      expect(inputBodyElements[1].name).toEqual('w:sectPr');
+      expect(inputBodyElements[1].name).toEqual(outputBodyElements[1].name);
+      expect(inputBodyElements[1].attributes).toEqual(outputBodyElements[1].attributes);
+      expect(inputBodyElements[1].elements.length).toEqual(outputBodyElements[1].elements.length);
+
+      // Does the entire input JSON equal the entire output JSON?
+      expect(initialJSON).toEqual(output);
+
+      // Does the original XML equal the exported XML?
+      const XML = converter.schemaToXml(output);
+      expect(XML).toEqual(removeExcessWhitespace(input));
     });
 
   });
 };
+
+/**
+ * Used to remove excess whitespace around the test XML strings
+ * 
+ * @param {string} xmlString 
+ * @returns 
+ */
+function removeExcessWhitespace(xmlString) {
+  xmlString = xmlString.trim();
+  xmlString = xmlString.replace(/>\s+</g, '><');
+  return xmlString;
+}

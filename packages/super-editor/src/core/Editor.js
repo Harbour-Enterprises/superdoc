@@ -31,6 +31,8 @@ export class Editor extends EventEmitter {
 
   #css;
 
+  #docx;
+
   options = {
     element: document.createElement('div'),
     content: '',
@@ -382,12 +384,16 @@ export class Editor extends EventEmitter {
    * Export the editor document to DOCX.
    * TODO: This is a WIP
    */
-  exportDocx() {
-    const doc = { doc: this.state.doc.toJSON() };
-    const json = this.converter.outputToJson(doc);
-    // const xml = this.converter.schemaToXml({ doc: this.state.doc.toJSON() });
-    // console.debug('XML', xml);
+  async exportDocx() {
+    const json = this.converter.outputToJson(this.getJSON());
+    const xml = this.converter.schemaToXml(json);
+    console.debug('Exporting DOCX:', xml);
+  
+    const zipper = new DocxZipper();
+    const newDocx = await zipper.updateZip(this.options.fileSource, String(xml));
+    return newDocx;
   }
+
 
   /**
    * Destroy the editor.

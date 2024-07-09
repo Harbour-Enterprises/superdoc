@@ -163,11 +163,11 @@ const receiveDocxComments = (data, doc) => {
     doc.conversations.push(convo);
   })
   isReady.value = true
-}
+};
 
 const onCreate = ({ editor }) => {
-  // const doc = getDocument(id);
-  // doc.core = editor;
+  proxy.$superdoc.activeEditor = editor;
+  console.debug('[Superdoc] Editor created', proxy.$superdoc.activeEditor);
 }
 const onSelectionUpdate = ({ editor, transaction }) => {
   const { selection } = editor.view.state;

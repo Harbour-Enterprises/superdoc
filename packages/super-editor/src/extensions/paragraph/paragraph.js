@@ -5,7 +5,9 @@ export const Paragraph = Node.create({
 
   group: 'block',
 
-  content: 'inline*',
+  // If possible, we should force at least one run inside a paragraph
+  // Will need special handling for 'enter' etc.
+  content: 'run+',
 
   inline: false,
 
