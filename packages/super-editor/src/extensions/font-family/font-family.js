@@ -43,12 +43,6 @@ export const FontFamily = Mark.create({
     };
   },
 
-  addShortcuts() {
-    return {
-      // 'Mod-u': () => this.editor.commands.toggleUnderline(),
-    }
-  },
-
   addAttributes(){
     return {
       attributes: {

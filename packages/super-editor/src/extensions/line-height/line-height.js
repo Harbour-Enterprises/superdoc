@@ -21,10 +21,4 @@ export const LineHeight = Mark.create({
       }
     }
   },
-
-  addShortcuts() {
-    return {
-      // 'Mod-u': () => this.editor.commands.toggleUnderline(),
-    }
-  },
 });

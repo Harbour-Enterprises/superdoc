@@ -25,7 +25,7 @@ export const Strike = Mark.create({
 
   addShortcuts() {
     return {
-      'Mod-Shift-S': () => this.editor.commands.toggleStrike(),
+      'Mod-Shift-s': () => this.editor.commands.toggleStrike(),
     };
   },
 });

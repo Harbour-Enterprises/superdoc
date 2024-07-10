@@ -37,7 +37,10 @@ export const TextAlign = Mark.create({
 
   addShortcuts() {
     return {
-      // 'Mod-u': () => this.editor.commands.toggleUnderline(),
+      // 'Mod-Shift-l': () => this.editor.commands.setTextAlign('left'),
+      // 'Mod-Shift-e': () => this.editor.commands.setTextAlign('center'),
+      // 'Mod-Shift-r': () => this.editor.commands.setTextAlign('right'),
+      // 'Mod-Shift-j': () => this.editor.commands.setTextAlign('justify'),
     }
   },
 });
