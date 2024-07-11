@@ -1,5 +1,5 @@
 import xmljs from 'xml-js';
-
+import {orderedListTypes, unorderedListTypes, getNodeNumberingDefinition } from './numbering';
 
 /**
  * Class to translate from DOCX XML to Prose Mirror Schema and back
@@ -7,7 +7,7 @@ import xmljs from 'xml-js';
  * Will need to be updated as we find new docx tags.
  * 
  */
-export class SuperConverter {
+class SuperConverter {
 
   static allowedElements = Object.freeze({
     'w:document': 'doc',
@@ -27,12 +27,14 @@ export class SuperConverter {
 
   });
 
-  static markTypes = Object.freeze({
-    'w:b': 'bold',
-    'w:i': 'italic',
-    'w:u': 'underline',
-    'w:strike': 'strike',
-  });
+  static markTypes = [
+    { name: 'w:b', type: 'bold' },
+    { name: 'w:bCs', type: 'bold' },
+    { name: 'w:i', type: 'italic' },
+    { name: 'w:iCs', type: 'italic' },
+    { name: 'w:u', type: 'underline' },
+    { name: 'w:strike', type: 'strike' },
+  ]
 
   static propertyTypes = Object.freeze({
     'w:pPr': 'paragraphProperties',
@@ -61,11 +63,17 @@ export class SuperConverter {
     this.xml = params?.xml;
     this.declaration = null;
 
+    // Processed additional content
+    this.numbering = null;
+
     // The JSON converted XML before any processing. This is simply the result of xml2json
     this.initialJSON = null;
 
     // This is the JSON schema that we will be working with
     this.json = params?.json;
+
+    this.tagsNotInSchema = ['w:body']
+    this.savedTagsToRestore = [];
 
     // Parse the initial XML, if provided
     // this.log('Original XML:', this.xml)
@@ -82,6 +90,10 @@ export class SuperConverter {
     return keys.find(key => SuperConverter.allowedElements[key] === name);
   }
 
+  getTagsFromMark(mark) {
+    return SuperConverter.markTypes.filter(m => m.type === mark);
+  }
+
   parseFromXml() {
     this.docx?.forEach(file => {
       this.convertedXml[file.name] = this.parseXmlToJson(file.content);
@@ -91,7 +103,7 @@ export class SuperConverter {
     if (!this.initialJSON) this.initialJSON = this.parseXmlToJson(this.xml);
     this.declaration = this.initialJSON?.declaration;
   }
-  
+
   parseXmlToJson(xml) {
     return JSON.parse(xmljs.xml2json(xml, null, 2))
   }
@@ -104,96 +116,104 @@ export class SuperConverter {
   getSchema() {
     const json = JSON.parse(JSON.stringify(this.initialJSON));
     const startElements = json.elements;
-    const result = this.convertToSchema(startElements[0]);
+    const result = {
+      type: 'doc',
+      content: this.convertToSchema(json.elements[0].elements),
+    }
 
+    console.debug('--- result', result, '\n\n')
     // this.log('\nSchema updated:', JSON.stringify(result, null, 2))
     return result;
   }
 
 
-  /** 
-   * convertToSchema
+  convertToSchema(elements) {
+    console.debug('\nConvert to schema:', elements,'\n')
+    if (!elements || !elements.length) return;
+
+    const processedElements = [];
+    for (let index = 0; index < elements.length; index++) {
+      const node = elements[index];
+      if (node.seen) continue;
+
+      // We will build a prose mirror ready schema node from XML node 
+      let schemaNode;
+      switch (node.name) {
+        case 'w:body':
+          this.savedTagsToRestore.push({ ...node });
+          const ignoreNodes = ['w:sectPr'];
+          const content = node.elements.filter((n) => !ignoreNodes.includes(n.name));
+          const result = this.convertToSchema(content);
+          return result;
+        case 'w:r':
+          let processedRun = [];
+          processedRun = this.convertToSchema(node.elements)?.filter(n => n);
+          if (node.elements.find(el => el.name === 'w:rPr')) {
+            const { marks = [] } = this._parseProperties(node);
+            processedRun = processedRun.map((n) => {
+              return { ...n, marks }
+            });
+          }
+          processedElements.push(...processedRun)
+          continue;
+        case 'w:p':
+          schemaNode = this.#handleParagraphProcessing(node, elements, index);
+          break;
+        case 'w:t':
+          schemaNode = this._handleTextNode(node);
+          break;
+        default:
+          schemaNode = this._handleStandardNode(node);
+      }
+
+      if (schemaNode?.type) {
+        const ignore = ['runProperties'];
+        if (ignore.includes(schemaNode.type)) console.debug('No schema node:', node);
+        else processedElements.push(schemaNode);
+      }
+    }
+    return processedElements;
+  }
+
+  /**
+   * Special cases of w:p based on paragraph properties
    * 
-   * Start with the first element. It is the <w:document> element
-   * 
-   * For each element in element.elements
-   *    What element is this?
-   *    Do we have special handling?
-   *    Append it to the tree
+   * If we detect a list node, we need to get all nodes that are also lists and process them together
+   * in order to combine list item nodes into list nodes.
    */
-  convertToSchema(node, parent = null) {
-    if (!node || node.seen) return;
-  
-    /* We will build a prose mirror ready schema node from XML node */
+  #handleParagraphProcessing(node, elements, index) {
     let schemaNode;
-    const { name: outerNodeName } = node;
 
-    /**
-     * Who am I?
-     * It isn't always clear what node we have from the outer element.
-     * Nodes such as lists are paragraphs but contain a list element somewhere.
-     */
-    //this.log('Who am I?', node.name)
-    // this.log('Node', node);
+    // Check if this paragraph node is a lsit
+    if (this.#testForList(node)) {          
+      // Get all siblings that are list items and haven't been processed yet.
+      const siblings = [...elements.slice(index)];
+      const listItems = [];
 
-    /* Standard nodes known to need no special handling */
-    const standardNodes = ['w:document', 'w:body', 'w:commentRangeStart', 'w:commentRangeEnd', 'w:commentReference'];
-    if (standardNodes.includes(outerNodeName)) schemaNode = this._handleStandardNode(node);
+      // Iterate each item until we find the end of the list (a non-list item),
+      // then send to the list handler for processing.
+      let possibleList = siblings.shift();
+      while (possibleList && this.#testForList(possibleList)) {
+        listItems.push(possibleList);
+        possibleList = siblings.shift();
+      }
 
-    /* w:p: If I am a paragraph, I might be a list item, or possibly other special case */
-    if (outerNodeName === 'w:p') {
+      schemaNode = this.#handleListNodes(listItems);
+    }      
 
-      /**
-       * Special cases of w:p based on paragraph properties
-       * 
-       * If we detect a list node, we need to get all nodes that are also lists and process them together
-       * in order to combine list item nodes into list nodes.
-       */
-      if (this._testForList(node)) {
-        // Get all siblings that are list items and haven't been processed yet.
-        const siblings = parent.elements.filter(el => !el.seen);
-        const listItems = [];
-      
-        // Iterate each item until we find the end of the list (a non-list item),
-        // then send to the list handler for processing.
-        let possibleList = siblings.shift();
-        while (possibleList && this._testForList(possibleList)) {
-          listItems.push(possibleList);
-          possibleList = siblings.shift();
-        }
-      
-        schemaNode = this.#handleListNode(node, listItems);
-      }      
-      
-      /* I am a standard paragraph tag */
-      if (!schemaNode) schemaNode = this._handleStandardNode(node);
-    }
-
-    /* w:r: If I am a run... */
-    if (outerNodeName === 'w:r') {
-      schemaNode = this._handleStandardNode(node);
-    }
-
-    /* w:t: If I am a text node... */
-    if (outerNodeName === 'w:t') schemaNode = this._handleTextNode(node);
-
-    /* Watch for unknown nodes as we build more functionality here */
-    if (!schemaNode) {
-      // console.debug('No schema:', node);
-      const ignore = ['w:t'];
-      if (!ignore.includes(outerNodeName)) console.debug('No schema node:', node);
-    } else if (!['text','run','paragraph','doc','body','orderedList'].includes(schemaNode.type)) {
-
-      // Watch for unknown list types or other undefined types
-      // console.debug('Schema node:', schemaNode);
-    }
-
-    node.seen = true;
+    // If it is a standard paragraph node, process normally
+    if (!schemaNode) schemaNode = this._handleStandardNode(node);
     return schemaNode;
   }
 
+  #wrapNodes(type, content) {
+    return {
+      type,
+      content,
+    }
+  }
 
-  _testForList(node) {
+  #testForList(node) {
     const { elements } = node;
     const pPr = elements?.find(el => el.name === 'w:pPr')
     if (!pPr) return false;
@@ -204,111 +224,71 @@ export class SuperConverter {
     return isList || hasNumPr;
   }
 
-  _getNodeListType(attributes) {
-    const def = this.convertedXml['word/numbering.xml'];
-    if (!def) return {};
-
-    const { paragraphProperties } = attributes;
-    const { elements: listStyles } = paragraphProperties;
-    const numPr = listStyles.find(style => style.name === 'w:numPr');
-    
-    // Get the indent level
-    const ilvlTag = numPr.elements.find(style => style.name === 'w:ilvl');
-    const ilvl = ilvlTag.attributes['w:val'];
-
-    // Get the list style id
-    const numIdTag = numPr.elements.find(style => style.name === 'w:numId');
-    const numId = numIdTag.attributes['w:val'];
-    const numberingElements = def.elements[0].elements;
-
-    // Get the list styles
-    const abstractDefinitions = numberingElements.filter(style => style.name === 'w:abstractNum')
-    const numDefinitions = numberingElements.filter(style => style.name === 'w:num')
-    const numDefinition = numDefinitions.find(style => style.attributes['w:numId'] === numId);
-    const abstractNumId = numDefinition.elements[0].attributes['w:val']
-    const abstractNum = abstractDefinitions.find(style => style.attributes['w:abstractNumId'] === abstractNumId);
-
-    // Determine list type
-    const currentLevelDef = abstractNum.elements.find(style => style.name === 'w:lvl');
-    const currentLevel = currentLevelDef.elements.find(style => style.name === 'w:numFmt')
-    const listTypeDef = currentLevel.attributes['w:val'];
-    let listType;
-    if (listTypeDef === 'bullet') listType = 'bulletList';
-    else if (listTypeDef === 'decimal') listType = 'orderedList';
-    else if (listTypeDef === 'lowerLetter') listType = 'bulletList';
-
-    // Check for unknown list types, there will be some
-    if (!listType) console.debug('_getNodeListType: No list type:', listTypeDef, attributes)
-    return { listType, ilvl, numId, abstractNum };
-  }
-
-
-
   /**
-   * List Nodes
+   * List processing
    * 
-   * This recursive function takes the current node (the first list item detected in the current array)
-   * and all list items that follow it.
+   * This recursive function takes a list of known list items and combines them into nested lists.
    * 
    * It begins with listLevel = 0, and if we find an indented node, we call this function again and increase the level.
    * with the same set of list items (as we do not know the node levels until we process them).
    *
-   * @param {Object} node - The current node being processed.
    * @param {Array} listItems - Array of list items to process.
    * @param {number} [listLevel=0] - The current indentation level of the list.
    * @returns {Object} The processed list node with structured content.
    */
-  #handleListNode(node, listItems, listLevel = 0) {
+  #handleListNodes(listItems, listLevel = 0) {
     const parsedListItems = [];
     let overallListType;
+    let listStyleType;
 
     for (let [index, item] of listItems.entries()) {
+      // Skip items we've already processed
       if (item.seen) continue;
 
+      // Get the properties of the node - this is where we will find depth level for the node
+      // As well as many other list properties
       const { attributes, elements, marks = [] } = this._parseProperties(item);
-      const { listType, ilvl } = this._getNodeListType(attributes);
+      const { listType, listOrderingType, ilvl, listrPrs, numId, listpPrs, start, lvlText, lvlJc } = this.getNodeNumberingDefinition(attributes, listLevel);
+      listStyleType = listOrderingType;
       const intLevel = parseInt(ilvl);
 
-      // Since this function is recursive, but at any depth we are iterating over the same items
-      // We need to skip any items that are below the current level (as they will be processed by a higher level)
-      if (listLevel > intLevel) continue;
-
-      const content = [];
-      const sublist = {};
-
-      // If we have found a new indentation level, we will go a level deeper and call this function again,
-      // The result becomes the content of the current list item.
-      if (listLevel < intLevel) {
-        Object.assign(sublist, this.#handleListNode(item, listItems, listLevel + 1));
-      } 
-      
-      // Standard processing: we parse the element and add it to the content
-      else {
+      // Append node if it belongs on this list level
+      if (listLevel === intLevel) {
         overallListType = listType;
         item.seen = true;
+        const schemaElements = this.convertToSchema(elements)?.filter(n => n);
 
-        for (const element of elements) {
-          // We replace the w:r here for a w:p for the sake of the schema which prefers <li><p>...</p></li>
-          if (element.name === 'w:r') element.name = 'w:p';
-          const schemaNode = this.convertToSchema(element);
-          if (schemaNode) content.push(schemaNode);
+        if (listpPrs) attributes['listParagraphProperties'] = listpPrs;
+        if (listrPrs) attributes['listRunProperties'] = listrPrs;
+        attributes['start'] = start;
+        attributes['lvlText'] = lvlText;
+        attributes['lvlJc'] = lvlJc;
+        parsedListItems.push(this.#createListItem(schemaElements, attributes, marks));
+      } 
+
+      // If this item belongs in a deeper list level, we need to process it by calling this function again
+      // But going one level deeper.
+      else if (listLevel < intLevel) {
+        const sublist = this.#handleListNodes(listItems.slice(index), listLevel + 1);
+        const lastItem = parsedListItems[parsedListItems.length - 1];
+        if (!lastItem) parsedListItems.push(sublist);
+        else {
+          lastItem.content[0].content.push(sublist);
         }
       }
-
-      // If we have a sublist, then insert it into the previous node's content
-      // Otherwise, create a new list item node.
-      if (Object.keys(sublist).length) {
-        const item = parsedListItems[index - 1]
-        item?.content.push(sublist);
-      } else {
-        parsedListItems.push(this.#createListItem(content, attributes, marks));
+      
+      // If this item belongs in a higher list level, we need to break out of the loop and return to higher levels
+      else {
+        break;
       }
     }
 
-    node.seen = true;
     return {
       type: overallListType || 'bulletList',
       content: parsedListItems,
+      attrs: {
+        'list-style-type': listStyleType,
+      }
     };
   }
 
@@ -322,7 +302,7 @@ export class SuperConverter {
   #createListItem(content, attrs, marks) {
     return {
       type: 'listItem',
-      content,
+      content: [this.#wrapNodes('paragraph', content)],
       attrs,
       marks,
     };
@@ -332,18 +312,14 @@ export class SuperConverter {
 
 
   _handleStandardNode(node) {
-    const { name, type } = node;
-
     // Parse properties
+    const { name, type } = node;
     const { attributes, elements, marks = [] } = this._parseProperties(node);
 
     // Iterate through the children and build the schemaNode content
     const content = [];
     if (elements && elements.length) {
-      for (const element of elements) {
-        const schemaNode = this.convertToSchema(element, node);
-        if (schemaNode) content.push(schemaNode);
-      }
+      content.push(...this.convertToSchema(elements));
     }
 
     return {
@@ -377,10 +353,14 @@ export class SuperConverter {
 
   _parseMarks(property) {
     const marks = [];
+    const seen = new Set();
     property.elements.forEach((element) => {
-      const mark = SuperConverter.markTypes[element.name];
-      if (!mark) return;
-      marks.push({ type: mark });
+      const marksForType = SuperConverter.markTypes.filter((mark) => mark.name === element.name);
+      marksForType.forEach((m) => {
+        if (!m || seen.has(m.type)) return;
+        seen.add(m.type);
+        marks.push({ type: m.type });
+      })
     });
 
     // if (marks.length) console.debug('Marks:', marks )
@@ -434,8 +414,55 @@ export class SuperConverter {
     return result;
   }
 
+  #preProcessTextNodes(node, parent) {
+    const { content = [] } = node;
+    const textNodes = content.filter((n) => n.type === 'text');
+    if (!textNodes.length) return [node];
+
+    const indexInParent = parent.content?.findIndex((n) => n === node);
+    console.debug('\n\n INDEX IN PARETN', indexInParent)
+
+    const contentCopy = [...node.content];
+    const newNodes = [];
+
+    let index = 0;
+    let currItem = contentCopy[index];
+    while (currItem) {
+      console.debug('--- CURR ITEM', currItem, '\n\n')
+      let newContent = [];
+      if (currItem.type === 'text' && currItem.marks) {
+        console.debug('--MARKS', currItem.marks,'\n')
+        newContent = [{ type: 'text', text: currItem.text }]
+      } else {
+        newContent = [currItem];
+      }
+      const newItem = { type: 'run', marks: currItem.marks || null, content: newContent };
+      contentToSplice.push(newItem);
+      currItem = contentCopy[++index]
+    }
+
+    console.debug('\n\n CONTENT TO SPLICE', contentToSplice, '\n\n')
+    console.debug('\n NODE WAS', node, parent)
+    
+    // for (let n in content) {
+    //   if (n.type !== 'text' || !n.marks) newContent.push(n);
+    // }
+    // const newContent = content.map((n) => {
+    //   if (n.type !== 'text' || !n.marks) return n;
+
+    //   // Remove marks from the text node and bump them up to a new run element
+    //   const newContent = [{ type: 'text', text: n.text }];
+    //   return { type: 'run', marks: n.marks, content: newContent };
+    // });
+    parent.content.splice(indexInParent, 1, ...contentToSplice)
+    node.skip = true;
+    return [node];
+  }
+
   #outputNodeToJson(node, parent = null) {
-    let name = this.getTagName(node.type);    
+    node = this.#preProcessTextNodes(node, parent);
+
+    let name = this.getTagName(node.type);
     const elements = [];
     const { content, attrs } = node;
     let attributes = attrs?.attributes || {};
@@ -447,7 +474,7 @@ export class SuperConverter {
       // const isList = ['orderedList', 'bulletList'].includes(node.type);
       // if (isList) { 
       //   // console.debug('List node:', node.type);
-        
+
       //   const listElements = [];
       //   for (let child of content) {
       //     const processedChild = {
@@ -474,9 +501,44 @@ export class SuperConverter {
       }
     }
 
+    // Check to see if this is going to be a text node
+    const hasTextNodes = content?.some((n) => n.type === 'text');
+    if (hasTextNodes && node.type !== 'text') {
+
+      // Re-build attributes from marks
+      const { marks = null } = node;
+      if (marks) {
+        let attributeGroup;
+        if (node.type === 'run') attributeGroup= 'w:rPr';
+        if (attributeGroup) {
+          const attributeElements = [];
+          marks.forEach((mark) => {
+            const tags = this.getTagsFromMark(mark.type);
+            if (!tags || !tags.length) return;
+
+            tags.forEach((tag) => {
+              attributeElements.push({
+                name: tag.name,
+                type: 'element'
+              });
+            })
+          });
+
+          elements.unshift({
+            type: 'element',
+            name: attributeGroup,
+            elements: attributeElements,
+          });
+
+          delete attributes.runProperties;
+          delete attributes.paragraphProperties;
+        }
+      }
+    }
+
     // Text nodes have special handling because our Schema requires them to have no attrs and the strucutre
     // is different, so we restore the expected export structure here.
-    else if (node.type === 'text') {
+    else if (node.type === 'text' && !node.skip) {
       // Add xml:space attribute to text nodes where needed
       const hasWhitespace = /^\s|\s$/.test(node.text);
       if (hasWhitespace) attributes['xml:space'] = 'preserve';
@@ -486,19 +548,7 @@ export class SuperConverter {
       });
     }
 
-    const sectionProperties = attrs?.attributes?.sectionProperties;
-    const runProperties = attrs?.attributes?.runProperties;
-    const paragraphProperties = attrs?.attributes?.paragraphProperties;
-
-    // console.debug('paragraphProperties:', paragraphProperties);
-    // if (paragraphProperties) {
-    //   delete attrs.attributes.paragraphProperties;
-    //   elements.push(paragraphProperties)
-    // }
-    // if (runProperties) {
-    //   delete attrs.attributes.runProperties;
-    //   elements.push(runProperties)
-    // }
+    const sectionProperties = attributes?.sectionProperties;
     if (sectionProperties) {
       delete attrs.attributes.sectionProperties;
       elements.push(sectionProperties)
@@ -569,3 +619,7 @@ export class SuperConverter {
     return tags;
   }
 }
+
+SuperConverter.prototype.getNodeNumberingDefinition = getNodeNumberingDefinition;
+
+export { SuperConverter }

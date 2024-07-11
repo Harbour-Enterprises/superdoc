@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SuperConverter } from '../../SuperConverter.js';
-import { Editor } from '../../Editor.js';
+import { Editor } from '../../../Editor.js';
 import * as extensions from '@extensions/index.js';
 
 export function runInputOutputTests() {
@@ -93,6 +93,84 @@ export function runInputOutputTests() {
 
       // Does the original XML equal the exported XML?
       const XML = converter.schemaToXml(output);
+      expect(XML).toEqual(removeExcessWhitespace(input));
+    });
+
+  });
+
+  describe('Editor.js and SuperConverter input/output conversion with marks', async () => {
+    it('can import/output the expected xml with marks', async () => {
+      const input = `
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:cx="http://schemas.microsoft.com/office/drawing/2014/chartex">
+          <w:body>
+            <w:p w14:paraId="44621174" w14:textId="6D5C378D" w:rsidR="003C58BC" w:rsidRDefault="00746728">
+              <w:r>
+                <w:t xml:space="preserve">This is a basic docx document with </w:t>
+              </w:r>
+              <w:r w:rsidRPr="00746728">
+                <w:rPr>
+                  <w:b />
+                  <w:bCs />
+                </w:rPr>
+                <w:t>bold</w:t>
+              </w:r>
+            </w:p>
+            <w:sectPr w:rsidR="00746728">
+              <w:pgSz w:w="12240" w:h="15840" />
+              <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0" />
+              <w:cols w:space="720" />
+              <w:docGrid w:linePitch="360" />
+            </w:sectPr>
+          </w:body>
+        </w:document>
+      `
+
+      const converter = new SuperConverter({ xml: input, debug: true });
+
+      // Declaration check
+      const expectedDeclaration = { attributes: { version: '1.0', encoding: 'UTF-8', standalone: 'yes' } };
+      expect(converter.declaration).toEqual(expectedDeclaration);
+
+      const initialJSON = { ...converter.initialJSON };
+      const containerDiv = document.createElement('div');
+      const schema = converter.getSchema();
+      const editor = new Editor({
+          element: containerDiv,
+          content: schema,
+          extensions: Object.values(extensions),
+          isTest: true,
+          converter,
+      });
+
+      // Delay to wait for the editor to be ready
+      await delay(250);
+      const doc = editor.getJSON();
+      const output = converter.outputToJson(doc);
+      const inputDocElement = initialJSON.elements[0];
+      const outputDocElement = output.elements[0];
+
+      // 
+      const inputBody = inputDocElement.elements[0];
+      const outputBody = outputDocElement.elements[0];
+      const inputParagraph = inputBody.elements[0];
+      const outputParagraph = outputBody.elements[0];
+
+      // Check the bold element
+      const inputBoldRun = inputParagraph.elements[1];
+      const outputBoldRun = outputParagraph.elements[1];
+
+      expect(inputBoldRun.name).toEqual(outputBoldRun.name);
+      expect(inputBoldRun.attributes).toEqual(outputBoldRun.attributes);
+      expect(inputBoldRun.elements.length).toEqual(outputBoldRun.elements.length);
+      expect(inputBoldRun).toEqual(outputBoldRun);
+
+      // Does the entire input JSON equal the entire output JSON?
+      expect(initialJSON).toEqual(output);
+
+      // Does the original XML equal the exported XML?
+      const XML = converter.schemaToXml(output);
+      console.debug('XML', XML);
       expect(XML).toEqual(removeExcessWhitespace(input));
     });
 

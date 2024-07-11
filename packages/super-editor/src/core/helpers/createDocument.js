@@ -10,9 +10,7 @@ export function createDocument(
   schema,
   parseOptions,
 ) {
-  const documentData = converter.getSchema();
-  console.debug('\nSCHEMA', JSON.stringify(documentData, null, 2), '\n');
-  
+  const documentData = converter.getSchema();  
   if (documentData) {
     return schema.nodeFromJSON(documentData);
   }

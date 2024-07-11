@@ -17,6 +17,10 @@ export const BulletList = Node.create({
 
   addAttributes() {
     return {
+      'list-style-type': {
+        default: 'bullet',
+        rendered: false,
+      },
       attributes: {
         rendered: false,
       },

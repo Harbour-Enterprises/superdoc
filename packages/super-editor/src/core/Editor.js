@@ -4,7 +4,7 @@ import { EditorView } from 'prosemirror-view';
 import { EventEmitter } from './EventEmitter.js';
 import { ExtensionService } from './ExtensionService.js';
 import { CommandService } from './CommandService.js';
-import { SuperConverter } from './SuperConverter.js';
+import { SuperConverter } from '@core/super-converter/SuperConverter.js';
 import { Commands, Keymap, Editable, EditorFocus } from './extensions/index.js';
 import { createDocument } from './helpers/createDocument.js';
 import { createStyleTag } from './utilities/createStyleTag.js';
@@ -307,6 +307,8 @@ export class Editor extends EventEmitter {
 
     const dom = this.view.dom;
     dom.editor = this;
+
+    console.debug('\n\nCURRENT SCHEMA:', this.getJSON());
   }
 
   /**

@@ -29,6 +29,11 @@ export const OrderedList = Node.create({
         },
       },
 
+      'list-style-type': {
+        default: 'decimal',
+        rendered: false,
+      },
+
       attributes: {
         rendered: false,
       },
