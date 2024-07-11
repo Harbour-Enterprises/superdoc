@@ -1,8 +1,8 @@
 <script setup>
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { ref } from 'vue';
 import ToolbarButton from './ToolbarButton.vue';
 import ToolbarSeparator from './ToolbarSeparator.vue';
+import ToolbarButtonIcon from './ToolbarButtonIcon.vue';
 
 /**
  * The toolbar should be completly decoupled from the editor.
@@ -10,13 +10,41 @@ import ToolbarSeparator from './ToolbarSeparator.vue';
  * One toolbar should work for many editors.
 */
 
+const toolbarItem = (options) => {
+  return {
+    type: options.type,
+    name: options.name,
+    active: options.active,
+    dropdownOptions: options.dropdownOptions || null,
+    command: options.command || null,
+    icon: options.icon || null,
+    tooltip: options.tooltip || null,
+    text: options.text || null,
+  }
+}
+
 const emit = defineEmits(['command']);
+const separator =  toolbarItem({
+  type: 'separator',
+  name: 'separator',
+  command: null,
+  icon: 'fa-grip-lines-vertical',
+  active: false,
+})
 const toolbarItems = ref([
   // font
-  // { type: 'dropdown', name: 'font', command: null, icon: 'fa-grip-lines-vertical', active: false },
+  toolbarItem({
+    type: 'dropdown',
+    name: 'arial',
+    command: 'toggleFont',
+    icon: null,
+    active: false,
+    tooltip: "Font",
+    text: "Font",
+  }),
 
   // separator
-  // { type: 'separator', name: 'separator', command: null, icon: 'fa-grip-lines-vertical', active: false },
+  separator,
 
   // font size
 
@@ -24,50 +52,148 @@ const toolbarItems = ref([
   // { type: 'separator', name: 'separator', command: null, icon: 'fa-grip-lines-vertical', active: false },
 
   // bold
-  { type: 'button', name: 'bold', command: 'toggleBold', icon: 'fa fa-bold', active: false },
+  toolbarItem({
+    type: 'button',
+    name: 'bold',
+    command: 'toggleBold',
+    icon: 'fa fa-bold',
+    active: false,
+    tooltip: "Bold",
+  }),
+
   // italic
-  { type: 'button', name: 'italic', command: 'toggleItalic', icon: 'fa fa-italic', active: false },
+  toolbarItem({
+    type: 'button',
+    name: 'italic',
+    command: 'toggleItalic',
+    icon: 'fa fa-italic',
+    active: false,
+    tooltip: "Italic",
+  }),
+
   // underline
-  { type: 'button', name: 'underline', command: 'toggleUnderline', icon: 'fa fa-underline', active: false },
+  toolbarItem({
+    type: 'button',
+    name: 'underline',
+    command: 'toggleUnderline',
+    icon: 'fa fa-underline',
+    active: false,
+    tooltip: "Underline",
+  }),
 
   // color
-  { type: 'button', name: 'color', command: 'toggleColor', icon: 'fa fa-font', active: false },
+  toolbarItem({
+    type: 'button',
+    name: 'color',
+    command: 'toggleColor',
+    icon: 'fa fa-font',
+    active: false,
+    tooltip: "Text color",
+  }),
 
   // separator
-  { type: 'separator', name: 'separator', command: null, icon: 'fa-grip-lines-vertical', active: false },
+  separator,
   
   // link
-  { type: 'button', name: 'link', command: null, icon: 'fa-link', active: false },
+  toolbarItem({
+    type: 'button',
+    name: 'link',
+    command: 'toggleLink',
+    icon: 'fa-link',
+    active: false,
+    tooltip: "Link",
+  }),
   
   // image
-  { type: 'button', name: 'link', command: null, icon: 'fa-image', active: false },
+  toolbarItem({
+    type: 'button',
+    name: 'image',
+    command: 'toggleImage',
+    icon: 'fa-image',
+    active: false,
+    tooltip: "Image",
+  }),
 
   // separator
-  { type: 'separator', name: 'separator', command: null, icon: 'fa-grip-lines-vertical', active: false },
+  separator,
 
   // paragraph
-  { type: 'button', name: 'paragraph', command: null, icon: 'fa-align-left', active: false },
+  toolbarItem({
+    type: 'dropdown',
+    name: 'paragraph',
+    command: 'toggleParagraph',
+    icon: 'fa-align-left',
+    active: false,
+    tooltip: "Paragraph",
+  }),
 
   // bullet list
-  { type: 'button', name: 'list', command: null, icon: 'fa-list', active: false },
+  toolbarItem({
+    type: 'button',
+    name: 'list',
+    command: 'toggleList',
+    icon: 'fa-list',
+    active: false,
+    tooltip: "Bullet list",
+  }),
 
   // number list
-  { type: 'button', name: 'numberedlist', command: null, icon: 'fa-list-numeric', active: false },
+  toolbarItem({
+    type: 'button',
+    name: 'numberedlist',
+    command: 'toggleNumberedList',
+    icon: 'fa-list-numeric',
+    active: false,
+    tooltip: "Numbered list",
+  }),
 
   // indent left
-  { type: 'button', name: 'indentleft', command: null, icon: 'fa-indent', active: false },
+  toolbarItem({
+    type: 'button',
+    name: 'indentleft',
+    command: 'toggleIndentLeft',
+    icon: 'fa-indent',
+    active: false,
+    tooltip: "Left indent",
+  }),
 
   // indent right
-  { type: 'button', name: 'indentright', command: null, icon: 'fa-indent', active: false },
+  toolbarItem({
+    type: 'button',
+    name: 'indentright',
+    command: 'toggleIndentRight',
+    icon: 'fa-indent',
+    active: false,
+    tooltip: "Right indent",
+  }),
 
   // overflow
-  { type: 'button', name: 'overflow', command: null, icon: 'fa-ellipsis-vertical', active: false },
+  toolbarItem({
+    type: 'button',
+    name: 'overflow',
+    command: 'toggleOverflow',
+    icon: 'fa-ellipsis-vertical',
+    active: false,
+    tooltip: "Overflow",
+  }),
 
   // suggesting
+  toolbarItem({
+    type: 'toggle',
+    text: 'Suggesting',
+    name: 'suggesting',
+    command: null,
+    icon: null,
+    active: false,
+    tooltip: "Suggesting",
+  }),
 ])
 
 const isButton = (item) => item.type === 'button';
 const isSeparator = (item) => item.type === 'separator';
+const isDropdown = (item) => item.type === 'dropdown';
+const isToggle = (item) => item.type === 'toggle';
+const hasIcon = (item) => item.icon !== null;
 
 const handleCommand = (command) => {
   console.debug('Toolbar command', command);
@@ -91,14 +217,19 @@ defineExpose({
     <div v-for="item, index in toolbarItems" :key="index">
 
       <!-- Toolbar button -->
-      <ToolbarButton
-          v-if="isButton(item)" :command="item.command"
+      <ToolbarSeparator v-if="isSeparator(item)"> </ToolbarSeparator>
+      <ToolbarButton v-else
+          :command="item.command"
           :active="item.active"
+          :tooltip="item.tooltip"
+          :name="item.name"
+          :text="item.text"
+          :is-dropdown="isDropdown(item)"
+          :is-toggle="isToggle(item)"
+          :has-icon="hasIcon(item)"
           @command="handleCommand">
-          <font-awesome-icon :icon="item.icon" />
       </ToolbarButton>
 
-      <ToolbarSeparator v-if="isSeparator(item)"> </ToolbarSeparator>
 
     </div>
   </div>

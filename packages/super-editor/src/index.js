@@ -18,7 +18,8 @@ import {
   faIndent,
   faEllipsisVertical,
   faList,
-  faListNumeric
+  faListNumeric,
+  faCaretDown
 } from '@fortawesome/free-solid-svg-icons';
 
 
@@ -35,7 +36,8 @@ library.add(
   faIndent,
   faEllipsisVertical,
   faList,
-  faListNumeric
+  faListNumeric,
+  faCaretDown
 );
 
 /**
