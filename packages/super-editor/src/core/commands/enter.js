@@ -20,10 +20,6 @@ export const enter = () => ({ state, dispatch }) => {
   if (parentType === "paragraph") {
     splitNode($from.pos);
     return true;
-  } else if (parentType === "run") {
-    const parentPos = $from.before($from.depth - 1);
-    splitNode(parentPos);
-    return true;
   }
 
   return false;

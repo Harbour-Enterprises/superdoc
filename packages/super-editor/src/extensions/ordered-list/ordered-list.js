@@ -1,5 +1,6 @@
 import { Node } from '@core/index.js';
 import { Attribute } from '@core/index.js';
+import { toKebabCase } from '@common/key-transform.js';
 
 export const OrderedList = Node.create({
   name: 'orderedList',
@@ -27,6 +28,17 @@ export const OrderedList = Node.create({
             ? parseInt(element.getAttribute('start') || '', 10)
             : 1;
         },
+      },
+
+      'list-style-type': {
+        default: 'decimal',
+        renderDOM: (attrs) => {
+          let listStyleType = 'decimal';
+          if ('list-style-type' in attrs) listStyleType = toKebabCase(attrs['list-style-type']);
+          return {
+            style: `list-style-type: ${listStyleType}`,
+          }
+        }
       },
 
       attributes: {

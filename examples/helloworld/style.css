@@ -146,7 +146,8 @@ header{
   }
 }
 
-.header-item-button{
+.header-item-button {
+  margin-right: 5px;
   color: #343639;
   height: 34px;
   font-size: 14px;
@@ -176,7 +177,7 @@ header{
   color:white;
 }
 
-#superdoc-controls-bar{
+.superdoc-controls-bar {
   background-color: #fcfcfc;
   width: 100%;
   position: fixed;
@@ -189,6 +190,8 @@ header{
   justify-content: center;
   z-index: 900;
   overflow: hidden;
+  display: flex;
+  align-items: center;
 }
 
 .superdoc-controls-bar-item{
@@ -533,4 +536,7 @@ header{
   line-height: 18px;
   outline: none;
   color: black;
+}
+.active {
+  background-color: #d8dee5;
 }

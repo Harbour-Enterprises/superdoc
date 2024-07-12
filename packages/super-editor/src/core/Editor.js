@@ -4,7 +4,7 @@ import { EditorView } from 'prosemirror-view';
 import { EventEmitter } from './EventEmitter.js';
 import { ExtensionService } from './ExtensionService.js';
 import { CommandService } from './CommandService.js';
-import { SuperConverter } from './SuperConverter.js';
+import { SuperConverter } from '@core/super-converter/SuperConverter.js';
 import { Commands, Keymap, Editable, EditorFocus } from './extensions/index.js';
 import { createDocument } from './helpers/createDocument.js';
 import { createStyleTag } from './utilities/createStyleTag.js';
@@ -30,6 +30,8 @@ export class Editor extends EventEmitter {
   isFocused = false;
 
   #css;
+
+  #docx;
 
   options = {
     element: document.createElement('div'),
@@ -305,6 +307,8 @@ export class Editor extends EventEmitter {
 
     const dom = this.view.dom;
     dom.editor = this;
+
+    console.debug('\n\nCURRENT SCHEMA:', JSON.stringify(this.getJSON()));
   }
 
   /**
@@ -353,12 +357,15 @@ export class Editor extends EventEmitter {
       return;
     }
 
+    console.debug('state:', this.state.toJSON());
+
     this.emit('update', {
       editor: this,
       transaction,
     });
   }
 
+  
   /**
    * Load the document comments.
    */
@@ -379,15 +386,41 @@ export class Editor extends EventEmitter {
   }
 
   /**
+   * Get page styles
+   */
+  getPageStyles() {
+    return this.converter.pageStyles;
+  }
+
+  /**
+   * TODO: Remove this - this is for testing only
+   */
+  insert(text) {
+    const { dispatch } = this.view;
+
+    if (!Array.isArray(text)) text = [text];
+    text.forEach((t) => {
+      const state = this.state;
+      const { from, to } = state.selection;
+      const transaction = state.tr.insertText(t + '\n', from);
+      dispatch(transaction);
+    });
+  }
+
+  /**
    * Export the editor document to DOCX.
    * TODO: This is a WIP
    */
-  exportDocx() {
-    const doc = { doc: this.state.doc.toJSON() };
-    const json = this.converter.outputToJson(doc);
-    // const xml = this.converter.schemaToXml({ doc: this.state.doc.toJSON() });
-    // console.debug('XML', xml);
+  async exportDocx() {
+    const json = this.converter.outputToJson(this.getJSON());
+    const xml = this.converter.schemaToXml(json);
+    console.debug('Exporting DOCX:', xml);
+  
+    const zipper = new DocxZipper();
+    const newDocx = await zipper.updateZip(this.options.fileSource, String(xml));
+    return newDocx;
   }
+
 
   /**
    * Destroy the editor.

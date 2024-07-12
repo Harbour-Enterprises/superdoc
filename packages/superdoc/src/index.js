@@ -4,6 +4,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { useSuperdocStore } from './stores/superdoc-store';
 import clickOutside from '@/helpers/v-click-outside';
+import SuperToolbar from '@/components/SuperToolbar/SuperToolbar.vue';
 import App from './Superdoc.vue'
 
 const createMyApp = () => {
@@ -22,6 +23,7 @@ const createMyApp = () => {
 */
 export default class Superdoc extends EventEmitter {
   constructor(config) {
+    console.debug('[superdoc] Initializing:', config);
     super();
     const { app, pinia, superdocStore } = createMyApp(this);
     this.app = app;
@@ -30,11 +32,18 @@ export default class Superdoc extends EventEmitter {
     this.app.config.globalProperties.$superdoc = this;
     this.superdocStore = superdocStore;
 
+    // Toolbar
+    this.toolbarElement = config.toolbar;
+    this.toolbar = null;
+
     this.superdocStore.init(config);
     this.activeEditor = null;
 
     // Directives
     this.app.mount(config.selector);
+
+    // If a toolbar element is provided, render a toolbar
+    if (this.toolbarElement) this.addToolbar(this);
   }
 
   broadcastComments(type, data) {
@@ -45,6 +54,24 @@ export default class Superdoc extends EventEmitter {
   onSelectionUpdate({ editor, transaction }) {
     this.activeEditor = editor;
     this.emit('selection-update', { editor, transaction });
+  }
+
+  setToolbar(component) {
+    this.toolbar = component;
+  }
+
+  addToolbar(instance) {
+    if (!this.toolbarElement) return;
+    const el = document.getElementById(this.toolbarElement);
+    if (!el) return;
+    
+    const app = createApp(SuperToolbar);
+    app.config.globalProperties.$superdoc = instance;
+    app.mount(el);
+  }
+
+  onToolbarCommand(command) {
+    this.activeEditor.commands[command]();
   }
 
   saveAll() {
@@ -61,7 +88,6 @@ export default class Superdoc extends EventEmitter {
       this.app.unmount();
     }
 
-    // Remove global properties
     delete this.app.config.globalProperties.$config;
     delete this.app.config.globalProperties.$superdoc;
   }

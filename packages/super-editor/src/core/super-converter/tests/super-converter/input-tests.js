@@ -4,7 +4,7 @@ import fs from 'fs';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { readFileSync } from './helpers';
 import { SuperConverter } from '../../SuperConverter';
-import DocxZipper from '../../DocxZipper';
+import DocxZipper from '../../../DocxZipper';
 
 const showParserLogging = false;
 

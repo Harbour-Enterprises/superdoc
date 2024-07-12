@@ -1,4 +1,4 @@
-import { SuperConverter } from "@core/SuperConverter";
+import { SuperConverter } from "@core/super-converter/SuperConverter";
 import DocxZipper from '@core/DocxZipper';
 import SuperEditor from '@components/SuperEditor.vue';
 import BasicUpload from './dev/components/BasicUpload.vue';

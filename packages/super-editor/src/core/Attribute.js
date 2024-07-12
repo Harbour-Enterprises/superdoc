@@ -133,6 +133,7 @@ export class Attribute {
         if (oldAttrs === false) return false;
 
         const parseFromString = (value) => {
+          if (typeof value !== 'string') return value;
           if (value.match(/^[+-]?(\d*\.)?\d+$/)) return Number(value);
           if (value === 'true') return true;
           if (value === 'false') return false;

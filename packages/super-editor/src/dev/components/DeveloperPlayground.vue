@@ -47,6 +47,9 @@ const onSelectionUpdate = ({ editor, transaction }) => {
 const onCreate = ({ editor }) => {
   console.debug('[Dev] Editor created', editor);
   activeEditor = editor;
+  window.editor = editor;
+
+  console.debug('[Dev] Page styles (pixels)', editor.getPageStyles());
 }
 
 const editorOptions = {
@@ -54,8 +57,14 @@ const editorOptions = {
   onSelectionUpdate
 }
 
-const exportDocx = () => {
-  activeEditor?.exportDocx();
+const exportDocx = async () => {
+  const result = await activeEditor?.exportDocx();
+  const blob = new Blob([result], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'exported.docx';
+  a.click();
 }
 </script>
 
