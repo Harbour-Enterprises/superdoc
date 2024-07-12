@@ -20,6 +20,7 @@ const toolbarItem = (options) => {
     icon: options.icon || null,
     tooltip: options.tooltip || null,
     text: options.text || null,
+    argument: options.argument || null,
   }
 }
 
@@ -89,6 +90,7 @@ const toolbarItems = ref([
     icon: 'fa fa-font',
     active: false,
     tooltip: "Text color",
+    argument: 'red',
   }),
 
   // separator
@@ -195,9 +197,14 @@ const isDropdown = (item) => item.type === 'dropdown';
 const isToggle = (item) => item.type === 'toggle';
 const hasIcon = (item) => item.icon !== null;
 
-const handleCommand = (command) => {
-  console.debug('Toolbar command', command);
-  emit('command', command);
+const handleCommand = (command, argument) => {
+  console.debug('Toolbar command', command, argument);
+  emit('command', {command, argument});
+}
+
+const handleToolbarButtonClick = ({command, argument}) => {;
+  console.debug('Toolbar command', command, argument);
+  emit('command', {command, argument});
 }
 
 const onSelectionChange = (marks) => {
@@ -227,7 +234,7 @@ defineExpose({
           :is-dropdown="isDropdown(item)"
           :is-toggle="isToggle(item)"
           :has-icon="hasIcon(item)"
-          @command="handleCommand">
+          @click="handleToolbarButtonClick(item)">
       </ToolbarButton>
 
 

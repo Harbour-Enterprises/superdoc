@@ -1,4 +1,5 @@
 import { Mark } from '@core/index.js';
+import { toggleMark } from 'prosemirror-commands';
 
 export const Color = Mark.create({
   name: 'color',
@@ -11,14 +12,28 @@ export const Color = Mark.create({
     ];
   },
 
-  renderDOM() {
-    return ['span', 0];
+
+  renderDOM(node) {
+    return ['span', node.mark.attrs.attributes, 0];
   },
 
-  addCommands() {
+  addAttributes(){
     return {
-      toggleColor: () => ({ commands }) => {
-        return commands.toggleMark(this.name, {attributes: {style: 'color: red;'}});
+      attributes: {
+        style: {default: null},
+      }
+    }
+  },
+
+  addCommands(node) {
+    return {
+      toggleColor: (color) => ({ commands }) => {
+        const attrs = {
+          attributes: {
+            style: `color: ${color};`,
+          }
+        }
+        return commands.toggleMark(this.name, attrs);
       },
     };
   },
