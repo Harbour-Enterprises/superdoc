@@ -1,6 +1,6 @@
 import { Node } from '@core/index.js';
 import { Attribute } from '@core/index.js';
-import { toDashed } from '@common/key-transform.js';
+import { toKebabCase } from '@common/key-transform.js';
 
 export const OrderedList = Node.create({
   name: 'orderedList',
@@ -34,7 +34,7 @@ export const OrderedList = Node.create({
         default: 'decimal',
         renderDOM: (attrs) => {
           let listStyleType = 'decimal';
-          if ('list-style-type' in attrs) listStyleType = toDashed(attrs['list-style-type']);
+          if ('list-style-type' in attrs) listStyleType = toKebabCase(attrs['list-style-type']);
           return {
             style: `list-style-type: ${listStyleType}`,
           }

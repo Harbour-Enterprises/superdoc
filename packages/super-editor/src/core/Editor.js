@@ -395,7 +395,7 @@ export class Editor extends EventEmitter {
   /**
    * TODO: Remove this - this is for testing only
    */
-  insertTextTest(text) {
+  insert(text) {
     const { dispatch } = this.view;
 
     if (!Array.isArray(text)) text = [text];

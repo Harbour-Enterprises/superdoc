@@ -1,5 +1,5 @@
 const snakeCase = (str) => str.replace(/[A-Z]/g, (match) => `_${match.toLowerCase()}`);
-const dasherize = (str) => str.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`);
+const kebabCase = (str) => str.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`);
 const camelize = (str) =>
   str
     .toLowerCase()
@@ -24,6 +24,6 @@ export const snakeCaseKeys = (comments) => {
   );
 }
 
-export const toDashed = (str) => {
-  return dasherize(str);
+export const toKebabCase = (str) => {
+  return kebabCase(str);
 }
