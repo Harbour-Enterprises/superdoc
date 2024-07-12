@@ -25,11 +25,11 @@ const handleNewFile = async (file) => {
   currentFile.value = new File([blob], 'docx-file.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
 }
 
-const handleToolbarCommand = (command) => {
-  console.debug('[SuperEditor dev] Toolbar command', command, activeEditor?.commands);
+const handleToolbarCommand = ({command, argument}) => {
+  console.debug('[SuperEditor dev] Toolbar command', command, argument, activeEditor?.commands);
   const commands = activeEditor?.commands;
   if (!!commands && command in commands) {
-    activeEditor?.commands[command]();
+    activeEditor?.commands[command](argument);
   }
 }
 
