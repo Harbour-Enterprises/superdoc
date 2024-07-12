@@ -1,4 +1,4 @@
-import { EditorState } from 'prosemirror-state';
+import { EditorState, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
 import { EventEmitter } from './EventEmitter.js';
@@ -406,6 +406,20 @@ export class Editor extends EventEmitter {
       dispatch(transaction);
     });
   }
+
+  // TODO: Remove this - this is for testing only
+  // toggle() {
+  //   let { state } = this;
+  //   const { doc: currentDoc } = state;
+  //   const { dispatch } = this.view;
+  //   let startPos = 3;
+  //   let endPos = 7;
+  //   let newSelection = TextSelection.create(currentDoc, startPos, endPos);
+  //   let transaction = state.tr.setSelection(newSelection);
+  //   dispatch(transaction);
+
+  //   this.commands.toggleBold();
+  // }
 
   /**
    * Export the editor document to DOCX.

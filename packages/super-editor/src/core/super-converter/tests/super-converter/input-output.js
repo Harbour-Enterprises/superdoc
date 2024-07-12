@@ -1,4 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { EditorState, TextSelection } from "prosemirror-state";
+import { toggleMark } from "prosemirror-commands";
+
 import { SuperConverter } from '../../SuperConverter.js';
 import { Editor } from '../../../Editor.js';
 import * as extensions from '@extensions/index.js';
@@ -14,7 +17,9 @@ export function runInputOutputTests() {
    * Editor.js' exportDocx method to convert the schema back to a docx document. 
    */
   describe('Editor.js and SuperConverter input/output conversion', async () => {
-    it('exports the expected output after importing xml, passing through the ProseMirror Schema and exported again', async () => {
+
+  
+    it('exports the expected output after importing xml, passing through the ProseMirror Schema', async () => {
       const input = `
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:cx="http://schemas.microsoft.com/office/drawing/2014/chartex">
@@ -212,6 +217,7 @@ export function runInputOutputTests() {
       expect(XML).toEqual(removeExcessWhitespace(input));
     });
 
+
     it('can import/output with expected list', async () => {
       const numberingXml = `
       <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -332,8 +338,7 @@ export function runInputOutputTests() {
         <w:num w:numId="1" w16cid:durableId="775100301">
           <w:abstractNumId w:val="0" />
         </w:num>
-      </w:numbering>
-`
+      </w:numbering>`;
       const input = `
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <w:document>
@@ -424,14 +429,12 @@ export function runInputOutputTests() {
             </w:p>
             <w:sectPr w:rsidR="00B12030">
               <w:pgSz w:w="12240" w:h="15840" />
-              <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720"
-                w:footer="720" w:gutter="0" />
+              <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0" />
               <w:cols w:space="720" />
               <w:docGrid w:linePitch="360" />
             </w:sectPr>
           </w:body>
-        </w:document>
-      `;
+        </w:document>`;
 
       const converter = new SuperConverter({ xml: input, debug: true });
       const numbering = converter.parseXmlToJson(numberingXml);
@@ -461,6 +464,7 @@ export function runInputOutputTests() {
       const outputBody = output.elements[0].elements[0];
       // console.debug('inputBody', inputBody);
       // console.debug('outputBody', outputBody);
+      expect(inputBody.elements.length).toEqual(outputBody.elements.length);
 
       const inputFirstListElement = inputBody.elements[0];
       const outputFirstListElement = outputBody.elements[0];
@@ -475,13 +479,14 @@ export function runInputOutputTests() {
       expect(inputFirstListRunItem.name).toEqual(outputFirstListRunItem.name);
       expect(inputFirstListRunItem.attributes).toEqual(outputFirstListRunItem.attributes);
       expect(inputFirstListRunItem.elements.length).toEqual(outputFirstListRunItem.elements.length);
-      
+
       const inputfirstRunElement = inputFirstListRunItem.elements[0];
       const outputFirstRunElement = outputFirstListRunItem.elements[0];
       // console.debug('inputfirstRunElement', inputfirstRunElement);
       // console.debug('outputFirstRunElement', outputFirstRunElement);
       expect(inputfirstRunElement.name).toEqual('w:t');
       expect(inputfirstRunElement.name).toEqual(outputFirstRunElement.name);
+      expect(inputfirstRunElement.elements[0].text).toEqual(outputFirstRunElement.elements[0].text);
       expect(inputfirstRunElement.attributes).toEqual(outputFirstRunElement.attributes);
       expect(inputfirstRunElement.elements.length).toEqual(outputFirstRunElement.elements.length);
       expect(inputfirstRunElement).toEqual(outputFirstRunElement);
@@ -489,17 +494,835 @@ export function runInputOutputTests() {
       // The second item is a nested list
       const inputFirstNestedList = inputBody.elements[1];
       const outputFirstNestedList = outputBody.elements[1];
-      console.debug('inputFirstNestedList', inputFirstNestedList.elements[1].elements[0].elements);
-      console.debug('outputFirstNestedList', outputFirstNestedList.elements[1].elements[0].elements);
-      // expect(inputFirstNestedList.attributes).toEqual(outputFirstNestedList.attributes);
-      // expect(inputFirstNestedList).toEqual(outputFirstNestedList);
+      // console.debug('inputFirstNestedList', inputFirstNestedList.elements);
+      // console.debug('outputFirstNestedList', outputFirstNestedList.elements);
+      expect(inputFirstNestedList.attributes).toEqual(outputFirstNestedList.attributes);
+
+      // Check that the paragraph properties were restored
+      // console.debug('inputFirstNestedList', inputFirstNestedList.elements[0]);
+      // console.debug('outputFirstNestedList', outputFirstNestedList.elements[0]);
+      expect(inputFirstNestedList.elements[0]).toEqual(outputFirstNestedList.elements[0]);
+
+      // Check the run item was restored
+      expect(inputFirstNestedList.elements[1]).toEqual(outputFirstNestedList.elements[1]);
+
+      // Check the whole list
+      expect(inputFirstNestedList).toEqual(outputFirstNestedList);
 
       // Full check of JSON
-      // expect(initialJSON).toEqual(output);
+      expect(initialJSON).toEqual(output);
 
+      // Full check XML
+      const inputXMLAsList = converter._generate_xml_as_list(initialJSON);
+      const outputXMLAsList = converter._generate_xml_as_list(output);
+      expect(inputXMLAsList.length).toEqual(outputXMLAsList.length);
+      for (let i = 0; i < inputXMLAsList.length; i++) {
+        expect(inputXMLAsList[i]).toEqual(outputXMLAsList[i]);
+      }
+      const finalXML = converter.schemaToXml(output);
+      expect(finalXML).toEqual(removeExcessWhitespace(input));
+    });
+
+
+
+    it('can import/export nested lists with marks in the nodes', async () => {
+      const numberingXml = `
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <w:numbering xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
+          xmlns:cx="http://schemas.microsoft.com/office/drawing/2014/chartex"
+          mc:Ignorable="w14 w15 w16se w16cid w16 w16cex w16sdtdh w16du wp14">
+          <w:abstractNum w:abstractNumId="0" w15:restartNumberingAfterBreak="0">
+            <w:nsid w:val="075C72CF" />
+            <w:multiLevelType w:val="hybridMultilevel" />
+            <w:tmpl w:val="5A586518" />
+            <w:lvl w:ilvl="0" w:tplc="10864A9A">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="-" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="720" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Aptos" w:eastAsiaTheme="minorHAnsi" w:hAnsi="Aptos" w:cstheme="minorBidi"
+                  w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="1" w:tplc="04090003">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="o" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="1440" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Courier New" w:hAnsi="Courier New" w:cs="Courier New" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="2" w:tplc="04090005" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="2160" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Wingdings" w:hAnsi="Wingdings" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="3" w:tplc="04090001" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="2880" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Symbol" w:hAnsi="Symbol" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="4" w:tplc="04090003" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="o" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="3600" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Courier New" w:hAnsi="Courier New" w:cs="Courier New" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="5" w:tplc="04090005" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="4320" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Wingdings" w:hAnsi="Wingdings" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="6" w:tplc="04090001" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="5040" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Symbol" w:hAnsi="Symbol" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="7" w:tplc="04090003" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="o" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="5760" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Courier New" w:hAnsi="Courier New" w:cs="Courier New" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="8" w:tplc="04090005" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="6480" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Wingdings" w:hAnsi="Wingdings" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+          </w:abstractNum>
+          <w:abstractNum w:abstractNumId="1" w15:restartNumberingAfterBreak="0">
+            <w:nsid w:val="07A8591E" />
+            <w:multiLevelType w:val="hybridMultilevel" />
+            <w:tmpl w:val="13A886F6" />
+            <w:lvl w:ilvl="0" w:tplc="50A2C410">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="-" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="720" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Aptos" w:eastAsiaTheme="minorHAnsi" w:hAnsi="Aptos" w:cstheme="minorBidi"
+                  w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="1" w:tplc="04090003" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="o" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="1440" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Courier New" w:hAnsi="Courier New" w:cs="Courier New" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="2" w:tplc="04090005" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="2160" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Wingdings" w:hAnsi="Wingdings" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="3" w:tplc="04090001" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="2880" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Symbol" w:hAnsi="Symbol" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="4" w:tplc="04090003" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="o" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="3600" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Courier New" w:hAnsi="Courier New" w:cs="Courier New" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="5" w:tplc="04090005" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="4320" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Wingdings" w:hAnsi="Wingdings" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="6" w:tplc="04090001" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="5040" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Symbol" w:hAnsi="Symbol" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="7" w:tplc="04090003" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="o" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="5760" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Courier New" w:hAnsi="Courier New" w:cs="Courier New" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="8" w:tplc="04090005" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="6480" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Wingdings" w:hAnsi="Wingdings" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+          </w:abstractNum>
+          <w:num w:numId="1" w16cid:durableId="907500030">
+            <w:abstractNumId w:val="1" />
+          </w:num>
+          <w:num w:numId="2" w16cid:durableId="681781737">
+            <w:abstractNumId w:val="0" />
+          </w:num>
+        </w:numbering>
+      `;
+
+      const input = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas">
+          <w:body>
+            <w:p w14:paraId="31E89D2C" w14:textId="2517014F" w:rsidR="003C58BC" w:rsidRDefault="007B1F51" w:rsidP="007B1F51">
+              <w:pPr>
+                <w:pStyle w:val="ListParagraph" />
+                <w:numPr>
+                  <w:ilvl w:val="0" />
+                  <w:numId w:val="2" />
+                </w:numPr>
+              </w:pPr>
+              <w:r>
+                <w:t xml:space="preserve">List with </w:t>
+              </w:r>
+              <w:r>
+                <w:rPr>
+                  <w:b />
+                  <w:bCs />
+                </w:rPr>
+                <w:t>bold</w:t>
+              </w:r>
+              <w:r>
+                <w:t xml:space="preserve"> item</w:t>
+              </w:r>
+            </w:p>
+            <w:p w14:paraId="7390E0A2" w14:textId="2A390454" w:rsidR="007B1F51" w:rsidRDefault="007B1F51" w:rsidP="007B1F51">
+              <w:pPr>
+                <w:pStyle w:val="ListParagraph" />
+                <w:numPr>
+                  <w:ilvl w:val="1" />
+                  <w:numId w:val="2" />
+                </w:numPr>
+              </w:pPr>
+              <w:r>
+                <w:t xml:space="preserve">List with </w:t>
+              </w:r>
+              <w:r>
+                <w:rPr>
+                  <w:i />
+                  <w:iCs />
+                </w:rPr>
+                <w:t>italic</w:t>
+              </w:r>
+              <w:r>
+                <w:t xml:space="preserve"> item</w:t>
+              </w:r>
+            </w:p>
+            <w:p w14:paraId="68916DDA" w14:textId="2FE74257" w:rsidR="007B1F51" w:rsidRDefault="007B1F51" w:rsidP="007B1F51">
+              <w:pPr>
+                <w:pStyle w:val="ListParagraph" />
+                <w:numPr>
+                  <w:ilvl w:val="0" />
+                  <w:numId w:val="2" />
+                </w:numPr>
+              </w:pPr>
+              <w:r>
+                <w:t>Normal list item</w:t>
+              </w:r>
+            </w:p>
+            <w:sectPr w:rsidR="007B1F51">
+              <w:pgSz w:w="12240" w:h="15840" />
+              <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0" />
+              <w:cols w:space="720" />
+              <w:docGrid w:linePitch="360" />
+            </w:sectPr>
+          </w:body>
+        </w:document>`;
+
+      const converter = new SuperConverter({ xml: input, debug: true });
+      const numbering = converter.parseXmlToJson(numberingXml);
+      converter.convertedXml['word/numbering.xml'] = numbering;
+
+      // Declaration check
+      const expectedDeclaration = { attributes: { version: '1.0', encoding: 'UTF-8', standalone: 'yes' } };
+      expect(converter.declaration).toEqual(expectedDeclaration);
+
+      const initialJSON = { ...converter.initialJSON };
+      const containerDiv = document.createElement('div');
+      const schema = converter.getSchema();
+      const editor = new Editor({
+          element: containerDiv,
+          content: schema,
+          extensions: Object.values(extensions),
+          isTest: true,
+          converter,
+      });
+
+      // Delay to wait for the editor to be ready
+      await delay(250);
+      const doc = editor.getJSON();
+      const output = converter.outputToJson(doc);
+      const inputBody = initialJSON.elements[0].elements[0];
+      const outputBody = output.elements[0].elements[0];
+      // console.debug('inputBody', inputBody);
+      // console.debug('outputBody', outputBody);
+      expect(inputBody.elements.length).toEqual(outputBody.elements.length);
+
+      const inputFirstListElement = inputBody.elements[0];
+      const outputFirstListElement = outputBody.elements[0];
+      // console.debug('inputFirstListElement', inputFirstListElement);
+      // console.debug('outputFirstListElement', outputFirstListElement);
+      expect(inputFirstListElement.name).toEqual('w:p');
+      expect(inputFirstListElement.name).toEqual(outputFirstListElement.name);
+      expect(inputFirstListElement.attributes).toEqual(outputFirstListElement.attributes);
+      expect(inputFirstListElement.elements.length).toEqual(outputFirstListElement.elements.length);
+
+      const inputRuns = inputFirstListElement.elements.filter(e => e.name === 'w:r');
+      const outputRuns = outputFirstListElement.elements.filter(e => e.name === 'w:r');
+      expect(inputRuns.length).toEqual(outputRuns.length);
+
+      // Full check
+      expect(inputBody).toEqual(outputBody);
+
+      // Full check XML
+      const inputXMLAsList = converter._generate_xml_as_list(initialJSON);
+      const outputXMLAsList = converter._generate_xml_as_list(output);
+      expect(inputXMLAsList.length).toEqual(outputXMLAsList.length);
+      for (let i = 0; i < inputXMLAsList.length; i++) {
+        expect(inputXMLAsList[i]).toEqual(outputXMLAsList[i]);
+      }
+      const finalXML = converter.schemaToXml(output);
+      expect(finalXML).toEqual(removeExcessWhitespace(input));
     });
   });
+
+  describe('Import/export with commands', async () => {
+    it('can import/export and toggle bold in a list', async () => {
+      const numberingXml = `
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <w:numbering xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
+          xmlns:cx="http://schemas.microsoft.com/office/drawing/2014/chartex"
+          mc:Ignorable="w14 w15 w16se w16cid w16 w16cex w16sdtdh w16du wp14">
+          <w:abstractNum w:abstractNumId="0" w15:restartNumberingAfterBreak="0">
+            <w:nsid w:val="075C72CF" />
+            <w:multiLevelType w:val="hybridMultilevel" />
+            <w:tmpl w:val="5A586518" />
+            <w:lvl w:ilvl="0" w:tplc="10864A9A">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="-" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="720" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Aptos" w:eastAsiaTheme="minorHAnsi" w:hAnsi="Aptos" w:cstheme="minorBidi"
+                  w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="1" w:tplc="04090003">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="o" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="1440" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Courier New" w:hAnsi="Courier New" w:cs="Courier New" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="2" w:tplc="04090005" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="2160" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Wingdings" w:hAnsi="Wingdings" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="3" w:tplc="04090001" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="2880" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Symbol" w:hAnsi="Symbol" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="4" w:tplc="04090003" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="o" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="3600" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Courier New" w:hAnsi="Courier New" w:cs="Courier New" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="5" w:tplc="04090005" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="4320" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Wingdings" w:hAnsi="Wingdings" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="6" w:tplc="04090001" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="5040" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Symbol" w:hAnsi="Symbol" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="7" w:tplc="04090003" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="o" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="5760" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Courier New" w:hAnsi="Courier New" w:cs="Courier New" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="8" w:tplc="04090005" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="6480" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Wingdings" w:hAnsi="Wingdings" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+          </w:abstractNum>
+          <w:abstractNum w:abstractNumId="1" w15:restartNumberingAfterBreak="0">
+            <w:nsid w:val="07A8591E" />
+            <w:multiLevelType w:val="hybridMultilevel" />
+            <w:tmpl w:val="13A886F6" />
+            <w:lvl w:ilvl="0" w:tplc="50A2C410">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="-" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="720" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Aptos" w:eastAsiaTheme="minorHAnsi" w:hAnsi="Aptos" w:cstheme="minorBidi"
+                  w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="1" w:tplc="04090003" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="o" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="1440" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Courier New" w:hAnsi="Courier New" w:cs="Courier New" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="2" w:tplc="04090005" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="2160" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Wingdings" w:hAnsi="Wingdings" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="3" w:tplc="04090001" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="2880" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Symbol" w:hAnsi="Symbol" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="4" w:tplc="04090003" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="o" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="3600" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Courier New" w:hAnsi="Courier New" w:cs="Courier New" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="5" w:tplc="04090005" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="4320" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Wingdings" w:hAnsi="Wingdings" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="6" w:tplc="04090001" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="5040" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Symbol" w:hAnsi="Symbol" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="7" w:tplc="04090003" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="o" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="5760" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Courier New" w:hAnsi="Courier New" w:cs="Courier New" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+            <w:lvl w:ilvl="8" w:tplc="04090005" w:tentative="1">
+              <w:start w:val="1" />
+              <w:numFmt w:val="bullet" />
+              <w:lvlText w:val="" />
+              <w:lvlJc w:val="left" />
+              <w:pPr>
+                <w:ind w:left="6480" w:hanging="360" />
+              </w:pPr>
+              <w:rPr>
+                <w:rFonts w:ascii="Wingdings" w:hAnsi="Wingdings" w:hint="default" />
+              </w:rPr>
+            </w:lvl>
+          </w:abstractNum>
+          <w:num w:numId="1" w16cid:durableId="907500030">
+            <w:abstractNumId w:val="1" />
+          </w:num>
+          <w:num w:numId="2" w16cid:durableId="681781737">
+            <w:abstractNumId w:val="0" />
+          </w:num>
+        </w:numbering>
+      `;
+
+      const input = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas">
+          <w:body>
+            <w:p w14:paraId="31E89D2C" w14:textId="2517014F" w:rsidR="003C58BC" w:rsidRDefault="007B1F51" w:rsidP="007B1F51">
+              <w:pPr>
+                <w:pStyle w:val="ListParagraph" />
+                <w:numPr>
+                  <w:ilvl w:val="0" />
+                  <w:numId w:val="2" />
+                </w:numPr>
+              </w:pPr>
+              <w:r>
+                <w:t xml:space="preserve">List with </w:t>
+              </w:r>
+              <w:r>
+                <w:rPr>
+                  <w:b />
+                  <w:bCs />
+                </w:rPr>
+                <w:t>bold</w:t>
+              </w:r>
+              <w:r>
+                <w:t xml:space="preserve"> item</w:t>
+              </w:r>
+            </w:p>
+            <w:p w14:paraId="7390E0A2" w14:textId="2A390454" w:rsidR="007B1F51" w:rsidRDefault="007B1F51" w:rsidP="007B1F51">
+              <w:pPr>
+                <w:pStyle w:val="ListParagraph" />
+                <w:numPr>
+                  <w:ilvl w:val="1" />
+                  <w:numId w:val="2" />
+                </w:numPr>
+              </w:pPr>
+              <w:r>
+                <w:t xml:space="preserve">List with </w:t>
+              </w:r>
+              <w:r>
+                <w:rPr>
+                  <w:i />
+                  <w:iCs />
+                </w:rPr>
+                <w:t>italic</w:t>
+              </w:r>
+              <w:r>
+                <w:t xml:space="preserve"> item</w:t>
+              </w:r>
+            </w:p>
+            <w:p w14:paraId="68916DDA" w14:textId="2FE74257" w:rsidR="007B1F51" w:rsidRDefault="007B1F51" w:rsidP="007B1F51">
+              <w:pPr>
+                <w:pStyle w:val="ListParagraph" />
+                <w:numPr>
+                  <w:ilvl w:val="0" />
+                  <w:numId w:val="2" />
+                </w:numPr>
+              </w:pPr>
+              <w:r>
+                <w:t>Normal list item</w:t>
+              </w:r>
+            </w:p>
+            <w:sectPr w:rsidR="007B1F51">
+              <w:pgSz w:w="12240" w:h="15840" />
+              <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0" />
+              <w:cols w:space="720" />
+              <w:docGrid w:linePitch="360" />
+            </w:sectPr>
+          </w:body>
+        </w:document>`;
+
+      const converter = new SuperConverter({ xml: input, debug: true });
+      const numbering = converter.parseXmlToJson(numberingXml);
+      converter.convertedXml['word/numbering.xml'] = numbering;
+
+      // Declaration check
+      const expectedDeclaration = { attributes: { version: '1.0', encoding: 'UTF-8', standalone: 'yes' } };
+      expect(converter.declaration).toEqual(expectedDeclaration);
+
+      const initialJSON = { ...converter.initialJSON };
+      const containerDiv = document.createElement('div');
+      const schema = converter.getSchema();
+      const editor = new Editor({
+          element: containerDiv,
+          content: schema,
+          extensions: Object.values(extensions),
+          isTest: true,
+          converter,
+      });
+
+      // Delay to wait for the editor to be ready
+      await delay(250);
+      let state = editor.state;
+
+      // Get the first word ('List')
+      const startPos = 3, endPos = 7;
+      const text = getTextatPos(editor.state.doc, startPos, endPos);
+      expect(text).toEqual('List');
+
+      // transaction will be re-used
+      let tr;
+      let newState;
+
+      // Split the node for "List" and the rest of the text
+      tr = state.tr.setSelection(TextSelection.create(editor.state.doc, startPos, endPos));
+      newState = state.apply(tr);
+      editor.view.updateState(newState);
+      state = editor.state;
+
+      tr = state.tr.split(endPos);
+      newState = state.apply(tr);
+      editor.view.updateState(newState);
+      state = editor.state;
+      const nodeAtPos = newState.doc.nodeAt(3);
+      expect(nodeAtPos.text).toEqual('List');
+
+      console.debug('newState', editor.getJSON().content[0].content[0].content[0]);
+
+      // Re-select 'List' and apply the mark
+      tr = state.tr.setSelection(TextSelection.create(editor.state.doc, startPos, endPos));
+      newState = state.apply(tr);
+      editor.view.updateState(newState);
+      state = editor.state;
+      
+      const markType = state.schema.marks.bold;
+      const { $from, $to } = state.selection;
+      const range = $from.blockRange($to);
+      tr = state.tr.addMark(range.start, range.end, markType.create());
+      newState = state.apply(tr);
+      editor.view.updateState(newState);
+      state = editor.state;
+
+
+      // Verify 'List' is now in fact, bold
+      const boldNode = state.doc.nodeAt(3);
+      const mark = boldNode.marks[0].type.name;
+      expect(boldNode.text).toEqual('List');
+      expect(mark).toEqual('bold');
+
+      // // Update the output since the document has changed
+      let currentJSON = editor.getJSON();
+
+      const inputBody = initialJSON.elements[0].elements[0];
+      const output = converter.outputToJson(currentJSON)
+      // console.debug('newState', currentJSON.content[0].content[0].content[0].content[0]);
+
+      const outputBody = output.elements[0].elements[0];
+      const inputFirstListElement = inputBody.elements[0];
+      console.debug('inputFirstListElement', inputFirstListElement)
+
+      const boldPr = inputFirstListElement.elements[2].elements[0]
+      const editedFirstListElement = {
+        name: inputFirstListElement.name,
+        type: 'element',
+        attributes: inputFirstListElement.attributes,
+        elements: [
+          inputFirstListElement.elements[0],
+          { name: 'w:r', attributes: undefined, type: 'element', elements: [
+            boldPr,
+            { type: 'element', name: 'w:t', elements: [{ text: 'List', type: 'text' }] }
+          ] },
+          { name: 'w:r', attributes: undefined, type: 'element', elements: [
+              { name: 'w:t', type: 'element', elements: [{ text: ' with ', type: 'text' }], attributes: { 'xml:space': 'preserve' } }
+            ]
+          },
+          inputFirstListElement.elements[2],
+        ]
+      }
+      const outputFirstListElement = outputBody.elements[0];
+      // console.debug('editedFirstListElement', inputFirstListElement.elements[2].elements[1]);
+      // console.debug('editedFirstListElement', editedFirstListElement.elements[3]);
+      // console.debug('outputFirstListElement', outputFirstListElement.elements[3]);
+      expect(editedFirstListElement.attributes).toEqual(outputFirstListElement.attributes);
+      expect(editedFirstListElement.elements[0]).toEqual(outputFirstListElement.elements[0]);
+      expect(editedFirstListElement.elements[1]).toEqual(outputFirstListElement.elements[1]);
+      expect(editedFirstListElement.elements[2]).toEqual(outputFirstListElement.elements[2]);
+      expect(editedFirstListElement.elements[3]).toEqual(outputFirstListElement.elements[3]);
+
+    });
+  })
 }; 
+
+
+/**
+ * Used to get the contents between positions in the editor
+ */
+function getTextatPos(doc, startPos, endPos) {
+  return doc.textBetween(startPos, endPos);
+}
 
 /**
  * Used to remove excess whitespace around the test XML strings

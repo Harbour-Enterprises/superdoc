@@ -1,6 +1,7 @@
 import { runInputTests, testInputConversion, testLists } from './tests/super-converter/input-tests';
 import { runOutputTests, testOutputConversion } from './tests/super-converter/output-tests';
 import { runInputOutputTests } from './tests/super-converter/input-output';
+
 // Available test files
 const testFiles = [
   'sample',
@@ -9,7 +10,7 @@ const testFiles = [
 ];
 
 
-runInputOutputTests();
+runInputOutputTests(); 
 
 
 // Run tests for each of our test files

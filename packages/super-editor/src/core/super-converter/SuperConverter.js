@@ -493,56 +493,104 @@ class SuperConverter {
           skip = true;
           break;
         case 'bulletList':
-          //console.debug("\n\n BULLET LIST", node.type, node, '\n\n')
           const { content, attrs } = node;
           const listType = attrs['list-style-type'];
 
-          const flatContent = this.#flattenContent(content);
-          console.debug('\n\n FLAT CONTENT', flatContent, '\n\n')
-
           // Each item in the content becomes its own paragraph item in the output
+          const flatContent = this.#flattenContent(content);
+          console.debug('\n\n\n ❗️ Flat content:', flatContent, '\n\n')
+
           const output = [];
           flatContent.forEach((n) => {
-            const { attrs = {} } = n;
-            const { listParagraphProperties } = attrs;
-            const { content: listContent } = n;
 
-            const listElements = [];
-            if (listParagraphProperties) {
-              const props = [];
-              Object.keys(listParagraphProperties).forEach((key) => {
-                props.push({ name: key, attributes: { 'w:val': listParagraphProperties[key] } });
-              });
-              listElements.push({
-                name: 'w:pPr',
-                elements: props,
-              });
-              listElements.push({
-                name: 'w:r',
-                elements: [
-                  { name: 'w:t', type: 'element', elements: [{ text: listContent[0].text, type: 'text' }], },
-                ]
-              })
-            };
+            const makeRun = (content, marks) => {  
+              console.debug('\n\n-MAKE RUN', marks, '\n\n')
+              return {
+                type: 'run',
+                content,
+              }
+            }
+            const convertListItemForOutput = (item) => {
+              console.debug('--- N', n, '\n\n')
 
-            const parentAttributes = n.attrs.attributes.parentAttributes || {};
-            delete parentAttributes.paragraphProperties;
-  
-            output.push({
-              name: 'w:p',
-              attributes: n.attrs.attributes.parentAttributes || {},
-              elements: listElements,
-            });
+              const textElements = [];
+              n.content.forEach((c) => {
+                console.debug('----- C', c, '\n\n')
+                textElements.push(...c.content);
+              });
+
+              const elements = [];
+              let parentAttributes = null;
+              parentAttributes = n.attrs.attributes?.parentAttributes || {};
+              const { paragraphProperties } = parentAttributes;
+              if (paragraphProperties) {
+                elements.push(paragraphProperties);
+                delete parentAttributes.paragraphProperties;
+              }
+
+              const processedElements = this.#outputProcessNodes(textElements);
+              elements.push(...processedElements);
+              return {
+                name: 'w:p',
+                type: 'element',
+                attributes: parentAttributes,
+                elements,
+              };
+            }
+            const output = convertListItemForOutput(n);
+            console.debug('Output:', output)
+            resultingElements.push(output);
+
+
+            // const { attrs = {} } = n;
+            // const { listParagraphProperties } = attrs;
+
+            // let processedItems = [];
+            // if (!n.content || !n.content.length) processedItems.push(n);
+            // else { 
+            //   const { content: paragraphItems } = n.content[0];
+            //   if (!paragraphItems || !paragraphItems.length) {
+            //     return
+            //   } else {
+            //     processedItems = this.#outputProcessNodes(paragraphItems);
+            //   }
+            // }
+
+            // const listElements = [];
+            // let parentAttributes = null;
+            // if (listParagraphProperties) {
+            //   const props = [];
+            //   Object.keys(listParagraphProperties).forEach((key) => {
+            //     props.push({ name: key, attributes: { 'w:val': listParagraphProperties[key] } });
+            //   });
+
+            //   // If we have parent paragraph properties, we need to add them to the list
+            //   parentAttributes = n.attrs.attributes?.parentAttributes || {};
+            //   const { paragraphProperties } = parentAttributes;
+            //   if (paragraphProperties) {
+            //     listElements.push(paragraphProperties);
+            //     delete parentAttributes.paragraphProperties;
+            //   }
+            //   listElements.push(...processedItems);
+            // };
+
+            // output.push({
+            //   name: 'w:p',
+            //   type: 'element',
+            //   attributes: parentAttributes,
+            //   elements: listElements,
+            // });
           })
-          console.debug('Bullet list item:', JSON.stringify(output));
-          resultingElements.push(...output);
           skip = true;
           break;
+        case 'body':
+          break
         case 'orderedList':
           // console.debug("\n\n ORDERED LIST", node.type, node, '\n\n')
           break;
         default:
           // console.debug("\n\n OTHER NODE", node.type, node, '\n\n')
+          break;
       }
 
       let resultingNode = node;
@@ -563,7 +611,9 @@ class SuperConverter {
       }
       
       index++;
-      resultingElements.push(resultingNode);
+
+      const skipNodes = ['bulletList', 'orderedList'];
+      if (!skipNodes.includes(node.type)) resultingElements.push(resultingNode);
       if (SuperConverter.elements.has(name)) resultingNode.type = 'element';
     }
 
@@ -572,25 +622,20 @@ class SuperConverter {
 
   #flattenContent(content) {
     const flatContent = [];
-  
     function recursiveFlatten(items) {
-      items.forEach(item => {
-        const { content, type } = item;
-        if (type === 'bulletList') {
-          recursiveFlatten(content);
-        } else {
-          if (content.length > 1) {
-            const copy = { ...item, content: [content[0]]};
-            flatContent.push(copy);
-            recursiveFlatten(content.slice(1));
-          } else {
-            flatContent.push(item);
+      items.forEach((item) => {
+        const subList = item.content.filter((c) => c.type === 'bulletList' || c.type === 'orderedList');
+        const notLists = item.content.filter((c) => c.type !== 'bulletList' && c.type !== 'orderedList');
 
-          }
+        const newItem = { ...item, content: notLists };
+        flatContent.push(newItem);
+
+        if (subList.length) {
+          console.debug('Sublists:', subList)
+          recursiveFlatten(subList[0].content);
         }
-      });
+      })
     }
-  
     recursiveFlatten(content);
     return flatContent;
   }
@@ -671,13 +716,11 @@ class SuperConverter {
       return newNode;
     });
 
-    if (runProperties) {
-      console.debug('Run properties:', runProperties)
+    if (runProperties && runProperties.elements.length) {
       nodeContents.unshift(runProperties);
     }
     const name = this.getTagName('run');
     const output = this.#getOutputNode(name, nodeContents, attrs);
-    console.debug('Output:', output)
     return output;
   }
   

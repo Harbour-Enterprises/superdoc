@@ -34,7 +34,8 @@ const handleToolbarCommand = ({command, argument}) => {
 }
 
 const onSelectionUpdate = ({ editor, transaction }) => {
-  console.debug('[SuperEditor dev] Selection update');
+  const { from, to } = transaction.selection;
+  console.debug('[SuperEditor dev] Selection update', from, to);
   activeEditor = editor;
 
   // This logic should maybe be inside the Editor.js rather than here?
