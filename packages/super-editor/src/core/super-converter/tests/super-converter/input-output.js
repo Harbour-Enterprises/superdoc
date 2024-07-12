@@ -491,7 +491,7 @@ export function runInputOutputTests() {
       const outputFirstNestedList = outputBody.elements[1];
       console.debug('inputFirstNestedList', inputFirstNestedList.elements[1].elements[0].elements);
       console.debug('outputFirstNestedList', outputFirstNestedList.elements[1].elements[0].elements);
-      //   expect(inputFirstNestedList.attributes).toEqual(outputFirstNestedList.attributes);
+      // expect(inputFirstNestedList.attributes).toEqual(outputFirstNestedList.attributes);
       // expect(inputFirstNestedList).toEqual(outputFirstNestedList);
 
       // Full check of JSON

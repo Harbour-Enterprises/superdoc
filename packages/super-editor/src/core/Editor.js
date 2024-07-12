@@ -363,6 +363,7 @@ export class Editor extends EventEmitter {
     });
   }
 
+  
   /**
    * Load the document comments.
    */
@@ -380,6 +381,13 @@ export class Editor extends EventEmitter {
    */
   getJSON() {
     return this.state.doc.toJSON();
+  }
+
+  /**
+   * Get page styles
+   */
+  getPageStyles() {
+    return this.converter.pageStyles;
   }
 
   /**

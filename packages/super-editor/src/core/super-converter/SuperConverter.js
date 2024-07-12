@@ -65,6 +65,7 @@ class SuperConverter {
 
     // Processed additional content
     this.numbering = null;
+    this.pageStyles = null;
 
     // The JSON converted XML before any processing. This is simply the result of xml2json
     this.initialJSON = null;
@@ -170,7 +171,53 @@ class SuperConverter {
     this.savedTagsToRestore.push({ ...node });
     const ignoreNodes = ['w:sectPr'];
     const content = node.elements.filter((n) => !ignoreNodes.includes(n.name));
+
+    this.#getDocumentStyles(node);
     return this.convertToSchema(content);
+  }
+  #getDocumentStyles(node) {
+    const sectPr = node.elements.find((n) => n.name === 'w:sectPr');
+    const styles = {};
+    sectPr.elements.forEach((el) => {
+      const { name, attributes } = el;
+      switch (name) {
+        case 'w:pgSz':
+          styles['pageSize'] = {
+            width: this.#twipsToPixels(attributes['w:w']),
+            height: this.#twipsToPixels(attributes['w:h']),
+          }
+          break;
+        case 'w:pgMar':
+          styles['pageMargins'] = {
+            top: this.#twipsToPixels(attributes['w:top']),
+            right: this.#twipsToPixels(attributes['w:right']),
+            bottom: this.#twipsToPixels(attributes['w:bottom']),
+            left: this.#twipsToPixels(attributes['w:left']),
+            header: this.#twipsToPixels(attributes['w:header']),
+            footer: this.#twipsToPixels(attributes['w:footer']),
+            gutter: this.#twipsToPixels(attributes['w:gutter']),
+          }
+          break;
+        case 'w:cols':
+          styles['columns'] = {
+            space: this.#twipsToPixels(attributes['w:space']),
+            num: attributes['w:num'],
+            equalWidth: attributes['w:equalWidth'],
+          }
+          break;
+        case 'w:docGrid':
+          styles['docGrid'] = {
+            linePitch: this.#twipsToPixels(attributes['w:linePitch']),
+            type: attributes['w:type'],
+          }
+          break;
+      }
+    });
+    this.pageStyles = styles;
+  }
+  #twipsToPixels(twips) {
+    if (twips instanceof String) twips = int(twips)
+    return (twips / 1440) * 96;
   }
 
   /**
