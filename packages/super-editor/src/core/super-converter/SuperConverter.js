@@ -502,14 +502,6 @@ class SuperConverter {
 
           const output = [];
           flatContent.forEach((n) => {
-
-            const makeRun = (content, marks) => {  
-              console.debug('\n\n-MAKE RUN', marks, '\n\n')
-              return {
-                type: 'run',
-                content,
-              }
-            }
             const convertListItemForOutput = (item) => {
               console.debug('--- N', n, '\n\n')
 
@@ -540,46 +532,6 @@ class SuperConverter {
             const output = convertListItemForOutput(n);
             console.debug('Output:', output)
             resultingElements.push(output);
-
-
-            // const { attrs = {} } = n;
-            // const { listParagraphProperties } = attrs;
-
-            // let processedItems = [];
-            // if (!n.content || !n.content.length) processedItems.push(n);
-            // else { 
-            //   const { content: paragraphItems } = n.content[0];
-            //   if (!paragraphItems || !paragraphItems.length) {
-            //     return
-            //   } else {
-            //     processedItems = this.#outputProcessNodes(paragraphItems);
-            //   }
-            // }
-
-            // const listElements = [];
-            // let parentAttributes = null;
-            // if (listParagraphProperties) {
-            //   const props = [];
-            //   Object.keys(listParagraphProperties).forEach((key) => {
-            //     props.push({ name: key, attributes: { 'w:val': listParagraphProperties[key] } });
-            //   });
-
-            //   // If we have parent paragraph properties, we need to add them to the list
-            //   parentAttributes = n.attrs.attributes?.parentAttributes || {};
-            //   const { paragraphProperties } = parentAttributes;
-            //   if (paragraphProperties) {
-            //     listElements.push(paragraphProperties);
-            //     delete parentAttributes.paragraphProperties;
-            //   }
-            //   listElements.push(...processedItems);
-            // };
-
-            // output.push({
-            //   name: 'w:p',
-            //   type: 'element',
-            //   attributes: parentAttributes,
-            //   elements: listElements,
-            // });
           })
           skip = true;
           break;
