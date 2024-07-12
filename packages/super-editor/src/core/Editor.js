@@ -308,7 +308,7 @@ export class Editor extends EventEmitter {
     const dom = this.view.dom;
     dom.editor = this;
 
-    console.debug('\n\nCURRENT SCHEMA:', this.getJSON());
+    console.debug('\n\nCURRENT SCHEMA:', JSON.stringify(this.getJSON()));
   }
 
   /**

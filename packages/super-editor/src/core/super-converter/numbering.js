@@ -11,6 +11,7 @@ const orderedListTypes = [
   "hex", // eg: 0, 1, 2, ..., 9, A, B, C, ..., F, 10, 11, ...
   "chicago", // eg: (0, 1, 2, ..., 9, 10, 11, 12, ..., 19, 1A, 1B, 1C, ..., 1Z, 20, 21, ..., 2Z)
 ];
+
 const unorderedListTypes = [
   "bullet", // A standard bullet point (•)
   "square", // Square bullets (▪)
@@ -18,10 +19,13 @@ const unorderedListTypes = [
   "disc", // Disc bullets (●)
 ]
 
-function getDefinitionForLevel(data, level) {
-  return data.elements.find((item) => Number(item.attributes['w:ilvl']) === level);
-}
-
+/**
+ * Main function to get list item information from numbering.xml
+ * 
+ * @param {object} attributes 
+ * @param {int} level 
+ * @returns 
+ */
 function getNodeNumberingDefinition(attributes, level) {
   if (!attributes) return;
 
@@ -78,6 +82,10 @@ function getNodeNumberingDefinition(attributes, level) {
   }
 
   return { listType, listOrderingType: listTypeDef,  ilvl, numId, listrPrs, listpPrs, start, lvlText, lvlJc };
+}
+
+function getDefinitionForLevel(data, level) {
+  return data.elements.find((item) => Number(item.attributes['w:ilvl']) === level);
 }
 
 function _processListParagraphProperties(data) {

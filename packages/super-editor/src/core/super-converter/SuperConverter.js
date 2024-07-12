@@ -115,20 +115,19 @@ class SuperConverter {
 
   getSchema() {
     const json = JSON.parse(JSON.stringify(this.initialJSON));
-    const startElements = json.elements;
     const result = {
       type: 'doc',
       content: this.convertToSchema(json.elements[0].elements),
+      attrs: {
+        attributes: json.elements[0].attributes,
+      }
     }
-
-    console.debug('--- result', result, '\n\n')
-    // this.log('\nSchema updated:', JSON.stringify(result, null, 2))
     return result;
   }
 
 
   convertToSchema(elements) {
-    console.debug('\nConvert to schema:', elements,'\n')
+    // console.debug('\nConvert to schema:', elements,'\n')
     if (!elements || !elements.length) return;
 
     const processedElements = [];
@@ -140,30 +139,18 @@ class SuperConverter {
       let schemaNode;
       switch (node.name) {
         case 'w:body':
-          this.savedTagsToRestore.push({ ...node });
-          const ignoreNodes = ['w:sectPr'];
-          const content = node.elements.filter((n) => !ignoreNodes.includes(n.name));
-          const result = this.convertToSchema(content);
-          return result;
+          return this.#handleInputBodyNode(node);
         case 'w:r':
-          let processedRun = [];
-          processedRun = this.convertToSchema(node.elements)?.filter(n => n);
-          if (node.elements.find(el => el.name === 'w:rPr')) {
-            const { marks = [] } = this._parseProperties(node);
-            processedRun = processedRun.map((n) => {
-              return { ...n, marks }
-            });
-          }
-          processedElements.push(...processedRun)
+          processedElements.push(...this.#handleInputRunNode(node));
           continue;
         case 'w:p':
           schemaNode = this.#handleParagraphProcessing(node, elements, index);
           break;
         case 'w:t':
-          schemaNode = this._handleTextNode(node);
+          schemaNode = this.#handleTextNode(node);
           break;
         default:
-          schemaNode = this._handleStandardNode(node);
+          schemaNode = this.#handleStandardNode(node);
       }
 
       if (schemaNode?.type) {
@@ -173,6 +160,33 @@ class SuperConverter {
       }
     }
     return processedElements;
+  }
+
+  /**
+   * Handle body nodes from XML. We don't use them in the schema but we do
+   * need to store the original info for export later.
+   */
+  #handleInputBodyNode(node) {
+    this.savedTagsToRestore.push({ ...node });
+    const ignoreNodes = ['w:sectPr'];
+    const content = node.elements.filter((n) => !ignoreNodes.includes(n.name));
+    return this.convertToSchema(content);
+  }
+
+  /**
+   * Process input run nodes to remove them from the schema
+   * 
+   * @param {object} node 
+   * @returns 
+   */
+  #handleInputRunNode(node) {
+    let processedRun = this.convertToSchema(node.elements)?.filter(n => n) || [];
+    const hasRunProperties = node.elements.some(el => el.name === 'w:rPr');
+    if (hasRunProperties) {
+      const { marks = [] } = this.#parseProperties(node);
+      processedRun = processedRun.map(n => ({ ...n, marks }));
+    }
+    return processedRun;
   }
 
   /**
@@ -198,11 +212,12 @@ class SuperConverter {
         possibleList = siblings.shift();
       }
 
-      schemaNode = this.#handleListNodes(listItems);
+      console.debug('\n\n INPUT LIST NODE', node.attributes, '\n\n')
+      schemaNode = this.#handleListNodes(listItems, 0, node);
     }      
 
     // If it is a standard paragraph node, process normally
-    if (!schemaNode) schemaNode = this._handleStandardNode(node);
+    if (!schemaNode) schemaNode = this.#handleStandardNode(node);
     return schemaNode;
   }
 
@@ -236,7 +251,7 @@ class SuperConverter {
    * @param {number} [listLevel=0] - The current indentation level of the list.
    * @returns {Object} The processed list node with structured content.
    */
-  #handleListNodes(listItems, listLevel = 0) {
+  #handleListNodes(listItems, listLevel = 0, parent = null) {
     const parsedListItems = [];
     let overallListType;
     let listStyleType;
@@ -247,23 +262,27 @@ class SuperConverter {
 
       // Get the properties of the node - this is where we will find depth level for the node
       // As well as many other list properties
-      const { attributes, elements, marks = [] } = this._parseProperties(item);
+      const { attributes, elements, marks = [] } = this.#parseProperties(item);
       const { listType, listOrderingType, ilvl, listrPrs, numId, listpPrs, start, lvlText, lvlJc } = this.getNodeNumberingDefinition(attributes, listLevel);
       listStyleType = listOrderingType;
       const intLevel = parseInt(ilvl);
 
       // Append node if it belongs on this list level
+      const nodeAttributes = {};
       if (listLevel === intLevel) {
         overallListType = listType;
         item.seen = true;
         const schemaElements = this.convertToSchema(elements)?.filter(n => n);
 
-        if (listpPrs) attributes['listParagraphProperties'] = listpPrs;
-        if (listrPrs) attributes['listRunProperties'] = listrPrs;
-        attributes['start'] = start;
-        attributes['lvlText'] = lvlText;
-        attributes['lvlJc'] = lvlJc;
-        parsedListItems.push(this.#createListItem(schemaElements, attributes, marks));
+        if (listpPrs) nodeAttributes['listParagraphProperties'] = listpPrs;
+        if (listrPrs) nodeAttributes['listRunProperties'] = listrPrs;
+        nodeAttributes['start'] = start;
+        nodeAttributes['lvlText'] = lvlText;
+        nodeAttributes['lvlJc'] = lvlJc;
+        nodeAttributes['attributes'] = {
+          parentAttributes: item?.attributes || null,
+        }
+        parsedListItems.push(this.#createListItem(schemaElements, nodeAttributes, marks));
       } 
 
       // If this item belongs in a deeper list level, we need to process it by calling this function again
@@ -273,7 +292,7 @@ class SuperConverter {
         const lastItem = parsedListItems[parsedListItems.length - 1];
         if (!lastItem) parsedListItems.push(sublist);
         else {
-          lastItem.content[0].content.push(sublist);
+          lastItem.content.push(sublist);
         }
       }
       
@@ -302,19 +321,16 @@ class SuperConverter {
   #createListItem(content, attrs, marks) {
     return {
       type: 'listItem',
-      content: [this.#wrapNodes('paragraph', content)],
+      content,
       attrs,
       marks,
     };
   }
 
-
-
-
-  _handleStandardNode(node) {
+  #handleStandardNode(node) {
     // Parse properties
     const { name, type } = node;
-    const { attributes, elements, marks = [] } = this._parseProperties(node);
+    const { attributes, elements, marks = [] } = this.#parseProperties(node);
 
     // Iterate through the children and build the schemaNode content
     const content = [];
@@ -331,11 +347,11 @@ class SuperConverter {
   }
 
 
-  _handleTextNode(node) {
+  #handleTextNode(node) {
     const { type } = node;
 
     // Parse properties
-    const { attributes, elements, marks = [] } = this._parseProperties(node);
+    const { attributes, elements, marks = [] } = this.#parseProperties(node);
 
     // Text nodes have no children. Only text.
     let text;
@@ -351,7 +367,7 @@ class SuperConverter {
   }
 
 
-  _parseMarks(property) {
+  #parseMarks(property) {
     const marks = [];
     const seen = new Set();
     property.elements.forEach((element) => {
@@ -368,28 +384,28 @@ class SuperConverter {
   }
 
 
-  _parseProperties(node) {
+  #parseProperties(node) {
       /**
        * What does it mean for a node to have a properties element?
        * It would have a child element that is: w:pPr, w:rPr, w:sectPr
        */
       let marks = [];
       const { attributes = {}, elements = [] } = node;
-      const [nodes, properties] = this._splitElementsAndProperties(elements);
+      const [nodes, properties] = this.#splitElementsAndProperties(elements);
 
       if (properties.length) {
         properties.forEach(property => {
           const propType = SuperConverter.propertyTypes[property.name];
           attributes[propType] = property;
 
-          marks = this._parseMarks(property);
+          marks = this.#parseMarks(property);
         }); 
       }
       return { elements: nodes, attributes, marks }
   }
 
 
-  _splitElementsAndProperties(elements) {
+  #splitElementsAndProperties(elements) {
     return elements.reduce(
       ([els, props], el) => {
         if (SuperConverter.propertyTypes[el.name]) props.push(el);
@@ -405,164 +421,220 @@ class SuperConverter {
 
 
   outputToJson(data) {
-    // console.debug('[SuperConverter] outputToJSON:', data);
     const firstElement = data;
     const result = {
       declaration: this.declaration,
-      elements: [this.#outputNodeToJson(firstElement)],
+      elements: this.#outputProcessNodes([firstElement]),
     }
+    // console.debug('FINAL RESULT', result)
     return result;
   }
 
-  #preProcessTextNodes(node, parent) {
-    const { content = [] } = node;
-    const textNodes = content.filter((n) => n.type === 'text');
-    if (!textNodes.length) return [node];
-
-    const indexInParent = parent.content?.findIndex((n) => n === node);
-    console.debug('\n\n INDEX IN PARETN', indexInParent)
-
-    const contentCopy = [...node.content];
-    const newNodes = [];
-
+  #outputProcessNodes(nodes, parent = null) {
+    const resultingElements = [];
     let index = 0;
-    let currItem = contentCopy[index];
-    while (currItem) {
-      console.debug('--- CURR ITEM', currItem, '\n\n')
-      let newContent = [];
-      if (currItem.type === 'text' && currItem.marks) {
-        console.debug('--MARKS', currItem.marks,'\n')
-        newContent = [{ type: 'text', text: currItem.text }]
-      } else {
-        newContent = [currItem];
+    for (let node of nodes) {
+      if (node.seen) continue;
+      let skip = false;
+
+      // Special output handling
+      switch (node.type) {
+        case 'doc':
+          node = this.#outputHandleDocumentNode(node);
+          break;
+        case 'text':
+          node = this.#outputHandleTextNode(nodes.slice(index));
+          skip = true;
+          break;
+        case 'bulletList':
+          //console.debug("\n\n BULLET LIST", node.type, node, '\n\n')
+          const { content, attrs } = node;
+          const listType = attrs['list-style-type'];
+
+          const flatContent = this.#flattenContent(content);
+          console.debug('\n\n FLAT CONTENT', flatContent, '\n\n')
+
+          // Each item in the content becomes its own paragraph item in the output
+          const output = [];
+          flatContent.forEach((n) => {
+            const { attrs = {} } = n;
+            const { listParagraphProperties } = attrs;
+            const { content: listContent } = n;
+
+            const listElements = [];
+            if (listParagraphProperties) {
+              const props = [];
+              Object.keys(listParagraphProperties).forEach((key) => {
+                props.push({ name: key, attributes: { 'w:val': listParagraphProperties[key] } });
+              });
+              listElements.push({
+                name: 'w:pPr',
+                elements: props,
+              });
+              listElements.push({
+                name: 'w:r',
+                elements: [
+                  { name: 'w:t', type: 'element', elements: [{ text: listContent[0].text, type: 'text' }], },
+                ]
+              })
+            };
+
+            const parentAttributes = n.attrs.attributes.parentAttributes || {};
+            delete parentAttributes.paragraphProperties;
+  
+            output.push({
+              name: 'w:p',
+              attributes: n.attrs.attributes.parentAttributes || {},
+              elements: listElements,
+            });
+          })
+          console.debug('Bullet list item:', JSON.stringify(output));
+          resultingElements.push(...output);
+          skip = true;
+          break;
+        case 'orderedList':
+          // console.debug("\n\n ORDERED LIST", node.type, node, '\n\n')
+          break;
+        default:
+          // console.debug("\n\n OTHER NODE", node.type, node, '\n\n')
       }
-      const newItem = { type: 'run', marks: currItem.marks || null, content: newContent };
-      contentToSplice.push(newItem);
-      currItem = contentCopy[++index]
+
+      let resultingNode = node;
+      let name = this.getTagName(node.type);
+      if (!skip) {
+        const { content, attrs } = node;
+        let attributes = attrs?.attributes || {};
+
+        let nodeContents = [];
+        if (content && content.length) nodeContents.push(...this.#outputProcessNodes(content, node));
+
+        resultingNode = this.#getOutputNode(name, nodeContents, attributes);
+        const sectionProperties = attributes?.sectionProperties;
+        if (sectionProperties) {
+          delete resultingNode.attributes;
+          resultingNode.elements.push(sectionProperties)
+        }
+      }
+      
+      index++;
+      resultingElements.push(resultingNode);
+      if (SuperConverter.elements.has(name)) resultingNode.type = 'element';
     }
 
-    console.debug('\n\n CONTENT TO SPLICE', contentToSplice, '\n\n')
-    console.debug('\n NODE WAS', node, parent)
-    
-    // for (let n in content) {
-    //   if (n.type !== 'text' || !n.marks) newContent.push(n);
-    // }
-    // const newContent = content.map((n) => {
-    //   if (n.type !== 'text' || !n.marks) return n;
-
-    //   // Remove marks from the text node and bump them up to a new run element
-    //   const newContent = [{ type: 'text', text: n.text }];
-    //   return { type: 'run', marks: n.marks, content: newContent };
-    // });
-    parent.content.splice(indexInParent, 1, ...contentToSplice)
-    node.skip = true;
-    return [node];
+    return resultingElements;
   }
 
-  #outputNodeToJson(node, parent = null) {
-    node = this.#preProcessTextNodes(node, parent);
+  #flattenContent(content) {
+    const flatContent = [];
+  
+    function recursiveFlatten(items) {
+      items.forEach(item => {
+        const { content, type } = item;
+        if (type === 'bulletList') {
+          recursiveFlatten(content);
+        } else {
+          if (content.length > 1) {
+            const copy = { ...item, content: [content[0]]};
+            flatContent.push(copy);
+            recursiveFlatten(content.slice(1));
+          } else {
+            flatContent.push(item);
 
-    let name = this.getTagName(node.type);
-    const elements = [];
-    const { content, attrs } = node;
-    let attributes = attrs?.attributes || {};
-
-    // Nodes that can't be mapped back to a name tag need special handling. ie: list nodes
-    if (node.type === 'listItem') name = 'w:r';
-
-    if (!name) {
-      // const isList = ['orderedList', 'bulletList'].includes(node.type);
-      // if (isList) { 
-      //   // console.debug('List node:', node.type);
-
-      //   const listElements = [];
-      //   for (let child of content) {
-      //     const processedChild = {
-      //       name: 'w:p',
-      //       elements: this.#outputNodeToJson(child, node),
-      //       attributes: {}
-      //     }
-      //     // console.debug('Processed child:', processedChild);
-      //     listElements.push(processedChild);
-      //   }
-      //   // console.debug('List elements:', listElements);
-      //   return listElements;
-      // }
-    }
-
-    // Standard handling of nodes
-    else if (node.type !== 'text') {
-      if (content) {
-        for (let child of content) {
-          const processedChild = this.#outputNodeToJson(child, node);
-          if (Array.isArray(processedChild)) elements.push(...processedChild);
-          else elements.push(processedChild)
+          }
         }
-      }
-    }
-
-    // Check to see if this is going to be a text node
-    const hasTextNodes = content?.some((n) => n.type === 'text');
-    if (hasTextNodes && node.type !== 'text') {
-
-      // Re-build attributes from marks
-      const { marks = null } = node;
-      if (marks) {
-        let attributeGroup;
-        if (node.type === 'run') attributeGroup= 'w:rPr';
-        if (attributeGroup) {
-          const attributeElements = [];
-          marks.forEach((mark) => {
-            const tags = this.getTagsFromMark(mark.type);
-            if (!tags || !tags.length) return;
-
-            tags.forEach((tag) => {
-              attributeElements.push({
-                name: tag.name,
-                type: 'element'
-              });
-            })
-          });
-
-          elements.unshift({
-            type: 'element',
-            name: attributeGroup,
-            elements: attributeElements,
-          });
-
-          delete attributes.runProperties;
-          delete attributes.paragraphProperties;
-        }
-      }
-    }
-
-    // Text nodes have special handling because our Schema requires them to have no attrs and the strucutre
-    // is different, so we restore the expected export structure here.
-    else if (node.type === 'text' && !node.skip) {
-      // Add xml:space attribute to text nodes where needed
-      const hasWhitespace = /^\s|\s$/.test(node.text);
-      if (hasWhitespace) attributes['xml:space'] = 'preserve';
-      elements.push({
-        text: node.text,
-        type: 'text',
       });
     }
+  
+    recursiveFlatten(content);
+    return flatContent;
+  }
 
-    const sectionProperties = attributes?.sectionProperties;
-    if (sectionProperties) {
-      delete attrs.attributes.sectionProperties;
-      elements.push(sectionProperties)
-    }
-
-    const resultingNode = {
+  #getOutputNode(name, elements, attributes = {}) {
+    return {
       name,
       elements,
-      attributes: Object.keys(attributes).length ? attributes : undefined
+      attributes: Object.keys(attributes).length ? attributes : undefined,
+      type: 'element',
+    }
+  }
+
+  #outputHandleDocumentNode(node) {
+    // Restore section props
+    const storedBody = this.savedTagsToRestore.find((n) => n.name === 'w:body');
+    const sectPr = storedBody.elements.find((n) => n.name === 'w:sectPr');
+    const bodyNode = {
+      type: 'body',
+      content: node.content,
+      attrs: {
+        attributes: {
+          sectionProperties: sectPr
+        },
+      }
+    }
+    node.content = [bodyNode];
+    return node;
+  }
+
+  #outputHandleTextNode(nodes) {
+    const groupedTextNodes = [];
+    let index = 0;
+    let groupedNode = nodes[index];
+    const attrs = groupedNode?.attrs;
+    const marks = groupedNode?.marks;
+
+    let runProperties = null;
+    if (marks) {
+      console.debug('Marks:', marks);
+
+      const elements = [];
+      marks.forEach((mark) => {
+        const marksToApply = SuperConverter.markTypes.filter((m) => m.type === mark.type)
+        marksToApply.forEach((m) => {
+          elements.push({
+            name: m.name,
+            type: 'element',
+          })
+        });
+      });
+
+      runProperties = {
+        name: 'w:rPr',
+        type: 'element',
+        elements
+      }
     }
 
-    if (SuperConverter.elements.has(name)) resultingNode.type = 'element';
-    return resultingNode;
+    while (groupedNode?.type === 'text' && groupedNode.attrs === attrs && groupedNode.marks === marks) {
+      groupedNode.seen = true;
+      groupedTextNodes.push(groupedNode);
+      groupedNode = nodes[++index];
+    }
+    
+    const nodeContents = groupedTextNodes.map((n) => { 
+      const { text } = n;
+      const hasLeadingOrTrailingSpace = /^\s|\s$/.test(text);
+      const space = hasLeadingOrTrailingSpace ? 'preserve' : null;
+      const attrs = space ? { 'xml:space': space } : null;
+
+      const newNode = {
+        type: 'element',
+        name: 'w:t',
+        elements: [{ text: n.text, type: 'text' }]
+      }
+      if (attrs && Object.keys(attrs).length) newNode.attributes = attrs;
+      return newNode;
+    });
+
+    if (runProperties) {
+      console.debug('Run properties:', runProperties)
+      nodeContents.unshift(runProperties);
+    }
+    const name = this.getTagName('run');
+    const output = this.#getOutputNode(name, nodeContents, attrs);
+    console.debug('Output:', output)
+    return output;
   }
+  
 
   #outputHandleListNode(node) {
 
@@ -621,5 +693,4 @@ class SuperConverter {
 }
 
 SuperConverter.prototype.getNodeNumberingDefinition = getNodeNumberingDefinition;
-
 export { SuperConverter }
