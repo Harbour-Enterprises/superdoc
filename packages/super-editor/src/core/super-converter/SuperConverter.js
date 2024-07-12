@@ -259,7 +259,6 @@ class SuperConverter {
         possibleList = siblings.shift();
       }
 
-      console.debug('\n\n INPUT LIST NODE', node.attributes, '\n\n')
       schemaNode = this.#handleListNodes(listItems, 0, node);
     }      
 
@@ -319,7 +318,7 @@ class SuperConverter {
       if (listLevel === intLevel) {
         overallListType = listType;
         item.seen = true;
-        const schemaElements = this.convertToSchema(elements)?.filter(n => n);
+        const schemaElements = [this.#wrapNodes('paragraph', this.convertToSchema(elements)?.filter(n => n))];
 
         if (listpPrs) nodeAttributes['listParagraphProperties'] = listpPrs;
         if (listrPrs) nodeAttributes['listRunProperties'] = listrPrs;

@@ -357,6 +357,8 @@ export class Editor extends EventEmitter {
       return;
     }
 
+    console.debug('state:', this.state.toJSON());
+
     this.emit('update', {
       editor: this,
       transaction,
@@ -388,6 +390,21 @@ export class Editor extends EventEmitter {
    */
   getPageStyles() {
     return this.converter.pageStyles;
+  }
+
+  /**
+   * TODO: Remove this - this is for testing only
+   */
+  insertTextTest(text) {
+    const { dispatch } = this.view;
+
+    if (!Array.isArray(text)) text = [text];
+    text.forEach((t) => {
+      const state = this.state;
+      const { from, to } = state.selection;
+      const transaction = state.tr.insertText(t + '\n', from);
+      dispatch(transaction);
+    });
   }
 
   /**

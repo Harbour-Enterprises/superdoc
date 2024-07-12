@@ -47,6 +47,7 @@ const onSelectionUpdate = ({ editor, transaction }) => {
 const onCreate = ({ editor }) => {
   console.debug('[Dev] Editor created', editor);
   activeEditor = editor;
+  window.editor = editor;
 
   console.debug('[Dev] Page styles (pixels)', editor.getPageStyles());
 }

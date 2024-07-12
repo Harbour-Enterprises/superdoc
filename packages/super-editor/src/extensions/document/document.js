@@ -5,7 +5,7 @@ export const Document = Node.create({
 
   topNode: true,
 
-  content: 'body',
+  content: 'block+',
 
   parseDOM() {
     return [{ tag: 'doc' }];
