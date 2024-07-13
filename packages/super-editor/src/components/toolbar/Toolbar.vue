@@ -43,6 +43,19 @@ const toolbarItems = ref([
     active: false,
     tooltip: "Font",
     text: "Font",
+    argument: 'Georgia, serif', // TODO: Change this - test only
+  }),
+
+  // TODO: Change this - make dropdown work
+  toolbarItem({
+    type: 'dropdown',
+    name: 'size',
+    command: 'changeFontSize',
+    icon: null,
+    active: false,
+    tooltip: "Font size",
+    text: "12pt",
+    argument: '12pt',
   }),
 
   // separator
@@ -181,15 +194,16 @@ const toolbarItems = ref([
   }),
 
   // suggesting
-  toolbarItem({
-    type: 'toggle',
-    text: 'Suggesting',
-    name: 'suggesting',
-    command: null,
-    icon: null,
-    active: false,
-    tooltip: "Suggesting",
-  }),
+  // TODO: Restore this later - removing for initial milestone
+  // toolbarItem({
+  //   type: 'toggle',
+  //   text: 'Suggesting',
+  //   name: 'suggesting',
+  //   command: null,
+  //   icon: null,
+  //   active: false,
+  //   tooltip: "Suggesting",
+  // }),
 ])
 
 const isButton = (item) => item.type === 'button';

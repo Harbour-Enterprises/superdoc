@@ -230,8 +230,8 @@ class SuperConverter {
     let processedRun = this.convertToSchema(node.elements)?.filter(n => n) || [];
     const hasRunProperties = node.elements.some(el => el.name === 'w:rPr');
     if (hasRunProperties) {
-      const { marks = [] } = this.#parseProperties(node);
-      processedRun = processedRun.map(n => ({ ...n, marks }));
+      const { marks = [], attributes = {} } = this.#parseProperties(node);
+      processedRun = processedRun.map(n => ({ ...n, marks, attributes }));
     }
     return processedRun;
   }
@@ -387,7 +387,7 @@ class SuperConverter {
     return {
       type: this.getElementName(node),
       content,
-      attrs: { type, attributes: attributes || {}, },
+      attrs: { ...attributes },
       marks,
     };
   }
@@ -425,7 +425,7 @@ class SuperConverter {
       })
     });
 
-    // if (marks.length) console.debug('Marks:', marks )
+    if (marks.length) console.debug('Marks:', marks )
     return marks;
   }
 
@@ -443,8 +443,27 @@ class SuperConverter {
         properties.forEach(property => {
           const propType = SuperConverter.propertyTypes[property.name];
           attributes[propType] = property;
-
           marks = this.#parseMarks(property);
+
+          const colorTag = property.elements.find((el) => el.name === 'w:color');
+          const colorValue = colorTag?.attributes['w:val'];
+          colorValue && marks.push({ 'type': 'color', 'attrs': { attributes: { style: `color: #${colorValue}`  }} })
+
+          const fontTag = property.elements.find((el) => el.name === 'w:rFonts');
+          const font = fontTag?.attributes['w:ascii'];
+          font && marks.push({ 'type': 'fontFamily', 'attrs': { attributes: { style: `font-family: ${font}`  }} })
+
+          const fontSizeTag = property.elements.find((el) => el.name === 'w:sz');
+          const fontSize = fontSizeTag?.attributes['w:val'];
+          fontSize && marks.push({ 'type': 'fontSize', 'attrs': { attributes: { style: `font-size: ${fontSize/2}pt`  }} })
+
+          if (propType === 'paragraphProperties') {
+            const { elements } = property;
+            const justificationTag = elements.find((el) => el.name === 'w:jc');
+            let justification = justificationTag?.attributes['w:val'];
+            if (justification === 'both') justification = 'justify';
+            attributes['justification'] = justification;
+          }
         }); 
       }
       return { elements: nodes, attributes, marks }

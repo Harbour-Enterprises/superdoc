@@ -1,4 +1,5 @@
 import { Node } from '@core/index.js';
+import { Attribute } from '@core/index.js';
 
 export const Paragraph = Node.create({
   name: 'paragraph',
@@ -15,15 +16,28 @@ export const Paragraph = Node.create({
     return [{ tag: 'p' }];
   },
 
-  renderDOM() {
-    return ['p', 0];
-  },
-
   addAttributes() {
     return {
+      justification: {
+        renderDOM: (attrs) => {
+          console.debug('renderDOM', attrs.justification);
+          let { justification } = attrs;
+          return {
+            style: `text-align: ${justification}`,
+          };
+        }
+      },
       attributes: {
         rendered: false,
       },
     };
+  },
+
+  renderDOM({htmlAttributes}) {
+    const { style } = htmlAttributes;
+    console.debug('renderDOM', style);
+
+    // return ['p', Attribute.mergeAttributes(this.options.htmlAttributes, restAttributes), 0]
+    return ['p', { style: style }, 0];
   },
 });

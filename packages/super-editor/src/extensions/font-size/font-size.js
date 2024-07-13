@@ -1,7 +1,7 @@
 import { Mark } from '@core/index.js';
 
-export const Color = Mark.create({
-  name: 'color',
+export const FontSize = Mark.create({
+  name: 'fontSize',
 
   parseDOM() {
     return [
@@ -24,10 +24,10 @@ export const Color = Mark.create({
 
   addCommands(node) {
     return {
-      toggleColor: (color) => ({ commands }) => {
+      changeFontSize: (size) => ({ commands }) => {
         const attrs = {
           attributes: {
-            style: `color: ${color};`,
+            style: `font-size: ${size}`
           }
         }
         return commands.toggleMark(this.name, attrs);
@@ -37,7 +37,7 @@ export const Color = Mark.create({
 
   addShortcuts() {
     return {
-      'Mod-u': () => this.editor.commands.toggleUnderline(),
+      // 'Mod-u': () => this.editor.commands.toggleUnderline(),
     }
   },
 });
