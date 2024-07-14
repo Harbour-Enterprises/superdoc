@@ -2,7 +2,7 @@
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import ToolbarButtonIcon from './ToolbarButtonIcon.vue'
 
-const emit = defineEmits(['command']);
+const emit = defineEmits(['command', 'toggle', 'select']);
 const props = defineProps({
   name: {
     type: String,
@@ -16,6 +16,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  commandArgument: {
+    type: null,
+    required: false,
+  },
   tooltip: {
     type: String,
     required: true,
@@ -28,6 +32,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  dropdownOptions: {
+    type: Array,
+    default: () => [],
+  },
   isToggle: {
     type: Boolean,
     default: false,
@@ -37,14 +45,26 @@ const props = defineProps({
     default: false,
   },
 });
+const handleButtonClick = () => {
+  console.log('handleButtonClick', props);
+  if (props.isDropdown) {
+    emit('toggle', {active: props.active === true ? false : true, name: props.name});
+    return;
+  }
+  emit('command', {command: props.command, argument: props.commandArgument})
+}
+const handleOptionClick = ({label, value}) => {
+  console.log('handleOptionClick', label, value);
+  emit('select', {label, value});
+}
 </script>
 
 <template>
   <div
       class="toolbar-button"
-      :class="{ active: props.active }"
+      :class="{ active: props.active, dropdown: isDropdown, toggle: isToggle}"
       :title="tooltip"
-      @click.stop.prevent="handleClick">
+      @click.stop.prevent="handleButtonClick">
 
       <span class="button-text" v-if="text">{{text}}</span>
       
@@ -56,6 +76,16 @@ const props = defineProps({
       </ToolbarButtonIcon>
 
       <font-awesome-icon v-if="isDropdown" icon="fa-caret-down" />
+      <div class="dropdown-options-ctn" v-if="isDropdown"
+      :style="{display: props.active ? 'initial' : 'none'}">
+        <div v-for="option in dropdownOptions"
+          :key="option.label"
+          class="dropdown-option"
+          @click="handleOptionClick(option)">
+          {{option.label}}
+          </div>
+      </div>
+
       <div class="toggle-ctn" v-if="isToggle">
           <div :class="{'toggle-slider': true, on: active}"></div>
 
@@ -151,6 +181,22 @@ const props = defineProps({
   height: 100%;
   background-color: #DBDBDB;
   border-radius: 60%;
+}
+
+.dropdown {
+  overflow: visible;
+  position: relative;
+}
+
+.dropdown-options-ctn {
+  position: absolute;
+  top: 30px;
+  width: 150px;
+  left: 0;
+  margin: 0 auto;
+  background-color: white;
+  z-index: 1;
+  padding: 1em;
 }
 
 </style>

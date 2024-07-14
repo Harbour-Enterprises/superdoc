@@ -15,8 +15,8 @@ const toolbarItem = (options) => {
   return {
     type: options.type,
     name: options.name,
-    active: options.active,
-    dropdownOptions: options.dropdownOptions || null,
+    active: options.active || false,
+    dropdownOptions: options.dropdownOptions || [],
     command: options.command || null,
     icon: options.icon || null,
     tooltip: options.tooltip || null,
@@ -25,7 +25,7 @@ const toolbarItem = (options) => {
   }
 }
 
-const emit = defineEmits(['command']);
+const emit = defineEmits(['command', 'toggle', 'select']);
 const separator =  toolbarItem({
   type: 'separator',
   name: 'separator',
@@ -37,8 +37,27 @@ const toolbarItems = ref([
   // font
   toolbarItem({
     type: 'dropdown',
-    name: 'arial',
+    name: 'font',
     command: 'toggleFont',
+    dropdownOptions: [
+      {
+        label: 'Georgia',
+        value: 'Georgia, serif'
+      },
+      {
+        label: 'Arial',
+        value: 'Arial, sans-serif'
+      },
+      {
+        label: 'Courier New',
+        value: 'Courier New, monospace'
+      },
+      {
+        label: 'Times New Roman',
+        value: 'Times New Roman, serif'
+      },
+    ],
+
     icon: null,
     active: false,
     tooltip: "Font",
@@ -212,9 +231,20 @@ const isDropdown = (item) => item.type === 'dropdown';
 const isToggle = (item) => item.type === 'toggle';
 const hasIcon = (item) => item.icon !== null;
 
-const handleCommand = (command, argument) => {
-  console.debug('Toolbar command', command, argument);
+const handleCommand = ({command, argument}) => {
+  console.debug('Toolbar command HANDLER', command, argument);
   emit('command', {command, argument});
+}
+
+const handleToggle = ({active, name}) => {
+  const item = toolbarItems.value.find((item) => item.name === name);
+  console.debug('Toolbar toggle HANDLER', active, name, item);
+  if (!item) return;
+  item.active = active;
+}
+
+const handleSelect = ({label, value}) => {
+  console.debug('Toolbar select HANDLER', label, value);
 }
 
 const handleToolbarButtonClick = ({command, argument}) => {;
@@ -242,14 +272,18 @@ defineExpose({
       <ToolbarSeparator v-if="isSeparator(item)"> </ToolbarSeparator>
       <ToolbarButton v-else
           :command="item.command"
+          :command-argument="item.argument"
           :active="item.active"
           :tooltip="item.tooltip"
           :name="item.name"
           :text="item.text"
           :is-dropdown="isDropdown(item)"
+          :dropdown-options="item.dropdownOptions"
           :is-toggle="isToggle(item)"
           :has-icon="hasIcon(item)"
-          @click="handleToolbarButtonClick(item)">
+          @toggle="handleToggle"
+          @select="handleSelect"
+          @command="handleCommand">
       </ToolbarButton>
 
 
