@@ -48,6 +48,7 @@ const props = defineProps({
 });
 const tooltipVisible = ref(false)
 const tooltipTimeout = ref(null)
+const nestedOptionTimeout = ref(null)
 const handleButtonMouseEnter = () => {
   console.log("mouse enter")
   // set 400ms delay before showing tooltip
@@ -64,7 +65,20 @@ const handleButtonMouseLeave = () => {
   tooltipVisible.value = false;
   clearTimeout(tooltipTimeout.value);
 }
-
+const handleOptionMouseEnter = (option) => {
+  // clearTimeout(nestedOptionTimeout.value);
+  option.active = true;
+}
+const handleNestedOptionMouseEnter = (option) => {
+  // clearTimeout(nestedOptionTimeout.value);
+  // option.active = true;
+}
+const handleOptionMouseLeave = (option) => {
+  // nestedOptionTimeout.value = setTimeout(() => {
+  //   option.active = false;
+  // }, 400);
+  option.active = false;
+}
 const handleButtonClick = () => {
   console.log('handleButtonClick', props);
   if (props.isDropdown) {
@@ -73,10 +87,11 @@ const handleButtonClick = () => {
   }
   emit('command', {command: props.command, argument: props.commandArgument})
 }
-const handleOptionClick = ({label, value}) => {
-  console.log('handleOptionClick', label, value);
+const handleOptionClick = (option) => {
+  const {label, fontName, fontWeight} = option;
+  console.log('handleOptionClick', label, fontName, fontWeight);
   // one command for all dropdown options
-  emit('select', {command: props.command, label, value});
+  emit('select', {name: props.name, command: props.command, label, fontName, fontWeight});
 }
 </script>
 
@@ -103,12 +118,26 @@ const handleOptionClick = ({label, value}) => {
       <font-awesome-icon v-if="isDropdown" :icon="active ? 'fa-caret-up' : 'fa-caret-down'" />
       <div class="dropdown-options-ctn" v-if="isDropdown"
       :style="{display: props.active ? 'initial' : 'none'}">
-        <div v-for="option in dropdownOptions"
+        <div v-for="(option, index) in dropdownOptions"
           :key="option.label"
           class="dropdown-option-outer"
-          @click="handleOptionClick(option)">
-            <div class="dropdown-option-inner">
+          @mouseenter="handleOptionMouseEnter(option)"
+          @mouseleave="handleOptionMouseLeave(option)"
+          @click.stop.prevent="handleOptionClick(option)">
+            <div class="dropdown-option-inner" :style="{fontFamily: option.fontName}">
               {{option.label}}
+              <font-awesome-icon v-if="option.options" :icon="'angle-right'" />
+            </div>
+            <div class="nested-dropdown-options" :style="{fontFamily: option.fontName, top: (44*Number(index))+'px', display: option.active ? 'initial' : 'none'}">
+              <div v-for="nestedOption in option.options"
+              @mouseenter="handleNestedOptionMouseEnter(option)"
+              :key="nestedOption.label"
+              class="dropdown-option-outer"
+              @click.stop.prevent="handleOptionClick({...nestedOption, fontName: option.fontName})">
+                <div class="dropdown-option-inner" :style="{fontWeight: nestedOption.fontWeight}">
+                  {{ nestedOption.label }}
+                </div>
+              </div>
             </div>
           </div>
       </div>
@@ -215,14 +244,22 @@ const handleOptionClick = ({label, value}) => {
 }
 
 .dropdown-options-ctn {
-  position: absolute;
   top: 30px;
+}
+
+/* both */
+.dropdown-options-ctn, .nested-dropdown-options {
+  position: absolute;
   width: 150px;
   left: 0;
   margin: 0 auto;
   background-color: white;
   z-index: 1;
-  border-radius: 3%;
+  border-radius: 5%;
+}
+
+.nested-dropdown-options {
+  left: 150px;
 }
 
 .dropdown-option-outer:hover {
@@ -231,6 +268,8 @@ const handleOptionClick = ({label, value}) => {
 
 .dropdown-option-inner {
   padding: 1em;
+  display: flex;
+  justify-content: space-between;
 }
 
 .tooltip {

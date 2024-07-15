@@ -42,19 +42,28 @@ const toolbarItems = ref([
     dropdownOptions: [
       {
         label: 'Georgia',
-        value: 'Georgia, serif'
+        fontName: 'Georgia, serif',
+        fontWeight: 400,
       },
       {
         label: 'Arial',
-        value: 'Arial, sans-serif'
+        fontName: 'Arial, sans-serif',
+        fontWeight: 400,
       },
       {
         label: 'Courier New',
-        value: 'Courier New, monospace'
+        fontName: 'Courier New, monospace',
+        fontWeight: 400,
+        active: false,
+        options: [
+          { label: 'Regular', fontWeight: 400 },
+          { label: 'Bold', fontWeight: 700 },
+        ],
       },
       {
         label: 'Times New Roman',
-        value: 'Times New Roman, serif'
+        fontName: 'Times New Roman, serif',
+        fontWeight: 400,
       },
     ],
 
@@ -242,10 +251,11 @@ const handleToggle = ({active, name}) => {
   item.active = active;
 }
 
-const handleSelect = ({command, label, value}) => {
-  console.debug('Toolbar select handler', command, label, value);
-  // handle select side effects here
-  emit('command', {command, argument: {label, value}});
+const handleSelect = ({name, command, label, fontName, fontWeight}) => {
+  console.debug('Toolbar select handler', name, command, label, fontName, fontWeight);
+  const item = toolbarItems.value.find((item) => item.name === name);
+  if (item) item.active = false;
+  emit('command', {command, argument: {label, fontName, fontWeight}});
 }
 
 const handleToolbarButtonClick = ({command, argument}) => {;
@@ -254,7 +264,6 @@ const handleToolbarButtonClick = ({command, argument}) => {;
 }
 
 const onSelectionChange = (marks) => {
-  console.log("MARKS", marks)
   toolbarItems.value.forEach((item) => {
     const markNames = marks.map((mark) => mark.type.name);
     if (markNames.includes(item.name) && item.type !== 'dropdown') {

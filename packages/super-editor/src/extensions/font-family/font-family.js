@@ -24,11 +24,17 @@ export const FontFamily = Mark.create({
 
   addCommands(node) {
     return {
-      toggleFont: ({label, value}) => ({ commands }) => {
-        console.debug('toggleFont', value, commands);
+      toggleFont: ({label, fontName, fontWeight}) => ({ commands }) => {
+        console.debug('toggleFont', label, fontName, fontWeight, commands);
+        const styleDict = {
+          'font-family': fontName,
+          'font-weight': fontWeight,
+        }
+        const styleString = Object.entries(styleDict).map(([key, value]) => `${key}: ${value}`).join(';');
+
         const attrs = {
           attributes: {
-            style: `font-family: ${value}`
+            style: styleString
           },
           font: label
         }

@@ -20,7 +20,8 @@ import {
   faList,
   faListNumeric,
   faCaretDown,
-  faCaretUp
+  faCaretUp,
+  faAngleRight
 } from '@fortawesome/free-solid-svg-icons';
 
 
@@ -39,7 +40,8 @@ library.add(
   faList,
   faListNumeric,
   faCaretDown,
-  faCaretUp
+  faCaretUp,
+  faAngleRight
 );
 
 /**
