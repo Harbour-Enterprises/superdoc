@@ -19,7 +19,8 @@ import {
   faEllipsisVertical,
   faList,
   faListNumeric,
-  faCaretDown
+  faCaretDown,
+  faCaretUp
 } from '@fortawesome/free-solid-svg-icons';
 
 
@@ -37,7 +38,8 @@ library.add(
   faEllipsisVertical,
   faList,
   faListNumeric,
-  faCaretDown
+  faCaretDown,
+  faCaretUp
 );
 
 /**

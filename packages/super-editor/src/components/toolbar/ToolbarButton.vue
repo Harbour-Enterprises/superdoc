@@ -1,6 +1,7 @@
 <script setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import ToolbarButtonIcon from './ToolbarButtonIcon.vue'
+import { ref } from 'vue';
 
 const emit = defineEmits(['command', 'toggle', 'select']);
 const props = defineProps({
@@ -8,7 +9,7 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  text: {
+  label: {
     type: String,
     default: null,
   },
@@ -45,6 +46,25 @@ const props = defineProps({
     default: false,
   },
 });
+const tooltipVisible = ref(false)
+const tooltipTimeout = ref(null)
+const handleButtonMouseEnter = () => {
+  console.log("mouse enter")
+  // set 400ms delay before showing tooltip
+  const now = Date.now();
+  const delay = 1000;
+  tooltipTimeout.value = setTimeout(() => {
+    if (now + delay <= Date.now()) {
+      tooltipVisible.value = true;
+    }
+  }, delay);
+}
+const handleButtonMouseLeave = () => {
+  console.log("mouse leave")
+  tooltipVisible.value = false;
+  clearTimeout(tooltipTimeout.value);
+}
+
 const handleButtonClick = () => {
   console.log('handleButtonClick', props);
   if (props.isDropdown) {
@@ -55,7 +75,8 @@ const handleButtonClick = () => {
 }
 const handleOptionClick = ({label, value}) => {
   console.log('handleOptionClick', label, value);
-  emit('select', {label, value});
+  // one command for all dropdown options
+  emit('select', {command: props.command, label, value});
 }
 </script>
 
@@ -63,10 +84,14 @@ const handleOptionClick = ({label, value}) => {
   <div
       class="toolbar-button"
       :class="{ active: props.active, dropdown: isDropdown, toggle: isToggle}"
-      :title="tooltip"
+      @mouseenter="handleButtonMouseEnter"
+      @mouseleave="handleButtonMouseLeave"
       @click.stop.prevent="handleButtonClick">
+      <div class="tooltip" :style="{display: tooltipVisible ? 'initial' : 'none', width: `${tooltip.length * 5}px`}">
+        <span>{{ tooltip }}</span>
+      </div>
 
-      <span class="button-text" v-if="text">{{text}}</span>
+      <span class="button-label" v-if="label">{{label}}</span>
       
       <ToolbarButtonIcon
         v-if="hasIcon"
@@ -75,14 +100,16 @@ const handleOptionClick = ({label, value}) => {
         :name="name">
       </ToolbarButtonIcon>
 
-      <font-awesome-icon v-if="isDropdown" icon="fa-caret-down" />
+      <font-awesome-icon v-if="isDropdown" :icon="active ? 'fa-caret-up' : 'fa-caret-down'" />
       <div class="dropdown-options-ctn" v-if="isDropdown"
       :style="{display: props.active ? 'initial' : 'none'}">
         <div v-for="option in dropdownOptions"
           :key="option.label"
-          class="dropdown-option"
+          class="dropdown-option-outer"
           @click="handleOptionClick(option)">
-          {{option.label}}
+            <div class="dropdown-option-inner">
+              {{option.label}}
+            </div>
           </div>
       </div>
 
@@ -115,7 +142,7 @@ const handleOptionClick = ({label, value}) => {
   color: #47484a;
   transition: all 0.2s ease-out;
   user-select: none;
-  overflow: hidden;
+  position: relative;
 }
 .toolbar-button:hover {
   color: black;
@@ -125,7 +152,7 @@ const handleOptionClick = ({label, value}) => {
 .active {
   background-color: #c8d0d8;
 }
-.button-text {
+.button-label {
   font-weight: 100;
   margin-right: 8px;
 }
@@ -185,7 +212,6 @@ const handleOptionClick = ({label, value}) => {
 
 .dropdown {
   overflow: visible;
-  position: relative;
 }
 
 .dropdown-options-ctn {
@@ -196,7 +222,37 @@ const handleOptionClick = ({label, value}) => {
   margin: 0 auto;
   background-color: white;
   z-index: 1;
+  border-radius: 3%;
+}
+
+.dropdown-option-outer:hover {
+  background-color: #DBDBDB;
+}
+
+.dropdown-option-inner {
   padding: 1em;
+}
+
+.tooltip {
+  position: absolute;
+  top: -30px;
+  background-color: white;
+  padding: 5px;
+  border-radius: 3%;
+  color: #555555;
+  font-size: 10px;
+  text-align: center;
+}
+
+.tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: white transparent transparent transparent;
 }
 
 </style>

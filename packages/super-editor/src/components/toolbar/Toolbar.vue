@@ -20,8 +20,8 @@ const toolbarItem = (options) => {
     command: options.command || null,
     icon: options.icon || null,
     tooltip: options.tooltip || null,
-    text: options.text || null,
-    argument: options.argument || null,
+    label: options.label || null,
+    argument: options.argument || null
   }
 }
 
@@ -37,7 +37,7 @@ const toolbarItems = ref([
   // font
   toolbarItem({
     type: 'dropdown',
-    name: 'font',
+    name: 'fontFamily',
     command: 'toggleFont',
     dropdownOptions: [
       {
@@ -61,8 +61,7 @@ const toolbarItems = ref([
     icon: null,
     active: false,
     tooltip: "Font",
-    text: "Font",
-    argument: 'Georgia, serif', // TODO: Change this - test only
+    label: "Font",
   }),
 
   // TODO: Change this - make dropdown work
@@ -73,7 +72,7 @@ const toolbarItems = ref([
     icon: null,
     active: false,
     tooltip: "Font size",
-    text: "12pt",
+    label: "12pt",
     argument: '12pt',
   }),
 
@@ -209,14 +208,14 @@ const toolbarItems = ref([
     command: 'toggleOverflow',
     icon: 'fa-ellipsis-vertical',
     active: false,
-    tooltip: "Overflow",
+    tooltip: "More options",
   }),
 
   // suggesting
   // TODO: Restore this later - removing for initial milestone
   // toolbarItem({
   //   type: 'toggle',
-  //   text: 'Suggesting',
+  //   label: 'Suggesting',
   //   name: 'suggesting',
   //   command: null,
   //   icon: null,
@@ -243,8 +242,10 @@ const handleToggle = ({active, name}) => {
   item.active = active;
 }
 
-const handleSelect = ({label, value}) => {
-  console.debug('Toolbar select HANDLER', label, value);
+const handleSelect = ({command, label, value}) => {
+  console.debug('Toolbar select handler', command, label, value);
+  // handle select side effects here
+  emit('command', {command, argument: {label, value}});
 }
 
 const handleToolbarButtonClick = ({command, argument}) => {;
@@ -253,9 +254,22 @@ const handleToolbarButtonClick = ({command, argument}) => {;
 }
 
 const onSelectionChange = (marks) => {
+  console.log("MARKS", marks)
   toolbarItems.value.forEach((item) => {
-    if (marks.includes(item.name)) item.active = true;
-    else item.active = false;
+    const markNames = marks.map((mark) => mark.type.name);
+    if (markNames.includes(item.name) && item.type !== 'dropdown') {
+      item.active = true;
+    } else item.active = false;
+
+    if (item.name === 'fontFamily') {
+      item.label = "Font";
+      const mark = marks.find((mark) => mark.type.name === item.name) || null;
+      if (!mark) return;
+
+      const font = mark.attrs?.font;
+      if (!font) item.label = 'Font';
+      item.label = font;
+    }
   });
 }
 
@@ -276,7 +290,7 @@ defineExpose({
           :active="item.active"
           :tooltip="item.tooltip"
           :name="item.name"
-          :text="item.text"
+          :label="item.label"
           :is-dropdown="isDropdown(item)"
           :dropdown-options="item.dropdownOptions"
           :is-toggle="isToggle(item)"
