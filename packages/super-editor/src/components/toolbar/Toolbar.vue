@@ -21,7 +21,9 @@ const toolbarItem = (options) => {
     icon: options.icon || null,
     tooltip: options.tooltip || null,
     label: options.label || null,
-    argument: options.argument || null
+    argument: options.argument || null,
+    disabled: options.disabled || false,
+    iconColor: options.iconColor || null,
   }
 }
 
@@ -155,6 +157,7 @@ const toolbarItems = ref([
     icon: 'fa-image',
     active: false,
     tooltip: "Image",
+    disabled: true,
   }),
 
   // separator
@@ -270,9 +273,20 @@ const onSelectionChange = (marks) => {
       item.active = true;
     } else item.active = false;
 
-    if (item.name === 'fontFamily') {
-      item.label = "Font";
+    // reset
+    if (item.name === 'color') {
+      item.iconColor = '#47484a';
       const mark = marks.find((mark) => mark.type.name === item.name) || null;
+      if (!mark) return;
+      if (item.active) {
+        item.iconColor = mark.attrs?.color;
+      }
+      return;
+    }
+
+    if (item.name === 'fontFamily') {
+      const mark = marks.find((mark) => mark.type.name === item.name) || null;
+      item.label = "Font";
       if (!mark) return;
 
       const font = mark.attrs?.font;
@@ -294,6 +308,7 @@ defineExpose({
       <!-- Toolbar button -->
       <ToolbarSeparator v-if="isSeparator(item)"> </ToolbarSeparator>
       <ToolbarButton v-else
+          :disabled="item.disabled"
           :command="item.command"
           :command-argument="item.argument"
           :active="item.active"
@@ -303,6 +318,7 @@ defineExpose({
           :is-dropdown="isDropdown(item)"
           :dropdown-options="item.dropdownOptions"
           :is-toggle="isToggle(item)"
+          :icon-color="item.iconColor"
           :has-icon="hasIcon(item)"
           @toggle="handleToggle"
           @select="handleSelect"

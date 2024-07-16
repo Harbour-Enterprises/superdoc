@@ -18,7 +18,8 @@ export const Color = Mark.create({
     return {
       attributes: {
         style: {default: null},
-      }
+      },
+      color: {default: null},
     }
   },
 
@@ -28,7 +29,8 @@ export const Color = Mark.create({
         const attrs = {
           attributes: {
             style: `color: ${color};`,
-          }
+          },
+          color,
         }
         return commands.toggleMark(this.name, attrs);
       },
