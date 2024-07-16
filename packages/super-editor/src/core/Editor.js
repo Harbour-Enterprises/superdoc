@@ -75,6 +75,7 @@ export class Editor extends EventEmitter {
     this.on('contentError', this.options.onContentError);
 
     this.#createView();
+    this.#initDefaultStyles();
     this.#injectCSS()
 
     this.on('create', this.options.onCreate);
@@ -127,6 +128,13 @@ export class Editor extends EventEmitter {
    */
   get isDestroyed() {
     return this.view.isDestroyed;
+  }
+
+  /**
+   * Get the editor element
+   */
+  get element() {
+    return this.options.element;
   }
 
   /**
@@ -308,9 +316,23 @@ export class Editor extends EventEmitter {
     const dom = this.view.dom;
     dom.editor = this;
 
-    console.debug('\n\nCURRENT SCHEMA:', JSON.stringify(this.getJSON()));
   }
 
+  /**
+   * Initialize default styles
+   */
+  #initDefaultStyles() {
+    const { pageSize, pageMargins } = this.converter.pageStyles; 
+    this.element.style.width = `${pageSize.width}in`;
+    this.element.style.maxWidth = `${pageSize.width}in`;
+    this.element.style.height = `${pageSize.height}in`;
+    this.element.style.paddingTop = `${pageMargins.top}in`
+    this.element.style.paddingRight = `${pageMargins.right}in`
+    this.element.style.paddingBottom = `${pageMargins.bottom}in`
+    this.element.style.paddingLeft = `${pageMargins.left}in`;
+    this.element.style.overflow = 'auto';
+  }
+  
   /**
    * The callback which is used to intercept View transactions.
    * @param {*} transaction State transaction.

@@ -18,15 +18,19 @@ export const Paragraph = Node.create({
 
   addAttributes() {
     return {
-      justification: {
+
+      paragraphSpacing: {
         renderDOM: (attrs) => {
-          console.debug('renderDOM', attrs.justification);
-          let { justification } = attrs;
+          let { paragraphSpacing } = attrs;
+          if (!paragraphSpacing) return;
+
+          const { lineSpaceBefore, lineSpaceAfter } = paragraphSpacing;
           return {
-            style: `text-align: ${justification}`,
+            style: `margin-bottom: ${lineSpaceAfter}px !important; margin-top: ${lineSpaceBefore}px; !important`,
           };
         }
       },
+
       attributes: {
         rendered: false,
       },

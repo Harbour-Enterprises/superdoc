@@ -6,7 +6,7 @@
 -->
 
 <script setup>
-import { ref } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import BasicUpload from './BasicUpload.vue';
 
 // Import the component the same you would in your app
@@ -49,9 +49,20 @@ const onCreate = ({ editor }) => {
   console.debug('[Dev] Editor created', editor);
   activeEditor = editor;
   window.editor = editor;
-
   console.debug('[Dev] Page styles (pixels)', editor.getPageStyles());
+  console.debug('[Dev] document styles', editor.converter.getDocumentDefaultStyles());
+
+  Object.assign(editorStyles, editor.converter.getDocumentDefaultStyles());
 }
+
+const editorStyles = reactive({ });
+const getEditorStyle = computed(() => {
+  const styles = {};
+  if (editorStyles.typeface) styles.fontFamily = editorStyles.typeface;
+  if (editorStyles.fontSizePt) styles.fontSize = editorStyles.fontSizePt;
+  styles.lineHeight = '1.15 !important';
+  return styles;
+});
 
 const editorOptions = {
   onCreate,
@@ -101,7 +112,8 @@ const exportDocx = async () => {
           mode="docx"
           documentId="ID-122"
           :file-source="currentFile" 
-          :options="editorOptions" />
+          :options="editorOptions"
+          :style="getEditorStyle" />
 
     </div>
   </div>

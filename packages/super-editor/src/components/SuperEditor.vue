@@ -53,8 +53,25 @@ onMounted(() => {
 
 <template>
   <div class="super-editor" v-if="props.fileSource">
-    <div ref="editorElem" class="editor"></div>
+    <div ref="editorElem" class="editor-element"></div>
   </div>
 </template>
 
-<style scoped></style>
+<style>
+.ProseMirror {
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+}
+.ProseMirror p {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+</style>
+<style scoped>
+.editor-element {
+  border: 1px solid #999;
+}
+</style>

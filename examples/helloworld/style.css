@@ -266,12 +266,8 @@ header{
 .superdoc-document-page{
   cursor: text;
   width:100%;
-  max-width: calc(816px - 100px);
-  padding-left: 50px;
-  padding-right: 50px;
+  max-width: calc(816px);
   height: 1056px;
-  padding-top: 50px;
-  padding-bottom: 50px;
   background-color: white;
   border-radius:3.8px;
   border: 1px solid #d3d3d3;
