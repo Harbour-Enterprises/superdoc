@@ -18,25 +18,6 @@ export const Paragraph = Node.create({
 
   addAttributes() {
     return {
-      justification: {
-        renderDOM: (attrs) => {
-          console.debug('renderDOM', attrs.justification);
-          let { justification } = attrs;
-          return {
-            style: `text-align: ${justification}`,
-          };
-        }
-      },
-
-      indent: {
-        renderDOM: (attrs) => {
-          let { indent } = attrs;
-          if (!indent) return;
-          return {
-            style: `text-indent: ${indent}px`,
-          };
-        }
-      },
 
       paragraphSpacing: {
         renderDOM: (attrs) => {

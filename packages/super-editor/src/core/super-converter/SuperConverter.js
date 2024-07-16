@@ -1,5 +1,6 @@
 import xmljs from 'xml-js';
 import {orderedListTypes, unorderedListTypes, getNodeNumberingDefinition } from './numbering';
+import { toKebabCase } from '@common/key-transform.js';
 
 /**
  * Class to translate from DOCX XML to Prose Mirror Schema and back
@@ -34,6 +35,12 @@ class SuperConverter {
     { name: 'w:iCs', type: 'italic' },
     { name: 'w:u', type: 'underline' },
     { name: 'w:strike', type: 'strike' },
+    { name: 'w:color', type: 'color' },
+    { name: 'w:sz', type: 'fontSize' },
+    { name: 'w:szCs', type: 'fontSize' },
+    { name: 'w:rFonts', type: 'fontFamily' },
+    { name: 'w:jc', type: 'textAlign' },
+    { name: 'w:ind', type: 'textIndent' },
   ]
 
   static propertyTypes = Object.freeze({
@@ -77,7 +84,6 @@ class SuperConverter {
     this.savedTagsToRestore = [];
 
     // Parse the initial XML, if provided
-    // this.log('Original XML:', this.xml)
     if (this.docx.length || this.xml) this.parseFromXml();
   }
 
@@ -199,8 +205,8 @@ class SuperConverter {
 
       if (schemaNode?.type) {
         const ignore = ['runProperties'];
-        if (ignore.includes(schemaNode.type)) console.debug('No schema node:', node);
-        else processedElements.push(schemaNode);
+        if (!ignore.includes(schemaNode.type)) processedElements.push(schemaNode);
+        // else console.debug('No schema node:', node);
       }
     }
     return processedElements;
@@ -227,31 +233,31 @@ class SuperConverter {
       switch (name) {
         case 'w:pgSz':
           styles['pageSize'] = {
-            width: this.#twipsToPixels(attributes['w:w']),
-            height: this.#twipsToPixels(attributes['w:h']),
+            width: this.#twipsToInches(attributes['w:w']),
+            height: this.#twipsToInches(attributes['w:h']),
           }
           break;
         case 'w:pgMar':
           styles['pageMargins'] = {
-            top: this.#twipsToPixels(attributes['w:top']),
-            right: this.#twipsToPixels(attributes['w:right']),
-            bottom: this.#twipsToPixels(attributes['w:bottom']),
-            left: this.#twipsToPixels(attributes['w:left']),
-            header: this.#twipsToPixels(attributes['w:header']),
-            footer: this.#twipsToPixels(attributes['w:footer']),
-            gutter: this.#twipsToPixels(attributes['w:gutter']),
+            top: this.#twipsToInches(attributes['w:top']),
+            right: this.#twipsToInches(attributes['w:right']),
+            bottom: this.#twipsToInches(attributes['w:bottom']),
+            left: this.#twipsToInches(attributes['w:left']),
+            header: this.#twipsToInches(attributes['w:header']),
+            footer: this.#twipsToInches(attributes['w:footer']),
+            gutter: this.#twipsToInches(attributes['w:gutter']),
           }
           break;
         case 'w:cols':
           styles['columns'] = {
-            space: this.#twipsToPixels(attributes['w:space']),
+            space: this.#twipsToInches(attributes['w:space']),
             num: attributes['w:num'],
             equalWidth: attributes['w:equalWidth'],
           }
           break;
         case 'w:docGrid':
           styles['docGrid'] = {
-            linePitch: this.#twipsToPixels(attributes['w:linePitch']),
+            linePitch: this.#twipsToInches(attributes['w:linePitch']),
             type: attributes['w:type'],
           }
           break;
@@ -259,9 +265,20 @@ class SuperConverter {
     });
     this.pageStyles = styles;
   }
+
+  #inchesToTwips(inches) {
+    if (inches instanceof String || typeof inches === 'string') inches = parseFloat(inches)
+    return inches * 1440;
+  }
+
+  #twipsToInches(twips) {
+    if (twips instanceof String || typeof inches === 'string') twips = int(twips)
+    return twips / 1440;
+  }
+
   #twipsToPixels(twips) {
-    if (twips instanceof String) twips = int(twips)
-    return (twips / 1440) * 96;
+    twips = this.#twipsToInches(twips);
+    return twips * 96;
   }
 
   /**
@@ -310,13 +327,11 @@ class SuperConverter {
     if (!schemaNode) schemaNode = this.#handleStandardNode(node);
 
     if ('attributes' in node) {
-      console.debug('Node attributes:', node)
       const defaultStyleId = node.attributes['w:rsidRDefault'];
-      console.debug('Default style ID:', defaultStyleId)
       const { lineSpaceAfter, lineSpaceBefore } = this.#getDefaultStyleDefinition(defaultStyleId);
 
       if (!('attributes' in schemaNode)) schemaNode.attributes = {};
-      schemaNode.attributes['paragraphSpacing'] = { lineSpaceAfter, lineSpaceBefore };
+      schemaNode.attrs['paragraphSpacing'] = { lineSpaceAfter, lineSpaceBefore };
     }
     return schemaNode;
   }
@@ -363,7 +378,16 @@ class SuperConverter {
       // Get the properties of the node - this is where we will find depth level for the node
       // As well as many other list properties
       const { attributes, elements, marks = [] } = this.#parseProperties(item);
-      const { listType, listOrderingType, ilvl, listrPrs, numId, listpPrs, start, lvlText, lvlJc } = this.getNodeNumberingDefinition(attributes, listLevel);
+      const {
+        listType,
+        listOrderingType,
+        ilvl,
+        listrPrs,
+        listpPrs,
+        start,
+        lvlText,
+        lvlJc
+      } = this.getNodeNumberingDefinition(attributes, listLevel);
       listStyleType = listOrderingType;
       const intLevel = parseInt(ilvl);
 
@@ -472,10 +496,32 @@ class SuperConverter {
     const seen = new Set();
     property.elements.forEach((element) => {
       const marksForType = SuperConverter.markTypes.filter((mark) => mark.name === element.name);
+      if (!marksForType.length) {
+        const missingMarks = ['w:shd', 'w:rStyle', 'w:pStyle']
+        if (missingMarks.includes(element.name)) console.debug('❗️❗️ATTN: No marks found for element:', element.name);
+        else throw new Error(`No marks found for element: ${element.name}`);
+      }
+
       marksForType.forEach((m) => {
         if (!m || seen.has(m.type)) return;
         seen.add(m.type);
-        marks.push({ type: m.type });
+
+        const { attributes } = element;
+        console.debug('Processing mark:', element, attributes)
+
+        const newMark = { type: m.type }
+        if (attributes) {
+          let value = attributes['w:val'];
+
+          if (m.type === 'textIndent') console.debug('Text indent:', attributes)
+          const kebabCase = toKebabCase(m.type);
+          if (kebabCase === 'color') value = `#${attributes['w:val']}`;
+          else if (kebabCase === 'font-size') value = `${attributes['w:val']/2}pt`;
+          else if (kebabCase === 'text-indent') value = `${this.#twipsToInches(attributes['w:left'])}in`;
+          else if (kebabCase === 'font-family') value = attributes['w:ascii'];
+          newMark.attrs = { attributes: { style: `${kebabCase}: ${value}` } };
+        }
+        marks.push(newMark);
       })
     });
 
@@ -516,50 +562,42 @@ class SuperConverter {
        */
       let marks = [];
       const { attributes = {}, elements = [] } = node;
-      const [nodes, properties] = this.#splitElementsAndProperties(elements);
+      const { nodes, paragraphProperties = {}, runProperties = {}, sectionProperties } = this.#splitElementsAndProperties(elements);
 
-      if (properties.length) {
-        properties.forEach(property => {
-          const propType = SuperConverter.propertyTypes[property.name];
-          attributes[propType] = property;
-          marks = this.#parseMarks(property);
-
-          const colorTag = property.elements.find((el) => el.name === 'w:color');
-          const colorValue = colorTag?.attributes['w:val'];
-          colorValue && marks.push({ 'type': 'color', 'attrs': { attributes: { style: `color: #${colorValue}`  }} })
-
-          const fontTag = property.elements.find((el) => el.name === 'w:rFonts');
-          const font = fontTag?.attributes['w:ascii'];
-          font && marks.push({ 'type': 'fontFamily', 'attrs': { attributes: { style: `font-family: ${font}`  }} })
-
-          const fontSizeTag = property.elements.find((el) => el.name === 'w:sz');
-          const fontSize = fontSizeTag?.attributes['w:val'];
-          fontSize && marks.push({ 'type': 'fontSize', 'attrs': { attributes: { style: `font-size: ${fontSize/2}pt`  }} })
-
-          if (propType === 'paragraphProperties') {
-            const { elements } = property;
-            const justificationTag = elements.find((el) => el.name === 'w:jc');
-            let justification = justificationTag?.attributes['w:val'];
-            if (justification === 'both') justification = 'justify';
-            attributes['justification'] = justification;
-
-            const indent = elements.find((el) => el.name === 'w:ind');
-            if (indent) attributes['indent'] = this.#twipsToPixels(indent.attributes['w:left']);
-          }
-        }); 
+      const runPropsInParagraph = paragraphProperties?.elements?.find((el) => el.name === 'w:rPr');
+      if (runPropsInParagraph) {
+        if (!runProperties || !runProperties.elements?.length) runProperties.elements = [];
+        runProperties.elements.push(...runPropsInParagraph.elements);
       }
+      paragraphProperties.elements = paragraphProperties?.elements?.filter((el) => el.name !== 'w:rPr');
+
+      // Get the marks from the run properties
+      if (runProperties && runProperties?.elements?.length) marks = this.#parseMarks(runProperties);
+      if (paragraphProperties && paragraphProperties.elements?.length) {
+        marks.push(...this.#parseMarks(paragraphProperties));
+      }
+
+      // Maintain any extra properties
+      if (paragraphProperties && paragraphProperties.elements?.length) {
+        attributes['paragraphProperties'] = paragraphProperties;
+      }
+
       return { elements: nodes, attributes, marks }
   }
 
 
   #splitElementsAndProperties(elements) {
-    return elements.reduce(
-      ([els, props], el) => {
-        if (SuperConverter.propertyTypes[el.name]) props.push(el);
-        else els.push(el);
-        return [els, props];
-      }, [[], []]
-    );
+    const pPr = elements.find((el) => el.name === 'w:pPr');
+    const rPr = elements.find((el) => el.name === 'w:rPr');
+    const sectPr = elements.find((el) => el.name === 'w:sectPr');
+    const els = elements.filter((el) => el.name !== 'w:pPr' && el.name !== 'w:rPr' && el.name !== 'w:sectPr');
+
+    return {
+      nodes: els,
+      paragraphProperties: pPr,
+      runProperties: rPr,
+      sectionProperties: sectPr,
+    }
   }
 
 
@@ -583,7 +621,8 @@ class SuperConverter {
     for (let node of nodes) {
       if (node.seen) continue;
       let skip = false;
-
+      const nodeToProcess = { ...node };
+  
       // Special output handling
       switch (node.type) {
         case 'doc':
@@ -612,6 +651,9 @@ class SuperConverter {
       }
 
       let resultingNode = node;
+
+      console.debug('Processing node:', node)
+
       let name = this.getTagName(node.type);
       if (!skip) {
         const { content, attrs } = node;
@@ -626,6 +668,24 @@ class SuperConverter {
           delete resultingNode.attributes;
           resultingNode.elements.push(sectionProperties)
         }
+
+        if (node.type === 'paragraph') {
+          const marks = node.marks;
+          const markElements = [];
+          if (marks) {
+            marks.forEach((mark) => {
+
+              const markElement = this.#mapOutputMarkToElement(mark);
+              markElements.push(markElement);
+            });
+            const pPr = {
+              name: 'w:pPr',
+              type: 'element',
+              elements: markElements,
+            }
+            resultingNode.elements.unshift(pPr);
+          }
+        }
       }
       
       index++;
@@ -636,6 +696,38 @@ class SuperConverter {
     }
 
     return resultingElements;
+  }
+
+  #mapOutputMarkToElement(mark) {
+    const kebabCase = toKebabCase(mark.type);
+    const value = mark.attrs?.attributes?.style?.split(`${kebabCase}: `)[1];
+
+    const xmlMark = SuperConverter.markTypes.find((m) => m.type === mark.type);
+    const markElement = { name: xmlMark.name, attributes: {} };
+
+    switch (mark.type) {
+      case 'textAlign':
+        markElement.attributes['w:val'] = value;
+        break;
+      case 'textIndent':
+        markElement.attributes['w:left'] = this.#inchesToTwips(value);
+        break;
+      case 'fontSize':
+        markElement.attributes['w:val'] = value.slice(0, -2) * 2;
+        break;
+      case 'fontFamily':
+        markElement.attributes['w:ascii'] = value;
+        break;
+      case 'color':
+        let processedColor = value;
+        if (value.startsWith('#')) processedColor = value.slice(1);
+        if (value.endsWith(';')) processedColor = value.slice(0, -1);
+        markElement.attributes['w:val'] = processedColor;
+        break;
+    }
+
+    console.debug('Mark element:', markElement)
+    return markElement;
   }
 
   #outputProcessList(node, resultingElements) {
@@ -684,6 +776,7 @@ class SuperConverter {
   #flattenContent(content) {
     const flatContent = [];
     function recursiveFlatten(items) {
+      if (!items || !items.length) return;
       items.forEach((item) => {
         const subList = item.content.filter((c) => c.type === 'bulletList' || c.type === 'orderedList');
         const notLists = item.content.filter((c) => c.type !== 'bulletList' && c.type !== 'orderedList');
@@ -734,18 +827,17 @@ class SuperConverter {
     const attrs = groupedNode?.attrs;
     const marks = groupedNode?.marks;
 
+    console.debug('--OUTPUT NODE', nodes);
+
     let runProperties = null;
     if (marks) {
-      console.debug('Marks:', marks);
-
       const elements = [];
       marks.forEach((mark) => {
+        console.debug('-- OUTPUT MARK', mark)
         const marksToApply = SuperConverter.markTypes.filter((m) => m.type === mark.type)
         marksToApply.forEach((m) => {
-          elements.push({
-            name: m.name,
-            type: 'element',
-          })
+          const markElement = this.#mapOutputMarkToElement(mark);
+          elements.push(markElement);
         });
       });
 

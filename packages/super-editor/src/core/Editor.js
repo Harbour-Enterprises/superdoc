@@ -323,9 +323,13 @@ export class Editor extends EventEmitter {
    */
   #initDefaultStyles() {
     const { pageSize, pageMargins } = this.converter.pageStyles; 
-    this.element.style.width = `${pageSize.width}px`;
-    this.element.style.height = `${pageSize.height}px`;
-    this.element.style.padding = `${pageMargins.top}px ${pageMargins.right}px ${pageMargins.bottom}px ${pageMargins.left}px`;
+    this.element.style.width = `${pageSize.width}in`;
+    this.element.style.maxWidth = `${pageSize.width}in`;
+    this.element.style.height = `${pageSize.height}in`;
+    this.element.style.paddingTop = `${pageMargins.top}in`
+    this.element.style.paddingRight = `${pageMargins.right}in`
+    this.element.style.paddingBottom = `${pageMargins.bottom}in`
+    this.element.style.paddingLeft = `${pageMargins.left}in`;
     this.element.style.overflow = 'auto';
   }
   
