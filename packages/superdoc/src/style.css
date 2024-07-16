@@ -105,11 +105,6 @@ body {
   outline: none;
   height: fit-content;
 }
-.super-editor .ProseMirror > * {
-  color: black;
-  font-family: 'Arial', sans-serif;
-  font-size: 12px !important;
-}
 @media (max-width: 768px) {
 
 }

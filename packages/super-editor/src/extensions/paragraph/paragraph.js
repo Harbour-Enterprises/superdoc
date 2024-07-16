@@ -27,6 +27,29 @@ export const Paragraph = Node.create({
           };
         }
       },
+
+      indent: {
+        renderDOM: (attrs) => {
+          let { indent } = attrs;
+          if (!indent) return;
+          return {
+            style: `text-indent: ${indent}px`,
+          };
+        }
+      },
+
+      paragraphSpacing: {
+        renderDOM: (attrs) => {
+          let { paragraphSpacing } = attrs;
+          if (!paragraphSpacing) return;
+
+          const { lineSpaceBefore, lineSpaceAfter } = paragraphSpacing;
+          return {
+            style: `margin-bottom: ${lineSpaceAfter}px !important; margin-top: ${lineSpaceBefore}px; !important`,
+          };
+        }
+      },
+
       attributes: {
         rendered: false,
       },

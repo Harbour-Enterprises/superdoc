@@ -114,6 +114,49 @@ class SuperConverter {
     return SuperConverter.allowedElements[name];
   }
 
+  getDocumentDefaultStyles() {
+    const styles = this.convertedXml['word/styles.xml'];
+    const defaults = styles.elements[0].elements.find((el) => el.name === 'w:docDefaults');
+
+    // TODO: Check if we need this
+    // const pDefault = defaults.elements.find((el) => el.name === 'w:pPrDefault');
+
+    // Get the run defaults for this document - this will include font, theme etc.
+    const rDefault = defaults.elements.find((el) => el.name === 'w:rPrDefault');
+    if ('elements' in rDefault) {
+      const rElements = rDefault.elements[0].elements
+      const fontThemeName = rElements.find((el) => el.name === 'w:rFonts')?.attributes['w:asciiTheme'];
+      let typeface, panose;
+      if (fontThemeName) {
+        const fontInfo = this.getThemeInfo(fontThemeName);
+        typeface = fontInfo.typeface;
+        panose = fontInfo.panose;
+      }
+
+      const fontSizePt = Number(rElements.find((el) => el.name === 'w:sz')?.attributes['w:val']) / 2;
+      const kern = rElements.find((el) => el.name === 'w:kern')?.attributes['w:val'];
+      return { fontSizePt, kern, typeface, panose };
+    }
+  }
+
+  getThemeInfo(themeName) {
+    themeName = themeName.toLowerCase();
+    const theme1 = this.convertedXml['word/theme/theme1.xml'];
+    const themeData = theme1.elements.find((el) => el.name === 'a:theme');
+    const themeElements = themeData.elements.find((el) => el.name === "a:themeElements");
+    const fontScheme = themeElements.elements.find((el) => el.name === 'a:fontScheme');
+    let fonts;
+
+    if (themeName.startsWith('major')) {
+      fonts = fontScheme.elements.find((el) => el.name === 'a:majorFont').elements[0];
+    } else if (themeName.startsWith('minor')) {
+      fonts = fontScheme.elements.find((el) => el.name === 'a:minorFont').elements[0];
+    }
+
+    const { typeface, panose } = fonts.attributes;
+    return { typeface, panose };
+  }
+
   getSchema() {
     const json = JSON.parse(JSON.stringify(this.initialJSON));
     const result = {
@@ -178,6 +221,7 @@ class SuperConverter {
   #getDocumentStyles(node) {
     const sectPr = node.elements.find((n) => n.name === 'w:sectPr');
     const styles = {};
+
     sectPr.elements.forEach((el) => {
       const { name, attributes } = el;
       switch (name) {
@@ -264,6 +308,16 @@ class SuperConverter {
 
     // If it is a standard paragraph node, process normally
     if (!schemaNode) schemaNode = this.#handleStandardNode(node);
+
+    if ('attributes' in node) {
+      console.debug('Node attributes:', node)
+      const defaultStyleId = node.attributes['w:rsidRDefault'];
+      console.debug('Default style ID:', defaultStyleId)
+      const { lineSpaceAfter, lineSpaceBefore } = this.#getDefaultStyleDefinition(defaultStyleId);
+
+      if (!('attributes' in schemaNode)) schemaNode.attributes = {};
+      schemaNode.attributes['paragraphSpacing'] = { lineSpaceAfter, lineSpaceBefore };
+    }
     return schemaNode;
   }
 
@@ -429,6 +483,31 @@ class SuperConverter {
     return marks;
   }
 
+  /**
+   * TODO: There are so many possible styles here - confirm what else we need.
+   */
+  #getDefaultStyleDefinition(defaultStyleId) {
+    const result = { lineSpaceBefore: null, lineSpaceAfter: null };
+    const styles = this.convertedXml['word/styles.xml'];
+    const { elements } = styles.elements[0];
+
+    console.debug('Default style ID elements:', elements)
+    const elementsWithId = elements.filter((el) => {
+      return el.elements.some((e) => {
+        return 'attributes' in e && e.attributes['w:val'] === defaultStyleId;
+      });
+    });
+
+    const firstMatch = elementsWithId[0];
+    if (!firstMatch) return result;
+
+    const pPr = firstMatch.elements.find((el) => el.name === 'w:pPr');
+    const spacing = pPr?.elements.find((el) => el.name === 'w:spacing');
+    if (!spacing) return result;
+    const lineSpaceBefore = this.#twipsToPixels(spacing.attributes['w:before']);
+    const lineSpaceAfter = this.#twipsToPixels(spacing.attributes['w:after']);
+    return { lineSpaceBefore, lineSpaceAfter };
+  }
 
   #parseProperties(node) {
       /**
@@ -463,6 +542,9 @@ class SuperConverter {
             let justification = justificationTag?.attributes['w:val'];
             if (justification === 'both') justification = 'justify';
             attributes['justification'] = justification;
+
+            const indent = elements.find((el) => el.name === 'w:ind');
+            if (indent) attributes['indent'] = this.#twipsToPixels(indent.attributes['w:left']);
           }
         }); 
       }
@@ -511,47 +593,12 @@ class SuperConverter {
           node = this.#outputHandleTextNode(nodes.slice(index));
           skip = true;
           break;
+        case 'orderedList':
+          this.#outputProcessList(node, resultingElements);
+          skip = true;
+          break;
         case 'bulletList':
-          const { content, attrs } = node;
-          const listType = attrs['list-style-type'];
-
-          // Each item in the content becomes its own paragraph item in the output
-          const flatContent = this.#flattenContent(content);
-          console.debug('\n\n\n ❗️ Flat content:', flatContent, '\n\n')
-
-          const output = [];
-          flatContent.forEach((n) => {
-            const convertListItemForOutput = (item) => {
-              console.debug('--- N', n, '\n\n')
-
-              const textElements = [];
-              n.content.forEach((c) => {
-                console.debug('----- C', c, '\n\n')
-                textElements.push(...c.content);
-              });
-
-              const elements = [];
-              let parentAttributes = null;
-              parentAttributes = n.attrs.attributes?.parentAttributes || {};
-              const { paragraphProperties } = parentAttributes;
-              if (paragraphProperties) {
-                elements.push(paragraphProperties);
-                delete parentAttributes.paragraphProperties;
-              }
-
-              const processedElements = this.#outputProcessNodes(textElements);
-              elements.push(...processedElements);
-              return {
-                name: 'w:p',
-                type: 'element',
-                attributes: parentAttributes,
-                elements,
-              };
-            }
-            const output = convertListItemForOutput(n);
-            console.debug('Output:', output)
-            resultingElements.push(output);
-          })
+          this.#outputProcessList(node, resultingElements)
           skip = true;
           break;
         case 'body':
@@ -589,6 +636,49 @@ class SuperConverter {
     }
 
     return resultingElements;
+  }
+
+  #outputProcessList(node, resultingElements) {
+    const { content, attrs } = node;
+    const listType = attrs['list-style-type'];
+
+    // Each item in the content becomes its own paragraph item in the output
+    const flatContent = this.#flattenContent(content);
+    console.debug('\n\n\n ❗️ Flat content:', flatContent, '\n\n')
+
+    const output = [];
+    flatContent.forEach((n) => {
+      const convertListItemForOutput = (item) => {
+        console.debug('--- N', n, '\n\n')
+
+        const textElements = [];
+        n.content.forEach((c) => {
+          console.debug('----- C', c, '\n\n')
+          textElements.push(...c.content);
+        });
+
+        const elements = [];
+        let parentAttributes = null;
+        parentAttributes = n.attrs.attributes?.parentAttributes || {};
+        const { paragraphProperties } = parentAttributes;
+        if (paragraphProperties) {
+          elements.push(paragraphProperties);
+          delete parentAttributes.paragraphProperties;
+        }
+
+        const processedElements = this.#outputProcessNodes(textElements);
+        elements.push(...processedElements);
+        return {
+          name: 'w:p',
+          type: 'element',
+          attributes: parentAttributes,
+          elements,
+        };
+      }
+      const output = convertListItemForOutput(n);
+      console.debug('Output:', output)
+      resultingElements.push(output);
+    })
   }
 
   #flattenContent(content) {

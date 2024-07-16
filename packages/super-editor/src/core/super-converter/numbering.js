@@ -38,7 +38,10 @@ function getNodeNumberingDefinition(attributes, level) {
   const { paragraphProperties } = attributes;
   const { elements: listStyles } = paragraphProperties;
   const numPr = listStyles.find(style => style.name === 'w:numPr');
-  if (!numPr) throw new Error(`No numbering properties found in paragraph: ${JSON.stringify(attributes)}`);
+  if (!numPr) {
+    return {};
+    throw new Error(`No numbering properties found in paragraph: ${JSON.stringify(attributes)}`);
+  }
   
   // Get the indent level
   const ilvlTag = numPr.elements.find(style => style.name === 'w:ilvl');
@@ -54,13 +57,14 @@ function getNodeNumberingDefinition(attributes, level) {
   const abstractDefinitions = numberingElements.filter(style => style.name === 'w:abstractNum')
   const numDefinitions = numberingElements.filter(style => style.name === 'w:num')
   const numDefinition = numDefinitions.find(style => style.attributes['w:numId'] === numId);
-  const abstractNumId = numDefinition.elements[0].attributes['w:val']
-  const listDefinitionForThisNumId = abstractDefinitions.find(style => style.attributes['w:abstractNumId'] === abstractNumId);
+  const abstractNumId = numDefinition?.elements[0].attributes['w:val']
+  const listDefinitionForThisNumId = abstractDefinitions?.find(style => style.attributes['w:abstractNumId'] === abstractNumId);
 
   // Determine list type and formatting for this list level
   const currentLevel = getDefinitionForLevel(listDefinitionForThisNumId, level);
+  if (!currentLevel) return {}
 
-  const start = currentLevel.elements.find(style => style.name === 'w:start').attributes['w:val'];
+  const start = currentLevel.elements.find(style => style.name === 'w:start')?.attributes['w:val'];
   const listTypeDef = currentLevel.elements.find(style => style.name === 'w:numFmt').attributes['w:val'];
   const lvlText = currentLevel.elements.find(style => style.name === 'w:lvlText').attributes['w:val'];
   const lvlJc = currentLevel.elements.find(style => style.name === 'w:lvlJc').attributes['w:val'];
@@ -85,13 +89,14 @@ function getNodeNumberingDefinition(attributes, level) {
 }
 
 function getDefinitionForLevel(data, level) {
-  return data.elements.find((item) => Number(item.attributes['w:ilvl']) === level);
+  return data?.elements?.find((item) => Number(item.attributes['w:ilvl']) === level);
 }
 
 function _processListParagraphProperties(data) {
   const { elements } = data;
   const expectedTypes = ['w:ind'];
   const paragraphProperties = {};
+  if (!elements) return paragraphProperties;
 
   elements.forEach((item) => { 
     if (!expectedTypes.includes(item.name)) throw new Error(`[numbering.xml] Unexpected list paragraph prop found: ${item.name}`);
@@ -105,17 +110,18 @@ function _processListParagraphProperties(data) {
 
 function _processListRunProperties(data) {
   const { elements } = data;
-  const expectedTypes = ['w:rFonts'];
-  const paragraphProperties = {};
+  const expectedTypes = ['w:rFonts', 'w:b', 'w:bCs', 'w:i', 'w:iCs', 'w:strike', 'w:dstrike', 'w:color', 'w:sz', 'w:szCs', 'w:u', 'w:bdr', 'w:shd', 'w:vertAlign'];
+  const runProperties = {};
+  if (!elements) return runProperties;
 
   elements.forEach((item) => { 
     if (!expectedTypes.includes(item.name)) throw new Error(`[numbering.xml] Unexpected list run prop found: ${item.name}`);
     const { attributes = {} } = item;
     Object.keys(attributes).forEach(key => {
-      paragraphProperties[key] = attributes[key];
+      runProperties[key] = attributes[key];
     });
   });
-  return paragraphProperties;
+  return runProperties;
 }
 
 export {
