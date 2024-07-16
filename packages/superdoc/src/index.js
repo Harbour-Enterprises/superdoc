@@ -70,8 +70,12 @@ export default class Superdoc extends EventEmitter {
     app.mount(el);
   }
 
-  onToolbarCommand(command) {
-    this.activeEditor.commands[command]();
+  onToolbarCommand({ command, argument }) {
+    if (command in this.activeEditor.commands) {
+      this.activeEditor.commands[command](argument);
+    } else {
+      console.error('[superdoc] Command not yet implemented:', command);
+    }
   }
 
   saveAll() {
