@@ -12,6 +12,7 @@ export { OrderedList } from './ordered-list/index.js';
 export { ListItem } from './list-item/index.js';
 export { CommentRangeStart, CommentRangeEnd, CommentReference } from './comment/index.js';
 export { TabNode } from './tab/index.js';
+export { PageBreak } from './page-break/index.js';
 
 // Marks extensions
 export { Bold } from './bold/index.js';

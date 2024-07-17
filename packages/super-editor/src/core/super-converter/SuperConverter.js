@@ -16,6 +16,7 @@ class SuperConverter {
     'w:p': 'paragraph',
     'w:r': 'run',
     'w:t': 'text',
+    'w:br': 'pageBreak',
     // 'w:tab': 'tab',
 
     // Formatting only
