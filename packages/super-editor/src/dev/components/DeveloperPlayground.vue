@@ -56,14 +56,6 @@ const onCreate = ({ editor }) => {
 }
 
 const editorStyles = reactive({ });
-const getEditorStyle = computed(() => {
-  const styles = {};
-  if (editorStyles.typeface) styles.fontFamily = editorStyles.typeface;
-  if (editorStyles.fontSizePt) styles.fontSize = editorStyles.fontSizePt;
-  styles.lineHeight = '1.15 !important';
-  return styles;
-});
-
 const editorOptions = {
   onCreate,
   onSelectionUpdate
@@ -112,12 +104,18 @@ const exportDocx = async () => {
           mode="docx"
           documentId="ID-122"
           :file-source="currentFile" 
-          :options="editorOptions"
-          :style="getEditorStyle" />
+          :options="editorOptions" />
 
     </div>
   </div>
 </template>
+
+<style>
+.ProseMirror p {
+  margin: 0;
+  padding: 0;
+}
+</style>
 
 <style scoped>
 .dev-app {

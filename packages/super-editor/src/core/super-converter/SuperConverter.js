@@ -16,6 +16,8 @@ class SuperConverter {
     'w:p': 'paragraph',
     'w:r': 'run',
     'w:t': 'text',
+    'w:br': 'pageBreak',
+    // 'w:tab': 'tab',
 
     // Formatting only
     'w:sectPr': 'sectionProperties',
@@ -41,6 +43,7 @@ class SuperConverter {
     { name: 'w:rFonts', type: 'fontFamily' },
     { name: 'w:jc', type: 'textAlign' },
     { name: 'w:ind', type: 'textIndent' },
+    { name: 'w:spacing', type: 'lineHeight' },
   ]
 
   static propertyTypes = Object.freeze({
@@ -119,7 +122,7 @@ class SuperConverter {
     const name = element.name || element.type;
     return SuperConverter.allowedElements[name];
   }
-
+  
   getDocumentDefaultStyles() {
     const styles = this.convertedXml['word/styles.xml'];
     const defaults = styles.elements[0].elements.find((el) => el.name === 'w:docDefaults');
@@ -195,9 +198,15 @@ class SuperConverter {
           continue;
         case 'w:p':
           schemaNode = this.#handleParagraphProcessing(node, elements, index);
+          const attrs = schemaNode.attrs.paragraphProperties?.elements
+          console.debug('PATTRS:', attrs)
           break;
         case 'w:t':
           schemaNode = this.#handleTextNode(node);
+          break;
+        case 'w:tab':
+          schemaNode = this.#handleStandardNode(node);
+          schemaNode.content = [{ type: 'text', text: ' ' }];
           break;
         default:
           schemaNode = this.#handleStandardNode(node);
@@ -497,28 +506,36 @@ class SuperConverter {
     property.elements.forEach((element) => {
       const marksForType = SuperConverter.markTypes.filter((mark) => mark.name === element.name);
       if (!marksForType.length) {
-        const missingMarks = ['w:shd', 'w:rStyle', 'w:pStyle']
+        const missingMarks = [
+          'w:shd',
+          'w:rStyle',
+          'w:pStyle',
+          'w:numPr',
+          'w:outlineLvl',
+          'w:bdr',
+          'w:pBdr',
+          'w:noProof',
+          'w:highlight',
+          'w:contextualSpacing',
+          'w:keepNext',
+          'w:tabs',
+          'w:keepLines'
+        ]
         if (missingMarks.includes(element.name)) console.debug('❗️❗️ATTN: No marks found for element:', element.name);
-        else throw new Error(`No marks found for element: ${element.name}`);
+        // else throw new Error(`No marks found for element: ${element.name}`);
       }
-
+      
       marksForType.forEach((m) => {
         if (!m || seen.has(m.type)) return;
         seen.add(m.type);
 
-        const { attributes } = element;
-        console.debug('Processing mark:', element, attributes)
-
+        const { attributes = {} } = element;
         const newMark = { type: m.type }
-        if (attributes) {
-          let value = attributes['w:val'];
 
-          if (m.type === 'textIndent') console.debug('Text indent:', attributes)
-          const kebabCase = toKebabCase(m.type);
-          if (kebabCase === 'color') value = `#${attributes['w:val']}`;
-          else if (kebabCase === 'font-size') value = `${attributes['w:val']/2}pt`;
-          else if (kebabCase === 'text-indent') value = `${this.#twipsToInches(attributes['w:left'])}in`;
-          else if (kebabCase === 'font-family') value = attributes['w:ascii'];
+        if (Object.keys(attributes).length) {
+          const value = this.#getMarkValue(m.type, attributes);
+          if (!value) return;
+          const kebabCase = toKebabCase(newMark.type);
           newMark.attrs = { attributes: { style: `${kebabCase}: ${value}` } };
         }
         marks.push(newMark);
@@ -529,14 +546,35 @@ class SuperConverter {
     return marks;
   }
 
+  #getIndentValue(attributes) {
+    let value  = attributes['w:left'];
+    if (!value) value = attributes['w:firstLine'];
+    return `${this.#twipsToInches(value)}in`
+  }
+
+  #getMarkValue(markType, attributes) {
+    if (markType === 'tabs') markType = 'textIndent';
+    const markValueMapper = {
+      color: `#${attributes['w:val']}`,
+      fontSize: `${attributes['w:val']/2}pt`,
+      textIndent: this.#getIndentValue(attributes),
+      fontFamily: attributes['w:ascii'],
+      lineHeight: `${this.#twipsToInches(attributes['w:line'])}in`,
+    }
+    if (markType in markValueMapper) return markValueMapper[markType];
+    console.debug('\n\n ❗️❗️ No value mapper for:', markType, 'Attributes:', attributes)
+    return attributes['w:val'];
+  }
+
   /**
    * TODO: There are so many possible styles here - confirm what else we need.
    */
   #getDefaultStyleDefinition(defaultStyleId) {
     const result = { lineSpaceBefore: null, lineSpaceAfter: null };
     const styles = this.convertedXml['word/styles.xml'];
-    const { elements } = styles.elements[0];
+    if (!styles) return result;
 
+    const { elements } = styles.elements[0];
     console.debug('Default style ID elements:', elements)
     const elementsWithId = elements.filter((el) => {
       return el.elements.some((e) => {
@@ -574,6 +612,7 @@ class SuperConverter {
       // Get the marks from the run properties
       if (runProperties && runProperties?.elements?.length) marks = this.#parseMarks(runProperties);
       if (paragraphProperties && paragraphProperties.elements?.length) {
+        console.debug('Paragraph properties:', node, paragraphProperties)
         marks.push(...this.#parseMarks(paragraphProperties));
       }
 
@@ -674,14 +713,21 @@ class SuperConverter {
           const markElements = [];
           if (marks) {
             marks.forEach((mark) => {
-
               const markElement = this.#mapOutputMarkToElement(mark);
-              markElements.push(markElement);
+
+              if (mark.type === 'textIndent') {
+                markElements.unshift(markElement);
+              } else markElements.push(markElement);
             });
             const pPr = {
               name: 'w:pPr',
               type: 'element',
               elements: markElements,
+            }
+
+            const hasIndent = markElements.find((m) => m.name === 'w:ind');
+            if (hasIndent) {
+              console.debug('\n\n INDENTPPR', pPr, '\n\n')
             }
             resultingNode.elements.unshift(pPr);
           }
@@ -705,12 +751,15 @@ class SuperConverter {
     const xmlMark = SuperConverter.markTypes.find((m) => m.type === mark.type);
     const markElement = { name: xmlMark.name, attributes: {} };
 
+
     switch (mark.type) {
       case 'textAlign':
         markElement.attributes['w:val'] = value;
         break;
       case 'textIndent':
-        markElement.attributes['w:left'] = this.#inchesToTwips(value);
+        markElement.attributes['w:firstline'] = this.#inchesToTwips(value);
+        console.debug('textIndent:', markElement);
+
         break;
       case 'fontSize':
         markElement.attributes['w:val'] = value.slice(0, -2) * 2;
@@ -723,6 +772,17 @@ class SuperConverter {
         if (value.startsWith('#')) processedColor = value.slice(1);
         if (value.endsWith(';')) processedColor = value.slice(0, -1);
         markElement.attributes['w:val'] = processedColor;
+        break;
+      case 'bold':
+        delete markElement.attributes
+        markElement.type = 'element';
+        break;
+      case 'italic':
+        delete markElement.attributes
+        markElement.type = 'element';
+        break;
+      case 'lineHeight':
+        markElement.attributes['w:line'] = this.#inchesToTwips(value);
         break;
     }
 

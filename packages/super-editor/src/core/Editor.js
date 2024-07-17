@@ -319,20 +319,37 @@ export class Editor extends EventEmitter {
   }
 
   /**
-   * Initialize default styles
+   * Initialize default styles for the editor container and prose mirror.
+   * Get page size and margins from the converter.
+   * Set document default font and font size.
    */
-  #initDefaultStyles() {
+  #initDefaultStyles() {    
+    const proseMirror = this.element.querySelector('.ProseMirror');
+    if (!proseMirror) return;
+
     const { pageSize, pageMargins } = this.converter.pageStyles; 
-    this.element.style.width = `${pageSize.width}in`;
-    this.element.style.maxWidth = `${pageSize.width}in`;
-    this.element.style.height = `${pageSize.height}in`;
-    this.element.style.paddingTop = `${pageMargins.top}in`
-    this.element.style.paddingRight = `${pageMargins.right}in`
-    this.element.style.paddingBottom = `${pageMargins.bottom}in`
-    this.element.style.paddingLeft = `${pageMargins.left}in`;
-    this.element.style.overflow = 'auto';
+    this.element.style.boxSizing = 'border-box';
+    this.element.style.width = pageSize.width + 'in';
+    this.element.style.minWidth =  pageSize.width + 'in';
+    this.element.style.maxWidth = pageSize.width + 'in';
+    this.element.style.height = pageSize.height + 'in';
+    this.element.style.paddingTop = pageMargins.top + 'in';
+    this.element.style.paddingRight = pageMargins.right + 'in';
+    this.element.style.paddingBottom = pageMargins.bottom + 'in';
+    this.element.style.paddingLeft = pageMargins.left + 'in';
+
+    proseMirror.style.outline = 'none';
+    proseMirror.style.border = 'none';
+    proseMirror.style.padding = '0';
+    proseMirror.style.margin = '0';
+    proseMirror.style.width = '100%';
+    proseMirror.style.paddingBottom = pageMargins.bottom + 'in';
+
+    const { typeface, fontSizePt } = this.converter.getDocumentDefaultStyles();
+    this.element.style.fontFamily = typeface;
+    this.element.style.fontSize = fontSizePt + 'pt';
   }
-  
+
   /**
    * The callback which is used to intercept View transactions.
    * @param {*} transaction State transaction.
