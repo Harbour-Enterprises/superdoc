@@ -25,12 +25,12 @@ export const Color = Mark.create({
 
   addCommands(node) {
     return {
-      toggleColor: (color) => ({ commands }) => {
+      toggleColor: ({value}) => ({ commands }) => {
         const attrs = {
           attributes: {
-            style: `color: ${color};`,
+            style: `color: ${value};`,
           },
-          color,
+          color: value,
         }
         return commands.toggleMark(this.name, attrs);
       },
