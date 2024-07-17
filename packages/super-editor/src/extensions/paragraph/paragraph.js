@@ -25,8 +25,11 @@ export const Paragraph = Node.create({
           if (!paragraphSpacing) return;
 
           const { lineSpaceBefore, lineSpaceAfter } = paragraphSpacing;
+          let style = '';
+          if (lineSpaceBefore) style += `margin-top: ${lineSpaceBefore}px;`;
+          if (lineSpaceAfter) style += `margin-bottom: ${lineSpaceAfter}px;`;
           return {
-            style: `margin-bottom: ${lineSpaceAfter}px !important; margin-top: ${lineSpaceBefore}px; !important`,
+            style
           };
         }
       },
@@ -39,9 +42,6 @@ export const Paragraph = Node.create({
 
   renderDOM({htmlAttributes}) {
     const { style } = htmlAttributes;
-    console.debug('renderDOM', style);
-
-    // return ['p', Attribute.mergeAttributes(this.options.htmlAttributes, restAttributes), 0]
     return ['p', { style: style }, 0];
   },
 });

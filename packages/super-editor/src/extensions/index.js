@@ -11,6 +11,7 @@ export { BulletList } from './bullet-list/index.js';
 export { OrderedList } from './ordered-list/index.js';
 export { ListItem } from './list-item/index.js';
 export { CommentRangeStart, CommentRangeEnd, CommentReference } from './comment/index.js';
+export { TabNode } from './tab/index.js';
 
 // Marks extensions
 export { Bold } from './bold/index.js';
@@ -22,3 +23,4 @@ export { FontFamily } from './font-family/index.js';
 export { FontSize } from './font-size/index.js';
 export { TextAlign } from './text-align/index.js';
 export { TextIndent } from './text-indent/index.js';
+export { LineHeight } from './line-height/index.js';

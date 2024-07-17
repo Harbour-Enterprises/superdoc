@@ -168,6 +168,7 @@ const receiveDocxComments = (data, doc) => {
 const onCreate = ({ editor }) => {
   proxy.$superdoc.activeEditor = editor;
   console.debug('[Superdoc] Editor created', proxy.$superdoc.activeEditor);
+  console.debug('[Superdoc] Page styles (pixels)', editor.getPageStyles());
 }
 const onSelectionUpdate = ({ editor, transaction }) => {
   const { selection } = editor.view.state;
@@ -232,7 +233,6 @@ const editorOptions = {
             @page-loaded="handlePageReady" />
 
           <SuperEditor
-              class="docx-editor"
               v-if="doc.type === 'docx'"
               mode="docx"
               :file-source="doc.data"
@@ -260,6 +260,7 @@ const editorOptions = {
 </div>
 </template>
 
+
 <style scoped>
 /* Right sidebar drawer */
 .right-sidebar {
@@ -267,10 +268,6 @@ const editorOptions = {
   padding: 0 10px;
   min-height: 100%;
   position: relative;
-}
-.docx-editor {
-  margin-bottom: 20px;
-  min-width: 600px;
 }
 
 /* General Styles */

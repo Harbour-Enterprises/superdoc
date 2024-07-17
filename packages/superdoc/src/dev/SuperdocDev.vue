@@ -1,7 +1,7 @@
 <script setup>
-import "super-editor/style.css";
+// import "super-editor/style.css";
 import Superdoc from '@/index';
-import docxWithComments from '../assets/lists_and_comments.docx?url'
+import docxWithComments from '../assets/sample.docx?url'
 import { onMounted } from 'vue';
 
 

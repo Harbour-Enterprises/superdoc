@@ -1,7 +1,7 @@
 import { Mark } from '@core/index.js';
 
-export const TextIndent = Mark.create({
-  name: 'textIndent',
+export const LineHeight = Mark.create({
+  name: 'lineHeight',
 
   parseDOM() {
     return [
@@ -11,7 +11,6 @@ export const TextIndent = Mark.create({
 
 
   renderDOM(node) {
-    console.debug('TEXT INDENT', node.mark.attrs);
     return ['span', node.mark.attrs.attributes, 0];
   },
 
@@ -21,19 +20,6 @@ export const TextIndent = Mark.create({
         style: {default: null},
       }
     }
-  },
-
-  addCommands(node) {
-    return {
-      changeTextIndent: (indent) => ({ commands }) => {
-        const attrs = {
-          attributes: {
-            style: `text-indent: ${indent}`
-          }
-        }
-        return commands.toggleMark(this.name, attrs);
-      },
-    };
   },
 
   addShortcuts() {

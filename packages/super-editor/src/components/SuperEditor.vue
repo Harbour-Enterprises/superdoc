@@ -57,21 +57,9 @@ onMounted(() => {
   </div>
 </template>
 
-<style>
-.ProseMirror {
-  width: 100% !important;
-  height: 100% !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: none !important;
-}
-.ProseMirror p {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-</style>
 <style scoped>
-.editor-element {
+.super-editor {
+  overflow: auto;
   border: 1px solid #999;
 }
 </style>
