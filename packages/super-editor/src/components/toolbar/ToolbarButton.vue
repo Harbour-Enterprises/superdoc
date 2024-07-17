@@ -1,20 +1,29 @@
 <script setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import ToolbarButtonIcon from './ToolbarButtonIcon.vue'
+import { ref, computed } from 'vue';
 
-const emit = defineEmits(['command']);
+const emit = defineEmits(['command', 'toggle', 'select']);
 const props = defineProps({
   name: {
     type: String,
     required: true,
   },
-  text: {
+  label: {
+    type: String,
+    default: null,
+  },
+  iconColor: {
     type: String,
     default: null,
   },
   command: {
     type: String,
     required: true,
+  },
+  commandArgument: {
+    type: null,
+    required: false,
   },
   tooltip: {
     type: String,
@@ -24,11 +33,11 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  isDropdown: {
+  hasCaret: {
     type: Boolean,
     default: false,
   },
-  isToggle: {
+  hasNestedOptions: {
     type: Boolean,
     default: false,
   },
@@ -36,35 +45,98 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
 });
+const tooltipVisible = ref(false)
+const tooltipTimeout = ref(null)
+
+const fullTooltip = computed(() => {
+  let tooltip = props.tooltip;
+  if (props.disabled) {
+    tooltip += ' (disabled)';
+  }
+  return tooltip;
+})
+
+const nestedOptionTimeout = ref(null)
+const handleButtonMouseEnter = () => {
+  console.log("mouse enter")
+  // set 400ms delay before showing tooltip
+  const now = Date.now();
+  const delay = 1000;
+  tooltipTimeout.value = setTimeout(() => {
+    if (now + delay <= Date.now()) {
+      tooltipVisible.value = true;
+    }
+  }, delay);
+}
+const handleButtonMouseLeave = () => {
+  console.log("mouse leave")
+  tooltipVisible.value = false;
+  clearTimeout(tooltipTimeout.value);
+}
+const handleOptionMouseEnter = (option) => {
+  // clearTimeout(nestedOptionTimeout.value);
+  option.active = true;
+}
+const handleNestedOptionMouseEnter = (option) => {
+  // clearTimeout(nestedOptionTimeout.value);
+  // option.active = true;
+}
+const handleOptionMouseLeave = (option) => {
+  // nestedOptionTimeout.value = setTimeout(() => {
+  //   option.active = false;
+  // }, 400);
+  option.active = false;
+}
+const handleButtonClick = () => {
+  if (props.disabled) return;
+  console.log('handleButtonClick', props);
+  if (props.hasNestedOptions) {
+    emit('toggle', {active: props.active === true ? false : true, name: props.name});
+    return;
+  }
+  emit('command', {command: props.command, argument: props.commandArgument})
+}
+const handleOptionClick = (option) => {
+  const {label, fontName, fontWeight} = option;
+  console.log('handleOptionClick', label, fontName, fontWeight);
+  // one command for all dropdown options
+  emit('select', {name: props.name, command: props.command, label, fontName, fontWeight});
+}
 </script>
 
 <template>
   <div
       class="toolbar-button"
-      :class="{ active: props.active }"
-      :title="tooltip"
-      @click.stop.prevent="handleClick">
+      :class="{ active: props.active, disabled: disabled}"
+      @mouseenter="handleButtonMouseEnter"
+      @mouseleave="handleButtonMouseLeave"
+      @click.stop.prevent="handleButtonClick">
+      <div class="tooltip" :style="{display: tooltipVisible ? 'initial' : 'none', width: `${fullTooltip.length * 5}px`}">
+        <span>{{ fullTooltip }}</span>
+      </div>
 
-      <span class="button-text" v-if="text">{{text}}</span>
+      <span class="button-label" v-if="label">{{label}}</span>
       
       <ToolbarButtonIcon
         v-if="hasIcon"
-        :style="{marginRight: isDropdown ? '8px' : null}"
+        :style="{marginRight: hasCaret ? '8px' : null}"
+        :color="iconColor"
         class="icon"
         :name="name">
       </ToolbarButtonIcon>
 
-      <font-awesome-icon v-if="isDropdown" icon="fa-caret-down" />
-      <div class="toggle-ctn" v-if="isToggle">
-          <div :class="{'toggle-slider': true, on: active}"></div>
+      <font-awesome-icon v-if="hasCaret"
+      class="caret"
+      :icon="active ? 'fa-caret-up' : 'fa-caret-down'"
+      :style="{opacity: disabled ? 0.6 : 1}"
+      />
 
-          <div class="toggle-background-ctn">
-            <div class="left"></div>
-            <div class="right"></div>
-            <div class="center"></div>
-          </div>
-      </div>
+      <slot></slot>
   </div>
 </template>
 
@@ -85,7 +157,7 @@ const props = defineProps({
   color: #47484a;
   transition: all 0.2s ease-out;
   user-select: none;
-  overflow: hidden;
+  position: relative;
 }
 .toolbar-button:hover {
   color: black;
@@ -95,55 +167,9 @@ const props = defineProps({
 .active {
   background-color: #c8d0d8;
 }
-.button-text {
+.button-label {
   font-weight: 100;
   margin-right: 8px;
-}
-/* .icon {
-  margin-right: 8px;
-} */
-
-/* toggle */
-.toggle-ctn {
-  width: 40px;
-  height: 20px;
-  position: relative;
-}
-.toggle-slider {
-  position: absolute;
-  background-color: #555555;
-  height: 15px;
-  width: 15px;
-  z-index: 1;
-  border-radius: 60%;
-  transform: translateY(-50%);
-  top: 50%;
-  left: 4px;
-}
-.toggle-slider.on {
-  left: 22px;
-}
-.toggle-background {
-  display: flex;
-  position: absolute;
-  width: 100%;
-  height: 100%;
-}
-
-.toggle-background-ctn {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  position: relative;
-}
-
-.center {
-  background-color: #DBDBDB;
-  position: absolute;
-  left: 50%;
-  width: 50%;
-  height: 100%;
-  transform: translateX(-50%);
 }
 
 .left, .right {
@@ -151,6 +177,35 @@ const props = defineProps({
   height: 100%;
   background-color: #DBDBDB;
   border-radius: 60%;
+}
+
+.tooltip {
+  position: absolute;
+  top: -30px;
+  background-color: white;
+  padding: 5px;
+  border-radius: 3%;
+  color: #555555;
+  font-size: 10px;
+  text-align: center;
+}
+
+.tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: white transparent transparent transparent;
+}
+
+.disabled {
+  cursor: default;
+}
+.disabled .icon, .disabled .caret, .disabled .button-label {
+  opacity: .6;
 }
 
 </style>

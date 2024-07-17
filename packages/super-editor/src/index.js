@@ -19,7 +19,9 @@ import {
   faEllipsisVertical,
   faList,
   faListNumeric,
-  faCaretDown
+  faCaretDown,
+  faCaretUp,
+  faAngleRight
 } from '@fortawesome/free-solid-svg-icons';
 
 
@@ -37,7 +39,9 @@ library.add(
   faEllipsisVertical,
   faList,
   faListNumeric,
-  faCaretDown
+  faCaretDown,
+  faCaretUp,
+  faAngleRight
 );
 
 /**

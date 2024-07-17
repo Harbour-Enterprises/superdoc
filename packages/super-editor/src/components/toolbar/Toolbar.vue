@@ -4,6 +4,9 @@ import { ref, onMounted } from 'vue';
 import ToolbarButton from './ToolbarButton.vue';
 import ToolbarSeparator from './ToolbarSeparator.vue';
 import ToolbarButtonIcon from './ToolbarButtonIcon.vue';
+import DropdownOptions from './DropdownOptions.vue';
+import ToggleSlider from './ToggleSlider.vue';
+import ColorPicker from './ColorPicker.vue';
 
 /**
  * The toolbar should be completly decoupled from the editor.
@@ -15,17 +18,21 @@ const toolbarItem = (options) => {
   return {
     type: options.type,
     name: options.name,
-    active: options.active,
-    dropdownOptions: options.dropdownOptions || null,
+    active: options.active || false,
+    dropdownOptions: options.dropdownOptions || [],
+    colorOptions: options.colorOptions || [],
+    hasNestedOptions: options.hasNestedOptions || false,
     command: options.command || null,
     icon: options.icon || null,
     tooltip: options.tooltip || null,
-    text: options.text || null,
+    label: options.label || null,
     argument: options.argument || null,
+    disabled: options.disabled || false,
+    iconColor: options.iconColor || null,
   }
 }
 
-const emit = defineEmits(['command']);
+const emit = defineEmits(['command', 'toggle', 'select']);
 const separator =  toolbarItem({
   type: 'separator',
   name: 'separator',
@@ -37,13 +44,40 @@ const toolbarItems = ref([
   // font
   toolbarItem({
     type: 'dropdown',
-    name: 'arial',
+    name: 'fontFamily',
     command: 'toggleFont',
+    dropdownOptions: [
+      {
+        label: 'Georgia',
+        fontName: 'Georgia, serif',
+        fontWeight: 400,
+      },
+      {
+        label: 'Arial',
+        fontName: 'Arial, sans-serif',
+        fontWeight: 400,
+      },
+      {
+        label: 'Courier New',
+        fontName: 'Courier New, monospace',
+        fontWeight: 400,
+        active: false,
+        options: [
+          { label: 'Regular', fontWeight: 400 },
+          { label: 'Bold', fontWeight: 700 },
+        ],
+      },
+      {
+        label: 'Times New Roman',
+        fontName: 'Times New Roman, serif',
+        fontWeight: 400,
+      },
+    ],
+
     icon: null,
     active: false,
     tooltip: "Font",
-    text: "Font",
-    argument: 'Georgia, serif', // TODO: Change this - test only
+    label: "Font",
   }),
 
   // TODO: Change this - make dropdown work
@@ -54,7 +88,7 @@ const toolbarItems = ref([
     icon: null,
     active: false,
     tooltip: "Font size",
-    text: "12pt",
+    label: "12pt",
     argument: '12pt',
   }),
 
@@ -98,13 +132,19 @@ const toolbarItems = ref([
 
   // color
   toolbarItem({
-    type: 'button',
+    type: 'colorpicker',
     name: 'color',
     command: 'toggleColor',
     icon: 'fa fa-font',
     active: false,
     tooltip: "Text color",
     argument: 'red',
+    colorOptions: [
+      [{label: 'Red', value: 'red'}, {label: 'Blue', value: 'blue'}, {label: 'Green', value: 'green'}],
+      [{label: 'Yellow', value: 'yellow'}, {label: 'Purple', value: 'purple'}, {label: 'Orange', value: 'orange'}],
+      [{label: 'Black', value: 'black'}, {label: 'White', value: 'white'}, {label: 'Gray', value: 'gray'}],
+      [{label: 'Pink', value: 'pink'}, {label: 'Brown', value: 'brown'}, {label: 'Cyan', value: 'cyan'}],
+    ]
   }),
 
   // separator
@@ -128,6 +168,7 @@ const toolbarItems = ref([
     icon: 'fa-image',
     active: false,
     tooltip: "Image",
+    disabled: true,
   }),
 
   // separator
@@ -190,14 +231,14 @@ const toolbarItems = ref([
     command: 'toggleOverflow',
     icon: 'fa-ellipsis-vertical',
     active: false,
-    tooltip: "Overflow",
+    tooltip: "More options",
   }),
 
   // suggesting
   // TODO: Restore this later - removing for initial milestone
   // toolbarItem({
   //   type: 'toggle',
-  //   text: 'Suggesting',
+  //   label: 'Suggesting',
   //   name: 'suggesting',
   //   command: null,
   //   icon: null,
@@ -210,10 +251,26 @@ const isButton = (item) => item.type === 'button';
 const isSeparator = (item) => item.type === 'separator';
 const isDropdown = (item) => item.type === 'dropdown';
 const isToggle = (item) => item.type === 'toggle';
+const isColorPicker = (item) => item.type === 'colorpicker';
 const hasIcon = (item) => item.icon !== null;
 
-const handleCommand = (command, argument) => {
-  console.debug('Toolbar command', command, argument);
+const handleCommand = ({command, argument}) => {
+  console.debug('Toolbar command HANDLER', command, argument);
+  emit('command', {command, argument});
+}
+
+const handleToggle = ({active, name}) => {
+  const item = toolbarItems.value.find((item) => item.name === name);
+  console.debug('Toolbar toggle HANDLER', active, name, item);
+  if (!item) return;
+  item.active = active;
+}
+
+const handleSelect = ({name, command, argument}) => {
+  // console.debug('Toolbar select handler', name, command, label, fontName, fontWeight);
+  console.debug('Toolbar select handler', name, command, argument);
+  const item = toolbarItems.value.find((item) => item.name === name);
+  if (item) item.active = false;
   emit('command', {command, argument});
 }
 
@@ -224,8 +281,31 @@ const handleToolbarButtonClick = ({command, argument}) => {;
 
 const onSelectionChange = (marks) => {
   toolbarItems.value.forEach((item) => {
-    if (marks.includes(item.name)) item.active = true;
-    else item.active = false;
+    const markNames = marks.map((mark) => mark.type.name);
+    const activeExcludes = ['dropdown', 'colorpicker']
+    if (markNames.includes(item.name) && !activeExcludes.includes(item.type)) {
+      item.active = true;
+    } else item.active = false;
+
+    // reset
+    if (item.name === 'color') {
+      item.iconColor = '#47484a';
+      const mark = marks.find((mark) => mark.type.name === item.name) || null;
+      console.log('color mark', mark);
+      if (!mark) return;
+      item.iconColor = mark.attrs?.color;
+      return;
+    }
+
+    if (item.name === 'fontFamily') {
+      const mark = marks.find((mark) => mark.type.name === item.name) || null;
+      item.label = "Font";
+      if (!mark) return;
+
+      const font = mark.attrs?.font;
+      if (!font) item.label = 'Font';
+      item.label = font;
+    }
   });
 }
 
@@ -241,18 +321,47 @@ defineExpose({
       <!-- Toolbar button -->
       <ToolbarSeparator v-if="isSeparator(item)"> </ToolbarSeparator>
       <ToolbarButton v-else
+        :disabled="item.disabled"
+        :command="item.command"
+        :command-argument="item.argument"
+        :active="item.active"
+        :tooltip="item.tooltip"
+        :name="item.name"
+        :label="item.label"
+        :has-caret="isDropdown(item)"
+        :has-nested-options="isDropdown(item) || isColorPicker(item)"
+        :is-toggle="isToggle(item)"
+        :icon-color="item.iconColor"
+        :has-icon="hasIcon(item)"
+        @toggle="handleToggle"
+        @select="handleSelect"
+        @command="handleCommand">
+
+          <!-- dropdown options -->
+          <DropdownOptions v-if="isDropdown(item) && item.active"
+          @select="handleSelect"
+          @command="handleCommand"
+          :item="item"
           :command="item.command"
-          :active="item.active"
-          :tooltip="item.tooltip"
-          :name="item.name"
-          :text="item.text"
-          :is-dropdown="isDropdown(item)"
-          :is-toggle="isToggle(item)"
-          :has-icon="hasIcon(item)"
-          @click="handleToolbarButtonClick(item)">
+          :name="item.name"/>
+
+          <!-- toggle slider -->
+          <ToggleSlider v-if="isToggle(item) && item.active"
+          @command="handleCommand"
+          :item="item"
+          :command="item.command"
+          :name="item.name"/>
+
+          <!-- color picker -->
+          <ColorPicker v-if="isColorPicker(item) && item.active"
+          @command="handleCommand"
+          @select="handleSelect"
+          :item="item"
+          :command="item.command"
+          :color-options="item.colorOptions"
+          :name="item.name"/>
+
       </ToolbarButton>
-
-
     </div>
   </div>
 </template>

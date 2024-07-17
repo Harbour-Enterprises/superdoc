@@ -24,12 +24,19 @@ export const FontFamily = Mark.create({
 
   addCommands(node) {
     return {
-      toggleFont: (font) => ({ commands }) => {
-        console.debug('toggleFont', font, commands);
+      toggleFont: ({label, fontName, fontWeight}) => ({ commands }) => {
+        console.debug('toggleFont', label, fontName, fontWeight, commands);
+        const styleDict = {
+          'font-family': fontName,
+          'font-weight': fontWeight,
+        }
+        const styleString = Object.entries(styleDict).map(([key, value]) => `${key}: ${value}`).join(';');
+
         const attrs = {
           attributes: {
-            style: `font-family: Georgia, serif`
-          }
+            style: styleString
+          },
+          font: label
         }
         return commands.toggleMark(this.name, attrs);
       },
@@ -41,4 +48,13 @@ export const FontFamily = Mark.create({
       // 'Mod-u': () => this.editor.commands.toggleUnderline(),
     }
   },
+
+  addAttributes(){
+    return {
+      attributes: {
+        style: {default: null},
+      },
+      font: {default: null},
+    }
+  }
 });

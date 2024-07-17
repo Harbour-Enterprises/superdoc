@@ -26,7 +26,7 @@ const handleNewFile = async (file) => {
 }
 
 const handleToolbarCommand = ({command, argument}) => {
-  console.debug('[SuperEditor dev] Toolbar command', command, argument, activeEditor?.commands);
+    console.debug('[SuperEditor dev] Toolbar command', command, argument, activeEditor?.commands);
   const commands = activeEditor?.commands;
   if (!!commands && command in commands) {
     activeEditor?.commands[command](argument);
@@ -41,10 +41,8 @@ const onSelectionUpdate = ({ editor, transaction }) => {
   // This logic should maybe be inside the Editor.js rather than here?
   const { selection } = editor.view.state;
   const marks = selection.$head.marks();
-  const markNames = marks.map((mark) => mark.type.name);
-  toolbar.value.onSelectionChange(markNames);
 
-  console.debug('[SuperEditor dev] content', editor.getJSON());
+  toolbar.value.onSelectionChange(marks);
 }
 
 const onCreate = ({ editor }) => {

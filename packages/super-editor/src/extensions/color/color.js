@@ -18,17 +18,19 @@ export const Color = Mark.create({
     return {
       attributes: {
         style: {default: null},
-      }
+      },
+      color: {default: null},
     }
   },
 
   addCommands(node) {
     return {
-      toggleColor: (color) => ({ commands }) => {
+      toggleColor: ({value}) => ({ commands }) => {
         const attrs = {
           attributes: {
-            style: `color: ${color};`,
-          }
+            style: `color: ${value};`,
+          },
+          color: value,
         }
         return commands.toggleMark(this.name, attrs);
       },

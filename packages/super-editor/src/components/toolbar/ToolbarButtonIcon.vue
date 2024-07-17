@@ -1,11 +1,23 @@
 <script setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { computed } from 'vue';
 
 const props = defineProps({
   name: {
-    name: String,
+    type: String,
     required: true,
-  }
+  },
+  color: {
+    type: String,
+    default: null,
+  },
+});
+
+const colorStyle = computed(() => {
+  if (props.name === 'color') return {
+    borderBottomColor: props.color
+  };
+  return { color: props.color };
 });
 
 const iconMap = {
@@ -26,8 +38,8 @@ const iconMap = {
 </script>
 
 <template>
-  <div :class="['toolbar-button-icon', name]">
-    <font-awesome-icon :icon="iconMap[name]" />
+  <div :class="['toolbar-button-icon', name]"  :style="colorStyle">
+    <font-awesome-icon :icon="iconMap[name]"/>
   </div>
 </template>
 
@@ -60,9 +72,12 @@ const iconMap = {
 }
 
 .color {
-  border-bottom: solid 1.9px #47484a;
+  border-bottom: solid 4px #47484a;
   position: relative;
-  top: -2.6px;
+  top: -1px;
+  width: 16px;
+  font-size: 10px;
+  text-align: center;
 }
 
 .indentleft {
