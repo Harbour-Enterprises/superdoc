@@ -3,6 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import ToolbarButtonIcon from './ToolbarButtonIcon.vue'
 import { ref, computed } from 'vue';
 
+const emit = defineEmits(['handleClick'])
+
 const props = defineProps({
   name: {
     type: String,
@@ -50,37 +52,46 @@ const fullTooltip = computed(() => {
   return tooltip;
 })
 
+const handleClick = () => {
+  emit('buttonClick')
+}
+
 </script>
 
 <template>
   <div
-      class="toolbar-button"
-      :class="{ active: props.active, disabled: disabled}">
+      class="toolbar-item">
       <div class="tooltip" :style="{display: tooltipVisible ? 'initial' : 'none', width: `${fullTooltip.length * 5}px`}">
         <span>{{ fullTooltip }}</span>
       </div>
 
-      <span class="button-label" v-if="label">{{label}}</span>
-      
-      <ToolbarButtonIcon
-        v-if="hasIcon"
-        :style="{marginRight: hasCaret ? '8px' : null}"
-        :color="iconColor"
-        class="icon"
-        :name="name">
-      </ToolbarButtonIcon>
+      <div class="toolbar-button" @click="handleClick"
+      :class="{ active: props.active, disabled}">
+        <span class="button-label" v-if="label">{{label}}</span>
+        
+        <ToolbarButtonIcon
+          v-if="hasIcon"
+          :style="{marginRight: hasCaret ? '8px' : null}"
+          :color="iconColor"
+          class="icon"
+          :name="name">
+        </ToolbarButtonIcon>
 
-      <font-awesome-icon v-if="hasCaret"
-      class="caret"
-      :icon="active ? 'fa-caret-up' : 'fa-caret-down'"
-      :style="{opacity: disabled ? 0.6 : 1}"
-      />
-
+        <font-awesome-icon v-if="hasCaret"
+        class="caret"
+        :icon="active ? 'fa-caret-up' : 'fa-caret-down'"
+        :style="{opacity: disabled ? 0.6 : 1}"
+        />
+      </div>
       <slot></slot>
   </div>
 </template>
 
 <style scoped>
+.toolbar-item {
+  position: relative;
+}
+
 .toolbar-button {
   height: 32px;
   padding-left: 12px;

@@ -8,6 +8,7 @@ import DropdownOptions from './DropdownOptions.vue';
 import ToggleSlider from './ToggleSlider.vue';
 import ColorPicker from './ColorPicker.vue';
 import ToolbarItem from './ToolbarItem'
+import LinkInput from './LinkInput.vue';
 
 import {
   bold,
@@ -138,8 +139,10 @@ const isDropdown = (item) => item.type === 'dropdown';
 const isToggle = (item) => item.type === 'toggle';
 const isColorPicker = (item) => item.type === 'colorpicker';
 const hasIcon = (item) => item.icon !== null;
+const showOptions = (item, name) => item?.name === name && item?.active;
 
 const handleToolbarButtonClick = (item, argument = null) => {
+  console.log("Toolbar button click:", item, argument)
   const {preCommand, postCommand, command} = item;
 
   if (preCommand) {
@@ -163,10 +166,10 @@ const handleToolbarButtonClick = (item, argument = null) => {
 //   emit('command', {command: item.command, argument: item.argument});
 // }
 
-const onSelectionChange = (marks) => {
+const onSelectionChange = (marks, selectionText = null) => {
   toolbarItems.value.forEach((item) => {
     if (item.onSelectionChange) {
-      item.onSelectionChange(item);
+      item.onSelectionChange(item, selectionText);
     }
 
     // handle selection
@@ -202,20 +205,27 @@ defineExpose({
         :has-icon="hasIcon(item)"
         @mouseenter="handleButtonMouseEnter(item)"
         @mouseleave="handleButtonMouseLeave(item)"
-        @click="handleToolbarButtonClick(item)">
+        @buttonClick="handleToolbarButtonClick(item)">
 
           <!-- font dropdown -->
           <DropdownOptions
-            v-if="item.childItem?.name ==='fontFamilyDropdown' && item.childItem.active"
+            v-if="showOptions(item.childItem, 'fontFamilyDropdown')"
             :command="item.childItem.command"
             @optionClick="(option) => handleToolbarButtonClick(item.childItem, option)"
             :fonts="fonts"/>
-      
+
           <!-- color picker  -->
           <ColorPicker
-            v-if="item.childItem?.name === 'colorOptions' && item.childItem.active"
+            v-if="showOptions(item.childItem, 'colorOptions')"
             :color-options="colors"
             @colorSelect="(color) => handleToolbarButtonClick(item.childItem, color)"/>
+
+          <!-- link input -->
+          <LinkInput v-if="showOptions(item.childItem, 'linkInput')"
+          :initial-text="item.childItem.argument.text"
+          :initial-url="item.childItem.argument.href"
+          @submit="(anchor) => handleToolbarButtonClick(item.childItem, anchor)"
+          @cancel="handleToolbarButtonClick({...item.childItem, command: null})"/>
       </ToolbarButton>
 
       <!-- toolbar options -->

@@ -41,9 +41,10 @@ const onSelectionUpdate = ({ editor, transaction }) => {
 
   // This logic should maybe be inside the Editor.js rather than here?
   const { selection } = editor.view.state;
+  const selectionText = selection.$head.parent.textContent;
   const marks = selection.$head.marks();
 
-  toolbar.value.onSelectionChange(marks);
+  toolbar.value.onSelectionChange(marks, selectionText);
 }
 
 const onCreate = ({ editor }) => {

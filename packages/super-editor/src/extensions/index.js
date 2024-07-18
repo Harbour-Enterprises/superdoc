@@ -21,6 +21,7 @@ export { Underline } from './underline/index.js';
 export { Strike } from './strike/index.js';
 export { Color } from './color/index.js';
 export { FontFamily } from './font-family/index.js';
+export { Link } from './link/index.js';
 export { FontSize } from './font-size/index.js';
 export { TextAlign } from './text-align/index.js';
 export { TextIndent } from './text-indent/index.js';

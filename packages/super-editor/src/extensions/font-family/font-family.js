@@ -14,14 +14,6 @@ export const FontFamily = Mark.create({
     return ['span', node.mark.attrs.attributes, 0];
   },
 
-  addAttributes(){
-    return {
-      attributes: {
-        style: {default: null},
-      }
-    }
-  },
-
   addCommands(node) {
     return {
       toggleFont: ({label, fontName, fontWeight}) => ({ commands }) => {
