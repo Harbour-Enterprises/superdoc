@@ -30,6 +30,7 @@ const handleToolbarCommand = ({command, argument}) => {
   const commands = activeEditor?.commands;
   if (!!commands && command in commands) {
     activeEditor?.commands[command](argument);
+    activeEditor.view.focus();
   }
 }
 

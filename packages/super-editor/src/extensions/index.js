@@ -7,7 +7,7 @@ export { Body } from './body/index.js';
 export { Text } from './text/index.js';
 export { RunItem } from './run-item/index.js';
 export { Paragraph } from './paragraph/index.js';
-export { BulletList } from './bullet-list/index.js';
+export { bulletedList } from './bullet-list/index.js';
 export { OrderedList } from './ordered-list/index.js';
 export { ListItem } from './list-item/index.js';
 export { CommentRangeStart, CommentRangeEnd, CommentReference } from './comment/index.js';

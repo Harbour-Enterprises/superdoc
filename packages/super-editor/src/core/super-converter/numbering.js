@@ -79,7 +79,7 @@ function getNodeNumberingDefinition(attributes, level) {
 
   // Get style for this list level
   let listType;
-  if (unorderedListTypes.includes(listTypeDef.toLowerCase())) listType = 'bulletList';
+  if (unorderedListTypes.includes(listTypeDef.toLowerCase())) listType = 'bulletedList';
   else if (orderedListTypes.includes(listTypeDef)) listType = 'orderedList';
   else {
     throw new Error(`Unknown list type found during import: ${listTypeDef}`);

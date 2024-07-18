@@ -3,7 +3,7 @@ import { Node } from '@core/index.js';
 export const Body = Node.create({
   name: 'body',
 
-  content: '(paragraph+ | bulletList* | orderedList*)',
+  content: '(paragraph+ | bulletedList* | orderedList*)',
 
   renderDOM() {
     return ['body', 0];

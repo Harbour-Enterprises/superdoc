@@ -436,7 +436,7 @@ class SuperConverter {
     }
 
     return {
-      type: overallListType || 'bulletList',
+      type: overallListType || 'bulletedList',
       content: parsedListItems,
       attrs: {
         'list-style-type': listStyleType,
@@ -675,7 +675,7 @@ class SuperConverter {
           this.#outputProcessList(node, resultingElements);
           skip = true;
           break;
-        case 'bulletList':
+        case 'bulletedList':
           this.#outputProcessList(node, resultingElements)
           skip = true;
           break;
@@ -736,7 +736,7 @@ class SuperConverter {
       
       index++;
 
-      const skipNodes = ['bulletList', 'orderedList'];
+      const skipNodes = ['bulletedList', 'orderedList'];
       if (!skipNodes.includes(node.type)) resultingElements.push(resultingNode);
       if (SuperConverter.elements.has(name)) resultingNode.type = 'element';
     }
@@ -838,8 +838,8 @@ class SuperConverter {
     function recursiveFlatten(items) {
       if (!items || !items.length) return;
       items.forEach((item) => {
-        const subList = item.content.filter((c) => c.type === 'bulletList' || c.type === 'orderedList');
-        const notLists = item.content.filter((c) => c.type !== 'bulletList' && c.type !== 'orderedList');
+        const subList = item.content.filter((c) => c.type === 'bulletedList' || c.type === 'orderedList');
+        const notLists = item.content.filter((c) => c.type !== 'bulletedList' && c.type !== 'orderedList');
 
         const newItem = { ...item, content: notLists };
         flatContent.push(newItem);

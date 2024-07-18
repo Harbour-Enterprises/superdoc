@@ -1,7 +1,7 @@
 import { Node } from '@core/index.js';
 
-export const BulletList = Node.create({
-  name: 'bulletList',
+export const bulletedList = Node.create({
+  name: 'bulletedList',
 
   group: 'block list',
 

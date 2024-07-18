@@ -1,19 +1,7 @@
 <script setup>
 
-const emit = defineEmits(['select']);
+const emit = defineEmits(['colorSelect']);
 const props = defineProps({
-    item: {
-        type: Object,
-        required: true,
-    },
-    name: {
-        type: String,
-        required: true,
-    },
-    command: {
-        type: String,
-        required: true,
-    },
     colorOptions: {
         type: Array,
         required: true,
@@ -26,7 +14,7 @@ const props = defineProps({
     <div class="color-picker-ctn">
         <div class="color-row" v-for="(row, index) in colorOptions" :key="index">
             <div class="color-option" v-for="option in row"
-            @click.stop.prevent="emit('select', {name, command, argument: {value: option.value}})"
+            @click.stop.prevent="emit('colorSelect', {value: option.value})"
             :key="option.label" 
             :style="{backgroundColor: option.value}"></div>
         </div>
