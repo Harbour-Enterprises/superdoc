@@ -14,21 +14,55 @@ import ColorPicker from './ColorPicker.vue';
  * One toolbar should work for many editors.
 */
 
+const handleButtonMouseEnter = (item) => {
+  if (item.childItem?.active) return;
+  const now = Date.now();
+  const timeout = 800;
+  item.tooltipTimeout = setTimeout(() => {
+    if (now + timeout <= Date.now()) {
+      item.tooltipVisible = true;
+    }
+  }, timeout);
+}
+
+const handleButtonMouseLeave = (item) => {
+  // cancel timeout
+  clearTimeout(item.tooltipTimeout);
+  item.tooltipVisible = false;
+}
+
 const toolbarItem = (options) => {
+  const types = ['button', 'options', 'separator'];
+  if (!types.includes(options.type)) {
+    console.error('Invalid toolbar item type:',options.type);
+    return;
+  }
   return {
     type: options.type,
     name: options.name,
-    active: options.active || false,
-    dropdownOptions: options.dropdownOptions || [],
-    colorOptions: options.colorOptions || [],
-    hasNestedOptions: options.hasNestedOptions || false,
+
+    // handlers
+    onTextSelection: options.onTextSelection || null,
+    preCommand: options.preCommand || null,
+
     command: options.command || null,
-    icon: options.icon || null,
-    tooltip: options.tooltip || null,
-    label: options.label || null,
     argument: options.argument || null,
-    disabled: options.disabled || false,
+    childItem: options.childItem || null,
+    parentItem: options.parentItem || null,
+    active: options.active || false,
+
+    // icon properties
+    icon: options.icon || null,
     iconColor: options.iconColor || null,
+    hasCaret: options.hasCaret || false,
+
+    // tooltip properties
+    tooltip: options.tooltip || null,
+    tooltipVisible: options.tooltipVisible || false,
+    tooltipTimeout: options.tooltipTimeout || null,
+
+    label: options.label || null,
+    disabled: options.disabled || false,
   }
 }
 
@@ -36,116 +70,120 @@ const emit = defineEmits(['command', 'toggle', 'select']);
 const separator =  toolbarItem({
   type: 'separator',
   name: 'separator',
-  command: null,
   icon: 'fa-grip-lines-vertical',
-  active: false,
 })
-const toolbarItems = ref([
-  // font
-  toolbarItem({
-    type: 'dropdown',
-    name: 'fontFamily',
-    command: 'toggleFont',
-    dropdownOptions: [
-      {
-        label: 'Georgia',
-        fontName: 'Georgia, serif',
-        fontWeight: 400,
-      },
-      {
-        label: 'Arial',
-        fontName: 'Arial, sans-serif',
-        fontWeight: 400,
-      },
-      {
-        label: 'Courier New',
-        fontName: 'Courier New, monospace',
-        fontWeight: 400,
-        active: false,
-        options: [
-          { label: 'Regular', fontWeight: 400 },
-          { label: 'Bold', fontWeight: 700 },
-        ],
-      },
-      {
-        label: 'Times New Roman',
-        fontName: 'Times New Roman, serif',
-        fontWeight: 400,
-      },
-    ],
 
-    icon: null,
-    active: false,
-    tooltip: "Font",
-    label: "Font",
-  }),
+// toolbar items
+const fontButton = toolbarItem({
+  type: 'button',
+  name: 'fontFamily',
+  tooltip: "Font",
+  label: "Font",
+  hasCaret: true,
+  preCommand(item) {
+    clearTimeout(item.tooltipTimeout);
+    item.tooltipVisible = false;
+    item.active = item.active ? false : true;
+    item.childItem.active = item.childItem.active ? false : true;
+  },
+  onTextSelection(item, mark) {
+    item.label = mark.attrs.font;
+  },
+});
+// font button and dropdown
+const fontOptions = toolbarItem({
+  type: 'options',
+  name: 'fontFamilyDropdown',
+  preCommand(item) {
+    item.active = false;
+  },
+  command: 'toggleFont',
+})
+fontButton.childItem = fontOptions;
+fontOptions.parentItem = fontButton;
 
-  // TODO: Change this - make dropdown work
-  toolbarItem({
-    type: 'dropdown',
-    name: 'size',
-    command: 'changeFontSize',
-    icon: null,
-    active: false,
-    tooltip: "Font size",
-    label: "12pt",
-    argument: '12pt',
-  }),
+const fontSize =  toolbarItem({
+  type: 'button',
+  name: 'size',
+  command: 'changeFontSize',
+  icon: null,
+  active: false,
+  tooltip: "Font size",
+  label: "12pt",
+  argument: '12pt',
+});
 
-  // separator
-  separator,
-
-  // font size
-
-  // separator
-  // { type: 'separator', name: 'separator', command: null, icon: 'fa-grip-lines-vertical', active: false },
-
-  // bold
+const bold = 
   toolbarItem({
     type: 'button',
     name: 'bold',
     command: 'toggleBold',
     icon: 'fa fa-bold',
-    active: false,
     tooltip: "Bold",
-  }),
+});
 
-  // italic
-  toolbarItem({
-    type: 'button',
-    name: 'italic',
-    command: 'toggleItalic',
-    icon: 'fa fa-italic',
-    active: false,
-    tooltip: "Italic",
-  }),
+const italic = toolbarItem({
+  type: 'button',
+  name: 'italic',
+  command: 'toggleItalic',
+  icon: 'fa fa-italic',
+  active: false,
+  tooltip: "Italic",
+});
 
-  // underline
-  toolbarItem({
-    type: 'button',
-    name: 'underline',
-    command: 'toggleUnderline',
-    icon: 'fa fa-underline',
-    active: false,
-    tooltip: "Underline",
-  }),
+const underline = toolbarItem({
+  type: 'button',
+  name: 'underline',
+  command: 'toggleUnderline',
+  icon: 'fa fa-underline',
+  active: false,
+  tooltip: "Underline",
+});
 
-  // color
-  toolbarItem({
-    type: 'colorpicker',
-    name: 'color',
-    command: 'toggleColor',
-    icon: 'fa fa-font',
-    active: false,
-    tooltip: "Text color",
-    argument: 'red',
-    colorOptions: [
-      [{label: 'Red', value: 'red'}, {label: 'Blue', value: 'blue'}, {label: 'Green', value: 'green'}],
-      [{label: 'Yellow', value: 'yellow'}, {label: 'Purple', value: 'purple'}, {label: 'Orange', value: 'orange'}],
-      [{label: 'Black', value: 'black'}, {label: 'White', value: 'white'}, {label: 'Gray', value: 'gray'}],
-      [{label: 'Pink', value: 'pink'}, {label: 'Brown', value: 'brown'}, {label: 'Cyan', value: 'cyan'}],
-    ]
-  }),
+// color
+const colorButton = toolbarItem({
+  type: 'button',
+  name: 'color',
+  icon: 'fa fa-font',
+  active: false,
+  tooltip: "Text color",
+  preCommand(item) {
+    item.childItem.active = item.childItem.active ? false : true;
+  },
+  // argument: 'red',
+  // colorOptions: [
+  //   [{label: 'Red', value: 'red'}, {label: 'Blue', value: 'blue'}, {label: 'Green', value: 'green'}],
+  //   [{label: 'Yellow', value: 'yellow'}, {label: 'Purple', value: 'purple'}, {label: 'Orange', value: 'orange'}],
+  //   [{label: 'Black', value: 'black'}, {label: 'White', value: 'white'}, {label: 'Gray', value: 'gray'}],
+  //   [{label: 'Pink', value: 'pink'}, {label: 'Brown', value: 'brown'}, {label: 'Cyan', value: 'cyan'}],
+  // ]
+});
+const colorOptions = {
+  name: 'colorOptions',
+  type: 'options',
+  command: 'toggleColor',
+}
+colorButton.childItem = colorOptions;
+colorOptions.parentItem = colorButton;
+
+const toolbarItemsDisplay = ref([
+  // font
+  fontButton,
+
+  // TODO: Change this - make dropdown work
+  fontSize,
+
+  // separator
+  separator,
+
+  // separator
+  // { type: 'separator', name: 'separator', command: null, icon: 'fa-grip-lines-vertical', active: false },
+
+  bold,
+  italic,
+  underline,
+
+  colorButton,
 
   // separator
   separator,
@@ -176,7 +214,7 @@ const toolbarItems = ref([
 
   // paragraph
   toolbarItem({
-    type: 'dropdown',
+    type: 'button',
     name: 'paragraph',
     command: 'toggleParagraph',
     icon: 'fa-align-left',
@@ -234,6 +272,7 @@ const toolbarItems = ref([
     tooltip: "More options",
   }),
 
+
   // suggesting
   // TODO: Restore this later - removing for initial milestone
   // toolbarItem({
@@ -247,6 +286,33 @@ const toolbarItems = ref([
   // }),
 ])
 
+const fonts = [
+      {
+        label: 'Georgia',
+        fontName: 'Georgia, serif',
+        fontWeight: 400,
+      },
+      {
+        label: 'Arial',
+        fontName: 'Arial, sans-serif',
+        fontWeight: 400,
+      },
+      {
+        label: 'Courier New',
+        fontName: 'Courier New, monospace',
+        fontWeight: 400,
+        active: false,
+        options: [
+          { label: 'Regular', fontWeight: 400 },
+          { label: 'Bold', fontWeight: 700 },
+        ],
+      },
+      {
+        label: 'Times New Roman',
+        fontName: 'Times New Roman, serif',
+        fontWeight: 400,
+      },
+    ]
 const isButton = (item) => item.type === 'button';
 const isSeparator = (item) => item.type === 'separator';
 const isDropdown = (item) => item.type === 'dropdown';
@@ -260,7 +326,7 @@ const handleCommand = ({command, argument}) => {
 }
 
 const handleToggle = ({active, name}) => {
-  const item = toolbarItems.value.find((item) => item.name === name);
+  const item = toolbarItemsDisplay.value.find((item) => item.name === name);
   console.debug('Toolbar toggle HANDLER', active, name, item);
   if (!item) return;
   item.active = active;
@@ -269,43 +335,62 @@ const handleToggle = ({active, name}) => {
 const handleSelect = ({name, command, argument}) => {
   // console.debug('Toolbar select handler', name, command, label, fontName, fontWeight);
   console.debug('Toolbar select handler', name, command, argument);
-  const item = toolbarItems.value.find((item) => item.name === name);
+  const item = toolbarItemsDisplay.value.find((item) => item.name === name);
   if (item) item.active = false;
   emit('command', {command, argument});
 }
 
-const handleToolbarButtonClick = ({command, argument}) => {;
-  console.debug('Toolbar command', command, argument);
+const handleToolbarButtonClick = (item) => {
+  const {preCommand, command, argument} = item;
+  if (preCommand) {
+    console.log("Calling precommand")
+    preCommand(item);
+  }
+  console.log("Toolbar button click:", command, argument)
   emit('command', {command, argument});
 }
 
+// const handleDropdownOptionClick = (command, option) => {;
+//   if (item.preCommand) item.preCommand(item);
+//   emit('command', {command: item.command, argument: item.argument});
+// }
+
 const onSelectionChange = (marks) => {
-  toolbarItems.value.forEach((item) => {
-    const markNames = marks.map((mark) => mark.type.name);
-    const activeExcludes = ['dropdown', 'colorpicker']
-    if (markNames.includes(item.name) && !activeExcludes.includes(item.type)) {
-      item.active = true;
-    } else item.active = false;
-
+  toolbarItemsDisplay.value.forEach((item) => {
     // reset
-    if (item.name === 'color') {
-      item.iconColor = '#47484a';
-      const mark = marks.find((mark) => mark.type.name === item.name) || null;
-      console.log('color mark', mark);
-      if (!mark) return;
-      item.iconColor = mark.attrs?.color;
-      return;
-    }
+    if (item.childItem) item.childItem.active = false;
+    item.active = false;
 
-    if (item.name === 'fontFamily') {
-      const mark = marks.find((mark) => mark.type.name === item.name) || null;
-      item.label = "Font";
-      if (!mark) return;
-
-      const font = mark.attrs?.font;
-      if (!font) item.label = 'Font';
-      item.label = font;
+    // handle selection
+    if (item.onTextSelection) {
+      const correspondingMark = marks.find((mark) => mark.type.name === item.name);
+      if (correspondingMark) item.onTextSelection(item, correspondingMark);
     }
+    // const markNames = marks.map((mark) => mark.type.name);
+    // const activeExcludes = ['dropdown', 'colorpicker']
+    // if (markNames.includes(item.name) && !activeExcludes.includes(item.type)) {
+    //   item.active = true;
+    // } else item.active = false;
+
+    // // reset
+    // if (item.name === 'color') {
+    //   item.iconColor = '#47484a';
+    //   const mark = marks.find((mark) => mark.type.name === item.name) || null;
+    //   console.log('color mark', mark);
+    //   if (!mark) return;
+    //   item.iconColor = mark.attrs?.color;
+    //   return;
+    // }
+
+    // if (item.name === 'fontFamily') {
+    //   const mark = marks.find((mark) => mark.type.name === item.name) || null;
+    //   item.label = "Font";
+    //   if (!mark) return;
+
+    //   const font = mark.attrs?.font;
+    //   if (!font) item.label = 'Font';
+    //   item.label = font;
+    // }
   });
 }
 
@@ -316,52 +401,39 @@ defineExpose({
 
 <template>
   <div class="toolbar">
-    <div v-for="item, index in toolbarItems" :key="index">
+    <div v-for="item, index in toolbarItemsDisplay" :key="index">
+
+      <!-- toolbar separator -->
+      <ToolbarSeparator v-if="isSeparator(item)" />
 
       <!-- Toolbar button -->
-      <ToolbarSeparator v-if="isSeparator(item)"> </ToolbarSeparator>
-      <ToolbarButton v-else
+      <ToolbarButton v-if="isButton(item)"
         :disabled="item.disabled"
-        :command="item.command"
-        :command-argument="item.argument"
         :active="item.active"
         :tooltip="item.tooltip"
+        :tooltip-visible="item.tooltipVisible"
         :name="item.name"
         :label="item.label"
-        :has-caret="isDropdown(item)"
-        :has-nested-options="isDropdown(item) || isColorPicker(item)"
-        :is-toggle="isToggle(item)"
+        :has-caret="item.hasCaret"
         :icon-color="item.iconColor"
         :has-icon="hasIcon(item)"
-        @toggle="handleToggle"
-        @select="handleSelect"
-        @command="handleCommand">
+        @mouseenter="handleButtonMouseEnter(item)"
+        @mouseleave="handleButtonMouseLeave(item)"
+        @click="handleToolbarButtonClick(item)">
 
-          <!-- dropdown options -->
-          <DropdownOptions v-if="isDropdown(item) && item.active"
-          @select="handleSelect"
-          @command="handleCommand"
-          :item="item"
-          :command="item.command"
-          :name="item.name"/>
-
-          <!-- toggle slider -->
-          <ToggleSlider v-if="isToggle(item) && item.active"
-          @command="handleCommand"
-          :item="item"
-          :command="item.command"
-          :name="item.name"/>
-
-          <!-- color picker -->
-          <ColorPicker v-if="isColorPicker(item) && item.active"
-          @command="handleCommand"
-          @select="handleSelect"
-          :item="item"
-          :command="item.command"
-          :color-options="item.colorOptions"
-          :name="item.name"/>
-
+          <!-- font dropdown -->
+          <DropdownOptions
+            v-if="item.childItem?.name ==='fontFamilyDropdown' && item.childItem.active"
+            :command="item.childItem.command"
+            @optionClick="(option) => handleToolbarButtonClick({
+              command: item.childItem.command,
+              preCommand: item.childItem.preCommand(item.childItem),
+              argument: option
+            })"
+            :fonts="fonts"/>
       </ToolbarButton>
+
+      <!-- toolbar options -->
     </div>
   </div>
 </template>

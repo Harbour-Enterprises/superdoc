@@ -3,7 +3,6 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import ToolbarButtonIcon from './ToolbarButtonIcon.vue'
 import { ref, computed } from 'vue';
 
-const emit = defineEmits(['command', 'toggle', 'select']);
 const props = defineProps({
   name: {
     type: String,
@@ -17,27 +16,19 @@ const props = defineProps({
     type: String,
     default: null,
   },
-  command: {
-    type: String,
-    required: true,
-  },
-  commandArgument: {
-    type: null,
-    required: false,
-  },
   tooltip: {
     type: String,
     required: true,
+  },
+  tooltipVisible: {
+    type: Boolean,
+    default: false,
   },
   active: {
     type: Boolean,
     default: false,
   },
   hasCaret: {
-    type: Boolean,
-    default: false,
-  },
-  hasNestedOptions: {
     type: Boolean,
     default: false,
   },
@@ -50,8 +41,6 @@ const props = defineProps({
     default: false,
   },
 });
-const tooltipVisible = ref(false)
-const tooltipTimeout = ref(null)
 
 const fullTooltip = computed(() => {
   let tooltip = props.tooltip;
@@ -61,61 +50,12 @@ const fullTooltip = computed(() => {
   return tooltip;
 })
 
-const nestedOptionTimeout = ref(null)
-const handleButtonMouseEnter = () => {
-  console.log("mouse enter")
-  // set 400ms delay before showing tooltip
-  const now = Date.now();
-  const delay = 1000;
-  tooltipTimeout.value = setTimeout(() => {
-    if (now + delay <= Date.now()) {
-      tooltipVisible.value = true;
-    }
-  }, delay);
-}
-const handleButtonMouseLeave = () => {
-  console.log("mouse leave")
-  tooltipVisible.value = false;
-  clearTimeout(tooltipTimeout.value);
-}
-const handleOptionMouseEnter = (option) => {
-  // clearTimeout(nestedOptionTimeout.value);
-  option.active = true;
-}
-const handleNestedOptionMouseEnter = (option) => {
-  // clearTimeout(nestedOptionTimeout.value);
-  // option.active = true;
-}
-const handleOptionMouseLeave = (option) => {
-  // nestedOptionTimeout.value = setTimeout(() => {
-  //   option.active = false;
-  // }, 400);
-  option.active = false;
-}
-const handleButtonClick = () => {
-  if (props.disabled) return;
-  console.log('handleButtonClick', props);
-  if (props.hasNestedOptions) {
-    emit('toggle', {active: props.active === true ? false : true, name: props.name});
-    return;
-  }
-  emit('command', {command: props.command, argument: props.commandArgument})
-}
-const handleOptionClick = (option) => {
-  const {label, fontName, fontWeight} = option;
-  console.log('handleOptionClick', label, fontName, fontWeight);
-  // one command for all dropdown options
-  emit('select', {name: props.name, command: props.command, label, fontName, fontWeight});
-}
 </script>
 
 <template>
   <div
       class="toolbar-button"
-      :class="{ active: props.active, disabled: disabled}"
-      @mouseenter="handleButtonMouseEnter"
-      @mouseleave="handleButtonMouseLeave"
-      @click.stop.prevent="handleButtonClick">
+      :class="{ active: props.active, disabled: disabled}">
       <div class="tooltip" :style="{display: tooltipVisible ? 'initial' : 'none', width: `${fullTooltip.length * 5}px`}">
         <span>{{ fullTooltip }}</span>
       </div>
@@ -207,5 +147,4 @@ const handleOptionClick = (option) => {
 .disabled .icon, .disabled .caret, .disabled .button-label {
   opacity: .6;
 }
-
 </style>

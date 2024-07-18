@@ -3,10 +3,6 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 const emit = defineEmits(['command']);
 const props = defineProps({
-  command: {
-    type: String,
-    required: true,
-  },
   active: {
     type: Boolean,
     default: false,

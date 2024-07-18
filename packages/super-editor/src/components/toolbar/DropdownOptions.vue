@@ -1,29 +1,27 @@
 <script setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
-const emit = defineEmits(['select']);
+const emit = defineEmits(['optionClick']);
 const props = defineProps({
-    item: {
-        type: Object,
-        required: true,
-    },
-    name: {
-        type: String,
-        required: true,
-    },
     command: {
         type: String,
         required: true,
     },
+    fonts: {
+        type: Array,
+        required: true
+    }
 });
 
 const handleOptionMouseEnter = (option) => {
+    console.log('mouse enter')
   // clearTimeout(nestedOptionTimeout.value);
     option.active = true;
 }
 const handleNestedOptionMouseEnter = (option) => {
+    console.log('nested mouse enter')
   // clearTimeout(nestedOptionTimeout.value);
-  // option.active = true;
+    option.active = true;
 }
 const handleOptionMouseLeave = (option) => {
   // nestedOptionTimeout.value = setTimeout(() => {
@@ -32,17 +30,13 @@ const handleOptionMouseLeave = (option) => {
     option.active = false;
 }
 const handleOptionClick = (option) => {
-    const {label, fontName, fontWeight} = option;
-    console.log('handleOptionClick', label, fontName, fontWeight);
-    // one command for all dropdown options
-    const argument = {label, fontName, fontWeight};
-    emit('select', {name: props.name, command: props.command, argument});
+    emit('optionClick', option)
 }
 </script>
 
 <template>
     <div class="dropdown-options-ctn">
-            <div v-for="(option, index) in props.item.dropdownOptions" :key="option.label" class="dropdown-option-outer"
+            <div v-for="(option, index) in fonts" :key="option.label" class="dropdown-option-outer"
             @mouseenter="handleOptionMouseEnter(option)" 
             @mouseleave="handleOptionMouseLeave(option)"
             @click.stop.prevent="handleOptionClick(option)">
