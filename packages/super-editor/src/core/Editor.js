@@ -1,4 +1,4 @@
-import { EditorState, TextSelection } from 'prosemirror-state';
+import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
 import { EventEmitter } from './EventEmitter.js';
@@ -12,6 +12,7 @@ import { initComments } from '@features/index.js';
 import { style } from './config/style.js';
 import DocxZipper from '@core/DocxZipper.js';
 
+import { pagination } from '@/plugins/pagination/pagination.js';
 
 /**
  * Editor main class.
@@ -28,7 +29,7 @@ export class Editor extends EventEmitter {
   view;
 
   isFocused = false;
-
+  
   #css;
 
   #docx;
@@ -88,6 +89,11 @@ export class Editor extends EventEmitter {
     this.on('commentsLoaded', this.options.onCommentsLoaded);
 
     this.#loadComments();
+
+    // Registering this after CSS and styles are added to ensure nodes are in the right place
+    // Not sure if this is the right approach but it works for now
+    // TODO: WIP
+    this.registerPlugin(pagination(this));
 
     window.setTimeout(() => {
       if (this.isDestroyed) return;
@@ -348,6 +354,7 @@ export class Editor extends EventEmitter {
     const { typeface, fontSizePt } = this.converter.getDocumentDefaultStyles();
     this.element.style.fontFamily = typeface;
     this.element.style.fontSize = fontSizePt + 'pt';
+    this.element.style.lineHeight = 1.05 * fontSizePt + 'pt';
   }
 
   /**

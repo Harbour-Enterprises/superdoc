@@ -121,7 +121,6 @@ export class ExtensionService {
       const keymapPlugin = keymap(bindingsContainer);
       plugins.push(keymapPlugin);
 
-
       const addPmPlugins = getExtensionConfigField(extension, 'addPmPlugins', context);
       if (addPmPlugins) {
         const pmPlugins = addPmPlugins();
