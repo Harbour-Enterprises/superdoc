@@ -10,8 +10,8 @@ export default (options) => {
         name: options.name,
 
         // handlers
-        onMarkSelection: options.onMarkSelection || null,
-        onSelectionChange: options.onSelectionChange || null,
+        onTextMarkSelection: options.onTextMarkSelection || null,
+        onTextSelectionChange: options.onTextSelectionChange || null,
         preCommand: options.preCommand || null,
         postCommand: options.postCommand || null,
 

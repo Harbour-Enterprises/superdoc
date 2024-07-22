@@ -44,7 +44,7 @@ const onSelectionUpdate = ({ editor, transaction }) => {
   const selectionText = selection.$head.parent.textContent;
   const marks = selection.$head.marks();
 
-  toolbar.value.onSelectionChange(marks, selectionText);
+  toolbar.value.onTextSelectionChange(marks, selectionText);
 }
 
 const onCreate = ({ editor }) => {

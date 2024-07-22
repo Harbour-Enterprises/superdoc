@@ -12,7 +12,7 @@ const link = ToolbarItem({
         self.active = self.active ? false : true;
         self.childItem.active = self.childItem.active ? false : true;
     },
-    onMarkSelection(self, mark) {
+    onTextMarkSelection(self, mark) {
         console.log('mark', mark);
         self.childItem.argument = {
             href: mark.attrs.href,
@@ -21,7 +21,7 @@ const link = ToolbarItem({
         self.active = true;
         self.childItem.active = true;
     },
-    onSelectionChange(self, selectionText = null) {
+    onTextSelectionChange(self, selectionText = null) {
         // if (selectionText) {
         //     console.log('selectionText', selectionText);
         //     self.argument = {

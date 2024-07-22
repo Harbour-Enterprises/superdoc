@@ -6,10 +6,10 @@ const bold = ToolbarItem({
     command: 'toggleBold',
     icon: 'fa fa-bold',
     tooltip: "Bold",
-    onSelectionChange(self) {
+    onTextSelectionChange(self) {
         self.active = false;
     },
-    onMarkSelection(self, mark) {
+    onTextMarkSelection(self, mark) {
         self.active = mark.type.name == 'bold';
     }
 });

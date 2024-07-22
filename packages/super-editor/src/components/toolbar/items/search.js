@@ -11,9 +11,9 @@ const button = ToolbarItem({
         self.active = self.active ? false : true;
         self.childItem.active = self.childItem.active ? false : true;
     },
-    onMarkSelection(self, mark) {
+    onTextMarkSelection(self, mark) {
     },
-    onSelectionChange(self) {
+    onTextSelectionChange(self) {
         self.active = false;
         self.childItem.active = false;
     }

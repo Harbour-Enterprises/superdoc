@@ -7,10 +7,10 @@ const underline = ToolbarItem({
     icon: 'fa fa-underline',
     active: false,
     tooltip: "Underline",
-    onSelectionChange(self) {
+    onTextSelectionChange(self) {
         self.active = false;
     },
-    onMarkSelection(self, mark) {
+    onTextMarkSelection(self, mark) {
         self.active = mark.type.name == 'underline';
     }
 });

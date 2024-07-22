@@ -10,9 +10,9 @@ const button = ToolbarItem({
         clearTimeout(self.tooltipTimeout);
         self.tooltipVisible = false;
     },
-    onMarkSelection(self, mark) {
+    onTextMarkSelection(self, mark) {
     },
-    onSelectionChange(self) {
+    onTextSelectionChange(self) {
         self.active = false;
     }
 });

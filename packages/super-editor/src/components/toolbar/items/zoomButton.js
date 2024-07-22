@@ -40,9 +40,9 @@ const zoomButton = ToolbarItem({
         self.label = String(sanitizedValue)+'%';
         editor.style.zoom = sanitizedValue/100;
     },
-    onMarkSelection(self, mark) {
+    onTextMarkSelection(self, mark) {
     },
-    onSelectionChange(self) {
+    onTextSelectionChange(self) {
         self.active = false;
         self.childItem.active = false;
     }

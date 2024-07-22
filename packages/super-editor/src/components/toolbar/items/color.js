@@ -9,10 +9,10 @@ const colorButton = ToolbarItem({
     preCommand(self) {
         self.childItem.active = self.childItem.active ? false : true;
     },
-    onMarkSelection(self, mark) {
+    onTextMarkSelection(self, mark) {
         self.iconColor = mark.attrs.color;
     },
-    onSelectionChange(self) {
+    onTextSelectionChange(self) {
         self.active = false;
         self.childItem.active = false;
         self.iconColor = '#47484a';

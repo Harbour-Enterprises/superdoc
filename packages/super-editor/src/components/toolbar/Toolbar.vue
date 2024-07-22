@@ -115,6 +115,23 @@ const colors = [
   ],
 ]
 
+const fontSizeOptions = [
+  {label: '8pt', value: 8},
+  {label: '9pt', value: 9},
+  {label: '10pt', value: 10},
+  {label: '11pt', value: 11},
+  {label: '12pt', value: 12},
+  {label: '14pt', value: 14},
+  {label: '18pt', value: 18},
+  {label: '24pt', value: 24},
+  {label: '30pt', value: 30},
+  {label: '36pt', value: 36},
+  {label: '48pt', value: 48},
+  {label: '60pt', value: 60},
+  {label: '72pt', value: 72},
+  {label: '96pt', value: 96}
+]
+
 const zoomOptions = [
   {label: '50%', value: 0.5},
   {label: '75%', value: 0.75},
@@ -188,22 +205,22 @@ const handleToolbarButtonTextSubmit = (item, argument) => {
   executeItemCommands(item, argument);
 }
 
-const onSelectionChange = (marks, selectionText = null) => {
+const onTextSelectionChange = (marks, selectionText = null) => {
   toolbarItems.value.forEach((item) => {
-    if (item.onSelectionChange) {
-      item.onSelectionChange(item, selectionText);
+    if (item.onTextSelectionChange) {
+      item.onTextSelectionChange(item, selectionText);
     }
 
     // handle selection
     const correspondingMark = marks.find((mark) => mark.type.name === item.name);
-    if (correspondingMark && item.onMarkSelection) {
-      item.onMarkSelection(item, correspondingMark);
+    if (correspondingMark && item.onTextMarkSelection) {
+      item.onTextMarkSelection(item, correspondingMark);
     }
   });
 }
 
 defineExpose({
-  onSelectionChange
+  onTextSelectionChange
 });
 </script>
 
@@ -236,7 +253,7 @@ defineExpose({
           <DropdownOptions
             v-if="showOptions(item.childItem, 'fontFamilyDropdown')"
             :command="item.childItem.command"
-            @op`t`ionClick="(option) => handleToolbarButtonClick(item.childItem, option)"
+            @optionClick="(option) => handleToolbarButtonClick(item.childItem, option)"
             :options="fonts"/>
 
           <!-- zoom dropdown -->
@@ -245,6 +262,13 @@ defineExpose({
             :command="item.childItem.command"
             @optionClick="(option) => handleToolbarButtonClick(item.childItem, option)"
             :options="zoomOptions"/>
+          
+          <!-- font size dropdown -->
+          <DropdownOptions
+            v-if="showOptions(item.childItem, 'fontSizeDropdown')"
+            :command="item.childItem.command"
+            @optionClick="(option) => handleToolbarButtonClick(item.childItem, option)"
+            :options="fontSizeOptions"/>
 
           <!-- color picker  -->
           <ColorPicker

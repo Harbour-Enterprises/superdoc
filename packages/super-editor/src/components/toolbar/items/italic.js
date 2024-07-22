@@ -7,10 +7,10 @@ const italic = ToolbarItem({
     icon: 'fa fa-italic',
     active: false,
     tooltip: "Italic",
-    onSelectionChange(self) {
+    onTextSelectionChange(self) {
         self.active = false;
     },
-    onMarkSelection(self, mark) {
+    onTextMarkSelection(self, mark) {
         self.active = mark.type.name == 'italic';
     }
 });
