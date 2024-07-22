@@ -61,9 +61,9 @@ const toolbarItems = ref([
   zoom,
   undo,
   redo,
+  separator,
   fontButton,
   fontSize,
-  separator,
   bold,
   italic,
   underline,
@@ -75,10 +75,11 @@ const toolbarItems = ref([
   paragraph,
   bulletedList,
   numberedList,
-  indentLeft,
   indentRight,
+  indentLeft,
+  separator,
+  search,
   overflow,
-  search
   // suggesting
   // TODO: Restore this later - removing for initial milestone
   // ToolbarItem({
@@ -112,6 +113,16 @@ const colors = [
     {label: 'Brown', value: 'brown'}, 
     {label: 'Cyan', value: 'cyan'}
   ],
+]
+
+const zoomOptions = [
+  {label: '50%', value: 0.5},
+  {label: '75%', value: 0.75},
+  {label: '90%', value: 0.9},
+  {label: '100%', value: 1},
+  {label: '125%', value: 1.25},
+  {label: '150%', value: 1.5},
+  {label: '200%', value: 2},
 ]
 
 const fonts = [
@@ -149,17 +160,17 @@ const isColorPicker = (item) => item.type === 'colorpicker';
 const hasIcon = (item) => item.icon !== null;
 const showOptions = (item, name) => item?.name === name && item?.active;
 
-const handleToolbarButtonClick = (item, argument = null) => {
-  console.log("Toolbar button click:", item, argument)
+const executeItemCommands = (item, argument = null) => {
+  console.log("Executing item commands", item, argument)
   const {preCommand, postCommand, command} = item;
 
   if (preCommand) {
-    console.log("Calling precommand", item)
+    console.log("Calling precommand", item, argument)
     preCommand(item, argument);
   }
 
   if (command) {
-    console.log("Toolbar button click:", command, argument)
+    console.log("Executing command", command, argument)
     emit('command', {command, argument});
   }
 
@@ -169,10 +180,13 @@ const handleToolbarButtonClick = (item, argument = null) => {
   }
 }
 
-// const handleDropdownOptionClick = (command, option) => {;
-//   if (item.preCommand) item.preCommand(item);
-//   emit('command', {command: item.command, argument: item.argument});
-// }
+const handleToolbarButtonClick = (item, argument = null) => {
+  executeItemCommands(item, argument);
+}
+
+const handleToolbarButtonTextSubmit = (item, argument) => {
+  executeItemCommands(item, argument);
+}
 
 const onSelectionChange = (marks, selectionText = null) => {
   toolbarItems.value.forEach((item) => {
@@ -210,18 +224,27 @@ defineExpose({
         :icon="item.icon"
         :label="item.label"
         :has-caret="item.hasCaret"
+        :inline-text-input-visible="item.inlineTextInputVisible"
         :icon-color="item.iconColor"
         :has-icon="hasIcon(item)"
         @mouseenter="handleButtonMouseEnter(item)"
         @mouseleave="handleButtonMouseLeave(item)"
+        @textSubmit="(argument) => handleToolbarButtonTextSubmit(item, argument)"
         @buttonClick="handleToolbarButtonClick(item)">
 
           <!-- font dropdown -->
           <DropdownOptions
             v-if="showOptions(item.childItem, 'fontFamilyDropdown')"
             :command="item.childItem.command"
+            @op`t`ionClick="(option) => handleToolbarButtonClick(item.childItem, option)"
+            :options="fonts"/>
+
+          <!-- zoom dropdown -->
+          <DropdownOptions
+            v-if="showOptions(item.childItem, 'zoomDropdown')"
+            :command="item.childItem.command"
             @optionClick="(option) => handleToolbarButtonClick(item.childItem, option)"
-            :fonts="fonts"/>
+            :options="zoomOptions"/>
 
           <!-- color picker  -->
           <ColorPicker

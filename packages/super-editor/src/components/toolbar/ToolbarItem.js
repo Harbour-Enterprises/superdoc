@@ -31,7 +31,9 @@ export default (options) => {
         tooltipVisible: options.tooltipVisible || false,
         tooltipTimeout: options.tooltipTimeout || null,
 
+        // behavior
         label: options.label || null,
         disabled: options.disabled || false,
+        inlineTextInputVisible: options.inlineTextInputVisible || false,
     }
 }

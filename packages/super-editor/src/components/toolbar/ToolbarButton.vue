@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import ToolbarButtonIcon from './ToolbarButtonIcon.vue'
 import { ref, computed } from 'vue';
 
-const emit = defineEmits(['handleClick'])
+const emit = defineEmits(['buttonClick', 'textSubmit']);
 
 const props = defineProps({
   name: {
@@ -46,6 +46,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  inlineTextInputVisible: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const fullTooltip = computed(() => {
@@ -56,9 +60,16 @@ const fullTooltip = computed(() => {
   return tooltip;
 })
 
+const inlineTextInput = ref(props.label || '');
+
 const handleClick = () => {
   emit('buttonClick')
 }
+
+const handleInputSubmit = () => {
+  emit('textSubmit', inlineTextInput.value);
+}
+
 
 </script>
 
@@ -71,7 +82,16 @@ const handleClick = () => {
 
       <div class="toolbar-button" @click="handleClick"
       :class="{ active: props.active, disabled}">
-        <span class="button-label" v-if="label">{{label}}</span>
+        <span class="button-label" v-if="label">
+          <input v-if="inlineTextInputVisible"
+          v-model="inlineTextInput"
+          @keydown.enter="handleInputSubmit"
+          type="text"
+          class="button-text-input"
+          :id="'inlineTextInput-' + name"/>
+
+          <span v-else>{{label}}</span>
+        </span>
         
         <ToolbarButtonIcon
           v-if="hasIcon"
@@ -163,4 +183,11 @@ const handleClick = () => {
 .disabled .icon, .disabled .caret, .disabled .button-label {
   opacity: .6;
 }
+/* .button-text-input {
+  font-size: 16px;
+  width: 70%;
+  border-radius: 5px;
+  margin-right: 1em;
+  border: 1px solid #ddd;
+} */
 </style>

@@ -16,7 +16,6 @@ const button = ToolbarItem({
     },
     onSelectionChange(self) {
         self.active = false;
-        self.childItem.active = false;
     }
 });
 

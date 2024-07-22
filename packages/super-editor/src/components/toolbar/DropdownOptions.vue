@@ -7,7 +7,7 @@ const props = defineProps({
         type: String,
         required: true,
     },
-    fonts: {
+    options: {
         type: Array,
         required: true
     }
@@ -36,7 +36,7 @@ const handleOptionClick = (option) => {
 
 <template>
     <div class="dropdown-options-ctn">
-            <div v-for="(option, index) in fonts" :key="option.label" class="dropdown-option-outer"
+            <div v-for="(option, index) in options" :key="option.label" class="dropdown-option-outer"
             @mouseenter="handleOptionMouseEnter(option)" 
             @mouseleave="handleOptionMouseLeave(option)"
             @click.stop.prevent="handleOptionClick(option)">
@@ -83,6 +83,10 @@ const handleOptionClick = (option) => {
 
 .nested-dropdown-options {
     left: 150px;
+}
+
+.dropdown-option-outer {
+    cursor: pointer;
 }
 
 .dropdown-option-outer:hover {
