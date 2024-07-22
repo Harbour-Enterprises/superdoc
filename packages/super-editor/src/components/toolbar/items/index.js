@@ -13,6 +13,10 @@ import numberedList from "./numberedList";
 import indentLeft from "./indentLeft";
 import indentRight from "./indentRight";
 import overflow from "./overflow";
+import zoom from "./zoomButton";
+import undo from "./historyUndo";
+import redo from "./historyRedo";
+import search from "./search";
 
 export {
     bold,
@@ -29,5 +33,9 @@ export {
     numberedList,
     indentLeft,
     indentRight,
-    overflow
+    overflow,
+    zoom,
+    undo,
+    redo,
+    search
 }

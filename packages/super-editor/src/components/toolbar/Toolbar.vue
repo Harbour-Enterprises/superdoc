@@ -25,7 +25,11 @@ import {
   numberedList,
   indentLeft,
   indentRight,
-  overflow
+  overflow,
+  zoom,
+  undo,
+  redo,
+  search
 } from './items/index'
 
 /**
@@ -54,6 +58,9 @@ const handleButtonMouseLeave = (item) => {
 const emit = defineEmits(['command', 'toggle', 'select']);
 
 const toolbarItems = ref([
+  zoom,
+  undo,
+  redo,
   fontButton,
   fontSize,
   separator,
@@ -71,6 +78,7 @@ const toolbarItems = ref([
   indentLeft,
   indentRight,
   overflow,
+  search
   // suggesting
   // TODO: Restore this later - removing for initial milestone
   // ToolbarItem({
@@ -199,6 +207,7 @@ defineExpose({
         :tooltip="item.tooltip"
         :tooltip-visible="item.tooltipVisible"
         :name="item.name"
+        :icon="item.icon"
         :label="item.label"
         :has-caret="item.hasCaret"
         :icon-color="item.iconColor"
@@ -222,8 +231,7 @@ defineExpose({
 
           <!-- link input -->
           <LinkInput v-if="showOptions(item.childItem, 'linkInput')"
-          :initial-text="item.childItem.argument.text"
-          :initial-url="item.childItem.argument.href"
+          :initial-url="item.childItem.argument?.href || ''"
           @submit="(anchor) => handleToolbarButtonClick(item.childItem, anchor)"
           @cancel="handleToolbarButtonClick({...item.childItem, command: null})"/>
       </ToolbarButton>

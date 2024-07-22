@@ -10,6 +10,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  icon: {
+    type: String,
+    default: null,
+  },
   label: {
     type: String,
     default: null,
@@ -74,6 +78,7 @@ const handleClick = () => {
           :style="{marginRight: hasCaret ? '8px' : null}"
           :color="iconColor"
           class="icon"
+          :icon="icon"
           :name="name">
         </ToolbarButtonIcon>
 
