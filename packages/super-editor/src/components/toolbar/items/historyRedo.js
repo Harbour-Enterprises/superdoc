@@ -4,13 +4,11 @@ const button = ToolbarItem({
     type: 'button',
     name: 'redo',
     tooltip: "Redo",
-    command: "redoAction",
+    command: "redo",
     icon: 'fa fa-rotate-right',
     preCommand(self) {
         clearTimeout(self.tooltipTimeout);
         self.tooltipVisible = false;
-        self.active = self.active ? false : true;
-        self.childItem.active = self.childItem.active ? false : true;
     },
     onMarkSelection(self, mark) {
     },
