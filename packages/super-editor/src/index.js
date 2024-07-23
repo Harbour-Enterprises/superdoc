@@ -14,7 +14,6 @@ import {
   faFont,
   faLink,
   faImage,
-  faAlignLeft,
   faIndent,
   faEllipsisVertical,
   faList,
@@ -24,7 +23,12 @@ import {
   faAngleRight,
   faRotateLeft,
   faRotateRight,
-  faMagnifyingGlass
+  faMagnifyingGlass,
+  faCircle,
+  faAlignLeft,
+  faAlignRight,
+  faAlignCenter,
+  faAlignJustify
 } from '@fortawesome/free-solid-svg-icons';
 
 
@@ -38,6 +42,9 @@ library.add(
   faLink,
   faImage,
   faAlignLeft,
+  faAlignRight,
+  faAlignCenter,
+  faAlignJustify,
   faIndent,
   faEllipsisVertical,
   faList,
@@ -47,7 +54,8 @@ library.add(
   faAngleRight,
   faRotateLeft,
   faRotateRight,
-  faMagnifyingGlass
+  faMagnifyingGlass,
+  faCircle
 );
 
 /**

@@ -6,7 +6,7 @@ import ToolbarSeparator from './ToolbarSeparator.vue';
 import ToolbarButtonIcon from './ToolbarButtonIcon.vue';
 import DropdownOptions from './DropdownOptions.vue';
 import ToggleSlider from './ToggleSlider.vue';
-import ColorPicker from './ColorPicker.vue';
+import IconGrid from './IconGrid.vue';
 import ToolbarItem from './ToolbarItem'
 import LinkInput from './LinkInput.vue';
 
@@ -20,7 +20,7 @@ import {
   colorButton,
   link,
   image,
-  paragraph,
+  alignment,
   bulletedList,
   numberedList,
   indentLeft,
@@ -72,7 +72,7 @@ const toolbarItems = ref([
   link,
   image,
   separator,
-  paragraph,
+  alignment,
   bulletedList,
   numberedList,
   indentRight,
@@ -93,25 +93,49 @@ const toolbarItems = ref([
   // }),
 ])
 
+const alignments = [
+  [
+    {label: 'Left', icon: 'fa-align-left', value: 'left'},
+    {label: 'Center', icon: 'fa-align-center', value: 'center'},
+    {label: 'Right', icon: 'fa-align-right', value: 'right'},
+    {label: 'Justify', icon: 'fa-align-justify', value: 'justify'},
+  ]
+]
+
+const makeColorOption = (label, color) => {
+  return {
+    label,
+    icon: 'fa-circle',
+    value: color,
+    style: {
+      color,
+      boxShadow: "0 0 5px 1px rgba(0, 0, 0, 0.1)",
+      borderRadius: "50%",
+      fontSize: "1.25em",
+    }
+  }
+}
+
 const colors = [
   [
-    {label: 'Red', value: 'red'},
-    {label: 'Blue', value: 'blue'}, 
-    {label: 'Green', value: 'green'}
+    makeColorOption('Red', 'red'),
+    makeColorOption('Blue', 'blue'),
+    makeColorOption('Green', 'green')
   ],
   [
-    {label: 'Yellow', value: 'yellow'},
-    {label: 'Purple', value: 'purple'},
-    {label: 'Orange', value: 'orange'}
+    makeColorOption('Yellow', 'yellow'),
+    makeColorOption('Purple', 'purple'),
+    makeColorOption('Orange', 'orange')
   ],
   [
-    {label: 'Black', value: 'black'},
-    {label: 'White', value: 'white'},
-    {label: 'Gray', value: 'gray'}],
+    makeColorOption('Black', 'black'),
+    makeColorOption('White', 'white'),
+    makeColorOption('Gray', 'gray')
+  ],
   [
-    {label: 'Pink', value: 'pink'}, 
-    {label: 'Brown', value: 'brown'}, 
-    {label: 'Cyan', value: 'cyan'}
+    makeColorOption('Pink', 'pink'),
+    makeColorOption('Brown', 'brown'),
+    makeColorOption('Cyan', 'cyan')
   ],
 ]
 
@@ -271,10 +295,16 @@ defineExpose({
             :options="fontSizeOptions"/>
 
           <!-- color picker  -->
-          <ColorPicker
+          <IconGrid
             v-if="showOptions(item.childItem, 'colorOptions')"
-            :color-options="colors"
-            @colorSelect="(color) => handleToolbarButtonClick(item.childItem, color)"/>
+            :icons="colors"
+            @select="(color) => handleToolbarButtonClick(item.childItem, color)"/>
+
+          <!-- alignment options  -->
+          <IconGrid
+          v-if="showOptions(item.childItem, 'alignmentOptions')"
+          :icons="alignments"
+          @select="(alignment) => handleToolbarButtonClick(item.childItem, alignment)"/>
 
           <!-- link input -->
           <LinkInput v-if="showOptions(item.childItem, 'linkInput')"

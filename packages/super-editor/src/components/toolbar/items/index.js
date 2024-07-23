@@ -7,7 +7,7 @@ import underline from "./underline";
 import colorButton from "./color";
 import link from "./link";
 import image from "./image";
-import paragraph from "./paragraph";
+import alignment from "./alignment";
 import bulletedList from "./bulletedList";
 import numberedList from "./numberedList";
 import indentLeft from "./indentLeft";
@@ -28,7 +28,7 @@ export {
     colorButton,
     link,
     image,
-    paragraph,
+    alignment,
     bulletedList,
     numberedList,
     indentLeft,
