@@ -8,8 +8,6 @@ const props = defineProps({
     default: false,
   },
 });
-
-const handleClick = () => emit('command', props.command);
 </script>
 
 <template>

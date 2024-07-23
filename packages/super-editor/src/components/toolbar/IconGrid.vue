@@ -41,15 +41,13 @@ const props = defineProps({
 .option {
     width: 20px;
     height: 20px;
-    /* font-size: 1.25em; */
     margin: 2px;
-    /* border-radius: 50%; */
     cursor: pointer;
-    /* border: solid 1px #ddd; */
-    /* box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.1); */
+    padding: .25em;
+    text-align: center;
 }
 
-.color-option:hover {
-    box-shadow: 0 0 5px 3px rgba(0, 0, 0, 0.1);
+.option:hover {
+    background-color: #ddd;
 }
 </style>

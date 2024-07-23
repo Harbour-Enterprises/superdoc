@@ -2,7 +2,7 @@ import ToolbarItem from "../ToolbarItem";
 
 const button = ToolbarItem({
     type: 'button',
-    name: 'alignment',
+    name: 'textAlign',
     tooltip: "Alignment",
     icon: "fa-align-left",
     hasCaret: true,
@@ -15,17 +15,19 @@ const button = ToolbarItem({
         self.icon
     },
     onTextMarkSelection(self, mark) {
+        self.icon = `fa-align-${mark.attrs.alignment}`;
     },
     onTextSelectionChange(self) {
         self.active = false;
         self.childItem.active = false;
+        self.icon = 'fa-align-left';
     }
 });
 
 const buttonOptions = ToolbarItem({
     type: 'options',
     name: 'alignmentOptions',
-    command: '_command',
+    command: 'changeTextAlignment',
     preCommand(self, argument) {
         console.log('preCommand', argument);
         self.active = false;
