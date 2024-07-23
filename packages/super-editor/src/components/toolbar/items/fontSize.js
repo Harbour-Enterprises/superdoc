@@ -1,16 +1,41 @@
 import ToolbarItem from "../ToolbarItem";
+import { sanitizeNumber } from "../helpers";
+
+const name = 'fontSize';
 
 const button = ToolbarItem({
     type: 'button',
-    name: 'fontSize',
+    name,
     label: "12pt",
     tooltip: "Font size",
     hasCaret: true,
-    preCommand(self) {
+    command: "changeFontSize",
+    preCommand(self, argument) {
         clearTimeout(self.tooltipTimeout);
         self.tooltipVisible = false;
         self.active = self.active ? false : true;
         self.childItem.active = self.childItem.active ? false : true;
+        self.inlineTextInputVisible = self.inlineTextInputVisible ? false : true;
+        setTimeout(() => {
+            const input = document.querySelector(`#inlineTextInput-${name}`);
+            if (input) input.focus();
+        });
+
+        // from text input
+        if (!argument) return;
+
+        const value = argument;
+        let sanitizedValue = sanitizeNumber(value);
+        if (sanitizedValue < 8) sanitizedValue = 8;
+        if (sanitizedValue > 96) sanitizedValue = 96;
+
+        const label = String(sanitizedValue)+'pt';
+        self.label = label;
+
+        return {
+            value: sanitizedValue,
+            label
+        }
     },
     onTextMarkSelection(self, mark) {
         console.log('onTextMarkSelection', mark);
@@ -31,6 +56,7 @@ const buttonOptions = ToolbarItem({
         console.log('preCommand', argument);
         self.active = false;
         self.parentItem.active = false;
+        self.parentItem.inlineTextInputVisible = false;
 
         const {label} = argument;
         self.parentItem.label = label;

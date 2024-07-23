@@ -1,21 +1,11 @@
 import ToolbarItem from "../ToolbarItem";
+import { sanitizeNumber } from "../helpers";
 
-const sanitizeZoom = (value) => {
-    // remove non-numeric characters
-    let sanitized = value.replace(/[^0-9.]/g, '');
-    // convert to number
-    sanitized = parseFloat(sanitized);
-    if (isNaN(sanitized)) sanitized = 100
-
-    sanitized = parseFloat(sanitized);
-    if (sanitized < 0) sanitized = 10;
-    if (sanitized > 200) sanitized = 200;
-    return sanitized;
-};
+const name = 'zoom';
 
 const zoomButton = ToolbarItem({
     type: 'button',
-    name: 'zoom',
+    name,
     tooltip: "Zoom",
     label: "100%",
     hasCaret: true,
@@ -27,7 +17,7 @@ const zoomButton = ToolbarItem({
         self.childItem.active = self.childItem.active ? false : true;
         self.inlineTextInputVisible = self.inlineTextInputVisible ? false : true;
         setTimeout(() => {
-            const input = document.querySelector('#inlineTextInput-zoom');
+            const input = document.querySelector(`#inlineTextInput-${name}`);
             if (input) input.focus();
         });
 
@@ -36,9 +26,18 @@ const zoomButton = ToolbarItem({
 
         const editor = document.querySelector('.super-editor');
         const value = argument;
-        const sanitizedValue = sanitizeZoom(value);
-        self.label = String(sanitizedValue)+'%';
+        let sanitizedValue = sanitizeNumber(value);
+        if (sanitizedValue < 0) sanitizedValue = 10;
+        if (sanitizedValue > 200) sanitizedValue = 200;
+
+        const label = String(sanitizedValue)+'%';
+        self.label = label;
         editor.style.zoom = sanitizedValue/100;
+
+        return {
+            value: sanitizedValue,
+            label
+        }
     },
     onTextMarkSelection(self, mark) {
     },

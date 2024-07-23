@@ -85,7 +85,7 @@ const handleInputSubmit = () => {
         <span class="button-label" v-if="label">
           <input v-if="inlineTextInputVisible"
           v-model="inlineTextInput"
-          @keydown.enter="handleInputSubmit"
+          @keydown.enter.prevent="handleInputSubmit"
           type="text"
           class="button-text-input"
           :id="'inlineTextInput-' + name"/>

@@ -25,7 +25,11 @@ export const FontSize = Mark.create({
 
   addCommands(node) {
     return {
-      changeFontSize: ({value}) => ({ commands }) => {
+      changeFontSize: (argument) => ({ commands }) => {
+        if (!argument) return;
+        const { value } = argument;
+
+        console.debug('changeFontSize command', value);
         const attrs = {
           attributes: {
             style: `font-size: ${value}pt`

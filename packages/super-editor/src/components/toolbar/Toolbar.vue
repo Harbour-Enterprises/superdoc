@@ -207,7 +207,9 @@ const executeItemCommands = (item, argument = null) => {
 
   if (preCommand) {
     console.log("Calling precommand", item, argument)
-    preCommand(item, argument);
+    const preCommandResult = preCommand(item, argument);
+    if (preCommandResult) argument = preCommandResult;
+    console.log("Precommand result", preCommandResult)
   }
 
   if (command) {

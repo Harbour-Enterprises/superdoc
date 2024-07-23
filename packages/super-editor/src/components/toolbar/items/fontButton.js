@@ -1,8 +1,10 @@
 import ToolbarItem from "../ToolbarItem";
 
+const name = 'fontFamily';
+
 const fontButton = ToolbarItem({
     type: 'button',
-    name: 'fontFamily',
+    name,
     tooltip: "Font",
     label: "Arial",
     hasCaret: true,

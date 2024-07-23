@@ -4,7 +4,7 @@ import ToolbarItem from "../ToolbarItem";
 const indentRight = ToolbarItem({
     type: 'button',
     name: 'indentright',
-    command: 'toggleIndentRight',
+    command: 'changeTextIndent',
     icon: 'fa-indent',
     active: false,
     tooltip: "Right indent",
