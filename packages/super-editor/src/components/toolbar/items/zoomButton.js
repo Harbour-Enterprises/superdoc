@@ -9,6 +9,7 @@ const zoomButton = ToolbarItem({
     tooltip: "Zoom",
     label: "100%",
     hasCaret: true,
+    style: {width: '100px'},
     inlineTextInputVisible: false,
     preCommand(self, argument) {
         clearTimeout(self.tooltipTimeout);
@@ -26,7 +27,7 @@ const zoomButton = ToolbarItem({
 
         const editor = document.querySelector('.super-editor');
         const value = argument;
-        let sanitizedValue = sanitizeNumber(value);
+        let sanitizedValue = sanitizeNumber(value, 100);
         if (sanitizedValue < 0) sanitizedValue = 10;
         if (sanitizedValue > 200) sanitizedValue = 200;
 

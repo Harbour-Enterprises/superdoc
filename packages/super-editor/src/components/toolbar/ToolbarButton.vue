@@ -144,6 +144,10 @@ const handleInputSubmit = () => {
   background-color: #c8d0d8;
 }
 .button-label {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-weight: 100;
   margin-right: 8px;
 }
@@ -183,6 +187,16 @@ const handleInputSubmit = () => {
 .disabled .icon, .disabled .caret, .disabled .button-label {
   opacity: .6;
 }
+.button-text-input {
+  background-color: #c8d0d8;
+  border: none;
+  font-size: 1em;
+}
+
+.button-text-input:focus {
+  outline: none;
+}
+
 /* .button-text-input {
   font-size: 16px;
   width: 70%;

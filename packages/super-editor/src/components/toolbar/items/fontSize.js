@@ -10,6 +10,7 @@ const button = ToolbarItem({
     tooltip: "Font size",
     hasCaret: true,
     command: "changeFontSize",
+    style: {width: '90px'},
     preCommand(self, argument) {
         clearTimeout(self.tooltipTimeout);
         self.tooltipVisible = false;
@@ -25,7 +26,7 @@ const button = ToolbarItem({
         if (!argument) return;
 
         const value = argument;
-        let sanitizedValue = sanitizeNumber(value);
+        let sanitizedValue = sanitizeNumber(value, 12);
         if (sanitizedValue < 8) sanitizedValue = 8;
         if (sanitizedValue > 96) sanitizedValue = 96;
 

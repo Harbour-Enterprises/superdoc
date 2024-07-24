@@ -9,6 +9,9 @@ export default (options) => {
         type: options.type,
         name: options.name,
 
+        // top-level style
+        style: options.style || null,
+
         // handlers
         onTextMarkSelection: options.onTextMarkSelection || null,
         onTextSelectionChange: options.onTextSelectionChange || null,

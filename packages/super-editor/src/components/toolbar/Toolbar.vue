@@ -259,6 +259,7 @@ defineExpose({
 
       <!-- Toolbar button -->
       <ToolbarButton v-if="isButton(item)"
+        :style="item.style"
         :disabled="item.disabled"
         :active="item.active"
         :tooltip="item.tooltip"

@@ -8,6 +8,7 @@ const fontButton = ToolbarItem({
     tooltip: "Font",
     label: "Arial",
     hasCaret: true,
+    style: {width: '120px'},
     preCommand(self) {
         clearTimeout(self.tooltipTimeout);
         self.tooltipVisible = false;
