@@ -63,10 +63,12 @@ const colorStyle = computed(() => {
 .color {
   border-bottom: solid 4px #47484a;
   position: relative;
-  top: -1px;
   width: 16px;
-  font-size: 10px;
   text-align: center;
+}
+
+.color svg {
+  zoom: .75;
 }
 
 .indentleft {

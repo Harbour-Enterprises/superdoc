@@ -9,6 +9,7 @@ const zoomButton = ToolbarItem({
     tooltip: "Zoom",
     label: "100%",
     hasCaret: true,
+    isWide: true,
     style: {width: '100px'},
     inlineTextInputVisible: false,
     preCommand(self, argument) {

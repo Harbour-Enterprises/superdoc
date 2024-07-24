@@ -78,7 +78,7 @@ const handleOptionClick = (option) => {
     margin: 0 auto;
     background-color: white;
     z-index: 1;
-    border-radius: 5%;
+    /* border-radius: 5%; */
 }
 
 .nested-dropdown-options {

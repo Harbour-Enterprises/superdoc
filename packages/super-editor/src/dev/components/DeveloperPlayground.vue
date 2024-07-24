@@ -112,16 +112,17 @@ onMounted(async () => {
     </div>
     <div class="content" v-if="currentFile">
 
-      <Toolbar @command="handleToolbarCommand" ref="toolbar" />
+      <div class="content-inner">
+        <Toolbar @command="handleToolbarCommand" ref="toolbar" />
+        <!-- SuperEditor expects its data to be a URL -->
+        <SuperEditor
+            mode="docx"
+            documentId="ID-122"
+            :file-source="currentFile" 
+            :options="editorOptions" />
+      </div>
 
-      <!-- SuperEditor expects its data to be a URL -->
-      <SuperEditor
-          mode="docx"
-          documentId="ID-122"
-          :file-source="currentFile" 
-          :options="editorOptions" />
-
-    </div>
+      </div>
   </div>
 </template>
 
@@ -157,5 +158,10 @@ onMounted(async () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+
+.content-inner {
+  width: 100%;
+  max-width: 8.5in;
 }
 </style>

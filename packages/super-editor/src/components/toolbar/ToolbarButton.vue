@@ -50,6 +50,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isNarrow: {
+    type: Boolean,
+    default: false,
+  },
+  isWide: {
+    type: Boolean,
+    default: false,
+  }
 });
 
 const fullTooltip = computed(() => {
@@ -69,8 +77,6 @@ const handleClick = () => {
 const handleInputSubmit = () => {
   emit('textSubmit', inlineTextInput.value);
 }
-
-
 </script>
 
 <template>
@@ -80,8 +86,9 @@ const handleInputSubmit = () => {
         <span>{{ fullTooltip }}</span>
       </div>
 
-      <div class="toolbar-button" @click="handleClick"
-      :class="{ active: props.active, disabled}">
+      <div @click="handleClick"
+      class="toolbar-button"
+      :class="{ active: props.active, disabled, narrow: isNarrow, wide: isWide}">
         <span class="button-label" v-if="label">
           <input v-if="inlineTextInputVisible"
           v-model="inlineTextInput"
@@ -95,7 +102,6 @@ const handleInputSubmit = () => {
         
         <ToolbarButtonIcon
           v-if="hasIcon"
-          :style="{marginRight: hasCaret ? '8px' : null}"
           :color="iconColor"
           class="icon"
           :icon="icon"
@@ -119,8 +125,6 @@ const handleInputSubmit = () => {
 
 .toolbar-button {
   height: 32px;
-  padding-left: 12px;
-  padding-right: 12px;
   border-radius: 6px;
   margin-top: 3.5px;
   margin-bottom: 4px;
@@ -135,6 +139,7 @@ const handleInputSubmit = () => {
   user-select: none;
   position: relative;
 }
+
 .toolbar-button:hover {
   color: black;
   background-color: #d8dee5;
@@ -149,7 +154,7 @@ const handleInputSubmit = () => {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: 100;
-  margin-right: 8px;
+  /* margin-right: 1%; */
 }
 
 .left, .right {
@@ -186,6 +191,9 @@ const handleInputSubmit = () => {
 }
 .disabled .icon, .disabled .caret, .disabled .button-label {
   opacity: .6;
+}
+.caret {
+  font-size: .6em;
 }
 .button-text-input {
   background-color: #c8d0d8;

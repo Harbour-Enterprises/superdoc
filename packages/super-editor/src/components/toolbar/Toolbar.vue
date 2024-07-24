@@ -253,14 +253,16 @@ defineExpose({
 
 <template>
   <div class="toolbar">
-    <div v-for="item, index in toolbarItems" :key="index">
+    <div v-for="item, index in toolbarItems"
+    :key="index"
+    :class="{narrow: item.isNarrow, wide: item.isWide}"
+    class="toolbar-item-ctn">
 
       <!-- toolbar separator -->
       <ToolbarSeparator v-if="isSeparator(item)" />
 
       <!-- Toolbar button -->
       <ToolbarButton v-if="isButton(item)"
-        :style="item.style"
         :disabled="item.disabled"
         :active="item.active"
         :tooltip="item.tooltip"
@@ -328,7 +330,22 @@ defineExpose({
   height: 39px;
   border-top: 1px solid #e8e8e863;
   border-bottom: 1px solid #e8e8e8;
-  display: flex;
-  justify-content: center;
+  justify-content: space-around;
+}
+
+.toolbar-item-ctn {
+  width: 4.5%;
+  display: inline-block;
+  margin: 0 .2%;
+}
+
+.narrow {
+  width: 1%;
+  margin: 0 .2%;
+}
+
+.wide {
+  width: 6%;
+  margin: 0 1%;
 }
 </style>

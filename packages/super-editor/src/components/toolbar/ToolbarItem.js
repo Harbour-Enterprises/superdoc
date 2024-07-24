@@ -11,6 +11,8 @@ export default (options) => {
 
         // top-level style
         style: options.style || null,
+        isNarrow: options.isNarrow || false,
+        isWide: options.isWide || false,
 
         // handlers
         onTextMarkSelection: options.onTextMarkSelection || null,

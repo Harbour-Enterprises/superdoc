@@ -6,6 +6,7 @@ const button = ToolbarItem({
     tooltip: "Redo",
     command: "redo",
     icon: 'fa fa-rotate-right',
+    // isNarrow: true,
     preCommand(self) {
         clearTimeout(self.tooltipTimeout);
         self.tooltipVisible = false;

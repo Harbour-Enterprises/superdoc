@@ -6,6 +6,7 @@ const button = ToolbarItem({
     tooltip: "Undo",
     command: "undo",
     icon: "fa-solid fa-rotate-left",
+    // isNarrow: true,
     preCommand(self) {
         clearTimeout(self.tooltipTimeout);
         self.tooltipVisible = false;

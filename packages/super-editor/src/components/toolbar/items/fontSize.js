@@ -9,6 +9,7 @@ const button = ToolbarItem({
     label: "12", // no units
     tooltip: "Font size",
     hasCaret: true,
+    isWide: true,
     command: "changeFontSize",
     style: {width: '90px'},
     preCommand(self, argument) {
