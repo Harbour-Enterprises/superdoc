@@ -6,8 +6,9 @@
 -->
 
 <script setup>
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import BasicUpload from './BasicUpload.vue';
+import blankDocBase64 from '../../blankDoc';
 
 // Import the component the same you would in your app
 import { SuperEditor, Toolbar } from '@/index';
@@ -15,12 +16,13 @@ import { SuperEditor, Toolbar } from '@/index';
 let activeEditor = null;
 const toolbar = ref(null);
 const currentFile = ref(null);
+
 const handleNewFile = async (file) => {
   currentFile.value = null;
 
   // Generate a file url
   const fileUrl = URL.createObjectURL(file);
-  const response = await fetch(fileUrl);
+  const response = await fetch(blankDocBase64);
   const blob = await response.blob();
   currentFile.value = new File([blob], 'docx-file.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
 }
@@ -72,6 +74,17 @@ const exportDocx = async () => {
   a.download = 'exported.docx';
   a.click();
 }
+
+const getDocumentFromBase64 = async (base64) => {
+  const response = await fetch(base64);
+  const blob = await response.blob();
+  return new File([blob], 'docx-file.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+}
+
+onMounted(async () => {
+  // set document to blank
+  currentFile.value = await getDocumentFromBase64(blankDocBase64);
+})
 </script>
 
 <template>

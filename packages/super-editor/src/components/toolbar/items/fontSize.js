@@ -6,7 +6,7 @@ const name = 'fontSize';
 const button = ToolbarItem({
     type: 'button',
     name,
-    label: "12pt",
+    label: "12", // no units
     tooltip: "Font size",
     hasCaret: true,
     command: "changeFontSize",
@@ -30,7 +30,8 @@ const button = ToolbarItem({
         if (sanitizedValue < 8) sanitizedValue = 8;
         if (sanitizedValue > 96) sanitizedValue = 96;
 
-        const label = String(sanitizedValue)+'pt';
+        // no units
+        const label = String(sanitizedValue);
         self.label = label;
 
         return {

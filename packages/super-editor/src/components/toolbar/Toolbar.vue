@@ -139,21 +139,22 @@ const colors = [
   ],
 ]
 
+// no units
 const fontSizeOptions = [
-  {label: '8pt', value: 8},
-  {label: '9pt', value: 9},
-  {label: '10pt', value: 10},
-  {label: '11pt', value: 11},
-  {label: '12pt', value: 12},
-  {label: '14pt', value: 14},
-  {label: '18pt', value: 18},
-  {label: '24pt', value: 24},
-  {label: '30pt', value: 30},
-  {label: '36pt', value: 36},
-  {label: '48pt', value: 48},
-  {label: '60pt', value: 60},
-  {label: '72pt', value: 72},
-  {label: '96pt', value: 96}
+  {label: '8', value: 8},
+  {label: '9', value: 9},
+  {label: '10', value: 10},
+  {label: '11', value: 11},
+  {label: '12', value: 12},
+  {label: '14', value: 14},
+  {label: '18', value: 18},
+  {label: '24', value: 24},
+  {label: '30', value: 30},
+  {label: '36', value: 36},
+  {label: '48', value: 48},
+  {label: '60', value: 60},
+  {label: '72', value: 72},
+  {label: '96', value: 96}
 ]
 
 const zoomOptions = [
