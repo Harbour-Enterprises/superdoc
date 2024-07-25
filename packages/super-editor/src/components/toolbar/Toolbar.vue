@@ -93,6 +93,31 @@ const toolbarItems = ref([
   // }),
 ])
 
+const toolbarItemsMobile = ref([
+  bold,
+  italic,
+  underline,
+  indentRight,
+  indentLeft,
+  search,
+  overflow
+].map((item) => item.name))
+
+const toolbarItemsTablet = ref([
+    fontButton,
+    fontSize,
+    alignment,
+    bulletedList,
+    numberedList,
+    overflow
+  ].map((item) => item.name))
+
+  const toolbarItemsDesktop = ref(toolbarItems.value.map((item) => item.name))
+
+const mobileBreakpoint = (item) => toolbarItemsMobile.value.includes(item.name);
+const tabletBreakpoint = (item) => toolbarItemsTablet.value.includes(item.name);
+const desktopBreakpoint = (item) => toolbarItemsDesktop.value.includes(item.name);
+
 const alignments = [
   [
     {label: 'Left', icon: 'fa-align-left', value: 'left'},
@@ -255,7 +280,13 @@ defineExpose({
   <div class="toolbar">
     <div v-for="item, index in toolbarItems"
     :key="index"
-    :class="{narrow: item.isNarrow, wide: item.isWide}"
+    :class="{
+      narrow: item.isNarrow,
+      wide: item.isWide,
+      mobile: mobileBreakpoint(item),
+      tablet: tabletBreakpoint(item),
+      desktop: desktopBreakpoint(item),
+    }"
     class="toolbar-item-ctn">
 
       <!-- toolbar separator -->
@@ -326,6 +357,7 @@ defineExpose({
 
 <style scoped>
 .toolbar {
+  display: flex;
   width: 100%;
   height: 39px;
   border-top: 1px solid #e8e8e863;
@@ -335,8 +367,24 @@ defineExpose({
 
 .toolbar-item-ctn {
   width: 4.5%;
-  display: inline-block;
   margin: 0 .2%;
+  display: none;
+}
+
+.mobile {
+  display: initial;
+}
+
+@media (min-width: 700px) {
+  .tablet {
+    display: initial;
+  }
+}
+
+@media (min-width: 800px) {
+  .desktop {
+    display: initial;
+  }
 }
 
 .narrow {
