@@ -27,6 +27,7 @@ export const Italic = Mark.create({
   addShortcuts() {
     return {
       'Mod-i': () => this.editor.commands.toggleItalic(),
+      'Mod-I': () => this.editor.commands.toggleItalic(),
     };
   },
 });

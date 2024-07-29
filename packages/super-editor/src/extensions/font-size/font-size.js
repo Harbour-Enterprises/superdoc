@@ -9,7 +9,6 @@ export const FontSize = Mark.create({
     ];
   },
 
-
   renderDOM(node) {
     return ['span', node.mark.attrs.attributes, 0];
   },
@@ -33,11 +32,5 @@ export const FontSize = Mark.create({
         return commands.toggleMark(this.name, attrs);
       },
     };
-  },
-
-  addShortcuts() {
-    return {
-      // 'Mod-u': () => this.editor.commands.toggleUnderline(),
-    }
   },
 });

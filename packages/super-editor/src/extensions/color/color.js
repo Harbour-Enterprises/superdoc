@@ -36,10 +36,4 @@ export const Color = Mark.create({
       },
     };
   },
-
-  addShortcuts() {
-    return {
-      'Mod-u': () => this.editor.commands.toggleUnderline(),
-    }
-  },
 });

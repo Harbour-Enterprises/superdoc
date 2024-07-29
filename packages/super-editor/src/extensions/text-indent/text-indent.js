@@ -35,10 +35,4 @@ export const TextIndent = Mark.create({
       },
     };
   },
-
-  addShortcuts() {
-    return {
-      // 'Mod-u': () => this.editor.commands.toggleUnderline(),
-    }
-  },
 });

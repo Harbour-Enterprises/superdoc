@@ -138,6 +138,20 @@ export class Editor extends EventEmitter {
   }
 
   /**
+   * Create "chain".
+   */
+  chain() {
+    return this.#commandService.chain();
+  }
+
+  /**
+   * Create "can".
+   */
+  can() {
+    return this.#commandService.can();
+  }
+
+  /**
    * Set editor options and update state.
    * @param options List of options.
    */

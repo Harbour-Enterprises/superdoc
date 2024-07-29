@@ -35,15 +35,17 @@ export class CommandService {
     const { editor, state } = this;
     const { view } = editor;
     const { tr } = state;
-    const props = this.createCommandProps(tr);
+    const props = this.createProps(tr);
 
     const commandEntries = Object.entries(this.rawCommands);
     const transformed = commandEntries.map(([name, command]) => {
       const method = (...args) => {
         const fn = command(...args)(props);
-
-        view.dispatch(tr);
-
+        
+        if (!tr.getMeta('preventDispatch')) {
+          view.dispatch(tr);
+        }
+        
         return fn;
       };
 
@@ -53,13 +55,84 @@ export class CommandService {
     return Object.fromEntries(transformed);
   }
 
+  get chain() {
+    return () => this.createChain();
+  }
+
+  get can() {
+    return () => this.createChain();
+  }
+
+  /**
+   * Creates "chain".
+   * @param startTr Start transaction.
+   * @param shouldDispatch Should dispatch or not.
+   */
+  createChain(startTr, shouldDispatch = true) {
+    const { editor, state, rawCommands } = this;
+    const { view } = editor;
+    const callbacks = [];
+    const hasStartTr = !!startTr;
+    const tr = startTr || state.tr;
+
+    const run = () => {
+      if (
+        !hasStartTr
+        && shouldDispatch
+        && !tr.getMeta('preventDispatch')
+      ) {
+        view.dispatch(tr);
+      }
+      return callbacks.every((cb) => cb === true);
+    };
+
+    const entries = Object.entries(rawCommands).map(([name, command]) => {
+      const chainedCommand = (...args) => {
+        const props = this.createProps(tr, shouldDispatch);
+        const callback = command(...args)(props);
+
+        callbacks.push(callback);
+        
+        return chain;
+      };
+      return [name, chainedCommand];
+    });
+
+    const chain = {
+      ...Object.fromEntries(entries),
+      run,
+    };
+    return chain;
+  }
+
+  /**
+   * Creates "can".
+   * @param startTr Start transaction.
+   */
+  createCan(startTr) {
+    const { rawCommands, state } = this;
+    const dispatch = false;
+    const tr = startTr || state.tr;
+    const props = this.createProps(tr, dispatch);
+    const formattedCommands = Object.fromEntries(
+      Object.entries(rawCommands).map(([name, command]) => {
+        return [name, (...args) => command(...args)({ ...props, dispatch: undefined })];
+      }),
+    );
+
+    return {
+      ...formattedCommands,
+      chain: () => this.createChain(tr, dispatch),
+    };
+  }
+
   /**
    * Creates default props for the command method.
    * @param {*} tr Transaction.
    * @param {*} shouldDispatch Check if should dispatch.
    * @returns Object with props.
    */
-  createCommandProps(tr, shouldDispatch = true) {
+  createProps(tr, shouldDispatch = true) {
     const { editor, state, rawCommands } = this;
     const { view } = editor;
 
@@ -69,6 +142,8 @@ export class CommandService {
       view,
       state: chainableEditorState(tr, state),
       dispatch: shouldDispatch ? () => null : null,
+      chain: () => this.createChain(tr, shouldDispatch),
+      can: () => this.createCan(tr),
       get commands() {
         return Object.fromEntries(
           Object.entries(rawCommands).map(([name, command]) => {

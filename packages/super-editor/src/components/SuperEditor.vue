@@ -1,8 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { Editor } from '@core/index.js';
-import * as extensions from '@extensions/index.js';
-
+import { getStarterExtensions } from '@extensions/index.js';
 
 const emit = defineEmits([
   'editor-ready',
@@ -40,7 +39,7 @@ const initEditor = () => {
   const editor  = new Editor({
     element: editorElem.value,
     fileSource: props.fileSource,
-    extensions: Object.values(extensions),
+    extensions: getStarterExtensions(),
     documentId: props.documentId,
     ...props.options,
   });
