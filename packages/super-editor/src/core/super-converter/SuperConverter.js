@@ -554,6 +554,7 @@ class SuperConverter {
 
   #getMarkValue(markType, attributes) {
     if (markType === 'tabs') markType = 'textIndent';
+
     const markValueMapper = {
       color: `#${attributes['w:val']}`,
       fontSize: `${attributes['w:val']/2}pt`,
@@ -766,6 +767,9 @@ class SuperConverter {
         break;
       case 'fontFamily':
         markElement.attributes['w:ascii'] = value;
+        markElement.attributes['w:eastAsia'] = value;
+        markElement.attributes['w:hAnsi'] = value;
+        markElement.attributes['w:cs'] = value;
         break;
       case 'color':
         let processedColor = value;

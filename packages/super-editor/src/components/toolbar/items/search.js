@@ -4,6 +4,7 @@ const button = ToolbarItem({
     type: 'button',
     name: 'search',
     tooltip: "Search",
+    disabled: true,
     icon: "fa-solid fa-magnifying-glass",
     preCommand(self) {
         clearTimeout(self.tooltipTimeout);

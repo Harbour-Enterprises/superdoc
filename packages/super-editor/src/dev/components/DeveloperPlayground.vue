@@ -27,14 +27,25 @@ const handleNewFile = async (file) => {
   currentFile.value = new File([blob], 'docx-file.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
 }
 
-const handleToolbarCommand = ({command, argument}) => {
-    console.debug('[SuperEditor dev] Toolbar command', command, argument, activeEditor?.commands);
+const commandsMap = {
+  toggleList: 'toggleBulletList',
+  toggleNumberedList: 'toggleOrderedList',
+};
+
+const handleToolbarCommand = ({ command, argument }) => {
+  console.debug('[SuperEditor dev] Toolbar command', command, argument, activeEditor?.commands);
+  
   const commands = activeEditor?.commands;
-  if (!!commands && command in commands) {
-    activeEditor?.commands[command](argument);
-    activeEditor.view.focus();
+  if (!commands) {
+    return;
   }
-}
+
+  const commandName = commandsMap[command] ? commandsMap[command] : command;
+  if (commandName in commands) {
+    activeEditor?.commands[commandName](argument);
+    activeEditor.view.focus();
+  }    
+};
 
 const onSelectionUpdate = ({ editor, transaction }) => {
   const { from, to } = transaction.selection;

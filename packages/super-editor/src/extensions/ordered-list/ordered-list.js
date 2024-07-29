@@ -7,16 +7,17 @@ export const OrderedList = Node.create({
 
   group: 'block list',
 
-  content: 'listItem+',
+  content() {
+    return `${this.options.itemTypeName}+`;
+  },
 
   addOptions() {
     return {
-      htmlAttributes: {
-        class: 'ordered-list',
-        // for testing
-        'data-test-attr': 'some-value',
-      },
-    }
+      itemTypeName: 'listItem',
+      htmlAttributes: {},
+      keepMarks: false,
+      keepAttributes: false,
+    };
   },
 
   addAttributes() {
@@ -33,11 +34,16 @@ export const OrderedList = Node.create({
       'list-style-type': {
         default: 'decimal',
         renderDOM: (attrs) => {
-          let listStyleType = 'decimal';
-          if ('list-style-type' in attrs) listStyleType = toKebabCase(attrs['list-style-type']);
-          return {
-            style: `list-style-type: ${listStyleType}`,
+          let listStyleType = attrs['list-style-type'];
+          if (!listStyleType) return {};
+
+          if (listStyleType === 'lowerLetter') {
+            listStyleType = 'lowerAlpha';
           }
+
+          return {
+            style: `list-style-type: ${toKebabCase(listStyleType)};`,
+          };
         }
       },
 
@@ -58,4 +64,27 @@ export const OrderedList = Node.create({
       ? ['ol', Attribute.mergeAttributes(this.options.htmlAttributes, restAttributes), 0]
       : ['ol', Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes), 0];
   },
+
+  addCommands() {
+    return {
+      toggleOrderedList: () => (props) => {      
+        const { commands, chain } = props;
+        return commands.toggleList(
+          this.name, 
+          this.options.itemTypeName, 
+          this.options.keepMarks,
+        );
+      },
+    };
+  },
+
+  addShortcuts() {
+    return {
+      'Mod-Shift-7': () => {
+        return this.editor.commands.toggleOrderedList();
+      },
+    };
+  },
+
+  // Input rules.
 });

@@ -17,6 +17,7 @@ export class Attribute {
       rendered: true,
       renderDOM: null,
       parseDOM: null,
+      keepOnSplit: true,
     };
     
     const globalAttributes = Attribute.#getGlobalAttributes(extensions, defaultAttribute);
@@ -224,6 +225,25 @@ export class Attribute {
       }, {});
   
     return merged;  
+  }
+  
+  /**
+   * Get extension attributes that should be splitted by keepOnSplit flag.
+   * @param extensionAttrs Array of attributes.
+   * @param typeName The type of the extension.
+   * @param attributes The extension attributes.
+   * @returns The splitted attributes.
+   */
+  static getSplittedAttributes(extensionAttrs, typeName, attributes) {
+    const attributesEntries = Object.entries(attributes);
+    const filtered = attributesEntries.filter(([name]) => {
+      const extensionAttr = extensionAttrs.find((item) => {
+        return item.type === typeName && item.name === name;
+      });
+      if (!extensionAttr) return false;
+      return extensionAttr.attribute.keepOnSplit;
+    });
+    return Object.fromEntries(filtered);
   }
 }
 

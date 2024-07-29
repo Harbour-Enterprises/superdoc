@@ -4,6 +4,7 @@ import { Schema } from './Schema.js';
 import { Attribute } from './Attribute.js';
 import { getExtensionConfigField } from './helpers/getExtensionConfigField.js';
 import { getSchemaTypeByName } from './helpers/getSchemaTypeByName.js'
+import { callOrGet } from './utilities/callOrGet.js';
 
 /**
  * ExtensionService is the main class to work with extensions.
@@ -14,6 +15,8 @@ export class ExtensionService {
   schema;
 
   extensions;
+
+  splittableMarks = [];
 
   constructor(extensions, editor) {
     this.editor = editor;
@@ -93,7 +96,7 @@ export class ExtensionService {
    */
   get plugins() {
     const editor = this.editor;
-    const extensions = [...this.extensions];
+    const extensions = ExtensionService.sortByPriority([...this.extensions].reverse());
 
     const allPlugins = extensions.map((extension) => {
       const context = {
@@ -152,6 +155,21 @@ export class ExtensionService {
     for (const extension of this.extensions) {
       this.editor.extensionStorage[extension.name] = extension.storage;
 
+      const context = {
+        name: extension.name,
+        options: extension.options,
+        storage: extension.storage,
+        editor: this.editor,
+        type: getSchemaTypeByName(extension.name, this.schema),
+      };
+
+      if (extension.type === 'mark') {
+        const keepOnSplit = callOrGet(getExtensionConfigField(extension, 'keepOnSplit', context)) ?? true;
+        if (keepOnSplit) {
+          this.splittableMarks.push(extension.name);
+        }
+      }
+      
       this.#attachEditorEvents(extension);
     }
   }

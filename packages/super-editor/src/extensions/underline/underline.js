@@ -26,6 +26,7 @@ export const Underline = Mark.create({
   addShortcuts() {
     return {
       'Mod-u': () => this.editor.commands.toggleUnderline(),
+      'Mod-U': () => this.editor.commands.toggleUnderline(),
     }
   },
 });

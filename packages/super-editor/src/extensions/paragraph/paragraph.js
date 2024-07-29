@@ -4,6 +4,8 @@ import { Attribute } from '@core/index.js';
 export const Paragraph = Node.create({
   name: 'paragraph',
 
+  priority: 1000,
+
   group: 'block',
 
   // If possible, we should force at least one run inside a paragraph
@@ -31,7 +33,7 @@ export const Paragraph = Node.create({
           return {
             style
           };
-        }
+        },
       },
 
       attributes: {
