@@ -6,6 +6,7 @@ const fontButton = ToolbarItem({
     type: 'button',
     name,
     tooltip: "Font",
+    overflowIcon: 'fa-font',
     label: "Arial",
     hasCaret: true,
     isWide: true,

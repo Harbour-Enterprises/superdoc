@@ -1,6 +1,6 @@
 <script setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import ToolbarButton from './ToolbarButton.vue';
 import ToolbarSeparator from './ToolbarSeparator.vue';
 import ToolbarButtonIcon from './ToolbarButtonIcon.vue';
@@ -104,15 +104,76 @@ const toolbarItemsMobile = ref([
 ].map((item) => item.name))
 
 const toolbarItemsTablet = ref([
+  ...toolbarItemsMobile.value,
+  ...[
     fontButton,
     fontSize,
     alignment,
     bulletedList,
     numberedList,
     overflow
-  ].map((item) => item.name))
+  ].map((item) => item.name)
+])
 
-  const toolbarItemsDesktop = ref(toolbarItems.value.map((item) => item.name))
+const overflowItems = ref([]);
+
+let windowResizeTimeout = null;
+
+const debounceSetOverflowItems = () => {
+  clearTimeout(windowResizeTimeout);
+  windowResizeTimeout = setTimeout(() => {
+    setOverflowItems();
+  }, 500);
+}
+
+const setOverflowItems = () => {
+  const windowWidth = window.innerWidth;
+  const mobileBreakpoint = 700;
+  const tabletBreakpoint = 800;
+
+  overflowItems.value = [];
+  const items = [];
+  const toolbarItemsBreakpoint = [];
+
+  // mobile
+  if (windowWidth < mobileBreakpoint)
+    toolbarItemsBreakpoint.push(...toolbarItemsMobile.value);
+  // tablet
+  if (windowWidth >= mobileBreakpoint && windowWidth < tabletBreakpoint)
+    toolbarItemsBreakpoint.push(...toolbarItemsTablet.value);
+  // desktop
+  if (windowWidth >= tabletBreakpoint)
+    toolbarItemsBreakpoint.push(...toolbarItemsDesktop.value);
+
+  // get intersection of mobile and toolbar items
+  toolbarItems.value.forEach(item => {
+    if (!toolbarItemsBreakpoint.includes(item.name) && item.type !== 'separator') {
+      items.push(item);
+    }
+  })
+
+  overflowItems.value = items;
+  console.log("Overflow items", overflowItems.value)
+};
+
+const overflowIconGrid = computed(() => [overflowItems.value.map((item) => (
+    {
+      label: item.name,
+      icon: item.overflowIcon || null,
+      value: 'test'
+    }
+))]);
+
+onMounted(() => {
+  window.addEventListener('resize', debounceSetOverflowItems);
+})
+
+onUnmounted(() => {
+  window.addEventListener('resize', debounceSetOverflowItems);
+})
+
+const desktopExclude = ['overflow'];
+const toolbarItemsDesktop = ref(toolbarItems.value.map((item) => item.name).filter((name) => !desktopExclude.includes(name)));
 
 const mobileBreakpoint = (item) => toolbarItemsMobile.value.includes(item.name);
 const tabletBreakpoint = (item) => toolbarItemsTablet.value.includes(item.name);
@@ -348,6 +409,12 @@ defineExpose({
           :initial-url="item.childItem.argument?.href || ''"
           @submit="(anchor) => handleToolbarButtonClick(item.childItem, anchor)"
           @cancel="handleToolbarButtonClick({...item.childItem, command: null})"/>
+
+          <!-- overflow options  -->
+          <IconGrid
+          v-if="showOptions(item.childItem, 'overflowOptions')"
+          :icons="overflowIconGrid"
+          @select="(alignment) => handleToolbarButtonClick(item.childItem, alignment)"/>
       </ToolbarButton>
 
       <!-- toolbar options -->
@@ -371,17 +438,29 @@ defineExpose({
   display: none;
 }
 
-.mobile {
-  display: initial;
+
+@media (max-width: 700px) {
+  .mobile {
+    display: initial;
+  }
 }
 
-@media (min-width: 700px) {
+@media (min-width: 700px) and (max-width: 800px) {
+  .mobile {
+    display: none;
+  }
   .tablet {
     display: initial;
   }
 }
 
 @media (min-width: 800px) {
+  .mobile {
+    display: none;
+  }
+  .tablet {
+    display: none;
+  }
   .desktop {
     display: initial;
   }

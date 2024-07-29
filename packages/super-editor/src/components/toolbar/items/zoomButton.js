@@ -7,6 +7,7 @@ const zoomButton = ToolbarItem({
     type: 'button',
     name,
     tooltip: "Zoom",
+    overflowIcon: 'fa-magnifying-glass-plus',
     label: "100%",
     hasCaret: true,
     isWide: true,

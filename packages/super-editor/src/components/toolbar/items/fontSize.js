@@ -8,6 +8,7 @@ const button = ToolbarItem({
     name,
     label: "12", // no units
     tooltip: "Font size",
+    overflowIcon: 'fa-text-height',
     hasCaret: true,
     isWide: true,
     command: "changeFontSize",

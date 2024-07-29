@@ -28,7 +28,10 @@ import {
   faAlignLeft,
   faAlignRight,
   faAlignCenter,
-  faAlignJustify
+  faAlignJustify,
+  faMagnifyingGlassPlus,
+  faTextHeight,
+  faPalette
 } from '@fortawesome/free-solid-svg-icons';
 
 
@@ -55,7 +58,11 @@ library.add(
   faRotateLeft,
   faRotateRight,
   faMagnifyingGlass,
-  faCircle
+  faCircle,
+  faMagnifyingGlassPlus,
+  faFont,
+  faTextHeight,
+  faPalette
 );
 
 /**

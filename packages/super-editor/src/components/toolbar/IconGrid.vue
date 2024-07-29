@@ -12,6 +12,7 @@ const props = defineProps({
 </script>
 
 <template>
+
     <div class="option-grid-ctn">
         <div class="option-row" v-for="(row, rowIndex) in icons" :key="rowIndex">
             <div class="option" v-for="(option, optionIndex) in row"
@@ -32,7 +33,7 @@ const props = defineProps({
     background-color: #fff;
     position: absolute;
     top: 32px;
-    left: 0;
+    right: 0;
 }
 .option-row {
     display: flex;

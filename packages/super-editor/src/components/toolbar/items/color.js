@@ -3,7 +3,8 @@ import ToolbarItem from "../ToolbarItem";
 const colorButton = ToolbarItem({
     type: 'button',
     name: 'color',
-    icon: 'fa fa-font',
+    icon: 'fa-font',
+    overflowIcon: 'fa-palette',
     active: false,
     tooltip: "Text color",
     preCommand(self) {

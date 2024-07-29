@@ -63,6 +63,7 @@ const colorStyle = computed(() => {
 .color {
   border-bottom: solid 4px #47484a;
   position: relative;
+  top: -2px;
   width: 16px;
   text-align: center;
 }

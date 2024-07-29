@@ -28,6 +28,7 @@ export default (options) => {
 
         // icon properties
         icon: options.icon || null,
+        overflowIcon: options.overflowIcon || options.icon || null,
         iconColor: options.iconColor || null,
         hasCaret: options.hasCaret || false,
 

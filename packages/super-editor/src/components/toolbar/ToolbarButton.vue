@@ -173,6 +173,8 @@ const handleInputSubmit = () => {
   color: #555555;
   font-size: 10px;
   text-align: center;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .tooltip::after {
