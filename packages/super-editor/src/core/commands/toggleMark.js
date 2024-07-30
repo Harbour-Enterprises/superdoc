@@ -5,7 +5,8 @@ import { getMarkType } from '../helpers/getMarkType.js';
  * Toggle mark.
  * @param typeOrName Mark type or name.
  * @param attrs Mark attributes.
- * @returns 
+ * 
+ * https://prosemirror.net/docs/ref/#commands.toggleMark
  */
 export const toggleMark = (typeOrName, attrs = {}) => ({ state, dispatch }) => {
   const type = getMarkType(typeOrName, state.schema);

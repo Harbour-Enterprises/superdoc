@@ -7,10 +7,7 @@ import { findParentNode } from './findParentNode.js';
  * @param listType List type.
  */
 export const joinListBackwards = (tr, listType) => {
-  const list = findParentNode(
-    (node) => node.type === listType,
-    tr.selection,
-  );
+  const list = findParentNode((node) => node.type === listType)(tr.selection);
   if (!list) return true;
 
   const before = tr.doc.resolve(Math.max(0, list.pos - 1)).before(list.depth);

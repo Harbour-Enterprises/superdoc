@@ -14,8 +14,7 @@ export const BulletList = Node.create({
     return {
       itemTypeName: 'listItem',
       htmlAttributes: {},
-      keepMarks: false,
-      keepAttributes: false,
+      keepMarks: true,
     };
   },
 

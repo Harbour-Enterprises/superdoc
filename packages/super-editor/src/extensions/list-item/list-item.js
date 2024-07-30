@@ -38,18 +38,19 @@ export const ListItem = Node.create({
       // The DOCX character for this list item (ie: ●, ▪)
       lvlText: { 
         default: null,
-        renderDOM: (attrs) => {
-          let lvlText = attrs?.lvlText;
-          if (!lvlText) return {};
+        rendered: false,
+        // renderDOM: (attrs) => {
+        //   let lvlText = attrs?.lvlText;
+        //   if (!lvlText) return {};
 
-          let code = lvlText.codePointAt(0);
-          let bulletType =  bulletTypes[code];
-          if (!bulletType) return {};
+        //   let code = lvlText.codePointAt(0);
+        //   let bulletType =  bulletTypes[code];
+        //   if (!bulletType) return {};
 
-          return {
-            style: `list-style-type: ${bulletType};`,
-          };
-        },
+        //   return {
+        //     style: `list-style-type: ${bulletType};`,
+        //   };
+        // },
       },
 
       // JC = justification. Expect left, right, center
