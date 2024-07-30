@@ -138,14 +138,14 @@ export class Editor extends EventEmitter {
   }
 
   /**
-   * Create "chain".
+   * Create a chain of commands to call multiple commands at once.
    */
   chain() {
     return this.#commandService.chain();
   }
 
   /**
-   * Create "can".
+   * Check if a command or a chain of commands can be executed. Without executing it.
    */
   can() {
     return this.#commandService.can();

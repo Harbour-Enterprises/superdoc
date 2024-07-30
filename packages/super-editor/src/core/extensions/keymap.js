@@ -4,7 +4,7 @@ import { isMacOS } from '../utilities/isMacOS.js';
 
 /**
  * For reference.
- * https://github.com/ProseMirror/prosemirror-commands/blob/master/src/commands.ts
+ * https://github.com/ProseMirror/prosemirror-commands/blob/master/src/commands.ts#L736
  */
 export const Keymap = Extension.create({
   name: 'keymap',

@@ -13,11 +13,13 @@ const ensureMarks = (state, splittableMarks) => {
 };
 
 /**
- * Creates a new node from an existing node.
- * 
- * For reference.
- * https://github.com/ProseMirror/prosemirror-commands/blob/master/src/commands.ts#L357
+ * Will split the current node into two nodes. If the selection is not
+ * splittable, the command will be ignored.
  * @param options.keepMarks Keep marks from prev node.
+ * 
+ * The command is a slightly modified version of the original 
+ * `splitBlockAs` command to better manage attributes and marks.
+ * https://github.com/ProseMirror/prosemirror-commands/blob/master/src/commands.ts#L357
  */
 export const splitBlock = ({ keepMarks = true } = {}) => (props) => {
   const { tr, state, dispatch, editor } = props;

@@ -1,8 +1,9 @@
 /**
  * Gets the default block type at a given match.
- * https://github.com/ProseMirror/prosemirror-commands/blob/master/src/commands.ts#L297
  * @param match Content match.
  * @returns Default block type or null.
+ * 
+ * https://github.com/ProseMirror/prosemirror-commands/blob/master/src/commands.ts#L297
  */
 export function defaultBlockAt(match) {
   for (let i = 0; i < match.edgeCount; i++) {

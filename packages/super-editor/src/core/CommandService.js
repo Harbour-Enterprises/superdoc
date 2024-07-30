@@ -55,16 +55,22 @@ export class CommandService {
     return Object.fromEntries(transformed);
   }
 
+  /**
+   * Create a chain of commands to call multiple commands at once.
+   */
   get chain() {
     return () => this.createChain();
   }
 
+  /**
+   * Check if a command or a chain of commands can be executed. Without executing it.
+   */
   get can() {
     return () => this.createChain();
   }
 
   /**
-   * Creates "chain".
+   * Creates a chain of commands.
    * @param startTr Start transaction.
    * @param shouldDispatch Should dispatch or not.
    */
@@ -106,7 +112,7 @@ export class CommandService {
   }
 
   /**
-   * Creates "can".
+   * Creates a can check for commands.
    * @param startTr Start transaction.
    */
   createCan(startTr) {
