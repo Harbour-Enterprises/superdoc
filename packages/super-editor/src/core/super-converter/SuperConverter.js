@@ -375,7 +375,7 @@ class SuperConverter {
    * @param {number} [listLevel=0] - The current indentation level of the list.
    * @returns {Object} The processed list node with structured content.
    */
-  #handleListNodes(listItems, listLevel = 0, parent = null) {
+  #handleListNodes(listItems, listLevel = 0) {
     const parsedListItems = [];
     let overallListType;
     let listStyleType;
@@ -405,7 +405,9 @@ class SuperConverter {
       if (listLevel === intLevel) {
         overallListType = listType;
         item.seen = true;
-        const schemaElements = [this.#wrapNodes('paragraph', this.convertToSchema(elements)?.filter(n => n))];
+
+        const schemaElements = [];
+        schemaElements.push(this.#wrapNodes('paragraph', this.convertToSchema(elements)?.filter(n => n)));
 
         if (listpPrs) nodeAttributes['listParagraphProperties'] = listpPrs;
         if (listrPrs) nodeAttributes['listRunProperties'] = listrPrs;
@@ -423,12 +425,13 @@ class SuperConverter {
       else if (listLevel < intLevel) {
         const sublist = this.#handleListNodes(listItems.slice(index), listLevel + 1);
         const lastItem = parsedListItems[parsedListItems.length - 1];
-        if (!lastItem) parsedListItems.push(sublist);
-        else {
+        if (!lastItem) {
+          parsedListItems.push(this.#createListItem([sublist], nodeAttributes, []));
+        } else {
           lastItem.content.push(sublist);
         }
       }
-      
+
       // If this item belongs in a higher list level, we need to break out of the loop and return to higher levels
       else {
         break;
@@ -524,7 +527,7 @@ class SuperConverter {
         if (missingMarks.includes(element.name)) console.debug('❗️❗️ATTN: No marks found for element:', element.name);
         // else throw new Error(`No marks found for element: ${element.name}`);
       }
-      
+
       marksForType.forEach((m) => {
         if (!m || seen.has(m.type)) return;
         seen.add(m.type);

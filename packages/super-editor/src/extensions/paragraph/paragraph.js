@@ -30,9 +30,7 @@ export const Paragraph = Node.create({
           let style = '';
           if (lineSpaceBefore) style += `margin-top: ${lineSpaceBefore}px;`;
           if (lineSpaceAfter) style += `margin-bottom: ${lineSpaceAfter}px;`;
-          return {
-            style
-          };
+          return { style };
         },
       },
 
