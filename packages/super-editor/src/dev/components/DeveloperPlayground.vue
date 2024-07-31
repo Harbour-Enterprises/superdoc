@@ -6,7 +6,7 @@
 -->
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, watch, onMounted } from 'vue';
 import BasicUpload from './BasicUpload.vue';
 import blankDocBase64 from '../../blankDoc';
 
@@ -14,6 +14,8 @@ import blankDocBase64 from '../../blankDoc';
 import { SuperEditor, Toolbar } from '@/index';
 
 let activeEditor = null;
+const toolbarVisible = ref(false);
+
 const toolbar = ref(null);
 const currentFile = ref(null);
 
@@ -67,6 +69,8 @@ const onSelectionUpdate = ({ editor, transaction }) => {
 const onCreate = ({ editor }) => {
   console.debug('[Dev] Editor created', editor);
   activeEditor = editor;
+  toolbarVisible.value = true;
+
   window.editor = editor;
   console.debug('[Dev] Page styles (pixels)', editor.getPageStyles());
   console.debug('[Dev] document styles', editor.converter.getDocumentDefaultStyles());
@@ -128,8 +132,11 @@ onMounted(async () => {
     <div class="content" v-if="currentFile">
 
       <div class="content-inner">
-        <Toolbar @command="handleToolbarCommand" ref="toolbar" />
-        <!-- SuperEditor expects its data to be a URL -->
+        <Toolbar
+        v-if="toolbarVisible"
+        :editor-instance="activeEditor"
+        @command="handleToolbarCommand" ref="toolbar" />
+        <!-- SuperEditor expects its data to be a URL --> 
         <SuperEditor
             mode="docx"
             documentId="ID-122"

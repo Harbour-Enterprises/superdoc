@@ -1,36 +1,527 @@
 <script setup>
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch, defineProps } from 'vue';
 import ToolbarButton from './ToolbarButton.vue';
 import ToolbarSeparator from './ToolbarSeparator.vue';
-import ToolbarButtonIcon from './ToolbarButtonIcon.vue';
 import DropdownOptions from './DropdownOptions.vue';
-import ToggleSlider from './ToggleSlider.vue';
 import IconGrid from './IconGrid.vue';
-import ToolbarItem from './ToolbarItem'
 import LinkInput from './LinkInput.vue';
+import { createToolbarItem as ToolbarItem } from './ToolbarItem';
 
-import {
-  bold,
-  fontButton,
-  fontSize,
-  separator,
-  italic,
-  underline,
-  colorButton,
-  link,
-  image,
-  alignment,
-  bulletedList,
-  numberedList,
-  indentLeft,
-  indentRight,
-  overflow,
-  zoom,
-  undo,
-  redo,
-  search
-} from './items/index'
+const props = defineProps({
+    editorInstance: {
+        type: Object,
+        required: true,
+    }
+});
+
+// bold
+const bold = ToolbarItem({
+    type: 'button',
+    name: 'bold',
+    command: 'toggleBold',
+    icon: 'fa fa-bold',
+    tooltip: "Bold",
+    onTextSelectionChange(self) {
+        self.active = false;
+    },
+    onTextMarkSelection(self, mark) {
+        self.active = mark.type.name == 'bold';
+    }
+});
+
+// font
+const fontButton = ToolbarItem({
+    type: 'button',
+    name,
+    tooltip: "Font",
+    overflowIcon: 'fa-font',
+    label: "Arial",
+    hasCaret: true,
+    isWide: true,
+    style: {width: '120px'},
+    preCommand(self) {
+        clearTimeout(self.tooltipTimeout);
+        self.tooltipVisible = false;
+        self.active = self.active ? false : true;
+        self.childItem.active = self.childItem.active ? false : true;
+    },
+    onTextMarkSelection(self, mark) {
+        self.label = mark.attrs.font;
+    },
+    onTextSelectionChange(self) {
+        self.active = false;
+        self.childItem.active = false;
+        self.label = "Arial";
+    }
+});
+
+const fontOptions = ToolbarItem({
+    type: 'options',
+    name: 'fontFamilyDropdown',
+    command: 'toggleFont',
+    preCommand(self, argument) {
+        console.log('preCommand', argument);
+        self.active = false;
+        self.parentItem.active = false;
+    },
+    command: 'toggleFont',
+})
+fontButton.childItem = fontOptions;
+fontOptions.parentItem = fontButton;
+
+// font size
+const fontSize = ToolbarItem({
+    type: 'button',
+    name: 'fontSize',
+    label: "12", // no units
+    tooltip: "Font size",
+    overflowIcon: 'fa-text-height',
+    hasCaret: true,
+    isWide: true,
+    command: "changeFontSize",
+    style: {width: '90px'},
+    preCommand(self, argument) {
+        clearTimeout(self.tooltipTimeout);
+        self.tooltipVisible = false;
+        self.active = self.active ? false : true;
+        self.childItem.active = self.childItem.active ? false : true;
+        self.inlineTextInputVisible = self.inlineTextInputVisible ? false : true;
+        setTimeout(() => {
+            const input = document.querySelector('#inlineTextInput-fontSize');
+            if (input) input.focus();
+        });
+
+        // from text input
+        if (!argument) return;
+
+        const value = argument;
+        let sanitizedValue = sanitizeNumber(value, 12);
+        if (sanitizedValue < 8) sanitizedValue = 8;
+        if (sanitizedValue > 96) sanitizedValue = 96;
+
+        // no units
+        const label = String(sanitizedValue);
+        self.label = label;
+
+        return {
+            value: sanitizedValue,
+            label
+        }
+    },
+    onTextMarkSelection(self, mark) {
+        console.log('onTextMarkSelection', mark);
+        self.label = mark.attrs.fontSize;
+    },
+    onTextSelectionChange(self) {
+        self.active = false;
+        self.childItem.active = false;
+        self.label = '12pt';
+    }
+});
+
+const fontSizeOptions = ToolbarItem({
+    type: 'options',
+    name: 'fontSizeDropdown',
+    command: 'changeFontSize',
+    preCommand(self, argument) {
+        console.log('preCommand', argument);
+        self.active = false;
+        self.parentItem.active = false;
+        self.parentItem.inlineTextInputVisible = false;
+
+        const {label} = argument;
+        self.parentItem.label = label;
+    },
+})
+fontSize.childItem = fontSizeOptions;
+fontSizeOptions.parentItem = fontSize;
+
+// separator
+const separator =  ToolbarItem({
+    type: 'separator',
+    name: 'separator',
+    icon: 'fa-grip-lines-vertical',
+    isNarrow: true,
+})
+
+// italic
+const italic = ToolbarItem({
+    type: 'button',
+    name: 'italic',
+    command: 'toggleItalic',
+    icon: 'fa fa-italic',
+    active: false,
+    tooltip: "Italic",
+    onTextSelectionChange(self) {
+        self.active = false;
+    },
+    onTextMarkSelection(self, mark) {
+        self.active = mark.type.name == 'italic';
+    }
+});
+
+// underline
+const underline = ToolbarItem({
+    type: 'button',
+    name: 'underline',
+    command: 'toggleUnderline',
+    icon: 'fa fa-underline',
+    active: false,
+    tooltip: "Underline",
+    onTextSelectionChange(self) {
+        self.active = false;
+    },
+    onTextMarkSelection(self, mark) {
+        self.active = mark.type.name == 'underline';
+    }
+});
+
+// color
+const colorButton = ToolbarItem({
+    type: 'button',
+    name: 'color',
+    icon: 'fa-font',
+    overflowIcon: 'fa-palette',
+    active: false,
+    tooltip: "Text color",
+    preCommand(self) {
+        self.childItem.active = self.childItem.active ? false : true;
+    },
+    onTextMarkSelection(self, mark) {
+        self.iconColor = mark.attrs.color;
+    },
+    onTextSelectionChange(self) {
+        self.active = false;
+        self.childItem.active = false;
+        self.iconColor = '#47484a';
+    },
+});
+const colorOptions = ToolbarItem({
+    name: 'colorOptions',
+    type: 'options',
+    command: 'toggleColor',
+    preCommand(self) {
+        self.active = false;
+        self.parentItem.active = false;
+    }
+});
+colorButton.childItem = colorOptions;
+colorOptions.parentItem = colorButton;
+
+// link
+const link = ToolbarItem({
+    type: 'button',
+    name: 'link',
+    icon: 'fa-link',
+    active: false,
+    tooltip: "Link",
+        preCommand(self) {
+        clearTimeout(self.tooltipTimeout);
+        self.tooltipVisible = false;
+        self.active = self.active ? false : true;
+        self.childItem.active = self.childItem.active ? false : true;
+    },
+    onTextMarkSelection(self, mark) {
+        console.log('mark', mark);
+        self.childItem.argument = {
+            href: mark.attrs.href,
+            text: mark.attrs.text,
+        }
+        self.active = true;
+        self.childItem.active = true;
+    },
+    onTextSelectionChange(self, selectionText = null) {
+        // if (selectionText) {
+        //     console.log('selectionText', selectionText);
+        //     self.argument = {
+        //         href: '',
+        //         text: selectionText,
+        //     }
+        // }
+        self.active = false;
+        self.childItem.active = false;
+    },
+});
+
+const linkInput = ToolbarItem({
+    type: 'options',
+    name: 'linkInput',
+    command: 'toggleLink',
+    preCommand(self) {
+        self.active = false;
+        self.parentItem.active = false;
+    },
+    active: false,
+});
+link.childItem = linkInput;
+linkInput.parentItem = link;
+
+// image
+const image = ToolbarItem({
+    type: 'button',
+    name: 'image',
+    command: 'toggleImage',
+    icon: 'fa-image',
+    active: false,
+    tooltip: "Image",
+    disabled: true,
+});
+
+// alignment
+const alignment = ToolbarItem({
+    type: 'button',
+    name: 'textAlign',
+    tooltip: "Alignment",
+    icon: "fa-align-left",
+    hasCaret: true,
+    preCommand(self) {
+        clearTimeout(self.tooltipTimeout);
+        self.tooltipVisible = false;
+        self.active = self.active ? false : true;
+        self.childItem.active = self.childItem.active ? false : true;
+
+        self.icon
+    },
+    onTextMarkSelection(self, mark) {
+        self.icon = `fa-align-${mark.attrs.alignment}`;
+    },
+    onTextSelectionChange(self) {
+        self.active = false;
+        self.childItem.active = false;
+        self.icon = 'fa-align-left';
+    }
+});
+
+const alignmentOptions = ToolbarItem({
+    type: 'options',
+    name: 'alignmentOptions',
+    command: 'changeTextAlignment',
+    preCommand(self, argument) {
+        console.log('preCommand', argument);
+        self.active = false;
+        self.parentItem.active = false;
+        self.argument = argument;
+    },
+})
+alignment.childItem = alignmentOptions;
+alignmentOptions.parentItem = alignment;
+
+// bullet list
+const bulletedList = ToolbarItem({
+    type: 'button',
+    name: 'list',
+    disabled: true,
+    command: 'toggleList',
+    icon: 'fa-list',
+    active: false,
+    tooltip: "Bullet list",
+});
+
+// number list
+const numberedList = ToolbarItem({
+    type: 'button',
+    name: 'numberedlist',
+    disabled: true,
+    command: 'toggleNumberedList',
+    icon: 'fa-list-numeric',
+    active: false,
+    tooltip: "Numbered list",
+});
+
+// indent left
+const indentLeft = ToolbarItem({
+    type: 'button',
+    name: 'indentleft',
+    command: 'toggleIndentLeft',
+    icon: 'fa-indent',
+    active: false,
+    tooltip: "Left indent",
+});
+
+// indent right
+const indentRight = ToolbarItem({
+    type: 'button',
+    name: 'indentright',
+    command: 'changeTextIndent',
+    icon: 'fa-indent',
+    active: false,
+    tooltip: "Right indent",
+});
+
+// overflow
+const overflow = ToolbarItem({
+    type: 'button',
+    name: 'overflow',
+    command: 'toggleOverflow',
+    icon: 'fa-ellipsis-vertical',
+    active: false,
+    tooltip: "More options",
+
+    preCommand(self) {
+        clearTimeout(self.tooltipTimeout);
+        self.tooltipVisible = false;
+        self.active = self.active ? false : true;
+        self.childItem.active = self.childItem.active ? false : true;
+    },
+    onTextMarkSelection(self, mark) {
+    },
+    onTextSelectionChange(self) {
+        self.active = false;
+        self.childItem.active = false;
+    }
+});
+
+const overflowOptions = ToolbarItem({
+    type: 'options',
+    name: 'overflowOptions',
+    preCommand(self, argument) {
+        console.log('preCommand', argument);
+        self.active = false;
+        self.parentItem.active = false;
+        self.argument = argument;
+    },
+})
+overflow.childItem = overflowOptions;
+overflowOptions.parentItem = overflow;
+
+// zoom
+const zoom = ToolbarItem({
+    type: 'button',
+    name: 'zoom',
+    tooltip: "Zoom",
+    overflowIcon: 'fa-magnifying-glass-plus',
+    label: "100%",
+    hasCaret: true,
+    isWide: true,
+    style: {width: '100px'},
+    inlineTextInputVisible: false,
+    preCommand(self, argument) {
+        clearTimeout(self.tooltipTimeout);
+        self.tooltipVisible = false;
+        self.active = self.active ? false : true;
+        self.childItem.active = self.childItem.active ? false : true;
+        self.inlineTextInputVisible = self.inlineTextInputVisible ? false : true;
+        setTimeout(() => {
+            const input = document.querySelector('#inlineTextInput-zoom');
+            if (input) input.focus();
+        });
+
+        // from text input
+        if (!argument) return;
+
+        const editor = document.querySelector('.super-editor');
+        const value = argument;
+        let sanitizedValue = sanitizeNumber(value, 100);
+        if (sanitizedValue < 0) sanitizedValue = 10;
+        if (sanitizedValue > 200) sanitizedValue = 200;
+
+        const label = String(sanitizedValue)+'%';
+        self.label = label;
+        editor.style.zoom = sanitizedValue/100;
+
+        return {
+            value: sanitizedValue,
+            label
+        }
+    },
+    onTextMarkSelection(self, mark) {
+    },
+    onTextSelectionChange(self) {
+        self.active = false;
+        self.childItem.active = false;
+    }
+});
+
+const zoomOptions = ToolbarItem({
+    type: 'options',
+    name: 'zoomDropdown',
+    preCommand(self, argument) {
+        console.log('preCommand', argument);
+        self.active = false;
+        self.parentItem.active = false;
+        self.parentItem.inlineTextInputVisible = false;
+        
+        const editor = document.querySelector('.super-editor');
+        const {value, label} = argument;
+        self.parentItem.label = label;
+        editor.style.zoom = value;
+    },
+})
+zoom.childItem = zoomOptions;
+zoomOptions.parentItem = zoom;
+
+// undo
+const undo = ToolbarItem({
+    type: 'button',
+    name: 'undo',
+    tooltip: "Undo",
+    command: "undo",
+    icon: "fa-solid fa-rotate-left",
+    // isNarrow: true,
+    preCommand(self) {
+        clearTimeout(self.tooltipTimeout);
+        self.tooltipVisible = false;
+    },
+    onTextMarkSelection(self, mark) {
+    },
+    onTextSelectionChange(self) {
+        self.active = false;
+    }
+});
+
+// redo
+const redo = ToolbarItem({
+    type: 'button',
+    name: 'redo',
+    tooltip: "Redo",
+    command: "redo",
+    icon: 'fa fa-rotate-right',
+    // isNarrow: true,
+    preCommand(self) {
+        clearTimeout(self.tooltipTimeout);
+        self.tooltipVisible = false;
+    },
+    onTextMarkSelection(self, mark) {
+    },
+    onTextSelectionChange(self) {
+        self.active = false;
+    }
+});
+
+// search
+const search = ToolbarItem({
+    type: 'button',
+    name: 'search',
+    tooltip: "Search",
+    disabled: true,
+    icon: "fa-solid fa-magnifying-glass",
+    preCommand(self) {
+        clearTimeout(self.tooltipTimeout);
+        self.tooltipVisible = false;
+        self.active = self.active ? false : true;
+        self.childItem.active = self.childItem.active ? false : true;
+    },
+    onTextMarkSelection(self, mark) {
+    },
+    onTextSelectionChange(self) {
+        self.active = false;
+        self.childItem.active = false;
+    }
+});
+
+const searchOptions = ToolbarItem({
+    type: 'options',
+    name: 'searchDropdown',
+    command: 'search',
+    preCommand(self, argument) {
+        console.log('preCommand', argument);
+        self.active = false;
+        self.parentItem.active = false;
+        self.argument = argument;
+    },
+})
+search.childItem = searchOptions;
+searchOptions.parentItem = search;
 
 /**
  * The toolbar should be completly decoupled from the editor.
@@ -226,7 +717,7 @@ const colors = [
 ]
 
 // no units
-const fontSizeOptions = [
+const fontSizeValues = [
   {label: '8', value: 8},
   {label: '9', value: 9},
   {label: '10', value: 10},
@@ -243,7 +734,7 @@ const fontSizeOptions = [
   {label: '96', value: 96}
 ]
 
-const zoomOptions = [
+const zoomValues = [
   {label: '50%', value: 0.5},
   {label: '75%', value: 0.75},
   {label: '90%', value: 0.9},
@@ -290,7 +781,7 @@ const showOptions = (item, name) => item?.name === name && item?.active;
 
 const executeItemCommands = (item, argument = null) => {
   console.log("Executing item commands", item, argument)
-  const {preCommand, postCommand, command} = item;
+  const {preCommand, command} = item;
 
   if (preCommand) {
     console.log("Calling precommand", item, argument)
@@ -302,11 +793,6 @@ const executeItemCommands = (item, argument = null) => {
   if (command) {
     console.log("Executing command", command, argument)
     emit('command', {command, argument});
-  }
-
-  if (postCommand) {
-    console.log("Calling postcommand", item, argument)
-    postCommand(item, argument);
   }
 }
 
@@ -383,14 +869,14 @@ defineExpose({
             v-if="showOptions(item.childItem, 'zoomDropdown')"
             :command="item.childItem.command"
             @optionClick="(option) => handleToolbarButtonClick(item.childItem, option)"
-            :options="zoomOptions"/>
+            :options="zoomValues"/>
           
           <!-- font size dropdown -->
           <DropdownOptions
             v-if="showOptions(item.childItem, 'fontSizeDropdown')"
             :command="item.childItem.command"
             @optionClick="(option) => handleToolbarButtonClick(item.childItem, option)"
-            :options="fontSizeOptions"/>
+            :options="fontSizeValues"/>
 
           <!-- color picker  -->
           <IconGrid

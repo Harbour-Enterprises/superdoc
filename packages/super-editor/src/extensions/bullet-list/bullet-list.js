@@ -2,7 +2,7 @@ import { Node } from '@core/index.js';
 import { Attribute } from '@core/index.js';
 
 export const BulletList = Node.create({
-  name: 'bulletedList',
+  name: 'bulletList',
 
   group: 'block list',
 
