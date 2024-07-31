@@ -25,6 +25,14 @@ export const style = `.ProseMirror {
   position: relative;
 }
 
+/* 
+  Hide marker for indented lists. 
+  If a list-item contains a list but doesn't contain a "p" tag with text.
+*/
+.ProseMirror li:has(> ul:first-child, > ol:first-child):not(:has(> p)) {
+  list-style-type: none;
+}
+
 .ProseMirror-hideselection *::selection {
   background: transparent;
 }

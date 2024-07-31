@@ -1,18 +1,10 @@
 import { Node } from '@core/index.js';
 import { Attribute } from '@core/index.js';
 
-const bulletTypes = {
-  111: 'circle',
-  61607: 'square',
-  61623: 'disc',
-  61656: '"\u27A2 "',
-  61558: '"\u2756 "',
-};
-
 export const ListItem = Node.create({
   name: 'listItem',
 
-  content: 'paragraph block*',
+  content: 'paragraph* block*',
 
   defining: true,
 
@@ -39,18 +31,6 @@ export const ListItem = Node.create({
       lvlText: { 
         default: null,
         rendered: false,
-        // renderDOM: (attrs) => {
-        //   let lvlText = attrs?.lvlText;
-        //   if (!lvlText) return {};
-
-        //   let code = lvlText.codePointAt(0);
-        //   let bulletType =  bulletTypes[code];
-        //   if (!bulletType) return {};
-
-        //   return {
-        //     style: `list-style-type: ${bulletType};`,
-        //   };
-        // },
       },
 
       // JC = justification. Expect left, right, center
