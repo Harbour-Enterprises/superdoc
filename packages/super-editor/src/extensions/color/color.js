@@ -33,7 +33,7 @@ export const Color = Mark.create({
           },
           color: value,
         }
-        return commands.toggleMark(this.name, attrs);
+        return commands.setMark(this.name, attrs);
       },
     };
   },

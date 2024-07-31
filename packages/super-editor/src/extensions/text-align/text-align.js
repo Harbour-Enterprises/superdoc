@@ -32,7 +32,7 @@ export const TextAlign = Mark.create({
           },
           alignment
         }
-        return commands.toggleMark(this.name, attrs);
+        return commands.setMark(this.name, attrs);
       },
     };
   },

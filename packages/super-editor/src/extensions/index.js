@@ -24,6 +24,7 @@ import { FontSize } from './font-size/index.js';
 import { TextAlign } from './text-align/index.js';
 import { TextIndent } from './text-indent/index.js';
 import { LineHeight } from './line-height/index.js';
+import { Link } from './link/index.js';
 
 const getStarterExtensions = () => [
   Bold,
@@ -39,6 +40,7 @@ const getStarterExtensions = () => [
   Italic,
   ListItem,
   LineHeight,
+  Link,
   OrderedList,
   Paragraph,
   PageBreak,

@@ -33,7 +33,7 @@ export const Link = Mark.create({
           href,
           text
         }
-                return commands.toggleMark(this.name, attrs);
+        return commands.setMark(this.name, attrs);
       },
     };
   },

@@ -7,6 +7,7 @@ export * from './createParagraphNear.js';
 export * from './newlineInCode.js';
 export * from './exitCode.js';
 export * from './toggleMark.js';
+export * from './setMark.js';
 export * from './clearNodes.js';
 
 export * from './selectAll.js';

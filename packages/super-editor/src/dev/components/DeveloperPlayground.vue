@@ -36,15 +36,19 @@ const handleToolbarCommand = ({ command, argument }) => {
   console.debug('[SuperEditor dev] Toolbar command', command, argument, activeEditor?.commands);
   
   const commands = activeEditor?.commands;
-  if (!commands) {
+    if (!commands) {
+    console.error('No commands');
     return;
   }
 
   const commandName = commandsMap[command] ? commandsMap[command] : command;
-  if (commandName in commands) {
+    if (commandName in commands) {
+      console.log('Executing command:', commandName);
     activeEditor?.commands[commandName](argument);
     activeEditor.view.focus();
-  }    
+    } else {
+    console.log('Command not found:', commandName);
+    }    
 };
 
 const onSelectionUpdate = ({ editor, transaction }) => {

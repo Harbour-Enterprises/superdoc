@@ -6,7 +6,7 @@ const link = ToolbarItem({
     icon: 'fa-link',
     active: false,
     tooltip: "Link",
-    preCommand(self) {
+        preCommand(self) {
         clearTimeout(self.tooltipTimeout);
         self.tooltipVisible = false;
         self.active = self.active ? false : true;
@@ -43,10 +43,6 @@ const linkInput = ToolbarItem({
         self.parentItem.active = false;
     },
     active: false,
-    // argument: {
-    //     href: '',
-    //     text: '',
-    // },
 });
 
 link.childItem = linkInput;

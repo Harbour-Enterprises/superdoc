@@ -18,6 +18,7 @@ const props = defineProps({
 const handleSubmit = () => {
     if (rawUrl.value === '' || validUrl.value) {
         emit('submit', { text: text.value, href: url.value });
+        return;
     }
     console.log('invalid url')
     urlError.value = true;

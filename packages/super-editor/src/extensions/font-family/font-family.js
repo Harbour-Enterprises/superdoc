@@ -30,7 +30,7 @@ export const FontFamily = Mark.create({
           },
           font: label
         }
-        return commands.toggleMark(this.name, attrs);
+        return commands.setMark(this.name, attrs);
       },
     };
   },

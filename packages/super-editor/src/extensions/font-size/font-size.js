@@ -35,7 +35,7 @@ export const FontSize = Mark.create({
           },
           fontSize: `${value}pt`,
         }
-        return commands.toggleMark(this.name, attrs);
+        return commands.setMark(this.name, attrs);
       },
     };
   },
