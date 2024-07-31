@@ -197,7 +197,7 @@ class SuperConverter {
           processedElements.push(...this.#handleInputRunNode(node));
           continue;
         case 'w:p':
-          schemaNode = this.#handleParagraphProcessing(node, elements, index);
+          schemaNode = this.#handleParagraphNode(node, elements, index);
           const attrs = schemaNode.attrs.paragraphProperties?.elements
           console.debug('PATTRS:', attrs)
           break;
@@ -312,7 +312,7 @@ class SuperConverter {
    * If we detect a list node, we need to get all nodes that are also lists and process them together
    * in order to combine list item nodes into list nodes.
    */
-  #handleParagraphProcessing(node, elements, index) {
+  #handleParagraphNode(node, elements, index) {
     let schemaNode;
 
     // Check if this paragraph node is a lsit
@@ -415,7 +415,7 @@ class SuperConverter {
         nodeAttributes['attributes'] = {
           parentAttributes: item?.attributes || null,
         }
-        parsedListItems.push(this.#createListItem(schemaElements, nodeAttributes, marks));
+        parsedListItems.push(this.#createListItem(schemaElements, nodeAttributes, []));
       } 
 
       // If this item belongs in a deeper list level, we need to process it by calling this function again
@@ -475,7 +475,7 @@ class SuperConverter {
       type: this.getElementName(node),
       content,
       attrs: { ...attributes },
-      marks,
+      marks: [],
     };
   }
 
