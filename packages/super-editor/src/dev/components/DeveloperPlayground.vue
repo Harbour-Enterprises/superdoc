@@ -8,7 +8,7 @@
 <script setup>
 import { ref, reactive, watch, onMounted } from 'vue';
 import BasicUpload from './BasicUpload.vue';
-import blankDocBase64 from '../../blankDoc';
+import blankDocBase64 from '../../tests/fixtures/blank-doc/blankDoc';
 
 // Import the component the same you would in your app
 import { SuperEditor, Toolbar } from '@/index';

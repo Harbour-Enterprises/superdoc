@@ -436,7 +436,7 @@ class SuperConverter {
     }
 
     return {
-      type: overallListType || 'bulletedList',
+      type: overallListType || 'bulletList',
       content: parsedListItems,
       attrs: {
         'list-style-type': listStyleType,
