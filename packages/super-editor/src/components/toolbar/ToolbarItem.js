@@ -45,6 +45,7 @@ export class ToolbarItem {
         this.label = null
         this.disabled = false
         this.inlineTextInputVisible = false
+        this.hasInlineTextInput = false
 
 
         const handlers = ['onTextMarkSelection', 'onTextSelectionChange', 'preCommand'];

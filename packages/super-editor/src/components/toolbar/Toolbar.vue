@@ -23,6 +23,7 @@ const closeOpenDropdowns = (currentItem = null) => {
     }
     item.active = false;
     item.childItem.active = false;
+    item.inlineTextInputVisible = false;
   });
 }
 
@@ -78,6 +79,7 @@ const fontSize = new ToolbarItem({
     tooltip: "Font size",
     overflowIcon: 'fa-text-height',
     hasCaret: true,
+    hasInlineTextInput: true,
     isWide: true,
     command: "changeFontSize",
     style: {width: '90px'},
@@ -335,6 +337,7 @@ const zoom = new ToolbarItem({
     isWide: true,
     style: {width: '100px'},
     inlineTextInputVisible: false,
+    hasInlineTextInput: true,
     preCommand(self, argument) {
         clearTimeout(self.tooltipTimeout);
         self.inlineTextInputVisible = self.inlineTextInputVisible ? false : true;
@@ -734,6 +737,7 @@ defineExpose({
         :label="item.label"
         :has-caret="item.hasCaret"
         :inline-text-input-visible="item.inlineTextInputVisible"
+        :has-inline-text-input="item.hasInlineTextInput"
         :icon-color="item.iconColor"
         :has-icon="hasIcon(item)"
         @mouseenter="handleButtonMouseEnter(item)"

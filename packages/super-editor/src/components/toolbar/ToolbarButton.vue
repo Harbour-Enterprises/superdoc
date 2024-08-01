@@ -50,6 +50,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  hasInlineTextInput: {
+    type: Boolean,
+    default: false,
+  },
   isNarrow: {
     type: Boolean,
     default: false,
@@ -88,7 +92,7 @@ const handleInputSubmit = () => {
 
       <div @click="handleClick"
       class="toolbar-button"
-      :class="{ active: props.active, disabled, narrow: isNarrow, wide: isWide}">
+      :class="{ active: props.active, disabled, narrow: isNarrow, wide: isWide, 'has-inline-text-input': hasInlineTextInput}">
         <span class="button-label" v-if="label">
           <input v-if="inlineTextInputVisible"
           v-model="inlineTextInput"
@@ -191,6 +195,10 @@ const handleInputSubmit = () => {
   border-color: white transparent transparent transparent;
 }
 
+.has-inline-text-input:hover {
+  cursor: text;
+}
+
 .disabled {
   cursor: default;
 }
@@ -204,6 +212,7 @@ const handleInputSubmit = () => {
   background-color: #c8d0d8;
   border: none;
   font-size: 1em;
+  border-bottom: solid 1px#47484a;
 }
 
 .button-text-input:focus {
