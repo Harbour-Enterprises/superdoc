@@ -63,6 +63,12 @@ export const ListItem = Node.create({
       Enter: () => {
         return this.editor.commands.splitListItem(this.name);
       },
+      'Shift-Enter': () => {
+        return this.editor.commands.first(({ commands }) => [
+          () => commands.createParagraphNear(),
+          () => commands.splitBlock(),
+        ]);
+      },
       Tab: () => {
         return this.editor.commands.sinkListItem(this.name);
       },

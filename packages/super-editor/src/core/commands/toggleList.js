@@ -1,8 +1,46 @@
 import { getNodeType } from '../helpers/getNodeType.js';
 import { findParentNode } from '../helpers/findParentNode.js';
 import { isList } from '../helpers/isList.js';
-import { joinListBackwards } from '../helpers/joinListBackwards.js';
-import { joinListForwards } from '../helpers/joinListForwards.js';
+
+/**
+ * Join list backwards.
+ * @param tr Transaction.
+ * @param listType List type.
+ */
+const joinListBackwards = (tr, listType) => {
+  const list = findParentNode((node) => node.type === listType)(tr.selection);
+  if (!list) return true;
+
+  const before = tr.doc.resolve(Math.max(0, list.pos - 1)).before(list.depth);
+  if (before === undefined) return true;
+
+  const nodeBefore = tr.doc.nodeAt(before)
+  const canJoinBackwards = list.node.type === nodeBefore?.type && canJoin(tr.doc, list.pos)
+  if (!canJoinBackwards) return true;
+
+  tr.join(list.pos);
+  return true;
+};
+
+/**
+ * Join list forwards.
+ * @param tr Transaction.
+ * @param listType List type.
+ */
+const joinListForwards = (tr, listType) => {
+  const list = findParentNode((node) => node.type === listType)(tr.selection);
+  if (!list) return true;
+
+  const after = tr.doc.resolve(list.start).after(list.depth)
+  if (after === undefined) return true;
+
+  const nodeAfter = tr.doc.nodeAt(after)
+  const canJoinForwards = list.node.type === nodeAfter?.type && canJoin(tr.doc, after)
+  if (!canJoinForwards) return true;
+
+  tr.join(after);
+  return true;
+};
 
 /**
  * Toggle between list types.

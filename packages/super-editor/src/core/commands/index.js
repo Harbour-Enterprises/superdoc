@@ -28,3 +28,5 @@ export * from './toggleList.js';
 export * from './splitListItem.js';
 export * from './sinkListItem.js';
 export * from './liftListItem.js';
+
+export * from './insertTabChar.js';
