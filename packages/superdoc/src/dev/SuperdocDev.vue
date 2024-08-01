@@ -1,6 +1,6 @@
 <script setup>
 // import "super-editor/style.css";
-import Superdoc from '@/index';
+import { Superdoc } from '@/index';
 import docxWithComments from '../assets/sample.docx?url'
 import { onMounted } from 'vue';
 
@@ -88,7 +88,7 @@ const exportDocx = async () => {
     <button @click="exportDocx">export</button>
 
     <!-- Import the toolbar from the super editor -->
-     <div id="toolbar"></div>
+     <div id="toolbar" style="min-width: 800px;"></div>
 
     <!-- Render the document here -->
     <div id="superdoc"></div>
