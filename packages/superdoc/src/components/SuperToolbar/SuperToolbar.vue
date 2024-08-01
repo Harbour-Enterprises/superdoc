@@ -7,6 +7,7 @@ const { proxy } = getCurrentInstance();
 const toolbar = ref(null);
 
 const handleToolbarCommand = (command) => {
+  console.debug('[SuperToolbar] Toolbar command', command);
   proxy.$superdoc.onToolbarCommand(command);
 }
 

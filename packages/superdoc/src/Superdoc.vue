@@ -169,12 +169,12 @@ const onCreate = ({ editor }) => {
   proxy.$superdoc.activeEditor = editor;
   console.debug('[Superdoc] Editor created', proxy.$superdoc.activeEditor);
   console.debug('[Superdoc] Page styles (pixels)', editor.getPageStyles());
+  proxy.$superdoc.broadcastLoaded();
 }
 const onSelectionUpdate = ({ editor, transaction }) => {
   const { selection } = editor.view.state;
   const marks = selection.$head.marks();
-  const markNames = marks.map((mark) => mark.type.name);
-  proxy.$superdoc.toolbar.onSelectionChange(markNames);
+  proxy.$superdoc.toolbar.onTextSelectionChange(marks);
   proxy.$superdoc.onSelectionUpdate({ editor, transaction });
 }
 

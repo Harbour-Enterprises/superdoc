@@ -48,6 +48,10 @@ class Superdoc extends EventEmitter {
     if (this.toolbarElement) this.addToolbar(this);
   }
 
+  broadcastLoaded() {
+    this.emit('ready');
+  }
+
   broadcastComments(type, data) {
     console.debug('[comments] Broadcasting:', type, data);
     this.emit('comments-update', type, data);

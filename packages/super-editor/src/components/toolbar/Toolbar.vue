@@ -267,6 +267,7 @@ alignmentOptions.parentItem = alignment;
 const bulletedList = new ToolbarItem({
     type: 'button',
     name: 'list',
+    disabled: true,
     command: 'toggleList',
     icon: 'fa-list',
     active: false,
@@ -277,6 +278,7 @@ const bulletedList = new ToolbarItem({
 const numberedList = new ToolbarItem({
     type: 'button',
     name: 'numberedlist',
+    disabled: true,
     command: 'toggleNumberedList',
     icon: 'fa-list-numeric',
     active: false,
