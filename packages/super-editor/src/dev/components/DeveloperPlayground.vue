@@ -24,7 +24,7 @@ const handleNewFile = async (file) => {
 
   // Generate a file url
   const fileUrl = URL.createObjectURL(file);
-  const response = await fetch(blankDocBase64);
+  const response = await fetch(fileUrl);
   const blob = await response.blob();
   currentFile.value = new File([blob], 'docx-file.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
 }
