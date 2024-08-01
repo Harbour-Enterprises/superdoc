@@ -37,7 +37,7 @@ export const Keymap = Extension.create({
       'Shift-Backspace': handleBackspace,
       'Delete': handleDelete,
       'Mod-Delete': handleDelete,
-      'Mod-a': this.editor.commands.selectAll(),
+      'Mod-a': () => this.editor.commands.selectAll(),
     };
 
     const pcBaseKeymap = {
@@ -54,6 +54,7 @@ export const Keymap = Extension.create({
       'Alt-d': handleDelete,
       'Ctrl-a': () => this.editor.commands.selectTextblockStart(),
       'Ctrl-e': () => this.editor.commands.selectTextblockEnd(),
+      'Ctrl-t': () => this.editor.commands.insertTabChar(),
     };
 
     if (isMacOS() || isIOS()) {
