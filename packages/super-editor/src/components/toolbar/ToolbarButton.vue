@@ -3,11 +3,16 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import ToolbarButtonIcon from './ToolbarButtonIcon.vue'
 import { ref, computed } from 'vue';
 
-const emit = defineEmits(['command', 'toggle', 'select']);
+const emit = defineEmits(['buttonClick', 'textSubmit']);
+
 const props = defineProps({
   name: {
     type: String,
     required: true,
+  },
+  icon: {
+    type: String,
+    default: null,
   },
   label: {
     type: String,
@@ -17,27 +22,19 @@ const props = defineProps({
     type: String,
     default: null,
   },
-  command: {
-    type: String,
-    required: true,
-  },
-  commandArgument: {
-    type: null,
-    required: false,
-  },
   tooltip: {
     type: String,
     required: true,
+  },
+  tooltipVisible: {
+    type: Boolean,
+    default: false,
   },
   active: {
     type: Boolean,
     default: false,
   },
   hasCaret: {
-    type: Boolean,
-    default: false,
-  },
-  hasNestedOptions: {
     type: Boolean,
     default: false,
   },
@@ -49,9 +46,19 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  inlineTextInputVisible: {
+    type: Boolean,
+    default: false,
+  },
+  isNarrow: {
+    type: Boolean,
+    default: false,
+  },
+  isWide: {
+    type: Boolean,
+    default: false,
+  }
 });
-const tooltipVisible = ref(false)
-const tooltipTimeout = ref(null)
 
 const fullTooltip = computed(() => {
   let tooltip = props.tooltip;
@@ -61,90 +68,63 @@ const fullTooltip = computed(() => {
   return tooltip;
 })
 
-const nestedOptionTimeout = ref(null)
-const handleButtonMouseEnter = () => {
-  console.log("mouse enter")
-  // set 400ms delay before showing tooltip
-  const now = Date.now();
-  const delay = 1000;
-  tooltipTimeout.value = setTimeout(() => {
-    if (now + delay <= Date.now()) {
-      tooltipVisible.value = true;
-    }
-  }, delay);
+const inlineTextInput = ref(props.label || '');
+
+const handleClick = () => {
+  emit('buttonClick')
 }
-const handleButtonMouseLeave = () => {
-  console.log("mouse leave")
-  tooltipVisible.value = false;
-  clearTimeout(tooltipTimeout.value);
-}
-const handleOptionMouseEnter = (option) => {
-  // clearTimeout(nestedOptionTimeout.value);
-  option.active = true;
-}
-const handleNestedOptionMouseEnter = (option) => {
-  // clearTimeout(nestedOptionTimeout.value);
-  // option.active = true;
-}
-const handleOptionMouseLeave = (option) => {
-  // nestedOptionTimeout.value = setTimeout(() => {
-  //   option.active = false;
-  // }, 400);
-  option.active = false;
-}
-const handleButtonClick = () => {
-  if (props.disabled) return;
-  console.log('handleButtonClick', props);
-  if (props.hasNestedOptions) {
-    emit('toggle', {active: props.active === true ? false : true, name: props.name});
-    return;
-  }
-  emit('command', {command: props.command, argument: props.commandArgument})
-}
-const handleOptionClick = (option) => {
-  const {label, fontName, fontWeight} = option;
-  console.log('handleOptionClick', label, fontName, fontWeight);
-  // one command for all dropdown options
-  emit('select', {name: props.name, command: props.command, label, fontName, fontWeight});
+
+const handleInputSubmit = () => {
+  emit('textSubmit', inlineTextInput.value);
 }
 </script>
 
 <template>
   <div
-      class="toolbar-button"
-      :class="{ active: props.active, disabled: disabled}"
-      @mouseenter="handleButtonMouseEnter"
-      @mouseleave="handleButtonMouseLeave"
-      @click.stop.prevent="handleButtonClick">
+      class="toolbar-item">
       <div class="tooltip" :style="{display: tooltipVisible ? 'initial' : 'none', width: `${fullTooltip.length * 5}px`}">
         <span>{{ fullTooltip }}</span>
       </div>
 
-      <span class="button-label" v-if="label">{{label}}</span>
-      
-      <ToolbarButtonIcon
-        v-if="hasIcon"
-        :style="{marginRight: hasCaret ? '8px' : null}"
-        :color="iconColor"
-        class="icon"
-        :name="name">
-      </ToolbarButtonIcon>
+      <div @click="handleClick"
+      class="toolbar-button"
+      :class="{ active: props.active, disabled, narrow: isNarrow, wide: isWide}">
+        <span class="button-label" v-if="label">
+          <input v-if="inlineTextInputVisible"
+          v-model="inlineTextInput"
+          @keydown.enter.prevent="handleInputSubmit"
+          type="text"
+          class="button-text-input"
+          :id="'inlineTextInput-' + name"/>
 
-      <font-awesome-icon v-if="hasCaret"
-      class="caret"
-      :icon="active ? 'fa-caret-up' : 'fa-caret-down'"
-      :style="{opacity: disabled ? 0.6 : 1}"
-      />
+          <span v-else>{{label}}</span>
+        </span>
+        
+        <ToolbarButtonIcon
+          v-if="hasIcon"
+          :color="iconColor"
+          class="icon"
+          :icon="icon"
+          :name="name">
+        </ToolbarButtonIcon>
 
+        <font-awesome-icon v-if="hasCaret"
+        class="caret"
+        :icon="active ? 'fa-caret-up' : 'fa-caret-down'"
+        :style="{opacity: disabled ? 0.6 : 1}"
+        />
+      </div>
       <slot></slot>
   </div>
 </template>
 
 <style scoped>
+.toolbar-item {
+  position: relative;
+}
+
 .toolbar-button {
   height: 32px;
-  padding-left: 12px;
-  padding-right: 12px;
   border-radius: 6px;
   margin-top: 3.5px;
   margin-bottom: 4px;
@@ -159,6 +139,7 @@ const handleOptionClick = (option) => {
   user-select: none;
   position: relative;
 }
+
 .toolbar-button:hover {
   color: black;
   background-color: #d8dee5;
@@ -168,8 +149,12 @@ const handleOptionClick = (option) => {
   background-color: #c8d0d8;
 }
 .button-label {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-weight: 100;
-  margin-right: 8px;
+  /* margin-right: 1%; */
 }
 
 .left, .right {
@@ -188,6 +173,8 @@ const handleOptionClick = (option) => {
   color: #555555;
   font-size: 10px;
   text-align: center;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .tooltip::after {
@@ -207,5 +194,24 @@ const handleOptionClick = (option) => {
 .disabled .icon, .disabled .caret, .disabled .button-label {
   opacity: .6;
 }
+.caret {
+  font-size: .6em;
+}
+.button-text-input {
+  background-color: #c8d0d8;
+  border: none;
+  font-size: 1em;
+}
 
+.button-text-input:focus {
+  outline: none;
+}
+
+/* .button-text-input {
+  font-size: 16px;
+  width: 70%;
+  border-radius: 5px;
+  margin-right: 1em;
+  border: 1px solid #ddd;
+} */
 </style>

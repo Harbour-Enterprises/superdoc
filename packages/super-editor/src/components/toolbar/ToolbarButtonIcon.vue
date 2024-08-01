@@ -11,6 +11,10 @@ const props = defineProps({
     type: String,
     default: null,
   },
+  icon: {
+    type: String,
+    default: null,
+  },
 });
 
 const colorStyle = computed(() => {
@@ -20,26 +24,11 @@ const colorStyle = computed(() => {
   return { color: props.color };
 });
 
-const iconMap = {
-  bold: "fa fa-bold",
-  italic: "fa fa-italic",
-  underline: "fa fa-underline",
-  color: "fa fa-font",
-  link: "fa-link",
-  image: "fa-image",
-  paragraph: "fa-align-left",
-  list: "fa-list",
-  numberedlist: "fa-list-numeric",
-  indentleft: "fa-indent",
-  indentright: "fa-indent",
-  overflow: "fa-ellipsis-vertical"
-}
-
 </script>
 
 <template>
   <div :class="['toolbar-button-icon', name]"  :style="colorStyle">
-    <font-awesome-icon :icon="iconMap[name]"/>
+    <font-awesome-icon :icon="icon"/>
   </div>
 </template>
 
@@ -74,10 +63,13 @@ const iconMap = {
 .color {
   border-bottom: solid 4px #47484a;
   position: relative;
-  top: -1px;
+  top: -2px;
   width: 16px;
-  font-size: 10px;
   text-align: center;
+}
+
+.color svg {
+  zoom: .75;
 }
 
 .indentleft {

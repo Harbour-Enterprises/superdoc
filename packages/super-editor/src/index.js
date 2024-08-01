@@ -14,14 +14,24 @@ import {
   faFont,
   faLink,
   faImage,
-  faAlignLeft,
   faIndent,
   faEllipsisVertical,
   faList,
   faListNumeric,
   faCaretDown,
   faCaretUp,
-  faAngleRight
+  faAngleRight,
+  faRotateLeft,
+  faRotateRight,
+  faMagnifyingGlass,
+  faCircle,
+  faAlignLeft,
+  faAlignRight,
+  faAlignCenter,
+  faAlignJustify,
+  faMagnifyingGlassPlus,
+  faTextHeight,
+  faPalette
 } from '@fortawesome/free-solid-svg-icons';
 
 
@@ -35,13 +45,24 @@ library.add(
   faLink,
   faImage,
   faAlignLeft,
+  faAlignRight,
+  faAlignCenter,
+  faAlignJustify,
   faIndent,
   faEllipsisVertical,
   faList,
   faListNumeric,
   faCaretDown,
   faCaretUp,
-  faAngleRight
+  faAngleRight,
+  faRotateLeft,
+  faRotateRight,
+  faMagnifyingGlass,
+  faCircle,
+  faMagnifyingGlassPlus,
+  faFont,
+  faTextHeight,
+  faPalette
 );
 
 /**

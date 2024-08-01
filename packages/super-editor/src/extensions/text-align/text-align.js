@@ -5,20 +5,21 @@ export const TextAlign = Mark.create({
 
   parseDOM() {
     return [
-      { tag: 'span' },
+      { tag: 'p' },
     ];
   },
 
 
   renderDOM(node) {
-    return ['span', node.mark.attrs.attributes, 0];
+    return ['p', node.mark.attrs.attributes, 0];
   },
 
   addAttributes(){
     return {
       attributes: {
         style: {default: null},
-      }
+      },
+      alignment: {default: null},
     }
   },
 
@@ -28,9 +29,10 @@ export const TextAlign = Mark.create({
         const attrs = {
           attributes: {
             style: `text-align: ${alignment}`
-          }
+          },
+          alignment
         }
-        return commands.toggleMark(this.name, attrs);
+        return commands.setMark(this.name, attrs);
       },
     };
   },

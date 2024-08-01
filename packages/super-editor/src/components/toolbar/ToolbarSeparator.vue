@@ -3,17 +3,11 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 const emit = defineEmits(['command']);
 const props = defineProps({
-  command: {
-    type: String,
-    required: true,
-  },
   active: {
     type: Boolean,
     default: false,
   },
 });
-
-const handleClick = () => emit('command', props.command);
 </script>
 
 <template>
@@ -26,8 +20,8 @@ const handleClick = () => emit('command', props.command);
 <style scoped>
 .toolbar-separator {
   height: 32px;
-  padding-left: 12px;
-  padding-right: 12px;
+  /* padding-left: 12px;
+  padding-right: 12px; */
   border-radius: 6px;
   margin-top: 3.5px;
   margin-bottom: 4px;

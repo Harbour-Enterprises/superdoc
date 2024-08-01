@@ -6,21 +6,25 @@
 -->
 
 <script setup>
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, watch, onMounted } from 'vue';
 import BasicUpload from './BasicUpload.vue';
+import blankDocBase64 from '../../tests/fixtures/blank-doc/blankDoc';
 
 // Import the component the same you would in your app
 import { SuperEditor, Toolbar } from '@/index';
 
 let activeEditor = null;
+const toolbarVisible = ref(false);
+
 const toolbar = ref(null);
 const currentFile = ref(null);
+
 const handleNewFile = async (file) => {
   currentFile.value = null;
 
   // Generate a file url
   const fileUrl = URL.createObjectURL(file);
-  const response = await fetch(fileUrl);
+  const response = await fetch(blankDocBase64);
   const blob = await response.blob();
   currentFile.value = new File([blob], 'docx-file.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
 }
@@ -34,14 +38,19 @@ const handleToolbarCommand = ({ command, argument }) => {
   console.debug('[SuperEditor dev] Toolbar command', command, argument, activeEditor?.commands);
   
   const commands = activeEditor?.commands;
-  if (!commands) {
+    if (!commands) {
+    console.error('No commands');
     return;
   }
 
   const commandName = commandsMap[command] ? commandsMap[command] : command;
-  if (commandName in commands) {
+    if (commandName in commands) {
+      console.log('Executing command:', commandName);
     activeEditor?.commands[commandName](argument);
-  }    
+    activeEditor.view.focus();
+    } else {
+    console.log('Command not found:', commandName);
+    }    
 };
 
 const onSelectionUpdate = ({ editor, transaction }) => {
@@ -51,14 +60,17 @@ const onSelectionUpdate = ({ editor, transaction }) => {
 
   // This logic should maybe be inside the Editor.js rather than here?
   const { selection } = editor.view.state;
+  const selectionText = selection.$head.parent.textContent;
   const marks = selection.$head.marks();
 
-  toolbar.value.onSelectionChange(marks);
+  toolbar.value.onTextSelectionChange(marks, selectionText);
 }
 
 const onCreate = ({ editor }) => {
   console.debug('[Dev] Editor created', editor);
   activeEditor = editor;
+  toolbarVisible.value = true;
+
   window.editor = editor;
   console.debug('[Dev] Page styles (pixels)', editor.getPageStyles());
   console.debug('[Dev] document styles', editor.converter.getDocumentDefaultStyles());
@@ -81,6 +93,17 @@ const exportDocx = async () => {
   a.download = 'exported.docx';
   a.click();
 }
+
+const getDocumentFromBase64 = async (base64) => {
+  const response = await fetch(base64);
+  const blob = await response.blob();
+  return new File([blob], 'docx-file.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+}
+
+onMounted(async () => {
+  // set document to blank
+  currentFile.value = await getDocumentFromBase64(blankDocBase64);
+})
 </script>
 
 <template>
@@ -108,16 +131,20 @@ const exportDocx = async () => {
     </div>
     <div class="content" v-if="currentFile">
 
-      <Toolbar @command="handleToolbarCommand" ref="toolbar" />
+      <div class="content-inner">
+        <Toolbar
+        v-if="toolbarVisible"
+        :editor-instance="activeEditor"
+        @command="handleToolbarCommand" ref="toolbar" />
+        <!-- SuperEditor expects its data to be a URL --> 
+        <SuperEditor
+            mode="docx"
+            documentId="ID-122"
+            :file-source="currentFile" 
+            :options="editorOptions" />
+      </div>
 
-      <!-- SuperEditor expects its data to be a URL -->
-      <SuperEditor
-          mode="docx"
-          documentId="ID-122"
-          :file-source="currentFile" 
-          :options="editorOptions" />
-
-    </div>
+      </div>
   </div>
 </template>
 
@@ -153,5 +180,10 @@ const exportDocx = async () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+
+.content-inner {
+  width: 100%;
+  max-width: 8.5in;
 }
 </style>

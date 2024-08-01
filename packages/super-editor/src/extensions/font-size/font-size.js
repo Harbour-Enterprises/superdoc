@@ -17,19 +17,25 @@ export const FontSize = Mark.create({
     return {
       attributes: {
         style: {default: null},
-      }
+      },
+      fontSize: {default: null},
     }
   },
 
   addCommands(node) {
     return {
-      changeFontSize: (size) => ({ commands }) => {
+      changeFontSize: (argument) => ({ commands }) => {
+        if (!argument) return;
+        const { value } = argument;
+
+        console.debug('changeFontSize command', value);
         const attrs = {
           attributes: {
-            style: `font-size: ${size}`
-          }
+            style: `font-size: ${value}pt`
+          },
+          fontSize: `${value}pt`,
         }
-        return commands.toggleMark(this.name, attrs);
+        return commands.setMark(this.name, attrs);
       },
     };
   },

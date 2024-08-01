@@ -5,31 +5,33 @@ export const TextIndent = Mark.create({
 
   parseDOM() {
     return [
-      { tag: 'span' },
+      { tag: 'p' },
     ];
   },
 
 
   renderDOM(node) {
     console.debug('TEXT INDENT', node.mark.attrs);
-    return ['span', node.mark.attrs.attributes, 0];
+    return ['p', node.mark.attrs.attributes, 0];
   },
 
   addAttributes(){
     return {
       attributes: {
         style: {default: null},
-      }
+      },
+      indent: {default: null},
     }
   },
 
-  addCommands(node) {
+  addCommands() {
     return {
       changeTextIndent: (indent) => ({ commands }) => {
         const attrs = {
           attributes: {
-            style: `text-indent: ${indent}`
-          }
+            style: 'text-indent: 1em'
+          },
+          indent: '1em'
         }
         return commands.toggleMark(this.name, attrs);
       },
