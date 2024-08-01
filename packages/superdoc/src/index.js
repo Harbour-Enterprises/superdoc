@@ -77,9 +77,11 @@ class Superdoc extends EventEmitter {
   }
 
   onToolbarCommand({ command, argument }) {
+    if (!command) return;
+
     if (command in this.activeEditor.commands) {
       this.activeEditor.commands[command](argument);
-    } else {
+    } else { 
       console.error('[superdoc] Command not yet implemented:', command);
     }
   }

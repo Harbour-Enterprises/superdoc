@@ -57,7 +57,7 @@ const fontButton = new ToolbarItem({
     }
 });
 
-const editorElement = document.querySelector('.super-editor');
+const editorElement = props.editorInstance.options.element
 editorElement.addEventListener('click', (e) => {
   closeOpenDropdowns();
 });
