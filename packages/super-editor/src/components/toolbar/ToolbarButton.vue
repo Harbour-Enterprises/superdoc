@@ -82,7 +82,7 @@ const handleInputSubmit = () => {
 <template>
   <div
       class="toolbar-item">
-      <div class="tooltip" :style="{display: tooltipVisible ? 'initial' : 'none', width: `${fullTooltip.length * 5}px`}">
+      <div class="tooltip" :style="{visibility: tooltipVisible ? 'visible' : 'hidden', width: `${fullTooltip.length * 5}px`}">
         <span>{{ fullTooltip }}</span>
       </div>
 
@@ -177,6 +177,7 @@ const handleInputSubmit = () => {
   text-align: center;
   left: 50%;
   transform: translateX(-50%);
+  display: table;
 }
 
 .tooltip::after {

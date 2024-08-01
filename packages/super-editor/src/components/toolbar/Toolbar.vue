@@ -106,10 +106,10 @@ const fontSize = new ToolbarItem({
         }
     },
     onTextMarkSelection(self, mark) {
-        self.label = mark.attrs.fontSize;
+      self.label = String(mark.attrs.fontSize);
     },
     onTextSelectionChange(self) {
-        self.label = '12pt';
+        self.label = '12';
     }
 });
 
