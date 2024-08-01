@@ -50,6 +50,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  hasInlineTextInput: {
+    type: Boolean,
+    default: false,
+  },
   isNarrow: {
     type: Boolean,
     default: false,
@@ -82,13 +86,13 @@ const handleInputSubmit = () => {
 <template>
   <div
       class="toolbar-item">
-      <div class="tooltip" :style="{display: tooltipVisible ? 'initial' : 'none', width: `${fullTooltip.length * 5}px`}">
+      <div class="tooltip" :style="{visibility: tooltipVisible ? 'visible' : 'hidden', width: `${fullTooltip.length * 5}px`}">
         <span>{{ fullTooltip }}</span>
       </div>
 
       <div @click="handleClick"
       class="toolbar-button"
-      :class="{ active: props.active, disabled, narrow: isNarrow, wide: isWide}">
+      :class="{ active: props.active, disabled, narrow: isNarrow, wide: isWide, 'has-inline-text-input': hasInlineTextInput}">
         <span class="button-label" v-if="label">
           <input v-if="inlineTextInputVisible"
           v-model="inlineTextInput"
@@ -128,11 +132,11 @@ const handleInputSubmit = () => {
   border-radius: 6px;
   margin-top: 3.5px;
   margin-bottom: 4px;
-  text-overflow: ellipsis;
+
   overflow-y: visible;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-around;
   cursor: pointer;
   color: #47484a;
   transition: all 0.2s ease-out;
@@ -149,12 +153,14 @@ const handleInputSubmit = () => {
   background-color: #c8d0d8;
 }
 .button-label {
-  width: 100%;
   overflow: hidden;
+  width: 50px;
+  text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: 100;
-  /* margin-right: 1%; */
+  font-size: .9em;
+  text-align: center;
 }
 
 .left, .right {
@@ -175,6 +181,7 @@ const handleInputSubmit = () => {
   text-align: center;
   left: 50%;
   transform: translateX(-50%);
+  display: table;
 }
 
 .tooltip::after {
@@ -186,6 +193,10 @@ const handleInputSubmit = () => {
   border-width: 5px;
   border-style: solid;
   border-color: white transparent transparent transparent;
+}
+
+.has-inline-text-input:hover {
+  cursor: text;
 }
 
 .disabled {
@@ -201,6 +212,7 @@ const handleInputSubmit = () => {
   background-color: #c8d0d8;
   border: none;
   font-size: 1em;
+  border-bottom: solid 1px#47484a;
 }
 
 .button-text-input:focus {

@@ -33,7 +33,7 @@ export const FontSize = Mark.create({
           attributes: {
             style: `font-size: ${value}pt`
           },
-          fontSize: `${value}pt`,
+          fontSize: value,
         }
         return commands.setMark(this.name, attrs);
       },
