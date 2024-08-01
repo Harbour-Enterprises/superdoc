@@ -6,6 +6,7 @@ export * from './chainableEditorState.js';
 export * from './getNodeType.js';
 export * from './getMarkType.js';
 export * from './defaultBlockAt.js';
+export * from './findParentNodeClosestToPos.js';
 export * from './findParentNode.js';
 export * from './isList.js';
 export * from './joinListBackwards.js';

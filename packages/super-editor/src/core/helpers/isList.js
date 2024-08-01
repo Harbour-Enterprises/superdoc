@@ -5,7 +5,6 @@ import { callOrGet } from '../utilities/callOrGet.js';
  * Check if node is a list.
  * @param name Node name.
  * @param extensions Array of extensions.
- * @returns 
  */
 export const isList = (name, extensions) => {
   const nodeExtensions = extensions.filter((e) => e.type === 'node');

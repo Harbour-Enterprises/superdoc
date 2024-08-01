@@ -8,14 +8,14 @@ export const Paragraph = Node.create({
 
   group: 'block',
 
-  // If possible, we should force at least one run inside a paragraph
-  // Will need special handling for 'enter' etc.
   content: 'inline*',
 
   inline: false,
 
-  parseDOM() {
-    return [{ tag: 'p' }];
+  addOptions() {
+    return {
+      htmlAttributes: {},
+    };
   },
 
   addAttributes() {
@@ -30,20 +30,32 @@ export const Paragraph = Node.create({
           let style = '';
           if (lineSpaceBefore) style += `margin-top: ${lineSpaceBefore}px;`;
           if (lineSpaceAfter) style += `margin-bottom: ${lineSpaceAfter}px;`;
-          return {
-            style
-          };
+          return { style };
         },
       },
 
       attributes: {
         rendered: false,
       },
+
+      textAlign: {
+        renderDOM: ({ textAlign }) => {
+          if (!textAlign) return {};
+          return { style: `text-align: ${textAlign}` };
+        },
+      },
+
+      textIndent: {
+        renderDOM: ({ textIndent }) => {
+          if (!textIndent) return {};
+          return { style: `text-indent: ${textIndent}` };
+        },
+      },
     };
   },
 
-  renderDOM({htmlAttributes}) {
-    const { style } = htmlAttributes;
-    return ['p', { style: style }, 0];
+  renderDOM({ htmlAttributes }) {
+    return ['p', Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes), 0];
   },
+
 });

@@ -5,11 +5,12 @@ import { Attribute } from '../Attribute.js';
 import { getNodeType } from '../helpers/getNodeType.js';
 
 /**
- * Splits one list item into two list items.
- * 
- * For reference.
- * https://github.com/ProseMirror/prosemirror-schema-list/blob/master/src/schema-list.ts#L114
+ * Splits one list item into two separate list items.
  * @param typeOrName The type or name of the node.
+ * 
+ * The command is a slightly modified version of the original 
+ * `splitListItem` command to better manage attributes and marks.
+ * https://github.com/ProseMirror/prosemirror-schema-list/blob/master/src/schema-list.ts#L114
  */
 export const splitListItem = (typeOrName) => (props) => {
   const { tr, state, dispatch, editor } = props;

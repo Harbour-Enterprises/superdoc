@@ -94,13 +94,13 @@ function getDefinitionForLevel(data, level) {
 
 function _processListParagraphProperties(data) {
   const { elements } = data;
-  const expectedTypes = ['w:ind'];
+  const expectedTypes = ['w:ind', 'w:jc', 'w:tabs'];
   const paragraphProperties = {};
   if (!elements) return paragraphProperties;
 
   elements.forEach((item) => { 
     if (!expectedTypes.includes(item.name)) throw new Error(`[numbering.xml] Unexpected list paragraph prop found: ${item.name}`);
-    const { attributes } = item;
+    const { attributes = {} } = item;
     Object.keys(attributes).forEach(key => {
       paragraphProperties[key] = attributes[key];
     });
@@ -110,7 +110,7 @@ function _processListParagraphProperties(data) {
 
 function _processListRunProperties(data) {
   const { elements } = data;
-  const expectedTypes = ['w:rFonts', 'w:b', 'w:bCs', 'w:i', 'w:iCs', 'w:strike', 'w:dstrike', 'w:color', 'w:sz', 'w:szCs', 'w:u', 'w:bdr', 'w:shd', 'w:vertAlign'];
+  const expectedTypes = ['w:rFonts', 'w:b', 'w:bCs', 'w:i', 'w:iCs', 'w:strike', 'w:dstrike', 'w:color', 'w:sz', 'w:szCs', 'w:u', 'w:bdr', 'w:shd', 'w:vertAlign', 'w:jc', 'w:spacing', 'w:w', ];
   const runProperties = {};
   if (!elements) return runProperties;
 

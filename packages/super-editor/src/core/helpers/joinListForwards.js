@@ -7,10 +7,7 @@ import { findParentNode } from './findParentNode.js';
  * @param listType List type.
  */
 export const joinListForwards = (tr, listType) => {
-  const list = findParentNode(
-    (node) => node.type === listType,
-    tr.selection,
-  );
+  const list = findParentNode((node) => node.type === listType)(tr.selection);
   if (!list) return true;
 
   const after = tr.doc.resolve(list.start).after(list.depth)

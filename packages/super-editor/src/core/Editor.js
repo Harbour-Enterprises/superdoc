@@ -138,14 +138,14 @@ export class Editor extends EventEmitter {
   }
 
   /**
-   * Create "chain".
+   * Create a chain of commands to call multiple commands at once.
    */
   chain() {
     return this.#commandService.chain();
   }
 
   /**
-   * Create "can".
+   * Check if a command or a chain of commands can be executed. Without executing it.
    */
   can() {
     return this.#commandService.can();
@@ -418,7 +418,6 @@ export class Editor extends EventEmitter {
     });
   }
 
-  
   /**
    * Load the document comments.
    */
@@ -446,48 +445,14 @@ export class Editor extends EventEmitter {
   }
 
   /**
-   * TODO: Remove this - this is for testing only
-   */
-  insert(text) {
-    const { dispatch } = this.view;
-
-    if (!Array.isArray(text)) text = [text];
-    text.forEach((t) => {
-      const state = this.state;
-      const { from, to } = state.selection;
-      const transaction = state.tr.insertText(t + '\n', from);
-      dispatch(transaction);
-    });
-  }
-
-  // TODO: Remove this - this is for testing only
-  // toggle() {
-  //   let { state } = this;
-  //   const { doc: currentDoc } = state;
-  //   const { dispatch } = this.view;
-  //   let startPos = 3;
-  //   let endPos = 7;
-  //   let newSelection = TextSelection.create(currentDoc, startPos, endPos);
-  //   let transaction = state.tr.setSelection(newSelection);
-  //   dispatch(transaction);
-
-  //   this.commands.toggleBold();
-  // }
-
-  /**
    * Export the editor document to DOCX.
-   * TODO: This is a WIP
    */
   async exportDocx() {
-    const json = this.converter.outputToJson(this.getJSON());
-    const xml = this.converter.schemaToXml(json);
-    console.debug('Exporting DOCX:', xml);
-  
+    const docx = this.converter.exportToDocx(this.getJSON());
     const zipper = new DocxZipper();
-    const newDocx = await zipper.updateZip(this.options.fileSource, String(xml));
+    const newDocx = await zipper.updateZip(this.options.fileSource, String(docx));
     return newDocx;
   }
-
 
   /**
    * Destroy the editor.
