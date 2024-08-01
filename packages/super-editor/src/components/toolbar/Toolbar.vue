@@ -5,7 +5,7 @@ import ToolbarSeparator from './ToolbarSeparator.vue';
 import DropdownOptions from './DropdownOptions.vue';
 import IconGrid from './IconGrid.vue';
 import LinkInput from './LinkInput.vue';
-import { createToolbarItem as ToolbarItem } from './ToolbarItem';
+import { ToolbarItem } from './ToolbarItem';
 
 const props = defineProps({
     editorInstance: {
@@ -14,54 +14,49 @@ const props = defineProps({
     }
 });
 
+const closeAllDropdowns = (currentItem) => {
+    toolbarItems.value.forEach((item) => {
+      if (item.name === currentItem?.name) return;
+      item.active = false;
+      if (item.childItem) item.childItem.active = false;
+    });
+}
+
 // bold
-const bold = ToolbarItem({
+const bold = new ToolbarItem({
     type: 'button',
     name: 'bold',
     command: 'toggleBold',
     icon: 'fa fa-bold',
     tooltip: "Bold",
-    onTextSelectionChange(self) {
-        self.active = false;
-    },
     onTextMarkSelection(self, mark) {
-        self.active = mark.type.name == 'bold';
+      self.active = mark.type.name === 'bold';
     }
 });
 
 // font
-const fontButton = ToolbarItem({
+const fontButton = new ToolbarItem({
     type: 'button',
-    name,
+    name: 'fontFamily',
     tooltip: "Font",
     overflowIcon: 'fa-font',
     label: "Arial",
     hasCaret: true,
     isWide: true,
     style: {width: '120px'},
-    preCommand(self) {
-        clearTimeout(self.tooltipTimeout);
-        self.tooltipVisible = false;
-        self.active = self.active ? false : true;
-        self.childItem.active = self.childItem.active ? false : true;
-    },
     onTextMarkSelection(self, mark) {
         self.label = mark.attrs.font;
     },
     onTextSelectionChange(self) {
-        self.active = false;
-        self.childItem.active = false;
-        self.label = "Arial";
+      self.label = "Arial";
     }
 });
 
-const fontOptions = ToolbarItem({
+const fontOptions = new ToolbarItem({
     type: 'options',
     name: 'fontFamilyDropdown',
     command: 'toggleFont',
-    preCommand(self, argument) {
-        console.log('preCommand', argument);
-        self.active = false;
+    preCommand(self) {
         self.parentItem.active = false;
     },
     command: 'toggleFont',
@@ -70,7 +65,7 @@ fontButton.childItem = fontOptions;
 fontOptions.parentItem = fontButton;
 
 // font size
-const fontSize = ToolbarItem({
+const fontSize = new ToolbarItem({
     type: 'button',
     name: 'fontSize',
     label: "12", // no units
@@ -81,10 +76,6 @@ const fontSize = ToolbarItem({
     command: "changeFontSize",
     style: {width: '90px'},
     preCommand(self, argument) {
-        clearTimeout(self.tooltipTimeout);
-        self.tooltipVisible = false;
-        self.active = self.active ? false : true;
-        self.childItem.active = self.childItem.active ? false : true;
         self.inlineTextInputVisible = self.inlineTextInputVisible ? false : true;
         setTimeout(() => {
             const input = document.querySelector('#inlineTextInput-fontSize');
@@ -109,24 +100,18 @@ const fontSize = ToolbarItem({
         }
     },
     onTextMarkSelection(self, mark) {
-        console.log('onTextMarkSelection', mark);
         self.label = mark.attrs.fontSize;
     },
     onTextSelectionChange(self) {
-        self.active = false;
-        self.childItem.active = false;
         self.label = '12pt';
     }
 });
 
-const fontSizeOptions = ToolbarItem({
+const fontSizeOptions = new ToolbarItem({
     type: 'options',
     name: 'fontSizeDropdown',
     command: 'changeFontSize',
     preCommand(self, argument) {
-        console.log('preCommand', argument);
-        self.active = false;
-        self.parentItem.active = false;
         self.parentItem.inlineTextInputVisible = false;
 
         const {label} = argument;
@@ -137,7 +122,7 @@ fontSize.childItem = fontSizeOptions;
 fontSizeOptions.parentItem = fontSize;
 
 // separator
-const separator =  ToolbarItem({
+const separator =  new ToolbarItem({
     type: 'separator',
     name: 'separator',
     icon: 'fa-grip-lines-vertical',
@@ -145,63 +130,51 @@ const separator =  ToolbarItem({
 })
 
 // italic
-const italic = ToolbarItem({
+const italic = new ToolbarItem({
     type: 'button',
     name: 'italic',
     command: 'toggleItalic',
     icon: 'fa fa-italic',
     active: false,
     tooltip: "Italic",
-    onTextSelectionChange(self) {
-        self.active = false;
-    },
     onTextMarkSelection(self, mark) {
         self.active = mark.type.name == 'italic';
     }
 });
 
 // underline
-const underline = ToolbarItem({
+const underline = new ToolbarItem({
     type: 'button',
     name: 'underline',
     command: 'toggleUnderline',
     icon: 'fa fa-underline',
     active: false,
     tooltip: "Underline",
-    onTextSelectionChange(self) {
-        self.active = false;
-    },
     onTextMarkSelection(self, mark) {
         self.active = mark.type.name == 'underline';
     }
 });
 
 // color
-const colorButton = ToolbarItem({
+const colorButton = new ToolbarItem({
     type: 'button',
     name: 'color',
     icon: 'fa-font',
     overflowIcon: 'fa-palette',
     active: false,
     tooltip: "Text color",
-    preCommand(self) {
-        self.childItem.active = self.childItem.active ? false : true;
-    },
     onTextMarkSelection(self, mark) {
         self.iconColor = mark.attrs.color;
     },
     onTextSelectionChange(self) {
-        self.active = false;
-        self.childItem.active = false;
         self.iconColor = '#47484a';
     },
 });
-const colorOptions = ToolbarItem({
+const colorOptions = new ToolbarItem({
     name: 'colorOptions',
     type: 'options',
     command: 'toggleColor',
     preCommand(self) {
-        self.active = false;
         self.parentItem.active = false;
     }
 });
@@ -209,20 +182,14 @@ colorButton.childItem = colorOptions;
 colorOptions.parentItem = colorButton;
 
 // link
-const link = ToolbarItem({
+const link = new ToolbarItem({
     type: 'button',
     name: 'link',
     icon: 'fa-link',
     active: false,
     tooltip: "Link",
-        preCommand(self) {
-        clearTimeout(self.tooltipTimeout);
-        self.tooltipVisible = false;
-        self.active = self.active ? false : true;
-        self.childItem.active = self.childItem.active ? false : true;
-    },
+    disabled: true,
     onTextMarkSelection(self, mark) {
-        console.log('mark', mark);
         self.childItem.argument = {
             href: mark.attrs.href,
             text: mark.attrs.text,
@@ -231,24 +198,15 @@ const link = ToolbarItem({
         self.childItem.active = true;
     },
     onTextSelectionChange(self, selectionText = null) {
-        // if (selectionText) {
-        //     console.log('selectionText', selectionText);
-        //     self.argument = {
-        //         href: '',
-        //         text: selectionText,
-        //     }
-        // }
-        self.active = false;
         self.childItem.active = false;
     },
 });
 
-const linkInput = ToolbarItem({
+const linkInput = new ToolbarItem({
     type: 'options',
     name: 'linkInput',
     command: 'toggleLink',
     preCommand(self) {
-        self.active = false;
         self.parentItem.active = false;
     },
     active: false,
@@ -257,7 +215,7 @@ link.childItem = linkInput;
 linkInput.parentItem = link;
 
 // image
-const image = ToolbarItem({
+const image = new ToolbarItem({
     type: 'button',
     name: 'image',
     command: 'toggleImage',
@@ -268,31 +226,22 @@ const image = ToolbarItem({
 });
 
 // alignment
-const alignment = ToolbarItem({
+const alignment = new ToolbarItem({
     type: 'button',
     name: 'textAlign',
     tooltip: "Alignment",
     icon: "fa-align-left",
     hasCaret: true,
-    preCommand(self) {
-        clearTimeout(self.tooltipTimeout);
-        self.tooltipVisible = false;
-        self.active = self.active ? false : true;
-        self.childItem.active = self.childItem.active ? false : true;
-
-        self.icon
-    },
     onTextMarkSelection(self, mark) {
-        self.icon = `fa-align-${mark.attrs.alignment}`;
+      self.icon = `fa-align-${mark.attrs.alignment}`;
     },
     onTextSelectionChange(self) {
-        self.active = false;
-        self.childItem.active = false;
-        self.icon = 'fa-align-left';
+      self.childItem.active = false;
+      self.icon = 'fa-align-left';
     }
 });
 
-const alignmentOptions = ToolbarItem({
+const alignmentOptions = new ToolbarItem({
     type: 'options',
     name: 'alignmentOptions',
     command: 'changeTextAlignment',
@@ -307,10 +256,9 @@ alignment.childItem = alignmentOptions;
 alignmentOptions.parentItem = alignment;
 
 // bullet list
-const bulletedList = ToolbarItem({
+const bulletedList = new ToolbarItem({
     type: 'button',
     name: 'list',
-    disabled: true,
     command: 'toggleList',
     icon: 'fa-list',
     active: false,
@@ -318,10 +266,9 @@ const bulletedList = ToolbarItem({
 });
 
 // number list
-const numberedList = ToolbarItem({
+const numberedList = new ToolbarItem({
     type: 'button',
     name: 'numberedlist',
-    disabled: true,
     command: 'toggleNumberedList',
     icon: 'fa-list-numeric',
     active: false,
@@ -329,63 +276,50 @@ const numberedList = ToolbarItem({
 });
 
 // indent left
-const indentLeft = ToolbarItem({
+const indentLeft = new ToolbarItem({
     type: 'button',
     name: 'indentleft',
     command: 'toggleIndentLeft',
     icon: 'fa-indent',
     active: false,
     tooltip: "Left indent",
+    disabled: true
 });
 
 // indent right
-const indentRight = ToolbarItem({
+const indentRight = new ToolbarItem({
     type: 'button',
     name: 'indentright',
     command: 'changeTextIndent',
     icon: 'fa-indent',
     active: false,
     tooltip: "Right indent",
+    disabled: true
 });
 
 // overflow
-const overflow = ToolbarItem({
+const overflow = new ToolbarItem({
     type: 'button',
     name: 'overflow',
     command: 'toggleOverflow',
     icon: 'fa-ellipsis-vertical',
     active: false,
     tooltip: "More options",
-
-    preCommand(self) {
-        clearTimeout(self.tooltipTimeout);
-        self.tooltipVisible = false;
-        self.active = self.active ? false : true;
-        self.childItem.active = self.childItem.active ? false : true;
-    },
-    onTextMarkSelection(self, mark) {
-    },
-    onTextSelectionChange(self) {
-        self.active = false;
-        self.childItem.active = false;
-    }
+    disabled: true
 });
 
-const overflowOptions = ToolbarItem({
+const overflowOptions = new ToolbarItem({
     type: 'options',
     name: 'overflowOptions',
     preCommand(self, argument) {
-        console.log('preCommand', argument);
-        self.active = false;
-        self.parentItem.active = false;
-        self.argument = argument;
+      self.parentItem.active = false;
     },
 })
 overflow.childItem = overflowOptions;
 overflowOptions.parentItem = overflow;
 
 // zoom
-const zoom = ToolbarItem({
+const zoom = new ToolbarItem({
     type: 'button',
     name: 'zoom',
     tooltip: "Zoom",
@@ -397,9 +331,6 @@ const zoom = ToolbarItem({
     inlineTextInputVisible: false,
     preCommand(self, argument) {
         clearTimeout(self.tooltipTimeout);
-        self.tooltipVisible = false;
-        self.active = self.active ? false : true;
-        self.childItem.active = self.childItem.active ? false : true;
         self.inlineTextInputVisible = self.inlineTextInputVisible ? false : true;
         setTimeout(() => {
             const input = document.querySelector('#inlineTextInput-zoom');
@@ -423,21 +354,13 @@ const zoom = ToolbarItem({
             value: sanitizedValue,
             label
         }
-    },
-    onTextMarkSelection(self, mark) {
-    },
-    onTextSelectionChange(self) {
-        self.active = false;
-        self.childItem.active = false;
     }
 });
 
-const zoomOptions = ToolbarItem({
+const zoomOptions = new ToolbarItem({
     type: 'options',
     name: 'zoomDropdown',
     preCommand(self, argument) {
-        console.log('preCommand', argument);
-        self.active = false;
         self.parentItem.active = false;
         self.parentItem.inlineTextInputVisible = false;
         
@@ -451,74 +374,36 @@ zoom.childItem = zoomOptions;
 zoomOptions.parentItem = zoom;
 
 // undo
-const undo = ToolbarItem({
+const undo = new ToolbarItem({
     type: 'button',
     name: 'undo',
     tooltip: "Undo",
     command: "undo",
-    icon: "fa-solid fa-rotate-left",
-    // isNarrow: true,
-    preCommand(self) {
-        clearTimeout(self.tooltipTimeout);
-        self.tooltipVisible = false;
-    },
-    onTextMarkSelection(self, mark) {
-    },
-    onTextSelectionChange(self) {
-        self.active = false;
-    }
+    icon: "fa-solid fa-rotate-left"
 });
 
 // redo
-const redo = ToolbarItem({
+const redo = new ToolbarItem({
     type: 'button',
     name: 'redo',
     tooltip: "Redo",
     command: "redo",
-    icon: 'fa fa-rotate-right',
-    // isNarrow: true,
-    preCommand(self) {
-        clearTimeout(self.tooltipTimeout);
-        self.tooltipVisible = false;
-    },
-    onTextMarkSelection(self, mark) {
-    },
-    onTextSelectionChange(self) {
-        self.active = false;
-    }
+    icon: 'fa fa-rotate-right'
 });
 
 // search
-const search = ToolbarItem({
+const search = new ToolbarItem({
     type: 'button',
     name: 'search',
     tooltip: "Search",
     disabled: true,
-    icon: "fa-solid fa-magnifying-glass",
-    preCommand(self) {
-        clearTimeout(self.tooltipTimeout);
-        self.tooltipVisible = false;
-        self.active = self.active ? false : true;
-        self.childItem.active = self.childItem.active ? false : true;
-    },
-    onTextMarkSelection(self, mark) {
-    },
-    onTextSelectionChange(self) {
-        self.active = false;
-        self.childItem.active = false;
-    }
+    icon: "fa-solid fa-magnifying-glass"
 });
 
-const searchOptions = ToolbarItem({
+const searchOptions = new ToolbarItem({
     type: 'options',
     name: 'searchDropdown',
-    command: 'search',
-    preCommand(self, argument) {
-        console.log('preCommand', argument);
-        self.active = false;
-        self.parentItem.active = false;
-        self.argument = argument;
-    },
+    command: 'search'
 })
 search.childItem = searchOptions;
 searchOptions.parentItem = search;
@@ -573,7 +458,7 @@ const toolbarItems = ref([
   overflow,
   // suggesting
   // TODO: Restore this later - removing for initial milestone
-  // ToolbarItem({
+  // new ToolbarItem({
   //   type: 'toggle',
   //   label: 'Suggesting',
   //   name: 'suggesting',
@@ -781,40 +666,33 @@ const showOptions = (item, name) => item?.name === name && item?.active;
 
 const executeItemCommands = (item, argument = null) => {
   console.log("Executing item commands", item, argument)
-  const {preCommand, command} = item;
 
-  if (preCommand) {
-    console.log("Calling precommand", item, argument)
-    const preCommandResult = preCommand(item, argument);
-    if (preCommandResult) argument = preCommandResult;
-    console.log("Precommand result", preCommandResult)
-  }
+  const preCommandResult = item.preCommand(argument);
+  if (preCommandResult) argument = preCommandResult;
+  console.log("Precommand result", preCommandResult)
 
-  if (command) {
-    console.log("Executing command", command, argument)
-    emit('command', {command, argument});
-  }
+  emit('command', {command: item.command, argument});
 }
 
 const handleToolbarButtonClick = (item, argument = null) => {
+  if (item.disabled) return;
+  closeAllDropdowns(item);
   executeItemCommands(item, argument);
 }
 
 const handleToolbarButtonTextSubmit = (item, argument) => {
+  if (item.disabled) return;
+  closeAllDropdowns(item);
   executeItemCommands(item, argument);
 }
 
 const onTextSelectionChange = (marks, selectionText = null) => {
   toolbarItems.value.forEach((item) => {
-    if (item.onTextSelectionChange) {
-      item.onTextSelectionChange(item, selectionText);
-    }
+    item.onTextSelectionChange(selectionText);
 
     // handle selection
     const correspondingMark = marks.find((mark) => mark.type.name === item.name);
-    if (correspondingMark && item.onTextMarkSelection) {
-      item.onTextMarkSelection(item, correspondingMark);
-    }
+    if (correspondingMark) item.onTextMarkSelection(correspondingMark);
   });
 }
 

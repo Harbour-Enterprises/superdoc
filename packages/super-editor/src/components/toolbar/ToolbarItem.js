@@ -1,43 +1,81 @@
 
-export const createToolbarItem = (options) => {
-    const types = ['button', 'options', 'separator'];
-    if (!types.includes(options.type)) {
-        throw new Error('Invalid toolbar item type - ' + options.type);
-    }
-    return {
-        type: options.type,
-        name: options.name,
+export class ToolbarItem {
+    init(options) {
+        // required
+        const types = ['button', 'options', 'separator'];
+        if (!types.includes(options.type)) {
+            throw new Error('Invalid toolbar item type - ' + options.type);
+        }
+
+        if (!options.name) {
+            throw new Error('Invalid toolbar item name - ' + options.name);
+        }
+
+        this.type = options.type
+        this.name = options.name
 
         // top-level style
-        style: options.style ?? null,
-        isNarrow: options.isNarrow ?? false,
-        isWide: options.isWide ?? false,
+        this.style = null
+        this.isNarrow = false
+        this.isWide = false
 
         // handlers
-        onTextMarkSelection: options.onTextMarkSelection ?? null,
-        onTextSelectionChange: options.onTextSelectionChange ?? null,
-        preCommand: options.preCommand ?? null,
+        this.onTextMarkSelection = this._onTextMarkSelection
+        this.onTextSelectionChange = this._onTextSelectionChange
+        this.preCommand = this._preCommand
 
-        command: options.command ?? null,
-        argument: options.argument ?? null,
-        childItem: options.childItem ?? null,
-        parentItem: options.parentItem ?? null,
-        active: options.active ?? false,
+        this.command = null
+        this.argument = null
+        this.childItem = null
+        this.parentItem = null
+        this.active = false
 
         // icon properties
-        icon: options.icon ?? null,
-        overflowIcon: options.overflowIcon ?? options.icon ?? null,
-        iconColor: options.iconColor ?? null,
-        hasCaret: options.hasCaret ?? false,
+        this.icon = null
+        this.overflowIcon = null
+        this.iconColor = null
+        this.hasCaret = false
 
         // tooltip properties
-        tooltip: options.tooltip ?? null,
-        tooltipVisible: options.tooltipVisible ?? false,
-        tooltipTimeout: options.tooltipTimeout ?? null,
+        this.tooltip = null
+        this.tooltipVisible = false
+        this.tooltipTimeout = null
 
         // behavior
-        label: options.label ?? null,
-        disabled: options.disabled ?? false,
-        inlineTextInputVisible: options.inlineTextInputVisible ?? false,
+        this.label = null
+        this.disabled = false
+        this.inlineTextInputVisible = false
+
+
+        const handlers = ['onTextMarkSelection', 'onTextSelectionChange', 'preCommand'];
+        Object.keys(options).forEach(key => {
+            if (!this.hasOwnProperty(key)) throw new Error('Invalid toolbar item property - ' + key);
+            // handler assignment
+            if (handlers.includes(key)) {
+                if (typeof options[key] !== 'function') throw new Error('Invalid toolbar item handler - ' + key);
+                this[key] = function(...args){
+                    this[`_${key}`]()
+                    options[key](this, ...args) // callback
+                }
+                return;
+            }
+            this[key] = options[key]
+        });
+    }
+
+    constructor(options = {}) {
+        this.init(options)
+    }
+
+    _onTextMarkSelection() {}
+    _onTextSelectionChange() {
+        this.active = false;
+        if (this.childItem) this.childItem.active = false;
+    }
+    _preCommand() {
+        clearTimeout(this.tooltipTimeout);
+        this.tooltipVisible = false;
+        this.active = this.active ? false : true;
+        if (this.childItem) this.childItem.active = this.childItem.active ? false : true;
     }
 }
