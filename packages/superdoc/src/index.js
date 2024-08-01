@@ -7,6 +7,8 @@ import clickOutside from '@/helpers/v-click-outside';
 import SuperToolbar from '@/components/SuperToolbar/SuperToolbar.vue';
 import App from './Superdoc.vue'
 
+import BlankDOCX from '../../../examples/helloworld/data/blank.docx?url';
+
 const createMyApp = () => {
   const app = createApp(App);
   const pinia = createPinia()
@@ -21,7 +23,7 @@ const createMyApp = () => {
   * Superdoc class
   * Expects a config object
 */
-export default class Superdoc extends EventEmitter {
+class Superdoc extends EventEmitter {
   constructor(config) {
     console.debug('[superdoc] Initializing:', config);
     super();
@@ -95,4 +97,10 @@ export default class Superdoc extends EventEmitter {
     delete this.app.config.globalProperties.$config;
     delete this.app.config.globalProperties.$superdoc;
   }
+}
+
+
+export { 
+  Superdoc,
+  BlankDOCX
 }
