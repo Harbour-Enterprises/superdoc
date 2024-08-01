@@ -1,3 +1,4 @@
+import { canJoin } from 'prosemirror-transform';
 import { getNodeType } from '../helpers/getNodeType.js';
 import { findParentNode } from '../helpers/findParentNode.js';
 import { isList } from '../helpers/isList.js';
