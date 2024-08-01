@@ -128,11 +128,11 @@ const handleInputSubmit = () => {
   border-radius: 6px;
   margin-top: 3.5px;
   margin-bottom: 4px;
-  text-overflow: ellipsis;
+
   overflow-y: visible;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-around;
   cursor: pointer;
   color: #47484a;
   transition: all 0.2s ease-out;
@@ -149,12 +149,14 @@ const handleInputSubmit = () => {
   background-color: #c8d0d8;
 }
 .button-label {
-  width: 100%;
   overflow: hidden;
+  width: 50px;
+  text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: 100;
-  /* margin-right: 1%; */
+  font-size: .9em;
+  text-align: center;
 }
 
 .left, .right {

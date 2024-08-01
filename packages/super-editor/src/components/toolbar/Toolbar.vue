@@ -14,12 +14,16 @@ const props = defineProps({
     }
 });
 
-const closeAllDropdowns = (currentItem) => {
-    toolbarItems.value.forEach((item) => {
-      if (item.name === currentItem?.name) return;
-      item.active = false;
-      if (item.childItem) item.childItem.active = false;
-    });
+const closeOpenDropdowns = (currentItem = null) => {
+  const parentToolbarItems = toolbarItems.value.filter(item => item.childItem);
+  parentToolbarItems.forEach((item) => {
+    if (currentItem) {
+      if (item.name === currentItem.name) return;
+      if (item.childItem && item.childItem.name === currentItem.name) return;
+    }
+    item.active = false;
+    item.childItem.active = false;
+  });
 }
 
 // bold
@@ -52,13 +56,15 @@ const fontButton = new ToolbarItem({
     }
 });
 
+const editorElement = document.querySelector('.super-editor');
+editorElement.addEventListener('click', (e) => {
+  closeOpenDropdowns();
+});
+
 const fontOptions = new ToolbarItem({
     type: 'options',
     name: 'fontFamilyDropdown',
     command: 'toggleFont',
-    preCommand(self) {
-        self.parentItem.active = false;
-    },
     command: 'toggleFont',
 })
 fontButton.childItem = fontOptions;
@@ -676,16 +682,16 @@ const executeItemCommands = (item, argument = null) => {
 
 const handleToolbarButtonClick = (item, argument = null) => {
   if (item.disabled) return;
-  closeAllDropdowns(item);
+  closeOpenDropdowns(item);
   executeItemCommands(item, argument);
 }
 
 const handleToolbarButtonTextSubmit = (item, argument) => {
   if (item.disabled) return;
-  closeAllDropdowns(item);
+  closeOpenDropdowns(item);
   executeItemCommands(item, argument);
 }
-
+  
 const onTextSelectionChange = (marks, selectionText = null) => {
   toolbarItems.value.forEach((item) => {
     item.onTextSelectionChange(selectionText);
@@ -836,7 +842,7 @@ defineExpose({
 }
 
 .wide {
-  width: 6%;
+  width: 10%;
   margin: 0 1%;
 }
 </style>
