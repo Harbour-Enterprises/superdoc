@@ -29,21 +29,16 @@ const handleNewFile = async (file) => {
   currentFile.value = new File([blob], 'docx-file.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
 }
 
-const commandsMap = {
-  toggleList: 'toggleBulletList',
-  toggleNumberedList: 'toggleOrderedList',
-};
-
 const handleToolbarCommand = ({ command, argument }) => {
   console.debug('[SuperEditor dev] Toolbar command', command, argument, activeEditor?.commands);
-  
+
   const commands = activeEditor?.commands;
     if (!commands) {
     console.error('No commands');
     return;
   }
 
-  const commandName = commandsMap[command] ? commandsMap[command] : command;
+  const commandName = command;
     if (commandName in commands) {
       console.log('Executing command:', commandName);
     activeEditor?.commands[commandName](argument);
