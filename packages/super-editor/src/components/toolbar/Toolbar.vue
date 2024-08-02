@@ -6,6 +6,7 @@ import DropdownOptions from './DropdownOptions.vue';
 import IconGrid from './IconGrid.vue';
 import LinkInput from './LinkInput.vue';
 import { ToolbarItem } from './ToolbarItem';
+import { sanitizeNumber } from './helpers';
 
 const props = defineProps({
     editorInstance: {
@@ -27,6 +28,13 @@ const closeOpenDropdowns = (currentItem = null) => {
   });
 }
 
+const editorElement = document.querySelector('.super-editor');
+if (editorElement) {
+  editorElement.addEventListener('click', (e) => {
+    closeOpenDropdowns();
+  });
+}
+
 // bold
 const bold = new ToolbarItem({
     type: 'button',
@@ -44,11 +52,16 @@ const fontButton = new ToolbarItem({
     type: 'button',
     name: 'fontFamily',
     tooltip: "Font",
+    command: 'toggleFont',
     overflowIcon: 'fa-font',
     label: "Arial",
     hasCaret: true,
     isWide: true,
     style: {width: '120px'},
+    preCommand(self, argument) {
+      if (!argument) return;
+      self.label = argument.label;
+    },
     onTextMarkSelection(self, mark) {
         self.label = mark.attrs.font;
     },
@@ -57,16 +70,36 @@ const fontButton = new ToolbarItem({
     }
 });
 
-const editorElement = props.editorInstance.options.element
-editorElement.addEventListener('click', (e) => {
-  closeOpenDropdowns();
-});
-
 const fontOptions = new ToolbarItem({
     type: 'options',
     name: 'fontFamilyDropdown',
-    command: 'toggleFont',
-    command: 'toggleFont',
+    options: [
+      {
+        label: 'Georgia',
+        fontName: 'Georgia, serif',
+        fontWeight: 400,
+      },
+      {
+        label: 'Arial',
+        fontName: 'Arial, sans-serif',
+        fontWeight: 400,
+      },
+      {
+        label: 'Courier New',
+        fontName: 'Courier New, monospace',
+        fontWeight: 400,
+        active: false,
+        options: [
+          { label: 'Regular', fontWeight: 400 },
+          { label: 'Bold', fontWeight: 700 },
+        ],
+      },
+      {
+        label: 'Times New Roman',
+        fontName: 'Times New Roman, serif',
+        fontWeight: 400,
+      },
+    ]
 })
 fontButton.childItem = fontOptions;
 fontOptions.parentItem = fontButton;
@@ -171,6 +204,10 @@ const colorButton = new ToolbarItem({
     overflowIcon: 'fa-palette',
     active: false,
     tooltip: "Text color",
+    command: 'toggleColor',
+    preCommand(self, color) {
+      self.iconColor = color;
+    },
     onTextMarkSelection(self, mark) {
         self.iconColor = mark.attrs.color;
     },
@@ -178,13 +215,48 @@ const colorButton = new ToolbarItem({
         self.iconColor = '#47484a';
     },
 });
+
+const makeColorOption = (label, color) => {
+  return {
+    label,
+    icon: 'fa-circle',
+    value: color,
+    style: {
+      color,
+      boxShadow: "0 0 5px 1px rgba(0, 0, 0, 0.1)",
+      borderRadius: "50%",
+      fontSize: "1.25em",
+    }
+  }
+}
 const colorOptions = new ToolbarItem({
     name: 'colorOptions',
     type: 'options',
-    command: 'toggleColor',
     preCommand(self) {
         self.parentItem.active = false;
-    }
+  },
+  options: [
+    [
+      makeColorOption('Red', 'red'),
+      makeColorOption('Blue', 'blue'),
+      makeColorOption('Green', 'green')
+    ],
+    [
+      makeColorOption('Yellow', 'yellow'),
+      makeColorOption('Purple', 'purple'),
+      makeColorOption('Orange', 'orange')
+    ],
+    [
+      makeColorOption('Black', 'black'),
+      makeColorOption('White', 'white'),
+      makeColorOption('Gray', 'gray')
+    ],
+    [
+      makeColorOption('Pink', 'pink'),
+      makeColorOption('Brown', 'brown'),
+      makeColorOption('Cyan', 'cyan')
+    ],
+  ]
 });
 colorButton.childItem = colorOptions;
 colorOptions.parentItem = colorButton;
@@ -247,17 +319,14 @@ const alignment = new ToolbarItem({
       self.childItem.active = false;
       self.icon = 'fa-align-left';
     }
-});
-
-const alignmentOptions = new ToolbarItem({
+  });
+  
+  const alignmentOptions = new ToolbarItem({
     type: 'options',
     name: 'alignmentOptions',
     command: 'changeTextAlignment',
     preCommand(self, argument) {
-        console.log('preCommand', argument);
-        self.active = false;
-        self.parentItem.active = false;
-        self.argument = argument;
+      self.parentItem.icon = `fa-align-${argument}`;
     },
 })
 alignment.childItem = alignmentOptions;
@@ -378,6 +447,15 @@ const zoomOptions = new ToolbarItem({
         self.parentItem.label = label;
         editor.style.zoom = value;
     },
+  options: [
+    { label: '50%', value: 0.5 },
+    { label: '75%', value: 0.75 },
+    { label: '90%', value: 0.9 },
+    { label: '100%', value: 1 },
+    { label: '125%', value: 1.25 },
+    { label: '150%', value: 1.5 },
+    { label: '200%', value: 2 },
+  ]
 })
 zoom.childItem = zoomOptions;
 zoomOptions.parentItem = zoom;
@@ -573,43 +651,6 @@ const alignments = [
   ]
 ]
 
-const makeColorOption = (label, color) => {
-  return {
-    label,
-    icon: 'fa-circle',
-    value: color,
-    style: {
-      color,
-      boxShadow: "0 0 5px 1px rgba(0, 0, 0, 0.1)",
-      borderRadius: "50%",
-      fontSize: "1.25em",
-    }
-  }
-}
-
-const colors = [
-  [
-    makeColorOption('Red', 'red'),
-    makeColorOption('Blue', 'blue'),
-    makeColorOption('Green', 'green')
-  ],
-  [
-    makeColorOption('Yellow', 'yellow'),
-    makeColorOption('Purple', 'purple'),
-    makeColorOption('Orange', 'orange')
-  ],
-  [
-    makeColorOption('Black', 'black'),
-    makeColorOption('White', 'white'),
-    makeColorOption('Gray', 'gray')
-  ],
-  [
-    makeColorOption('Pink', 'pink'),
-    makeColorOption('Brown', 'brown'),
-    makeColorOption('Cyan', 'cyan')
-  ],
-]
-
 // no units
 const fontSizeValues = [
   {label: '8', value: 8},
@@ -628,43 +669,7 @@ const fontSizeValues = [
   {label: '96', value: 96}
 ]
 
-const zoomValues = [
-  {label: '50%', value: 0.5},
-  {label: '75%', value: 0.75},
-  {label: '90%', value: 0.9},
-  {label: '100%', value: 1},
-  {label: '125%', value: 1.25},
-  {label: '150%', value: 1.5},
-  {label: '200%', value: 2},
-]
 
-const fonts = [
-      {
-        label: 'Georgia',
-        fontName: 'Georgia, serif',
-        fontWeight: 400,
-      },
-      {
-        label: 'Arial',
-        fontName: 'Arial, sans-serif',
-        fontWeight: 400,
-      },
-      {
-        label: 'Courier New',
-        fontName: 'Courier New, monospace',
-        fontWeight: 400,
-        active: false,
-        options: [
-          { label: 'Regular', fontWeight: 400 },
-          { label: 'Bold', fontWeight: 700 },
-        ],
-      },
-      {
-        label: 'Times New Roman',
-        fontName: 'Times New Roman, serif',
-        fontWeight: 400,
-      },
-    ]
 const isButton = (item) => item.type === 'button';
 const isSeparator = (item) => item.type === 'separator';
 const isDropdown = (item) => item.type === 'dropdown';
@@ -685,8 +690,19 @@ const executeItemCommands = (item, argument = null) => {
 
 const handleToolbarButtonClick = (item, argument = null) => {
   if (item.disabled) return;
+  console.log("Toolbar button click", argument)
   closeOpenDropdowns(item);
   executeItemCommands(item, argument);
+}
+
+const handleDropdownOptionMouseEnter = (item, optionIndex) => {
+  const option = item.options[optionIndex];
+  option.active = true
+}
+
+const handleDropdownOptionMouseLeave = (item, optionIndex) => {
+  const option = item.options[optionIndex];
+  option.active = false
 }
 
 const handleToolbarButtonTextSubmit = (item, argument) => {
@@ -749,15 +765,17 @@ defineExpose({
           <DropdownOptions
             v-if="showOptions(item.childItem, 'fontFamilyDropdown')"
             :command="item.childItem.command"
-            @optionClick="(option) => handleToolbarButtonClick(item.childItem, option)"
-            :options="fonts"/>
+            @optionEnter="(optionIndex) => handleDropdownOptionMouseEnter(item.childItem, optionIndex)"
+            @optionLeave="(optionIndex) => handleDropdownOptionMouseLeave(item.childItem, optionIndex)"
+            @optionClick="(option) => handleToolbarButtonClick(item, option)"
+            :options="item.childItem.options"/>
 
           <!-- zoom dropdown -->
           <DropdownOptions
             v-if="showOptions(item.childItem, 'zoomDropdown')"
             :command="item.childItem.command"
             @optionClick="(option) => handleToolbarButtonClick(item.childItem, option)"
-            :options="zoomValues"/>
+            :options="item.childItem.options"/>
           
           <!-- font size dropdown -->
           <DropdownOptions
@@ -769,8 +787,8 @@ defineExpose({
           <!-- color picker  -->
           <IconGrid
             v-if="showOptions(item.childItem, 'colorOptions')"
-            :icons="colors"
-            @select="(color) => handleToolbarButtonClick(item.childItem, color)"/>
+            :icons="item.childItem.options"
+            @select="(color) => handleToolbarButtonClick(item, color)"/>
 
           <!-- alignment options  -->
           <IconGrid

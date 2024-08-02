@@ -26,6 +26,7 @@ export const TextAlign = Mark.create({
   addCommands(node) {
     return {
       changeTextAlignment: (alignment) => ({ commands }) => {
+        if (!alignment) return;
         const attrs = {
           attributes: {
             style: `text-align: ${alignment}`

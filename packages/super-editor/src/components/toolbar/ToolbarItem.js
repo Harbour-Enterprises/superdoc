@@ -14,6 +14,13 @@ export class ToolbarItem {
         this.type = options.type
         this.name = options.name
 
+        // nested options
+        this.options = []
+        if (options.options) {
+            if (!Array.isArray(options.options)) throw new Error('Invalid toolbar item options - ' + options.options);
+            this.options = options.options
+        }
+
         // top-level style
         this.style = null
         this.isNarrow = false
@@ -46,7 +53,6 @@ export class ToolbarItem {
         this.disabled = false
         this.inlineTextInputVisible = false
         this.hasInlineTextInput = false
-
 
         const handlers = ['onTextMarkSelection', 'onTextSelectionChange', 'preCommand'];
         Object.keys(options).forEach(key => {
