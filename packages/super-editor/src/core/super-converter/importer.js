@@ -147,8 +147,7 @@ export class DocxImporter {
         listItems.push(possibleList);
         possibleList = siblings.shift();
         if (possibleList?.elements && !this.#hasTextNode(possibleList.elements)) {
-        // if (possibleList?.elements?.length === 1) {
-          listItems[listItems.length - 1].elements.push(possibleList);
+          listItems.push(possibleList);
           possibleList = siblings.shift();
         }
       }
@@ -213,11 +212,18 @@ export class DocxImporter {
     let overallListType;
     let listStyleType;
 
-    console.debug('\n\nLISTNODES', listItems, '\n\n')
     for (let [index, item] of listItems.entries()) {
       // Skip items we've already processed
       if (item.seen) continue;
 
+      // Sometimes there are paragraph nodes that only have pPr element and no text node - these are 
+      // Spacers in the XML and need to be appended to the last item.
+      if (item.elements && !this.#hasTextNode(item.elements)) {
+        const n = this.#handleStandardNode(item, listItems, index);
+        parsedListItems[parsedListItems.length - 1].content.push(n);
+        item.seen = true;
+        continue;
+      }
 
       // Get the properties of the node - this is where we will find depth level for the node
       // As well as many other list properties
