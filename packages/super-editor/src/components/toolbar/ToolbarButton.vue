@@ -114,6 +114,7 @@ const handleInputSubmit = () => {
 
         <font-awesome-icon v-if="hasCaret"
         class="caret"
+        :class="{disabled}"
         :icon="active ? 'fa-caret-up' : 'fa-caret-down'"
         :style="{opacity: disabled ? 0.6 : 1}"
         />
@@ -145,7 +146,6 @@ const handleInputSubmit = () => {
 }
 
 .toolbar-button:hover {
-  color: black;
   background-color: #d8dee5;
 }
 .toolbar-button:active,
@@ -202,8 +202,12 @@ const handleInputSubmit = () => {
 .disabled {
   cursor: default;
 }
+.disabled:hover {
+  cursor: default;
+  background-color: initial;
+}
 .disabled .icon, .disabled .caret, .disabled .button-label {
-  opacity: .6;
+  opacity: .35;
 }
 .caret {
   font-size: .6em;
@@ -212,7 +216,11 @@ const handleInputSubmit = () => {
   background-color: #c8d0d8;
   border: none;
   font-size: 1em;
-  border-bottom: solid 1px#47484a;
+  /* border-bottom: solid 1px#47484a; */
+  text-align: center;
+  width: 90%;
+  font-size: 1em;
+  font-weight: 100;
 }
 
 .button-text-input:focus {

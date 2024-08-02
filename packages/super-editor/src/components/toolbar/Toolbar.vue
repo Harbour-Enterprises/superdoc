@@ -6,6 +6,7 @@ import DropdownOptions from './DropdownOptions.vue';
 import IconGrid from './IconGrid.vue';
 import LinkInput from './LinkInput.vue';
 import { ToolbarItem } from './ToolbarItem';
+import { sanitizeNumber } from './helpers';
 
 const props = defineProps({
     editorInstance: {
