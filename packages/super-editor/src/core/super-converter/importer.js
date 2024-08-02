@@ -284,6 +284,9 @@ export class DocxImporter {
       content: parsedListItems,
       attrs: {
         'list-style-type': listStyleType,
+        attributes: {
+          'parentAttributes': listItems[0]?.attributes || null,
+        }
       }
     };
   }

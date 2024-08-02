@@ -47,6 +47,7 @@ export default defineConfig(({ mode }) => {
         '@extensions': fileURLToPath(new URL('./src/extensions', import.meta.url)),
         '@features': fileURLToPath(new URL('./src/features', import.meta.url)),
         '@components': fileURLToPath(new URL('./src/components', import.meta.url)),
+        '@helpers': fileURLToPath(new URL('./src/core/helpers', import.meta.url)),
       },
       extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json'],
     },

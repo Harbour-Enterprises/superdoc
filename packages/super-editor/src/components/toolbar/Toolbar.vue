@@ -629,6 +629,10 @@ const overflowIconGrid = computed(() => [overflowItems.value.map((item) => (
 
 onMounted(() => {
   window.addEventListener('resize', debounceSetOverflowItems);
+  const editorElement = document.getElementById('super-editor');
+  editorElement?.addEventListener('click', (e) => {
+    closeOpenDropdowns();
+  });
 })
 
 onUnmounted(() => {

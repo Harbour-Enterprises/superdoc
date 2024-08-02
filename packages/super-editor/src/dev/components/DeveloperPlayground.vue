@@ -1,14 +1,7 @@
-<!-- 
-  Dev app for the SuperEditor component
-
-  The super-editor package exports SuperEditor directly. Thus, this app simulates the process
-  of importing the component into another Vue 3 app (ie: superdoc) and using it.
--->
-
 <script setup>
 import { ref, reactive, watch, onMounted } from 'vue';
 import BasicUpload from './BasicUpload.vue';
-import blankDocBase64 from '../../tests/fixtures/blank-doc/blankDoc';
+import BlankDOCX from '@common/data/blank.docx?url';
 
 // Import the component the same you would in your app
 import { SuperEditor, Toolbar } from '@/index';
@@ -18,15 +11,21 @@ const toolbarVisible = ref(false);
 
 const toolbar = ref(null);
 const currentFile = ref(null);
+const DOC_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 
 const handleNewFile = async (file) => {
   currentFile.value = null;
 
   // Generate a file url
   const fileUrl = URL.createObjectURL(file);
+  currentFile.value = await getFileObject(fileUrl);
+}
+
+const getFileObject = async (fileUrl) => {
+  // Generate a file url
   const response = await fetch(fileUrl);
   const blob = await response.blob();
-  currentFile.value = new File([blob], 'docx-file.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  return new File([blob], 'docx-file.docx', { type: DOC_TYPE});
 }
 
 const handleToolbarCommand = ({ command, argument }) => {
@@ -40,7 +39,7 @@ const handleToolbarCommand = ({ command, argument }) => {
 
   const commandName = command;
     if (commandName in commands) {
-      console.log('Executing command:', commandName);
+      // console.log('Executing command:', commandName);
     activeEditor?.commands[commandName](argument);
     activeEditor.view.focus();
     } else {
@@ -50,7 +49,7 @@ const handleToolbarCommand = ({ command, argument }) => {
 
 const onSelectionUpdate = ({ editor, transaction }) => {
   const { from, to } = transaction.selection;
-  console.debug('[SuperEditor dev] Selection update', from, to);
+  // console.debug('[SuperEditor dev] Selection update', from, to);
   activeEditor = editor;
 
   // This logic should maybe be inside the Editor.js rather than here?
@@ -81,7 +80,7 @@ const editorOptions = {
 
 const exportDocx = async () => {
   const result = await activeEditor?.exportDocx();
-  const blob = new Blob([result], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  const blob = new Blob([result], { type: DOC_TYPE });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -89,15 +88,9 @@ const exportDocx = async () => {
   a.click();
 }
 
-const getDocumentFromBase64 = async (base64) => {
-  const response = await fetch(base64);
-  const blob = await response.blob();
-  return new File([blob], 'docx-file.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-}
-
 onMounted(async () => {
   // set document to blank
-  currentFile.value = await getDocumentFromBase64(blankDocBase64);
+  currentFile.value = await getFileObject(BlankDOCX);
 })
 </script>
 

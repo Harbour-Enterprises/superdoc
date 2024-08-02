@@ -7,7 +7,7 @@ import clickOutside from '@/helpers/v-click-outside';
 import SuperToolbar from '@/components/SuperToolbar/SuperToolbar.vue';
 import App from './Superdoc.vue'
 
-import BlankDOCX from '../../../examples/helloworld/data/blank.docx?url';
+import BlankDOCX from '@common/data/blank.docx?url';
 
 const createMyApp = () => {
   const app = createApp(App);

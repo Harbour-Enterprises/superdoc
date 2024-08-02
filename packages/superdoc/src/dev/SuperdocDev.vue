@@ -1,23 +1,22 @@
 <script setup>
 // import "super-editor/style.css";
 import { Superdoc } from '@/index';
-import docxWithComments from '../assets/sample.docx?url'
+// import docxWithComments from '../assets/sample.docx?url'
 import { onMounted } from 'vue';
-
+import BlankDOCX from '@common/data/blank.docx?url';
 
 /* For local dev */
 let activeEditor = null;
 let superdoc = null;
-const getFileObject = async () => {
+const getFileObject = async (fileUrl) => {
   // Generate a file url
-  const fileUrl = docxWithComments;
-  const response = await fetch(docxWithComments);
+  const response = await fetch(fileUrl);
   const blob = await response.blob();
   return new File([blob], 'docx-file.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
 }
 
 const initializeApp = async () => {
-  const docx = await getFileObject();
+  const docx = await getFileObject(BlankDOCX);
   const config = {
     selector: '#superdoc',
     toolbar: 'toolbar',

@@ -1,6 +1,7 @@
 import { Node } from '@core/index.js';
 import { Attribute } from '@core/index.js';
 import { toKebabCase } from '@common/key-transform.js';
+import { generateDocxListAttributes } from '@helpers/index.js';
 
 export const OrderedList = Node.create({
   name: 'orderedList',
@@ -48,6 +49,7 @@ export const OrderedList = Node.create({
 
       attributes: {
         rendered: false,
+        keepOnSplit: true,
       },
     };
   },
@@ -66,12 +68,14 @@ export const OrderedList = Node.create({
 
   addCommands() {
     return {
-      toggleOrderedList: () => (props) => {      
-        const { commands, chain } = props;
+      toggleOrderedList: () => (props) => {    
+        const attributes = generateDocxListAttributes('orderedList');  
+        const { commands } = props;
         return commands.toggleList(
           this.name, 
           this.options.itemTypeName, 
           this.options.keepMarks,
+          attributes
         );
       },
     };
