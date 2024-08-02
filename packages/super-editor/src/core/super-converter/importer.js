@@ -220,7 +220,7 @@ export class DocxImporter {
       // Spacers in the XML and need to be appended to the last item.
       if (item.elements && !this.#hasTextNode(item.elements)) {
         const n = this.#handleStandardNode(item, listItems, index);
-        parsedListItems[parsedListItems.length - 1].content.push(n);
+        parsedListItems[parsedListItems.length - 1]?.content.push(n);
         item.seen = true;
         continue;
       }
@@ -315,7 +315,7 @@ export class DocxImporter {
     if (elements.length === 1) text = elements[0].text;
 
     // Word sometimes will have an empty text node with a space attribute, in that case it should be a space
-    else if (!elements.length && node.attributes['xml:space'] === 'preserve') {
+    else if (!elements.length && 'attributes' in node && node.attributes['xml:space'] === 'preserve') {
       text = ' ';
     }
     
