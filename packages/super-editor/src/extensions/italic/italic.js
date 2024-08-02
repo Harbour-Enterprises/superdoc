@@ -1,7 +1,13 @@
-import { Mark } from '@core/index.js';
+import { Mark, Attribute } from '@core/index.js';
 
 export const Italic = Mark.create({
   name: 'italic',
+
+  addOptions() {
+    return {
+      htmlAttributes: {},
+    };
+  },
 
   parseDOM() {
     return [
@@ -12,12 +18,18 @@ export const Italic = Mark.create({
     ];
   },
 
-  renderDOM() {
-    return ['em', 0];
+  renderDOM({ htmlAttributes }) {
+    return ['em', Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes) , 0];
   },
 
   addCommands() {
     return {
+      setItalic: () => ({ commands }) => {
+        return commands.setMark(this.name);
+      },
+      unsetItalic: () => ({ commands }) => {
+        return commands.unsetMark(this.name);
+      },
       toggleItalic: () => ({ commands }) => {
         return commands.toggleMark(this.name);
       },

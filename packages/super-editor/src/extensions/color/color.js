@@ -1,39 +1,44 @@
-import { Mark } from '@core/index.js';
+import { Extension } from '@core/index.js';
 
-export const Color = Mark.create({
+export const Color = Extension.create({
   name: 'color',
 
-  parseDOM() {
+  addOptions() {
+    return {
+      types: ['textStyle'],
+    };
+  },
+
+  addGlobalAttributes() {
     return [
-      { tag: 'span' },
+      {
+        types: this.options.types,
+        attributes: {
+          color: {
+            default: null,
+            parseDOM: (el) => el.style.color?.replace(/['"]+/g, ''),
+            renderDOM: (attrs) => {
+              if (!attrs.color) return {};
+              return { style: `color: ${attrs.color}` };
+            },
+          },
+        },
+      },
     ];
   },
 
-
-  renderDOM(node) {
-    return ['span', node.mark.attrs.attributes, 0];
-  },
-
-  addAttributes(){
+  addCommands() {
     return {
-      attributes: {
-        style: {default: null},
+      setColor: (color) => ({ chain }) => {
+        return chain()
+          .setMark('textStyle', { color })
+          .run();
       },
-      color: {default: null},
-    }
-  },
-
-  addCommands(node) {
-    return {
-      toggleColor: (value) => ({ commands }) => {
-        console.debug('toggleColor', value);
-        const attrs = {
-          attributes: {
-            style: `color: ${value};`,
-          },
-          color: value,
-        }
-        return commands.setMark(this.name, attrs);
+      unsetColor: () => ({ chain }) => {
+        return chain()
+          .setMark('textStyle', { color: null })
+          .removeEmptyTextStyle()
+          .run();
       },
     };
   },

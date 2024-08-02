@@ -1,24 +1,47 @@
-import { Mark } from '@core/index.js';
+import { Extension } from '@core/index.js';
 
-export const LineHeight = Mark.create({
+export const LineHeight = Extension.create({
   name: 'lineHeight',
 
-  parseDOM() {
+  addOptions() {
+    return {
+      types: ['heading', 'paragraph'],
+    };
+  },
+
+  addGlobalAttributes() {
     return [
-      { tag: 'span' },
+      {
+        types: this.options.types,
+        attributes: {
+          lineHeight: {
+            default: null,
+            parseDOM: (el) => el.style.lineHeight,
+            renderDOM: (attrs) => {
+              if (!attrs.lineHeight) return {};
+              return { style: `line-height: ${attrs.lineHeight}` };
+            },
+          },
+        },
+      },
     ];
   },
 
-
-  renderDOM(node) {
-    return ['span', node.mark.attrs.attributes, 0];
-  },
-
-  addAttributes(){
+  addCommands() {
     return {
-      attributes: {
-        style: {default: null},
-      }
-    }
+      setLineHeight: (lineHeight) => ({ commands }) => {
+        if (!lineHeight) return false;
+
+        return this.options.types
+          .map((type) => commands.updateAttributes(type, { lineHeight }))
+          .every((result) => result);
+      },
+
+      unsetLineHeight: () => ({ commands }) => {
+        return this.options.types
+          .map((type) => commands.resetAttributes(type, 'lineHeight'))
+          .every((result) => result);
+      },
+    };
   },
 });

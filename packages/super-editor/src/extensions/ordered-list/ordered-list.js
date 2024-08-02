@@ -1,5 +1,4 @@
-import { Node } from '@core/index.js';
-import { Attribute } from '@core/index.js';
+import { Node, Attribute } from '@core/index.js';
 import { toKebabCase } from '@common/key-transform.js';
 import { generateDocxListAttributes } from '@helpers/index.js';
 

@@ -52,7 +52,7 @@ const fontButton = new ToolbarItem({
     type: 'button',
     name: 'fontFamily',
     tooltip: "Font",
-    command: 'toggleFont',
+    command: 'setFontFamily',
     overflowIcon: 'fa-font',
     label: "Arial",
     hasCaret: true,
@@ -89,10 +89,10 @@ const fontOptions = new ToolbarItem({
         fontName: 'Courier New, monospace',
         fontWeight: 400,
         active: false,
-        options: [
-          { label: 'Regular', fontWeight: 400 },
-          { label: 'Bold', fontWeight: 700 },
-        ],
+        // options: [
+        //   { label: 'Regular', fontWeight: 400 },
+        //   { label: 'Bold', fontWeight: 700 },
+        // ],
       },
       {
         label: 'Times New Roman',
@@ -108,13 +108,13 @@ fontOptions.parentItem = fontButton;
 const fontSize = new ToolbarItem({
     type: 'button',
     name: 'fontSize',
-    label: "12", // no units
+    label: "12",
     tooltip: "Font size",
     overflowIcon: 'fa-text-height',
     hasCaret: true,
     hasInlineTextInput: true,
     isWide: true,
-    command: "changeFontSize",
+    command: "setFontSize",
     style: {width: '90px'},
     preCommand(self, argument) {
         self.inlineTextInputVisible = self.inlineTextInputVisible ? false : true;
@@ -151,7 +151,7 @@ const fontSize = new ToolbarItem({
 const fontSizeOptions = new ToolbarItem({
     type: 'options',
     name: 'fontSizeDropdown',
-    command: 'changeFontSize',
+    command: 'setFontSize',
     preCommand(self, argument) {
         self.parentItem.inlineTextInputVisible = false;
 
@@ -204,7 +204,7 @@ const colorButton = new ToolbarItem({
     overflowIcon: 'fa-palette',
     active: false,
     tooltip: "Text color",
-    command: 'toggleColor',
+    command: 'setColor',
     preCommand(self, color) {
       self.iconColor = color;
     },
@@ -324,7 +324,7 @@ const alignment = new ToolbarItem({
   const alignmentOptions = new ToolbarItem({
     type: 'options',
     name: 'alignmentOptions',
-    command: 'changeTextAlignment',
+    command: 'setTextAlign',
     preCommand(self, argument) {
       self.parentItem.icon = `fa-align-${argument}`;
     },
@@ -356,22 +356,22 @@ const numberedList = new ToolbarItem({
 const indentLeft = new ToolbarItem({
     type: 'button',
     name: 'indentleft',
-    command: 'toggleIndentLeft',
+    command: 'decreaseTextIndent',
     icon: 'fa-indent',
     active: false,
     tooltip: "Left indent",
-    disabled: true
+    disabled: false
 });
 
 // indent right
 const indentRight = new ToolbarItem({
     type: 'button',
     name: 'indentright',
-    command: 'changeTextIndent',
+    command: 'increaseTextIndent',
     icon: 'fa-indent',
     active: false,
     tooltip: "Right indent",
-    disabled: true
+    disabled: false
 });
 
 // overflow
@@ -655,22 +655,21 @@ const alignments = [
   ]
 ]
 
-// no units
 const fontSizeValues = [
-  {label: '8', value: 8},
-  {label: '9', value: 9},
-  {label: '10', value: 10},
-  {label: '11', value: 11},
-  {label: '12', value: 12},
-  {label: '14', value: 14},
-  {label: '18', value: 18},
-  {label: '24', value: 24},
-  {label: '30', value: 30},
-  {label: '36', value: 36},
-  {label: '48', value: 48},
-  {label: '60', value: 60},
-  {label: '72', value: 72},
-  {label: '96', value: 96}
+  {label: '8', value: '8pt'},
+  {label: '9', value: '9pt'},
+  {label: '10', value: '10pt'},
+  {label: '11', value: '11pt'},
+  {label: '12', value: '12pt'},
+  {label: '14', value: '14pt'},
+  {label: '18', value: '18pt'},
+  {label: '24', value: '24pt'},
+  {label: '30', value: '30pt'},
+  {label: '36', value: '36pt'},
+  {label: '48', value: '48pt'},
+  {label: '60', value: '60pt'},
+  {label: '72', value: '72pt'},
+  {label: '96', value: '96pt'},
 ]
 
 
@@ -732,6 +731,24 @@ defineExpose({
 
 <template>
   <div class="toolbar">
+
+    <!-- TODO: delete this (examples of how to handle active state)-->
+    <div 
+      style="display: none;"
+      :class="{
+        'is-bold-active': editorInstance.isActive('bold'),
+        'is-italic-active': editorInstance.isActive('italic'),
+        'is-undeline-active': editorInstance.isActive('underline'),
+        'is-arial-font-active': editorInstance.isActive('textStyle', { fontFamily: 'Arial, sans-serif' }),
+        'is-purple-color-active': editorInstance.isActive('textStyle', { color: 'purple' }),
+        'is-orange-color-active': editorInstance.getAttributes('textStyle').color === 'orange',
+        'is-bullet-list-active': editorInstance.isActive('bulletList'),
+        'is-center-align': editorInstance.isActive({ textAlign: 'center' }),
+      }"
+      :data-current-color="editorInstance.getAttributes('textStyle').color"
+      :data-current-font-size="editorInstance.getAttributes('textStyle').fontSize">
+    </div>
+
     <div v-for="item, index in toolbarItems"
     :key="index"
     :class="{

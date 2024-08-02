@@ -1,5 +1,4 @@
-import { Node } from '@core/index.js';
-import { Attribute } from '@core/index.js';
+import { Node, Attribute } from '@core/index.js';
 
 export const PageBreak = Node.create({
   name: 'pageBreak',
@@ -8,9 +7,9 @@ export const PageBreak = Node.create({
 
   inline: false,
 
-  parseDOM() {
-    return [{ tag: 'p' }];
-  },
+  // parseDOM() {
+  //   return [{ tag: 'p' }];
+  // },
 
   addAttributes() {
     return {

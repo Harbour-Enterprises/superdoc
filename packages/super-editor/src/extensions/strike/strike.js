@@ -1,7 +1,13 @@
-import { Mark } from '@core/index.js';
+import { Mark, Attribute } from '@core/index.js';
 
 export const Strike = Mark.create({
   name: 'strike',
+
+  addOptions() {
+    return {
+      htmlAttributes: {},
+    };
+  },
 
   parseDOM() {
     return [
@@ -11,12 +17,18 @@ export const Strike = Mark.create({
     ];
   },
 
-  renderDOM() {
-    return ['s', 0];
+  renderDOM({ htmlAttributes }) {
+    return ['s', Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes), 0];
   },
 
   addCommands() {
     return {
+      setStrike: () => ({ commands }) => {
+        return commands.setMark(this.name)
+      },
+      unsetStrike: () => ({ commands }) => {
+        return commands.unsetMark(this.name)
+      },
       toggleStrike: () => ({ commands }) => {
         return commands.toggleMark(this.name);
       },

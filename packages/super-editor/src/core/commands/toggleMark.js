@@ -1,14 +1,16 @@
-import { toggleMark as originalToggleMark } from 'prosemirror-commands';
 import { getMarkType } from '../helpers/getMarkType.js';
+import { isMarkActive } from '../helpers/isMarkActive.js';
 
 /**
- * Toggle mark.
+ * Toggle a mark on and off.
  * @param typeOrName Mark type or name.
  * @param attrs Mark attributes.
- * 
- * https://prosemirror.net/docs/ref/#commands.toggleMark
+ * @param options.extendEmptyMarkRange Removes the mark even across the current selection.
  */
-export const toggleMark = (typeOrName, attrs = {}) => ({ state, dispatch }) => {
+export const toggleMark = (typeOrName, attrs = {}, options = {}) => ({ state, commands }) => {
+  const { extendEmptyMarkRange = false } = options;
   const type = getMarkType(typeOrName, state.schema);
-  return originalToggleMark(type, attrs)(state, dispatch);
+  const isActive = isMarkActive(state, type, attrs);
+  if (isActive) return commands.unsetMark(type, { extendEmptyMarkRange });
+  return commands.setMark(type, attrs);
 };

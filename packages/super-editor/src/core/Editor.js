@@ -4,14 +4,15 @@ import { EditorView } from 'prosemirror-view';
 import { EventEmitter } from './EventEmitter.js';
 import { ExtensionService } from './ExtensionService.js';
 import { CommandService } from './CommandService.js';
+import { Attribute } from './Attribute.js';
 import { SuperConverter } from '@core/super-converter/SuperConverter.js';
 import { Commands, Keymap, Editable, EditorFocus } from './extensions/index.js';
 import { createDocument } from './helpers/createDocument.js';
+import { isActive } from './helpers/isActive.js';
 import { createStyleTag } from './utilities/createStyleTag.js';
 import { initComments } from '@features/index.js';
 import { style } from './config/style.js';
 import DocxZipper from '@core/DocxZipper.js';
-
 
 /**
  * Editor main class.
@@ -428,6 +429,28 @@ export class Editor extends EventEmitter {
       this.options.documentId,
     );
     this.emit('commentsLoaded', { comments });
+  }
+
+  /**
+   * Get attrs of the currently selected node or mark.
+   * @example
+   * editor.getAttributes('textStyle').color
+   */
+  getAttributes(nameOrType) {
+    return Attribute.getAttributes(this.state, nameOrType);
+  }
+
+  /**
+   * Returns if the currently selected node or mark is active.
+   * @example
+   * editor.isActive('bold')
+   * editor.isActive('textStyle', { color: 'purple' })
+   * editor.isActive({ textAlign: 'center' })
+   */
+  isActive(nameOrAttributes, attributesOrUndefined) {
+    const name = typeof nameOrAttributes === 'string' ? nameOrAttributes : null;
+    const attributes = typeof nameOrAttributes === 'string' ? attributesOrUndefined : nameOrAttributes;
+    return isActive(this.state, name, attributes);
   }
 
   /**

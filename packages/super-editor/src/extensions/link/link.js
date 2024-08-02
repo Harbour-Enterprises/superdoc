@@ -1,7 +1,22 @@
-import { Mark } from '@core/index.js';
-
+import { Mark, Attribute } from '@core/index.js';
+ 
+// TODO
 export const Link = Mark.create({
   name: 'link',
+
+  priority: 1000,
+
+  keepOnSplit: false,
+
+  addOptions() {
+    return {
+      htmlAttributes: {
+        target: '_blank',
+        rel: 'noopener noreferrer nofollow',
+        class: null,
+      },
+    };
+  },
 
   parseDOM() {
     return [
@@ -9,21 +24,32 @@ export const Link = Mark.create({
     ];
   },
 
-  renderDOM(node) {
-    return ['a', node.mark.attrs.attributes, 0];
+  renderDOM({ htmlAttributes }) {
+    return ['a', Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes), 0];
   },
 
-  addAttributes(){
+  addAttributes() {
     return {
-      attributes: {
-        href: {default: null},
+      href: { 
+        default: null
       },
-      href: {default: null},
-      text: {default: null},
-    }
+      target: {
+        default: this.options.htmlAttributes.target,
+      },
+      rel: {
+        default: this.options.htmlAttributes.rel,
+      },
+      text: { 
+        default: null 
+      },
+      attributes: {
+        href: { default: null },
+        rendered: false,
+      },
+    };
   },
 
-  addCommands(node) {
+  addCommands() {
     return {
       toggleLink: ({href, text}) => ({ commands }) => {
         const attrs = {
@@ -31,16 +57,10 @@ export const Link = Mark.create({
             href
           },
           href,
-          text
-        }
+          text,
+        };
         return commands.setMark(this.name, attrs);
       },
     };
   },
-
-  addShortcuts() {
-    return {
-      // 'Mod-u': () => this.editor.commands.toggleUnderline(),
-    }
-  }
 });

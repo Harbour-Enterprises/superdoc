@@ -28,6 +28,17 @@ const getFileObject = async (fileUrl) => {
   return new File([blob], 'docx-file.docx', { type: DOC_TYPE});
 }
 
+const commandsMap = {
+  setFontSize: (args) => {
+    let value = typeof args === 'object' ? args?.value : args;
+    activeEditor.commands.setFontSize(value);
+  },
+  setFontFamily: (args) => {
+    let value = args?.fontName;
+    activeEditor.commands.setFontFamily(value);
+  },
+};
+
 const handleToolbarCommand = ({ command, argument }) => {
   console.debug('[SuperEditor dev] Toolbar command', command, argument, activeEditor?.commands);
 
@@ -38,13 +49,18 @@ const handleToolbarCommand = ({ command, argument }) => {
   }
 
   const commandName = command;
-    if (commandName in commands) {
-      // console.log('Executing command:', commandName);
-    activeEditor?.commands[commandName](argument);
+  if (commandName in commands) {
+    console.log('Executing command:', commandName);
+
+    const command = commandsMap[commandName] 
+      ? commandsMap[commandName] 
+      : activeEditor.commands[commandName];
+
+    command(argument);
     activeEditor.view.focus();
-    } else {
+  } else {
     console.log('Command not found:', commandName);
-    }    
+  }    
 };
 
 const onSelectionUpdate = ({ editor, transaction }) => {
