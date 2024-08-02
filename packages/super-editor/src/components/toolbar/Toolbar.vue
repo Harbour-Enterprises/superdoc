@@ -51,11 +51,16 @@ const fontButton = new ToolbarItem({
     type: 'button',
     name: 'fontFamily',
     tooltip: "Font",
+    command: 'toggleFont',
     overflowIcon: 'fa-font',
     label: "Arial",
     hasCaret: true,
     isWide: true,
     style: {width: '120px'},
+    preCommand(self, argument) {
+      if (!argument) return;
+      self.label = argument.label;
+    },
     onTextMarkSelection(self, mark) {
         self.label = mark.attrs.font;
     },
@@ -67,7 +72,6 @@ const fontButton = new ToolbarItem({
 const fontOptions = new ToolbarItem({
     type: 'options',
     name: 'fontFamilyDropdown',
-    command: 'toggleFont',
     options: [
       {
         label: 'Georgia',
@@ -199,6 +203,10 @@ const colorButton = new ToolbarItem({
     overflowIcon: 'fa-palette',
     active: false,
     tooltip: "Text color",
+    command: 'toggleColor',
+    preCommand(self, color) {
+      self.iconColor = color;
+    },
     onTextMarkSelection(self, mark) {
         self.iconColor = mark.attrs.color;
     },
@@ -223,7 +231,6 @@ const makeColorOption = (label, color) => {
 const colorOptions = new ToolbarItem({
     name: 'colorOptions',
     type: 'options',
-    command: 'toggleColor',
     preCommand(self) {
         self.parentItem.active = false;
   },
@@ -311,17 +318,14 @@ const alignment = new ToolbarItem({
       self.childItem.active = false;
       self.icon = 'fa-align-left';
     }
-});
-
-const alignmentOptions = new ToolbarItem({
+  });
+  
+  const alignmentOptions = new ToolbarItem({
     type: 'options',
     name: 'alignmentOptions',
     command: 'changeTextAlignment',
     preCommand(self, argument) {
-        console.log('preCommand', argument);
-        self.active = false;
-        self.parentItem.active = false;
-        self.argument = argument;
+      self.parentItem.icon = `fa-align-${argument}`;
     },
 })
 alignment.childItem = alignmentOptions;
@@ -685,6 +689,13 @@ const executeItemCommands = (item, argument = null) => {
   emit('command', {command: item.command, argument});
 }
 
+const handleToolbarButtonClick = (item, argument = null) => {
+  if (item.disabled) return;
+  console.log("Toolbar button click", argument)
+  closeOpenDropdowns(item);
+  executeItemCommands(item, argument);
+}
+
 const handleDropdownOptionMouseEnter = (item, optionIndex) => {
   const option = item.options[optionIndex];
   option.active = true
@@ -693,13 +704,6 @@ const handleDropdownOptionMouseEnter = (item, optionIndex) => {
 const handleDropdownOptionMouseLeave = (item, optionIndex) => {
   const option = item.options[optionIndex];
   option.active = false
-}
-
-const handleToolbarButtonClick = (item, argument = null) => {
-  if (item.disabled) return;
-  console.log("Toolbar button click", argument)
-  closeOpenDropdowns(item);
-  executeItemCommands(item, argument);
 }
 
 const handleToolbarButtonTextSubmit = (item, argument) => {
@@ -764,7 +768,7 @@ defineExpose({
             :command="item.childItem.command"
             @optionEnter="(optionIndex) => handleDropdownOptionMouseEnter(item.childItem, optionIndex)"
             @optionLeave="(optionIndex) => handleDropdownOptionMouseLeave(item.childItem, optionIndex)"
-            @optionClick="(option) => handleToolbarButtonClick(item.childItem, option)"
+            @optionClick="(option) => handleToolbarButtonClick(item, option)"
             :options="item.childItem.options"/>
 
           <!-- zoom dropdown -->
@@ -785,7 +789,7 @@ defineExpose({
           <IconGrid
             v-if="showOptions(item.childItem, 'colorOptions')"
             :icons="item.childItem.options"
-            @select="(color) => handleToolbarButtonClick(item.childItem, color)"/>
+            @select="(color) => handleToolbarButtonClick(item, color)"/>
 
           <!-- alignment options  -->
           <IconGrid

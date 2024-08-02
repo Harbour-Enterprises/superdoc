@@ -16,7 +16,9 @@ export const FontFamily = Mark.create({
 
   addCommands() {
     return {
-      toggleFont: ({label, fontName, fontWeight}) => ({ commands }) => {
+      toggleFont: (argument) => ({ commands }) => {
+        if (!argument) return;
+        const {label, fontName, fontWeight} = argument;
         console.debug('toggleFont', label, fontName, fontWeight, commands);
         const styleDict = {
           'font-family': fontName,
