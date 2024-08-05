@@ -325,6 +325,10 @@ const alignment = makeToolbarItem({
     hasCaret: true,
     markName: 'textAlign',
     labelAttr: 'textAlign',
+    getIcon(self) {
+      const attrs = self.editor.getAttributes('paragraph').textAlign;
+      return `fa-align-${attrs}`;
+    },
     onTextMarkSelection(self, mark) {
       self.icon = `fa-align-${mark.attrs.alignment}`;
     },
@@ -777,17 +781,17 @@ defineExpose({
       <!-- Toolbar button -->
       <ToolbarButton v-if="isButton(item)"
         :disabled="item.disabled"
-        :active="editorInstance.isActive(item.name)"
+        :active="item.getActiveState()"
         :tooltip="item.tooltip"
         :tooltip-visible="item.tooltipVisible"
         :name="item.name"
-        :icon="item.icon"
-        :label="item.getLabel(editorInstance)"
+        :icon="item.getIcon()"
+        :label="item.getLabel()"
         :hide-label="item.hideLabel"
         :has-caret="item.hasCaret"
         :inline-text-input-visible="item.inlineTextInputVisible"
         :has-inline-text-input="item.hasInlineTextInput"
-        :icon-color="item.getIconColor(editorInstance)"
+        :icon-color="item.getIconColor()"
         :has-icon="hasIcon(item)"
         @mouseenter="handleButtonMouseEnter(item)"
         @mouseleave="handleButtonMouseLeave(item)"

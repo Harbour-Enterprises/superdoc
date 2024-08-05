@@ -31,13 +31,6 @@ export class ToolbarItem {
         this.isNarrow = false
         this.isWide = false
 
-        // handlers
-        this.onTextMarkSelection = this._onTextMarkSelection
-        this.onTextSelectionChange = this._onTextSelectionChange
-        this.preCommand = this._preCommand
-        this.getLabel = this._getLabel
-        this.getIconColor = this._getIconColor
-
         this.command = null
         this.argument = null
         this.childItem = null
@@ -66,10 +59,23 @@ export class ToolbarItem {
         this.markName = null
         this.labelAttr = null
 
-        const handlers = ['onTextMarkSelection', 'onTextSelectionChange', 'preCommand', 'getAttr', 'getLabel', 'getIconColor'];
+        const handlers = [
+            'onTextMarkSelection',
+            'onTextSelectionChange',
+            'preCommand',
+            'getAttr',
+            'getLabel',
+            'getIconColor',
+            'getActiveState',
+            'getIcon'
+        ];
+        // set default handlers
+        handlers.forEach(handler => {
+            this[handler] = this[`_${handler}`]
+        });
         Object.keys(options).forEach(key => {
             if (!this.hasOwnProperty(key)) throw new Error('Invalid toolbar item property - ' + key);
-            // handler assignment
+            // set custom handlers
             if (handlers.includes(key)) {
                 if (typeof options[key] !== 'function') throw new Error('Invalid toolbar item handler - ' + key);
                 this[key] = function(...args){
@@ -87,6 +93,9 @@ export class ToolbarItem {
     }
 
     // handlers
+    _getActiveState() {
+        return this.editor.isActive(this.name)
+    }
     _getAttr(attr) {
         if (!this.markName || !attr) return null;
         return this.editor.getAttributes(this.markName)[attr];
@@ -96,6 +105,9 @@ export class ToolbarItem {
     }
     _getIconColor() {
         return this._getAttr('color') || this.iconColor;
+    }
+    _getIcon() {
+        return this.icon || null;
     }
     _onTextMarkSelection() {}
     _onTextSelectionChange() {
