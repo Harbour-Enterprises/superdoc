@@ -1,7 +1,6 @@
 <script setup>
 import { ref, reactive, watch, onMounted } from 'vue';
 import BasicUpload from './BasicUpload.vue';
-import { undoDepth, redoDepth } from 'prosemirror-history';
 import BlankDOCX from '@common/data/blank.docx?url';
 
 // Import the component the same you would in your app
@@ -48,15 +47,12 @@ const handleToolbarCommand = ({ command, argument }) => {
     }    
 };
 
-const undoAvailable = ref(false);
-const redoAvailable = ref(false);
-
+const lastTransaction = ref(null);
 const onUpdate = ({ editor, transaction }) => {
   console.debug('[SuperEditor dev] Document updated', editor);
   activeEditor = editor;
 
-  undoAvailable.value = undoDepth(editor.view.state) > 0;
-  redoAvailable.value = redoDepth(editor.view.state) > 0;
+  lastTransaction.value = transaction;
 }
 
 const onSelectionUpdate = ({ editor, transaction }) => {
@@ -136,8 +132,7 @@ onMounted(async () => {
         <Toolbar
         v-if="toolbarVisible"
         :editor-instance="activeEditor"
-        :undo-available="undoAvailable"
-        :redo-available="redoAvailable"
+        :update-transaction="lastTransaction"
         @command="handleToolbarCommand" ref="toolbar" />
         <!-- SuperEditor expects its data to be a URL --> 
         <SuperEditor
