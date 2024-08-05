@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch, defineProps } from 'vue';
+import { undoDepth, redoDepth } from 'prosemirror-history';
 import ToolbarButton from './ToolbarButton.vue';
 import ToolbarSeparator from './ToolbarSeparator.vue';
 import DropdownOptions from './DropdownOptions.vue';
@@ -10,6 +11,10 @@ import { sanitizeNumber } from './helpers';
 
 const props = defineProps({
     editorInstance: {
+        type: Object,
+        required: true,
+    },
+    updateTransaction: {
         type: Object,
         required: true,
     }
@@ -480,6 +485,7 @@ zoomOptions.parentItem = zoom;
 // undo
 const undo = makeToolbarItem({
     type: 'button',
+    disabled: true,
     name: 'undo',
     tooltip: "Undo",
     command: "undo",
@@ -489,10 +495,16 @@ const undo = makeToolbarItem({
 // redo
 const redo = makeToolbarItem({
     type: 'button',
+    disabled: true,
     name: 'redo',
     tooltip: "Redo",
     command: "redo",
     icon: 'fa fa-rotate-right'
+});
+
+watch(() => props.updateTransaction, () => {
+  undo.disabled = undoDepth(props.editorInstance.state) <= 0;
+  redo.disabled = redoDepth(props.editorInstance.state) <= 0;
 });
 
 // search
