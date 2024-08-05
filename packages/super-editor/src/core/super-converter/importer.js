@@ -337,6 +337,7 @@ export class DocxImporter {
   #parseMarks(property) {
     const marks = [];
     const seen = new Set();
+
     property.elements.forEach((element) => {
       const marksForType = SuperConverter.markTypes.filter((mark) => mark.name === element.name);
       if (!marksForType.length) {
@@ -366,24 +367,24 @@ export class DocxImporter {
         const { attributes = {} } = element;
         const newMark = { type: m.type }
 
-        if (attributes['w:val'] === "0" || attributes['w:val'] === 'none') {
-          console.debug('\n\n NEW MARK', attributes['w:val'], '\n\n')
+        if (attributes['w:val'] == "0" || attributes['w:val'] === 'none') {
           return;
         }
-        if (attributes['w:val'] === 0) {
-          return;
-        }
+
+        // Use the parent mark (ie: textStyle) if present
+        if (m.mark) newMark.type = m.mark;
+
+        // Marks with attrs: we need to get their values
         if (Object.keys(attributes).length) {
           const value = this.#getMarkValue(m.type, attributes);
           if (!value) return;
-          const kebabCase = toKebabCase(newMark.type);
-          newMark.attrs = { attributes: { style: `${kebabCase}: ${value}` } };
+
+          newMark.attrs = {};
+          newMark.attrs[m.property] = value;
         }
         marks.push(newMark);
       })
     });
-
-    if (marks.length) console.debug('Marks:', marks )
     return marks;
   }
 
@@ -443,12 +444,6 @@ export class DocxImporter {
       let marks = [];
       const { attributes = {}, elements = [] } = node;
       const { nodes, paragraphProperties = {}, runProperties = {} } = this.#splitElementsAndProperties(elements);
-
-      // const runPropsInParagraph = paragraphProperties?.elements?.find((el) => el.name === 'w:rPr');
-      // if (runPropsInParagraph) {
-      //   if (!runProperties || !runProperties.elements?.length) runProperties.elements = [];
-      //   runProperties.elements.push(...runPropsInParagraph.elements);
-      // }
       paragraphProperties.elements = paragraphProperties?.elements?.filter((el) => el.name !== 'w:rPr');
 
       // Get the marks from the run properties
@@ -462,11 +457,12 @@ export class DocxImporter {
         attributes['paragraphProperties'] = paragraphProperties;
       }
 
+      // If this is a paragraph, don't apply marks but apply attributes directly
       if (marks && node.name === 'w:p') {
         marks.forEach((mark) => {
-          const kebab = toKebabCase(mark.type);
-          const value = mark.attrs.attributes.style.split(`${kebab}: `)[1];
-          attributes[mark.type] = value;
+          const attrValue = Object.keys(mark.attrs)[0];
+          const value = mark.attrs[attrValue];
+          attributes[attrValue] = value;
         });
         marks = [];
       }
