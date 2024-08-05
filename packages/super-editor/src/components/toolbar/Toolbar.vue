@@ -15,6 +15,10 @@ const props = defineProps({
     }
 });
 
+const makeToolbarItem = (item) => {
+  return new ToolbarItem({...item, editor: props.editorInstance});
+}
+
 const closeOpenDropdowns = (currentItem = null) => {
   const parentToolbarItems = toolbarItems.value.filter(item => item.childItem);
   parentToolbarItems.forEach((item) => {
@@ -36,7 +40,7 @@ if (editorElement) {
 }
 
 // bold
-const bold = new ToolbarItem({
+const bold = makeToolbarItem({
     type: 'button',
     name: 'bold',
     command: 'toggleBold',
@@ -48,7 +52,7 @@ const bold = new ToolbarItem({
 });
 
 // font
-const fontButton = new ToolbarItem({
+const fontButton = makeToolbarItem({
     type: 'button',
     name: 'fontFamily',
     tooltip: "Font",
@@ -72,7 +76,7 @@ const fontButton = new ToolbarItem({
     }
 });
 
-const fontOptions = new ToolbarItem({
+const fontOptions = makeToolbarItem({
     type: 'options',
     name: 'fontFamilyDropdown',
     options: [
@@ -107,7 +111,7 @@ fontButton.childItem = fontOptions;
 fontOptions.parentItem = fontButton;
 
 // font size
-const fontSize = new ToolbarItem({
+const fontSize = makeToolbarItem({
     type: 'button',
     name: 'fontSize',
     defaultLabel: "12",
@@ -152,7 +156,7 @@ const fontSize = new ToolbarItem({
     }
 });
 
-const fontSizeOptions = new ToolbarItem({
+const fontSizeOptions = makeToolbarItem({
     type: 'options',
     name: 'fontSizeDropdown',
     command: 'setFontSize',
@@ -167,7 +171,7 @@ fontSize.childItem = fontSizeOptions;
 fontSizeOptions.parentItem = fontSize;
 
 // separator
-const separator =  new ToolbarItem({
+const separator =  makeToolbarItem({
     type: 'separator',
     name: 'separator',
     icon: 'fa-grip-lines-vertical',
@@ -175,7 +179,7 @@ const separator =  new ToolbarItem({
 })
 
 // italic
-const italic = new ToolbarItem({
+const italic = makeToolbarItem({
     type: 'button',
     name: 'italic',
     command: 'toggleItalic',
@@ -188,7 +192,7 @@ const italic = new ToolbarItem({
 });
 
 // underline
-const underline = new ToolbarItem({
+const underline = makeToolbarItem({
     type: 'button',
     name: 'underline',
     command: 'toggleUnderline',
@@ -201,7 +205,7 @@ const underline = new ToolbarItem({
 });
 
 // color
-const colorButton = new ToolbarItem({
+const colorButton = makeToolbarItem({
     type: 'button',
     name: 'color',
     icon: 'fa-font',
@@ -236,7 +240,7 @@ const makeColorOption = (label, color) => {
     }
   }
 }
-const colorOptions = new ToolbarItem({
+const colorOptions = makeToolbarItem({
     name: 'colorOptions',
     type: 'options',
     preCommand(self) {
@@ -269,7 +273,7 @@ colorButton.childItem = colorOptions;
 colorOptions.parentItem = colorButton;
 
 // link
-const link = new ToolbarItem({
+const link = makeToolbarItem({
     type: 'button',
     name: 'link',
     icon: 'fa-link',
@@ -289,7 +293,7 @@ const link = new ToolbarItem({
     },
 });
 
-const linkInput = new ToolbarItem({
+const linkInput = makeToolbarItem({
     type: 'options',
     name: 'linkInput',
     command: 'toggleLink',
@@ -302,7 +306,7 @@ link.childItem = linkInput;
 linkInput.parentItem = link;
 
 // image
-const image = new ToolbarItem({
+const image = makeToolbarItem({
     type: 'button',
     name: 'image',
     command: 'toggleImage',
@@ -313,7 +317,7 @@ const image = new ToolbarItem({
 });
 
 // alignment
-const alignment = new ToolbarItem({
+const alignment = makeToolbarItem({
     type: 'button',
     name: 'textAlign',
     tooltip: "Alignment",
@@ -330,7 +334,7 @@ const alignment = new ToolbarItem({
     }
   });
   
-  const alignmentOptions = new ToolbarItem({
+  const alignmentOptions = makeToolbarItem({
     type: 'options',
     name: 'alignmentOptions',
     command: 'setTextAlign',
@@ -342,7 +346,7 @@ alignment.childItem = alignmentOptions;
 alignmentOptions.parentItem = alignment;
 
 // bullet list
-const bulletedList = new ToolbarItem({
+const bulletedList = makeToolbarItem({
     type: 'button',
     name: 'list',
     command: 'toggleBulletList',
@@ -352,7 +356,7 @@ const bulletedList = new ToolbarItem({
 });
 
 // number list
-const numberedList = new ToolbarItem({
+const numberedList = makeToolbarItem({
     type: 'button',
     name: 'numberedlist',
     command: 'toggleOrderedList',
@@ -362,7 +366,7 @@ const numberedList = new ToolbarItem({
 });
 
 // indent left
-const indentLeft = new ToolbarItem({
+const indentLeft = makeToolbarItem({
     type: 'button',
     name: 'indentleft',
     command: 'decreaseTextIndent',
@@ -373,7 +377,7 @@ const indentLeft = new ToolbarItem({
 });
 
 // indent right
-const indentRight = new ToolbarItem({
+const indentRight = makeToolbarItem({
     type: 'button',
     name: 'indentright',
     command: 'increaseTextIndent',
@@ -384,7 +388,7 @@ const indentRight = new ToolbarItem({
 });
 
 // overflow
-const overflow = new ToolbarItem({
+const overflow = makeToolbarItem({
     type: 'button',
     name: 'overflow',
     command: 'toggleOverflow',
@@ -394,7 +398,7 @@ const overflow = new ToolbarItem({
     disabled: true
 });
 
-const overflowOptions = new ToolbarItem({
+const overflowOptions = makeToolbarItem({
     type: 'options',
     name: 'overflowOptions',
     preCommand(self, argument) {
@@ -405,7 +409,7 @@ overflow.childItem = overflowOptions;
 overflowOptions.parentItem = overflow;
 
 // zoom
-const zoom = new ToolbarItem({
+const zoom = makeToolbarItem({
     type: 'button',
     name: 'zoom',
     tooltip: "Zoom",
@@ -416,6 +420,9 @@ const zoom = new ToolbarItem({
     style: {width: '100px'},
     inlineTextInputVisible: false,
     hasInlineTextInput: true,
+    getLabel(self) {
+      return self.label || self.defaultLabel;
+    },
     preCommand(self, argument) {
         clearTimeout(self.tooltipTimeout);
         self.inlineTextInputVisible = self.inlineTextInputVisible ? false : true;
@@ -437,14 +444,11 @@ const zoom = new ToolbarItem({
         self.label = label;
         editor.style.zoom = sanitizedValue/100;
 
-        return {
-            value: sanitizedValue,
-            label
-        }
+        return sanitizedValue
     }
 });
 
-const zoomOptions = new ToolbarItem({
+const zoomOptions = makeToolbarItem({
     type: 'options',
     name: 'zoomDropdown',
     preCommand(self, argument) {
@@ -470,7 +474,7 @@ zoom.childItem = zoomOptions;
 zoomOptions.parentItem = zoom;
 
 // undo
-const undo = new ToolbarItem({
+const undo = makeToolbarItem({
     type: 'button',
     name: 'undo',
     tooltip: "Undo",
@@ -479,7 +483,7 @@ const undo = new ToolbarItem({
 });
 
 // redo
-const redo = new ToolbarItem({
+const redo = makeToolbarItem({
     type: 'button',
     name: 'redo',
     tooltip: "Redo",
@@ -488,7 +492,7 @@ const redo = new ToolbarItem({
 });
 
 // search
-const search = new ToolbarItem({
+const search = makeToolbarItem({
     type: 'button',
     name: 'search',
     tooltip: "Search",
@@ -496,7 +500,7 @@ const search = new ToolbarItem({
     icon: "fa-solid fa-magnifying-glass"
 });
 
-const searchOptions = new ToolbarItem({
+const searchOptions = makeToolbarItem({
     type: 'options',
     name: 'searchDropdown',
     command: 'search'
@@ -554,7 +558,7 @@ const toolbarItems = ref([
   overflow,
   // suggesting
   // TODO: Restore this later - removing for initial milestone
-  // new ToolbarItem({
+  // makeToolbarItem({
   //   type: 'toggle',
   //   defaultLabel: 'Suggesting',
   //   name: 'suggesting',
@@ -693,9 +697,7 @@ const showOptions = (item, name) => item?.name === name && item?.active;
 const executeItemCommands = (item, argument = null) => {
   console.log("Executing item commands", item, argument)
 
-  const preCommandResult = item.preCommand(argument);
-  if (preCommandResult) argument = preCommandResult;
-  console.log("Precommand result", preCommandResult)
+  item.preCommand(argument);
 
   emit('command', {command: item.command, argument});
 }

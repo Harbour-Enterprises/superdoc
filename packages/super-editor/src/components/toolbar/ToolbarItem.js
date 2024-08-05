@@ -11,8 +11,13 @@ export class ToolbarItem {
             throw new Error('Invalid toolbar item name - ' + options.name);
         }
 
+        if (!options.editor) {
+            throw new Error('Invalid toolbar item editor - ' + options.editor);
+        }
+
         this.type = options.type
         this.name = options.name
+        this.editor = options.editor
 
         // nested options
         this.options = []
@@ -30,6 +35,8 @@ export class ToolbarItem {
         this.onTextMarkSelection = this._onTextMarkSelection
         this.onTextSelectionChange = this._onTextSelectionChange
         this.preCommand = this._preCommand
+        this.getLabel = this._getLabel
+        this.getIconColor = this._getIconColor
 
         this.command = null
         this.argument = null
@@ -59,7 +66,7 @@ export class ToolbarItem {
         this.markName = null
         this.labelAttr = null
 
-        const handlers = ['onTextMarkSelection', 'onTextSelectionChange', 'preCommand'];
+        const handlers = ['onTextMarkSelection', 'onTextSelectionChange', 'preCommand', 'getAttr', 'getLabel', 'getIconColor'];
         Object.keys(options).forEach(key => {
             if (!this.hasOwnProperty(key)) throw new Error('Invalid toolbar item property - ' + key);
             // handler assignment
@@ -79,21 +86,17 @@ export class ToolbarItem {
         this.init(options)
     }
 
-    getAttr(editor, attr) {
-        if (!editor) throw new Error('Invalid editor');
-        if (!this.markName || !attr) return null;
-        return editor.getAttributes(this.markName)[attr];
-    }
-
-    getLabel(editor) {
-        return this.getAttr(editor, this.labelAttr) || this.defaultLabel;
-    }
-
-    getIconColor(editor) {
-        return this.getAttr(editor, 'color') || this.iconColor;
-    }
-
     // handlers
+    _getAttr(attr) {
+        if (!this.markName || !attr) return null;
+        return this.editor.getAttributes(this.markName)[attr];
+    }
+    _getLabel() {
+        return this._getAttr(this.labelAttr) || this.defaultLabel;
+    }
+    _getIconColor() {
+        return this._getAttr('color') || this.iconColor;
+    }
     _onTextMarkSelection() {}
     _onTextSelectionChange() {
         this.active = false;
