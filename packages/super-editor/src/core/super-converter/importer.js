@@ -377,7 +377,6 @@ export class DocxImporter {
         // Marks with attrs: we need to get their values
         if (Object.keys(attributes).length) {
           const value = this.#getMarkValue(m.type, attributes);
-          if (!value) return;
 
           newMark.attrs = {};
           newMark.attrs[m.property] = value;
@@ -391,22 +390,40 @@ export class DocxImporter {
   #getIndentValue(attributes) {
     let value  = attributes['w:left'];
     if (!value) value = attributes['w:firstLine'];
-    return `${twipsToInches(value)}in`
+    return `${twipsToInches(value).toFixed(2)}in`
+  }
+
+  #getLineHeightValue(attributes) {
+    let value = attributes['w:line'];
+
+    // TODO: Figure out handling of additional line height attributes from docx
+    // if (!value) value = attributes['w:lineRule'];
+    // if (!value) value = attributes['w:after'];
+    // if (!value) value = attributes['w:before'];
+    if (!value || value == 0) return null;
+    return `${twipsToInches(value).toFixed(2)}in`;
   }
 
   #getMarkValue(markType, attributes) {
     if (markType === 'tabs') markType = 'textIndent';
 
     const markValueMapper = {
-      color: `#${attributes['w:val']}`,
-      fontSize: `${attributes['w:val']/2}pt`,
-      textIndent: this.#getIndentValue(attributes),
-      fontFamily: attributes['w:ascii'],
-      lineHeight: `${twipsToInches(attributes['w:line'])}in`,
+      color: () => `#${attributes['w:val']}`,
+      fontSize: () => `${attributes['w:val']/2}pt`,
+      textIndent: () => this.#getIndentValue(attributes),
+      fontFamily: () => attributes['w:ascii'],
+      lineHeight: () => this.#getLineHeightValue(attributes),
     }
-    if (markType in markValueMapper) return markValueMapper[markType];
-    console.debug('\n\n ❗️❗️ No value mapper for:', markType, 'Attributes:', attributes)
-    return attributes['w:val'];
+
+    if (!(markType in markValueMapper)) {
+      console.debug('\n\n ❗️❗️ No value mapper for:', markType, 'Attributes:', attributes)
+    };
+
+    // Returned the mapped mark value
+    if (markType in markValueMapper) {
+      const f = markValueMapper[markType];
+      return markValueMapper[markType]();
+    }
   }
 
   /**
