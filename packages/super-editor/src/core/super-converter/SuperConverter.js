@@ -35,13 +35,13 @@ class SuperConverter {
     { name: 'w:iCs', type: 'italic' },
     { name: 'w:u', type: 'underline' },
     { name: 'w:strike', type: 'strike' },
-    { name: 'w:color', type: 'color' },
-    { name: 'w:sz', type: 'fontSize' },
-    { name: 'w:szCs', type: 'fontSize' },
-    { name: 'w:rFonts', type: 'fontFamily' },
-    { name: 'w:jc', type: 'textAlign' },
-    { name: 'w:ind', type: 'textIndent' },
-    { name: 'w:spacing', type: 'lineHeight' },
+    { name: 'w:color', type: 'color', mark: 'textStyle', property: 'color' },
+    { name: 'w:sz', type: 'fontSize', mark: 'textStyle', property: 'fontSize' },
+    { name: 'w:szCs', type: 'fontSize', mark: 'textStyle', property: 'fontSize' },
+    { name: 'w:rFonts', type: 'fontFamily', mark: 'textStyle', property: 'fontFamily' },
+    { name: 'w:jc', type: 'textAlign', mark: 'textStyle', property: 'textAlign' },
+    { name: 'w:ind', type: 'textIndent', mark: 'textStyle', property: 'textIndent' },
+    { name: 'w:spacing', type: 'lineHeight', mark: 'textStyle', property: 'lineHeight' },
   ]
 
   static propertyTypes = Object.freeze({
