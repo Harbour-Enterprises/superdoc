@@ -7,9 +7,14 @@ import IconGrid from './IconGrid.vue';
 import LinkInput from './LinkInput.vue';
 import { ToolbarItem } from './ToolbarItem';
 import { sanitizeNumber } from './helpers';
+import { undoDepth, redoDepth } from 'prosemirror-history';
 
 const props = defineProps({
     editorInstance: {
+        type: Object,
+        required: true,
+    },
+    updateTransaction: {
         type: Object,
         required: true,
     }
@@ -464,6 +469,7 @@ zoomOptions.parentItem = zoom;
 const undo = new ToolbarItem({
     type: 'button',
     name: 'undo',
+    disabled: true,
     tooltip: "Undo",
     command: "undo",
     icon: "fa-solid fa-rotate-left"
@@ -473,9 +479,15 @@ const undo = new ToolbarItem({
 const redo = new ToolbarItem({
     type: 'button',
     name: 'redo',
+    disabled: true,
     tooltip: "Redo",
     command: "redo",
     icon: 'fa fa-rotate-right'
+});
+
+watch(() => props.updateTransaction, () => {
+  undo.disabled = undoDepth(props.editorInstance.state) <= 0;
+  redo.disabled = redoDepth(props.editorInstance.state) <= 0;
 });
 
 // search

@@ -47,6 +47,14 @@ const handleToolbarCommand = ({ command, argument }) => {
     }    
 };
 
+const lastTransaction = ref(null);
+const onUpdate = ({ editor, transaction }) => {
+  console.debug('[SuperEditor dev] Document updated', editor);
+  activeEditor = editor;
+
+  lastTransaction.value = transaction;
+}
+
 const onSelectionUpdate = ({ editor, transaction }) => {
   const { from, to } = transaction.selection;
   // console.debug('[SuperEditor dev] Selection update', from, to);
@@ -75,7 +83,8 @@ const onCreate = ({ editor }) => {
 const editorStyles = reactive({ });
 const editorOptions = {
   onCreate,
-  onSelectionUpdate
+  onSelectionUpdate,
+  onUpdate
 }
 
 const exportDocx = async () => {
@@ -123,6 +132,7 @@ onMounted(async () => {
         <Toolbar
         v-if="toolbarVisible"
         :editor-instance="activeEditor"
+        :update-transaction="lastTransaction"
         @command="handleToolbarCommand" ref="toolbar" />
         <!-- SuperEditor expects its data to be a URL --> 
         <SuperEditor
