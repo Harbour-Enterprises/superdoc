@@ -115,6 +115,7 @@ export const toggleList = (listTypeOrName, itemTypeOrName, keepMarks, attributes
 
   // This is the case when there is no need to ensureMarks.
   if (!keepMarks || !marks || !dispatch) {
+
     const result = chain()
       // First check if it's possible to wrap node in a list 
       // and if not then try to convert it into a default node (paragraph).

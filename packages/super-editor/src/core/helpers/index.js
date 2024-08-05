@@ -9,3 +9,5 @@ export * from './defaultBlockAt.js';
 export * from './findParentNodeClosestToPos.js';
 export * from './findParentNode.js';
 export * from './isList.js';
+export * from './docxIdGenerator.js';
+export * from './listHelpers.js';

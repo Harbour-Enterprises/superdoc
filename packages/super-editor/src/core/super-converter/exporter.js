@@ -161,44 +161,51 @@ export class DocxExporter {
   #outputProcessList(node, resultingElements) {
     const { content, attrs } = node;
     const listType = attrs['list-style-type'];
-
+  
     // Each item in the content becomes its own paragraph item in the output
     const flatContent = this.#flattenContent(content);
     console.debug('\n\n\n ❗️ Flat content:', flatContent, '\n\n')
-
-    const output = [];
     flatContent.forEach((n) => {
-      const convertListItemForOutput = (item) => {
-        console.debug('--- N', n, '\n\n')
 
-        const textElements = [];
-        n.content.forEach((c) => {
-          console.debug('----- C', c, '\n\n')
-          textElements.push(...c.content);
-        });
-
-        const elements = [];
-        let parentAttributes = null;
-        parentAttributes = n.attrs.attributes?.parentAttributes || {};
-        const { paragraphProperties } = parentAttributes;
-        if (paragraphProperties) {
-          elements.push(paragraphProperties);
-          delete parentAttributes.paragraphProperties;
-        }
-
-        const processedElements = this.#outputProcessNodes(textElements);
-        elements.push(...processedElements);
-        return {
-          name: 'w:p',
-          type: 'element',
-          attributes: parentAttributes,
-          elements,
-        };
+      n.attrs = { ...n.attrs, ...attrs };
+      const parentAttributes = {
+        paragraphProperties: node.attrs.attributes?.parentAttributes?.paragraphProperties,
+        ...attrs.attributes.parentAttributes,
       }
-      const output = convertListItemForOutput(n);
-      console.debug('Output:', output)
+      n.attrs.attributes = { parentAttributes };
+
+      const output = this.#convertListItemForOutput(n);
       resultingElements.push(output);
     })
+
+  }
+
+  #convertListItemForOutput(n) {
+
+    const textElements = [];
+    n.content.forEach((c) => {
+      if (!c.content) return;
+      textElements.push(...c.content);
+    });
+
+    const elements = [];
+    let parentAttributes = null;
+    parentAttributes = n.attrs.attributes?.parentAttributes || {};
+    const { paragraphProperties } = parentAttributes;
+
+    if (paragraphProperties) {
+      elements.push(paragraphProperties);
+      delete parentAttributes.paragraphProperties;
+    }
+
+    const processedElements = this.#outputProcessNodes(textElements);
+    elements.push(...processedElements);
+    return {
+      name: 'w:p',
+      type: 'element',
+      attributes: parentAttributes,
+      elements,
+    };
   }
 
   #flattenContent(content) {
