@@ -43,6 +43,7 @@ export const FontSize = Extension.create({
   addCommands() {
     return {
       setFontSize: (fontSize) => ({ chain }) => {
+        if (!fontSize) return false;
         return chain()
           .setMark('textStyle', { fontSize })
           .run();

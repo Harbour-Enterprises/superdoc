@@ -49,10 +49,15 @@ export class ToolbarItem {
         this.tooltipTimeout = null
 
         // behavior
-        this.label = null
+        this.defaultLabel = null
+        this.hideLabel = false
         this.disabled = false
         this.inlineTextInputVisible = false
         this.hasInlineTextInput = false
+
+        // mark
+        this.markName = null
+        this.labelAttr = null
 
         const handlers = ['onTextMarkSelection', 'onTextSelectionChange', 'preCommand'];
         Object.keys(options).forEach(key => {
@@ -62,7 +67,7 @@ export class ToolbarItem {
                 if (typeof options[key] !== 'function') throw new Error('Invalid toolbar item handler - ' + key);
                 this[key] = function(...args){
                     this[`_${key}`]()
-                    options[key](this, ...args) // callback
+                    return options[key](this, ...args) // callback
                 }
                 return;
             }
@@ -74,6 +79,21 @@ export class ToolbarItem {
         this.init(options)
     }
 
+    getAttr(editor, attr) {
+        if (!editor) throw new Error('Invalid editor');
+        if (!this.markName || !attr) return null;
+        return editor.getAttributes(this.markName)[attr];
+    }
+
+    getLabel(editor) {
+        return this.getAttr(editor, this.labelAttr) || this.defaultLabel;
+    }
+
+    getIconColor(editor) {
+        return this.getAttr(editor, 'color') || this.iconColor;
+    }
+
+    // handlers
     _onTextMarkSelection() {}
     _onTextSelectionChange() {
         this.active = false;

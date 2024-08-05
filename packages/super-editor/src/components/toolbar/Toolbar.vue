@@ -54,7 +54,9 @@ const fontButton = new ToolbarItem({
     tooltip: "Font",
     command: 'setFontFamily',
     overflowIcon: 'fa-font',
-    label: "Arial",
+    defaultLabel: "Arial",
+    markName: 'textStyle',
+    labelAttr: 'fontFamily',
     hasCaret: true,
     isWide: true,
     style: {width: '120px'},
@@ -108,7 +110,9 @@ fontOptions.parentItem = fontButton;
 const fontSize = new ToolbarItem({
     type: 'button',
     name: 'fontSize',
-    label: "12",
+    defaultLabel: "12",
+    markName: 'textStyle',
+    labelAttr: 'fontSize',
     tooltip: "Font size",
     overflowIcon: 'fa-text-height',
     hasCaret: true,
@@ -201,6 +205,9 @@ const colorButton = new ToolbarItem({
     type: 'button',
     name: 'color',
     icon: 'fa-font',
+    hideLabel: true,
+    markName: 'textStyle',
+    labelAttr: 'color',
     overflowIcon: 'fa-palette',
     active: false,
     tooltip: "Text color",
@@ -312,6 +319,8 @@ const alignment = new ToolbarItem({
     tooltip: "Alignment",
     icon: "fa-align-left",
     hasCaret: true,
+    markName: 'textAlign',
+    labelAttr: 'textAlign',
     onTextMarkSelection(self, mark) {
       self.icon = `fa-align-${mark.attrs.alignment}`;
     },
@@ -401,7 +410,7 @@ const zoom = new ToolbarItem({
     name: 'zoom',
     tooltip: "Zoom",
     overflowIcon: 'fa-magnifying-glass-plus',
-    label: "100%",
+    defaultLabel: "100%",
     hasCaret: true,
     isWide: true,
     style: {width: '100px'},
@@ -547,7 +556,7 @@ const toolbarItems = ref([
   // TODO: Restore this later - removing for initial milestone
   // new ToolbarItem({
   //   type: 'toggle',
-  //   label: 'Suggesting',
+  //   defaultLabel: 'Suggesting',
   //   name: 'suggesting',
   //   command: null,
   //   icon: null,
@@ -621,7 +630,7 @@ const setOverflowItems = () => {
 
 const overflowIconGrid = computed(() => [overflowItems.value.map((item) => (
     {
-      label: item.name,
+      defaultLabel: item.name,
       icon: item.overflowIcon || null,
       value: 'test'
     }
@@ -648,10 +657,10 @@ const desktopBreakpoint = (item) => toolbarItemsDesktop.value.includes(item.name
 
 const alignments = [
   [
-    {label: 'Left', icon: 'fa-align-left', value: 'left'},
-    {label: 'Center', icon: 'fa-align-center', value: 'center'},
-    {label: 'Right', icon: 'fa-align-right', value: 'right'},
-    {label: 'Justify', icon: 'fa-align-justify', value: 'justify'},
+    {defaultLabel: 'Left', icon: 'fa-align-left', value: 'left'},
+    {defaultLabel: 'Center', icon: 'fa-align-center', value: 'center'},
+    {defaultLabel: 'Right', icon: 'fa-align-right', value: 'right'},
+    {defaultLabel: 'Justify', icon: 'fa-align-justify', value: 'justify'},
   ]
 ]
 
@@ -766,16 +775,17 @@ defineExpose({
       <!-- Toolbar button -->
       <ToolbarButton v-if="isButton(item)"
         :disabled="item.disabled"
-        :active="item.active"
+        :active="editorInstance.isActive(item.name)"
         :tooltip="item.tooltip"
         :tooltip-visible="item.tooltipVisible"
         :name="item.name"
         :icon="item.icon"
-        :label="item.label"
+        :label="item.getLabel(editorInstance)"
+        :hide-label="item.hideLabel"
         :has-caret="item.hasCaret"
         :inline-text-input-visible="item.inlineTextInputVisible"
         :has-inline-text-input="item.hasInlineTextInput"
-        :icon-color="item.iconColor"
+        :icon-color="item.getIconColor(editorInstance)"
         :has-icon="hasIcon(item)"
         @mouseenter="handleButtonMouseEnter(item)"
         @mouseleave="handleButtonMouseLeave(item)"
