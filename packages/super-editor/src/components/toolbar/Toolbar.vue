@@ -12,6 +12,14 @@ const props = defineProps({
     editorInstance: {
         type: Object,
         required: true,
+    },
+    undoAvailable: {
+        type: Boolean,
+        required: true,
+    },
+    redoAvailable: {
+        type: Boolean,
+        required: true,
     }
 });
 
@@ -464,18 +472,26 @@ zoomOptions.parentItem = zoom;
 const undo = new ToolbarItem({
     type: 'button',
     name: 'undo',
+    disabled: true,
     tooltip: "Undo",
     command: "undo",
     icon: "fa-solid fa-rotate-left"
+});
+watch(() => props.undoAvailable, (undoAvailable) => {
+    undo.disabled = !undoAvailable;
 });
 
 // redo
 const redo = new ToolbarItem({
     type: 'button',
     name: 'redo',
+    disabled: true,
     tooltip: "Redo",
     command: "redo",
     icon: 'fa fa-rotate-right'
+});
+watch(() => props.redoAvailable, (redoAvailable) => {
+    redo.disabled = !redoAvailable;
 });
 
 // search
