@@ -413,6 +413,7 @@ export class DocxImporter {
       textIndent: () => this.#getIndentValue(attributes),
       fontFamily: () => attributes['w:ascii'],
       lineHeight: () => this.#getLineHeightValue(attributes),
+      textAlign: () => attributes['w:val'],
     }
 
     if (!(markType in markValueMapper)) {
