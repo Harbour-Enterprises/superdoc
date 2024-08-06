@@ -100,9 +100,6 @@ export class DocxExporter {
             }
 
             const hasIndent = markElements.find((m) => m.name === 'w:ind');
-            if (hasIndent) {
-              console.debug('\n\n INDENTPPR', pPr, '\n\n')
-            }
             resultingNode.elements.unshift(pPr);
           }
         }
@@ -169,19 +166,29 @@ export class DocxExporter {
     return markElement;
   }
 
+  #updateListLevel(element, level) {
+    const styleElement = element.elements.find((e) => e.name === 'w:numPr');
+    const iLvl = styleElement.elements.find((e) => e.name === 'w:ilvl');
+    iLvl.attributes['w:val'] = level;
+  }
+  
   #outputProcessList(node, resultingElements) {
     const { content, attrs } = node;
     const listType = attrs['list-style-type'];
   
     // Each item in the content becomes its own paragraph item in the output
     const flatContent = this.#flattenContent(content);
+    const paragraphProperties = node.attrs.attributes?.parentAttributes?.paragraphProperties;
+    
     console.debug('\n\n\n ❗️ Flat content:', flatContent, '\n\n')
-    flatContent.forEach((n) => {
-
+    flatContent.forEach((n, index) => {
+      const pPr = JSON.parse(JSON.stringify(paragraphProperties));
       n.attrs = { ...n.attrs, ...attrs };
+
+      this.#updateListLevel(pPr, n.level);
       const parentAttributes = {
-        paragraphProperties: node.attrs.attributes?.parentAttributes?.paragraphProperties,
         ...attrs.attributes.parentAttributes,
+        paragraphProperties: pPr,
       }
       n.attrs.attributes = { parentAttributes };
 
@@ -219,23 +226,25 @@ export class DocxExporter {
     };
   }
 
-  #flattenContent(content) {
+  #flattenContent(content, level = 0) {
     const flatContent = [];
-    function recursiveFlatten(items) {
+
+    function recursiveFlatten(items, level = 0) {
       if (!items || !items.length) return;
       items.forEach((item) => {
         const subList = item.content.filter((c) => c.type === 'bulletList' || c.type === 'orderedList');
         const notLists = item.content.filter((c) => c.type !== 'bulletList' && c.type !== 'orderedList');
 
         const newItem = { ...item, content: notLists };
+        newItem.level = level;
         flatContent.push(newItem);
 
         if (subList.length) {
-          console.debug('Sublists:', subList)
-          recursiveFlatten(subList[0].content);
+          recursiveFlatten(subList[0].content, level + 1);
         }
       })
     }
+
     recursiveFlatten(content);
     return flatContent;
   }
