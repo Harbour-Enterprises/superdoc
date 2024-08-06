@@ -171,16 +171,22 @@ const onCreate = ({ editor }) => {
   console.debug('[Superdoc] Page styles (pixels)', editor.getPageStyles());
   proxy.$superdoc.broadcastLoaded();
 }
+
+const onFocus = ({ editor }) => {
+  proxy.$superdoc.activeEditor = editor;
+  proxy.$superdoc.addToolbar(proxy.$superdoc);
+}
 const onSelectionUpdate = ({ editor, transaction }) => {
-  const { selection } = editor.view.state;
-  const marks = selection.$head.marks();
-  proxy.$superdoc.toolbar.onTextSelectionChange(marks);
-  proxy.$superdoc.onSelectionUpdate({ editor, transaction });
+  // const { selection } = editor.view.state;
+  // const marks = selection.$head.marks();
+  // proxy.$superdoc.toolbar.onTextSelectionChange(marks);
+  // proxy.$superdoc.onSelectionUpdate({ editor, transaction });
 }
 
 const editorOptions = {
   onCreate,
-  onSelectionUpdate
+  // onSelectionUpdate,
+  onFocus
 }
 
 </script>
