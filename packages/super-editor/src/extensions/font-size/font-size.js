@@ -15,6 +15,7 @@ export const FontSize = Extension.create({
     return {
       types: ['textStyle'],
       defaults: {
+        value: 12,
         unit: 'pt',
       },
     }
@@ -30,9 +31,10 @@ export const FontSize = Extension.create({
             parseDOM: (el) => el.style.fontSize,
             renderDOM: (attrs) => {
               if (!attrs.fontSize) return {};
-              const [value, unit] = parseSizeUnit(attrs.fontSize);
-              const fontSize = `${value}${unit ? unit : this.options.defaults.unit}`;
-              return { style: `font-size: ${fontSize}` };
+              let [value, unit] = parseSizeUnit(attrs.fontSize);
+              if (Number.isNaN(value)) return {};
+              unit = unit ? unit : this.options.defaults.unit;
+              return { style: `font-size: ${value}${unit}` };
             },
           },
         },
