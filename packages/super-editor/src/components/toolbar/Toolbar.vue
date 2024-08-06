@@ -72,12 +72,6 @@ const fontButton = makeToolbarItem({
     preCommand(self, argument) {
       if (!argument) return;
       self.label = argument.label;
-    },
-    onTextMarkSelection(self, mark) {
-        self.label = mark.attrs.font;
-    },
-    onTextSelectionChange(self) {
-      self.label = "Arial";
     }
 });
 
@@ -152,12 +146,6 @@ const fontSize = makeToolbarItem({
             value: sanitizedValue,
             label
         }
-    },
-    onTextMarkSelection(self, mark) {
-      self.label = String(mark.attrs.fontSize);
-    },
-    onTextSelectionChange(self) {
-        self.label = '12';
     }
 });
 
@@ -221,15 +209,6 @@ const colorButton = makeToolbarItem({
     active: false,
     tooltip: "Text color",
     command: 'setColor',
-    preCommand(self, color) {
-      self.iconColor = color;
-    },
-    onTextMarkSelection(self, mark) {
-        self.iconColor = mark.attrs.color;
-    },
-    onTextSelectionChange(self) {
-        self.iconColor = '#47484a';
-    },
 });
 
 const makeColorOption = (label, color) => {
@@ -285,17 +264,6 @@ const link = makeToolbarItem({
     active: false,
     tooltip: "Link",
     disabled: true,
-    onTextMarkSelection(self, mark) {
-        self.childItem.argument = {
-            href: mark.attrs.href,
-            text: mark.attrs.text,
-        }
-        self.active = true;
-        self.childItem.active = true;
-    },
-    onTextSelectionChange(self, selectionText = null) {
-        self.childItem.active = false;
-    },
 });
 
 const linkInput = makeToolbarItem({
@@ -331,16 +299,9 @@ const alignment = makeToolbarItem({
     markName: 'textAlign',
     labelAttr: 'textAlign',
     getIcon(self) {
-      let attrs = self.editor?.getAttributes('paragraph').textAlign;
-      if (!attrs) attrs = 'left';
-      return `fa-align-${attrs}`;
-    },
-    onTextMarkSelection(self, mark) {
-      self.icon = `fa-align-${mark.attrs.alignment}`;
-    },
-    onTextSelectionChange(self) {
-      self.childItem.active = false;
-      self.icon = 'fa-align-left';
+      let alignment = self.editor?.getAttributes('paragraph').textAlign;
+      if (!alignment) alignment = 'left';
+      return `fa-align-${alignment}`;
     }
   });
   
@@ -348,9 +309,6 @@ const alignment = makeToolbarItem({
     type: 'options',
     name: 'alignmentOptions',
     command: 'setTextAlign',
-    preCommand(self, argument) {
-      self.parentItem.icon = `fa-align-${argument}`;
-    },
 })
 alignment.childItem = alignmentOptions;
 alignmentOptions.parentItem = alignment;
@@ -430,7 +388,7 @@ const zoom = makeToolbarItem({
     style: {width: '100px'},
     inlineTextInputVisible: false,
     hasInlineTextInput: true,
-    getLabel(self) {
+    getActiveLabel(self) {
       return self.label || self.defaultLabel;
     },
     preCommand(self, argument) {
@@ -527,6 +485,14 @@ const searchOptions = makeToolbarItem({
 search.childItem = searchOptions;
 searchOptions.parentItem = search;
 
+const clearFormatting = makeToolbarItem({
+    type: 'button',
+    name: 'clearFormatting',
+    command: 'clearFormat',
+    tooltip: "Clear formatting",
+    icon: 'fa-text-slash'
+});
+
 /**
  * The toolbar should be completly decoupled from the editor.
  * It shouldn't be dependant on Editor.js or vice-versa.
@@ -574,6 +540,7 @@ const toolbarItems = ref([
   indentRight,
   separator,
   search,
+  clearFormatting,
   overflow,
   // suggesting
   // TODO: Restore this later - removing for initial milestone
@@ -745,13 +712,7 @@ const handleToolbarButtonTextSubmit = (item, argument) => {
 }
   
 const onTextSelectionChange = (marks, selectionText = null) => {
-  toolbarItems.value.forEach((item) => {
-    item.onTextSelectionChange(selectionText);
-
-    // handle selection
-    const correspondingMark = marks.find((mark) => mark.type.name === item.name);
-    if (correspondingMark) item.onTextMarkSelection(correspondingMark);
-  });
+  console.log("Text selection change", marks, selectionText)
 }
 
 defineExpose({
@@ -784,7 +745,7 @@ defineExpose({
         :tooltip-visible="item.tooltipVisible"
         :name="item.name"
         :icon="item.getIcon()"
-        :label="item.getLabel()"
+        :label="item.getActiveLabel() || item.defaultLabel"
         :hide-label="item.hideLabel"
         :has-caret="item.hasCaret"
         :inline-text-input-visible="item.inlineTextInputVisible"

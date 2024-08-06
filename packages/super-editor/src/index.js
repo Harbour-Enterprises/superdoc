@@ -31,7 +31,8 @@ import {
   faAlignJustify,
   faMagnifyingGlassPlus,
   faTextHeight,
-  faPalette
+  faPalette,
+  faTextSlash
 } from '@fortawesome/free-solid-svg-icons';
 
 
@@ -62,7 +63,8 @@ library.add(
   faMagnifyingGlassPlus,
   faFont,
   faTextHeight,
-  faPalette
+  faPalette,
+  faTextSlash
 );
 
 /**
