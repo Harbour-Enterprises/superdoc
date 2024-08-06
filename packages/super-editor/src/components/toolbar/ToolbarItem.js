@@ -11,10 +11,6 @@ export class ToolbarItem {
             throw new Error('Invalid toolbar item name - ' + options.name);
         }
 
-        if (!options.editor) {
-            throw new Error('Invalid toolbar item editor - ' + options.editor);
-        }
-
         this.type = options.type
         this.name = options.name
         this.editor = options.editor
@@ -94,11 +90,11 @@ export class ToolbarItem {
 
     // handlers
     _getActiveState() {
-        return this.editor.isActive(this.name)
+        return this.editor?.isActive(this.name)
     }
     _getAttr(attr) {
         if (!this.markName || !attr) return null;
-        return this.editor.getAttributes(this.markName)[attr];
+        return this.editor?.getAttributes(this.markName)[attr];
     }
     _getLabel() {
         return this._getAttr(this.labelAttr) || this.defaultLabel;

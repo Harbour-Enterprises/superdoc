@@ -62,16 +62,19 @@ class Superdoc extends EventEmitter {
     this.emit('selection-update', { editor, transaction });
   }
 
-  setToolbar(component) {
-    this.toolbar = component;
-  }
-
   addToolbar(instance) {
     if (!this.toolbarElement) return;
+
+    if (this.toolbar) {
+      console.debug('[superdoc] Unmounting existing toolbar');
+      this.toolbar.unmount();
+    }
+
     const el = document.getElementById(this.toolbarElement);
     if (!el) return;
     
     const app = createApp(SuperToolbar);
+    this.toolbar = app;
     app.config.globalProperties.$superdoc = instance;
     app.mount(el);
   }

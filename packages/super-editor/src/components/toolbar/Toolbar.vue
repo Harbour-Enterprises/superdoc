@@ -13,7 +13,7 @@ import { undoDepth, redoDepth } from 'prosemirror-history';
 const props = defineProps({
     editorInstance: {
         type: Object,
-        required: true,
+        required: false,
     },
     updateTransaction: {
         type: Object,
@@ -332,7 +332,8 @@ const alignment = makeToolbarItem({
     markName: 'textAlign',
     labelAttr: 'textAlign',
     getIcon(self) {
-      const attrs = self.editor.getAttributes('paragraph').textAlign;
+      let attrs = self.editor?.getAttributes('paragraph').textAlign;
+      if (!attrs) attrs = 'left';
       return `fa-align-${attrs}`;
     },
     onTextMarkSelection(self, mark) {
@@ -570,8 +571,8 @@ const toolbarItems = ref([
   alignment,
   bulletedList,
   numberedList,
-  indentRight,
   indentLeft,
+  indentRight,
   separator,
   search,
   overflow,
@@ -761,23 +762,6 @@ defineExpose({
 
 <template>
   <div class="toolbar">
-
-    <!-- TODO: delete this (examples of how to handle active state)-->
-    <div 
-      style="display: none;"
-      :class="{
-        'is-bold-active': editorInstance.isActive('bold'),
-        'is-italic-active': editorInstance.isActive('italic'),
-        'is-undeline-active': editorInstance.isActive('underline'),
-        'is-arial-font-active': editorInstance.isActive('textStyle', { fontFamily: 'Arial, sans-serif' }),
-        'is-purple-color-active': editorInstance.isActive('textStyle', { color: 'purple' }),
-        'is-orange-color-active': editorInstance.getAttributes('textStyle').color === 'orange',
-        'is-bullet-list-active': editorInstance.isActive('bulletList'),
-        'is-center-align': editorInstance.isActive({ textAlign: 'center' }),
-      }"
-      :data-current-color="editorInstance.getAttributes('textStyle').color"
-      :data-current-font-size="editorInstance.getAttributes('textStyle').fontSize">
-    </div>
 
     <div v-for="item, index in toolbarItems"
     :key="index"
