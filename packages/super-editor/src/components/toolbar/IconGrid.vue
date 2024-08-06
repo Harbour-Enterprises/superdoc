@@ -34,6 +34,7 @@ const props = defineProps({
     position: absolute;
     top: 32px;
     right: 0;
+    z-index: 3;
 }
 .option-row {
     display: flex;

@@ -123,29 +123,23 @@ const fontSize = makeToolbarItem({
     isWide: true,
     command: "setFontSize",
     style: {width: '90px'},
-    preCommand(self, argument) {
-        self.inlineTextInputVisible = self.inlineTextInputVisible ? false : true;
-        setTimeout(() => {
+    preCommand(self) {
+      self.inlineTextInputVisible = self.inlineTextInputVisible ? false : true;
+      setTimeout(() => {
             const input = document.querySelector('#inlineTextInput-fontSize');
             if (input) input.focus();
         });
+    },
+    getActiveLabel(self) {
+      let label = self._getActiveLabel() || self.defaultLabel;
+      let sanitizedValue = sanitizeNumber(label, 12);
+      if (sanitizedValue < 8) sanitizedValue = 8;
+      if (sanitizedValue > 96) sanitizedValue = 96;
 
-        // from text input
-        if (!argument) return;
+      // no units
+      label = String(sanitizedValue);
 
-        const value = argument;
-        let sanitizedValue = sanitizeNumber(value, 12);
-        if (sanitizedValue < 8) sanitizedValue = 8;
-        if (sanitizedValue > 96) sanitizedValue = 96;
-
-        // no units
-        const label = String(sanitizedValue);
-        self.label = label;
-
-        return {
-            value: sanitizedValue,
-            label
-        }
+      return label;
     }
 });
 
@@ -211,7 +205,7 @@ const colorButton = makeToolbarItem({
     command: 'setColor',
 });
 
-const makeColorOption = (label, color) => {
+const makeColorOption = (color, label = null) => {
   return {
     label,
     icon: 'fa-circle',
@@ -232,25 +226,84 @@ const colorOptions = makeToolbarItem({
   },
   options: [
     [
-      makeColorOption('Red', 'red'),
-      makeColorOption('Blue', 'blue'),
-      makeColorOption('Green', 'green')
+      makeColorOption('#111', 'Black'),
+      makeColorOption('#333', 'Darker Grey'),
+      makeColorOption('##5C5C5C', 'Dark Grey', ),
+      makeColorOption('#858585', 'Grey'),
+      makeColorOption('#ADADAD', 'Light Grey'),
+      makeColorOption('#D6D6D6', 'Lighter Grey'),
+      makeColorOption('#FFF', 'White'),
     ],
+
     [
-      makeColorOption('Yellow', 'yellow'),
-      makeColorOption('Purple', 'purple'),
-      makeColorOption('Orange', 'orange')
+      makeColorOption('#860028', 'Dark Red'),
+      makeColorOption('#D2003F'),
+      makeColorOption('#DB3365'),
+      makeColorOption('#E4668C'),
+      makeColorOption('#ED99B2'),
+      makeColorOption('#F6CCD9'),
+      makeColorOption('#FF004D'),
     ],
+
     [
-      makeColorOption('Black', 'black'),
-      makeColorOption('White', 'white'),
-      makeColorOption('Gray', 'gray')
+      makeColorOption('#83015E'),
+      makeColorOption('#CD0194'),
+      makeColorOption('#D734A9'),
+      makeColorOption('#E167BF'),
+      makeColorOption('#E167BF'),
+      makeColorOption('#F5CCEA'),
+      makeColorOption('#FF00A8'),
     ],
+
     [
-      makeColorOption('Pink', 'pink'),
-      makeColorOption('Brown', 'brown'),
-      makeColorOption('Cyan', 'cyan')
+      makeColorOption('#8E220A'),
+      makeColorOption('#DD340F'),
+      makeColorOption('#E45C3F'),
+      makeColorOption('#EB856F'),
+      makeColorOption('#DD340F'),
+      makeColorOption('#F8D6CF'),
+      makeColorOption('#FF7A00'),
     ],
+
+    [
+      makeColorOption('#947D02'),
+      makeColorOption('#E7C302'),
+      makeColorOption('#ECCF35'),
+      makeColorOption('#F1DB67'),
+      makeColorOption('#F5E79A'),
+      makeColorOption('#FAF3CC'),
+      makeColorOption('#FAFF09')
+    ],
+
+    [
+      makeColorOption('#055432'),
+      makeColorOption('#07834F'),
+      makeColorOption('#399C72'),
+      makeColorOption('#6AB595'),
+      makeColorOption('#9CCDB9'),
+      makeColorOption('#CDE6DC'),
+      makeColorOption('#05F38F')
+    ],
+
+    [
+      makeColorOption('#063E7E'),
+      makeColorOption('#0A60C5'),
+      makeColorOption('#3B80D1'),
+      makeColorOption('#6CA0DC'),
+      makeColorOption('#9DBFE8'),
+      makeColorOption('#CEDFF3'),
+      makeColorOption('#00E0FF')
+    ],
+
+    [
+      makeColorOption('#3E027A'),
+      makeColorOption('#6103BF'),
+      makeColorOption('#8136CC'),
+      makeColorOption('#A068D9'),
+      makeColorOption('#C09AE6'),
+      makeColorOption('#DFCDF2'),
+      makeColorOption('#A91DFF')
+    ]
   ]
 });
 colorButton.childItem = colorOptions;
