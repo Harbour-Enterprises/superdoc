@@ -1,48 +1,48 @@
-import { Mark } from '@core/index.js';
+import { Extension } from '@core/index.js';
 
-export const FontFamily = Mark.create({
+export const FontFamily = Extension.create({
   name: 'fontFamily',
 
-  parseDOM() {
-    return [
-      { tag: 'span' },
-    ];
+  addOptions() {
+    return {
+      types: ['textStyle'],
+    };
   },
 
-
-  renderDOM(node) {
-    return ['span', node.mark.attrs.attributes, 0];
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          fontFamily: {
+            default: null,
+            parseDOM: (el) => el.style.fontFamily?.replace(/['"]+/g, ''),
+            renderDOM: (attrs) => {
+              if (!attrs.fontFamily) return {};
+              return { style: `font-family: ${attrs.fontFamily}` };
+            },
+          },
+        },
+      }
+    ];
   },
 
   addCommands() {
     return {
-      toggleFont: (argument) => ({ commands }) => {
-        if (!argument) return;
-        const {label, fontName, fontWeight} = argument;
-        console.debug('toggleFont', label, fontName, fontWeight, commands);
-        const styleDict = {
-          'font-family': fontName,
-          'font-weight': fontWeight,
-        }
-        const styleString = Object.entries(styleDict).map(([key, value]) => `${key}: ${value}`).join(';');
+      setFontFamily: (fontFamily) => ({ chain }) => {
+        console.log({ fontFamily });
+        if (!fontFamily) return false;
+        return chain()
+          .setMark('textStyle', { fontFamily })
+          .run();
+      },
 
-        const attrs = {
-          attributes: {
-            style: styleString
-          },
-          font: label
-        }
-        return commands.setMark(this.name, attrs);
+      unsetFontFamily: () => ({ chain }) => {
+        return chain()
+          .setMark('textStyle', { fontFamily: null })
+          .removeEmptyTextStyle()
+          .run();
       },
     };
   },
-
-  addAttributes(){
-    return {
-      attributes: {
-        style: {default: null},
-      },
-      font: {default: null},
-    }
-  }
 });

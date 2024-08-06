@@ -147,7 +147,7 @@ export class CommandService {
       editor,
       view,
       state: chainableEditorState(tr, state),
-      dispatch: shouldDispatch ? () => null : null,
+      dispatch: shouldDispatch ? () => undefined : undefined,
       chain: () => this.createChain(tr, shouldDispatch),
       can: () => this.createCan(tr),
       get commands() {

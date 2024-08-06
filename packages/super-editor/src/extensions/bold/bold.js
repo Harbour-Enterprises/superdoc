@@ -1,7 +1,13 @@
-import { Mark } from '@core/index.js';
+import { Mark, Attribute } from '@core/index.js';
 
 export const Bold = Mark.create({
   name: 'bold',
+
+  addOptions() {
+    return {
+      htmlAttributes: {},
+    };
+  },
 
   parseDOM() {
     return [
@@ -12,12 +18,18 @@ export const Bold = Mark.create({
     ];
   },
 
-  renderDOM() {
-    return ['strong', 0];
+  renderDOM({ htmlAttributes }) {
+    return ['strong', Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes), 0];
   },
 
   addCommands() {
     return {
+      setBold: () => ({ commands }) => {
+        return commands.setMark(this.name);
+      },
+      unsetBold: () => ({ commands }) => {
+        return commands.unsetMark(this.name);
+      },
       toggleBold: () => ({ commands }) => {
         return commands.toggleMark(this.name);
       },

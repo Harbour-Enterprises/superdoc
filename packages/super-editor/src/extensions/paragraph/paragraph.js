@@ -1,5 +1,4 @@
-import { Node } from '@core/index.js';
-import { Attribute } from '@core/index.js';
+import { Node, Attribute } from '@core/index.js';
 
 export const Paragraph = Node.create({
   name: 'paragraph',
@@ -20,16 +19,17 @@ export const Paragraph = Node.create({
 
   addAttributes() {
     return {
-
       paragraphSpacing: {
         renderDOM: (attrs) => {
-          let { paragraphSpacing } = attrs;
-          if (!paragraphSpacing) return;
+          const { paragraphSpacing } = attrs;
+          if (!paragraphSpacing) return {};
 
           const { lineSpaceBefore, lineSpaceAfter } = paragraphSpacing;
-          let style = '';
-          if (lineSpaceBefore) style += `margin-top: ${lineSpaceBefore}px;`;
-          if (lineSpaceAfter) style += `margin-bottom: ${lineSpaceAfter}px;`;
+          const style = `
+            ${lineSpaceBefore ? `margin-top: ${lineSpaceBefore.toFixed(2)}px;` : ''}
+            ${lineSpaceAfter ? `margin-bottom: ${lineSpaceAfter.toFixed(2)}px;` : ''}
+          `.trim();
+          
           return { style };
         },
       },
@@ -37,25 +37,14 @@ export const Paragraph = Node.create({
       attributes: {
         rendered: false,
       },
-
-      textAlign: {
-        renderDOM: ({ textAlign }) => {
-          if (!textAlign) return {};
-          return { style: `text-align: ${textAlign}` };
-        },
-      },
-
-      textIndent: {
-        renderDOM: ({ textIndent }) => {
-          if (!textIndent) return {};
-          return { style: `text-indent: ${textIndent}` };
-        },
-      },
     };
+  },
+
+  parseDOM() {
+    return [{ tag: 'p' }];
   },
 
   renderDOM({ htmlAttributes }) {
     return ['p', Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes), 0];
   },
-
 });

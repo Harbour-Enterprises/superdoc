@@ -1,49 +1,63 @@
-import { Mark } from '@core/index.js';
+import { Extension } from '@core/index.js';
 
-export const TextAlign = Mark.create({
+export const TextAlign = Extension.create({
   name: 'textAlign',
 
-  parseDOM() {
-    return [
-      { tag: 'p' },
-    ];
-  },
-
-
-  renderDOM(node) {
-    return ['p', node.mark.attrs.attributes, 0];
-  },
-
-  addAttributes(){
+  addOptions() {
     return {
-      attributes: {
-        style: {default: null},
-      },
-      alignment: {default: null},
+      types: ['heading', 'paragraph'],
+      alignments: ['left', 'center', 'right', 'justify'],
+      defaultAlignment: 'left',
     }
   },
 
-  addCommands(node) {
-    return {
-      changeTextAlignment: (alignment) => ({ commands }) => {
-        if (!alignment) return;
-        const attrs = {
-          attributes: {
-            style: `text-align: ${alignment}`
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          textAlign: {
+            default: this.options.defaultAlignment,
+            parseDOM: (el) => {
+              const alignment = el.style.textAlign || this.options.defaultAlignment;
+              const containsAlignment = this.options.alignments.includes(alignment);
+              return containsAlignment ? alignment : this.options.defaultAlignment;
+            },
+            renderDOM: (attrs) => {
+              if (attrs.textAlign === this.options.defaultAlignment) return {};
+              return { style: `text-align: ${attrs.textAlign}` };
+            },
           },
-          alignment
-        }
-        return commands.setMark(this.name, attrs);
+        },
+      },
+    ];
+  },
+
+  addCommands() {
+    return {
+      setTextAlign: (alignment) => ({ commands }) => {
+        const containsAlignment = this.options.alignments.includes(alignment);
+        if (!containsAlignment) return false;
+
+        return this.options.types
+          .map((type) => commands.updateAttributes(type, { textAlign: alignment }))
+          .every((result) => result);
+      },
+
+      unsetTextAlign: () => ({ commands }) => {
+        return this.options.types
+          .map((type) => commands.resetAttributes(type, 'textAlign'))
+          .every((result) => result);
       },
     };
   },
 
   addShortcuts() {
     return {
-      // 'Mod-Shift-l': () => this.editor.commands.setTextAlign('left'),
-      // 'Mod-Shift-e': () => this.editor.commands.setTextAlign('center'),
-      // 'Mod-Shift-r': () => this.editor.commands.setTextAlign('right'),
-      // 'Mod-Shift-j': () => this.editor.commands.setTextAlign('justify'),
-    }
+      'Mod-Shift-l': () => this.editor.commands.setTextAlign('left'),
+      'Mod-Shift-e': () => this.editor.commands.setTextAlign('center'),
+      'Mod-Shift-r': () => this.editor.commands.setTextAlign('right'),
+      'Mod-Shift-j': () => this.editor.commands.setTextAlign('justify'),
+    };
   },
 });

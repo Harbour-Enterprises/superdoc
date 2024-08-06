@@ -22,6 +22,15 @@ export class DocxExporter {
     return result;
   }
 
+  #getValidMarks(node) {
+    const { attrs } = node;
+    return Object.keys(attrs)
+        .filter((key) => SuperConverter.markTypes.find((m) => m.type === key && attrs[key]))
+        .map((key) => {
+          return { type: key, attrs: { [key]: attrs[key] } };
+        });
+  }
+
   #outputProcessNodes(nodes, parent = null) {
     const resultingElements = [];
     let index = 0;
@@ -56,8 +65,6 @@ export class DocxExporter {
 
       let resultingNode = node;
 
-      console.debug('Processing node:', node)
-
       let name = this.getTagName(node.type);
       if (!skip) {
         const { content, attrs } = node;
@@ -74,8 +81,9 @@ export class DocxExporter {
         }
 
         if (node.type === 'paragraph') {
-          const marks = node.marks;
+          const marks = this.#getValidMarks(node);
           const markElements = [];
+
           if (marks) {
             marks.forEach((mark) => {
               const markElement = this.#mapOutputMarkToElement(mark);
@@ -84,6 +92,7 @@ export class DocxExporter {
                 markElements.unshift(markElement);
               } else markElements.push(markElement);
             });
+
             const pPr = {
               name: 'w:pPr',
               type: 'element',
@@ -110,37 +119,11 @@ export class DocxExporter {
   }
 
   #mapOutputMarkToElement(mark) {
-    const kebabCase = toKebabCase(mark.type);
-    const value = mark.attrs?.attributes?.style?.split(`${kebabCase}: `)[1];
-
     const xmlMark = SuperConverter.markTypes.find((m) => m.type === mark.type);
     const markElement = { name: xmlMark.name, attributes: {} };
 
-
+    let value;
     switch (mark.type) {
-      case 'textAlign':
-        markElement.attributes['w:val'] = value;
-        break;
-      case 'textIndent':
-        markElement.attributes['w:firstline'] = inchesToTwips(value);
-        console.debug('textIndent:', markElement);
-
-        break;
-      case 'fontSize':
-        markElement.attributes['w:val'] = value.slice(0, -2) * 2;
-        break;
-      case 'fontFamily':
-        markElement.attributes['w:ascii'] = value;
-        markElement.attributes['w:eastAsia'] = value;
-        markElement.attributes['w:hAnsi'] = value;
-        markElement.attributes['w:cs'] = value;
-        break;
-      case 'color':
-        let processedColor = value;
-        if (value.startsWith('#')) processedColor = value.slice(1);
-        if (value.endsWith(';')) processedColor = value.slice(0, -1);
-        markElement.attributes['w:val'] = processedColor;
-        break;
       case 'bold':
         delete markElement.attributes
         markElement.type = 'element';
@@ -149,12 +132,40 @@ export class DocxExporter {
         delete markElement.attributes
         markElement.type = 'element';
         break;
+      case 'underline':
+        delete markElement.attributes
+        markElement.type = 'element';
+        break;
+
+      // Cases for text styles
+      case 'fontSize':
+        value = mark.attrs.fontSize;
+        markElement.attributes['w:val'] = value.slice(0, -2) * 2;
+        break;
+      case 'fontFamily':
+        value = mark.attrs.fontFamily;
+        markElement.attributes['w:ascii'] = value;
+        markElement.attributes['w:eastAsia'] = value;
+        markElement.attributes['w:hAnsi'] = value;
+        markElement.attributes['w:cs'] = value;
+        break;
+      case 'color':
+        let processedColor = mark.attrs.color;
+        if (processedColor.startsWith('#')) processedColor = processedColor.slice(1);
+        if (processedColor.endsWith(';')) processedColor = processedColor.slice(0, -1);
+        markElement.attributes['w:val'] = processedColor;
+        break;
+      case 'textAlign':
+        markElement.attributes['w:val'] = mark.attrs.textAlign;
+        break;
+      case 'textIndent':
+        markElement.attributes['w:firstline'] = inchesToTwips(mark.attrs.textIndent);
+        break;
       case 'lineHeight':
-        markElement.attributes['w:line'] = inchesToTwips(value);
+        markElement.attributes['w:line'] = inchesToTwips(mark.attrs.lineHeight);
         break;
     }
 
-    console.debug('Mark element:', markElement)
     return markElement;
   }
 
@@ -262,16 +273,28 @@ export class DocxExporter {
     const attrs = groupedNode?.attrs;
     const marks = groupedNode?.marks;
 
+
     let runProperties = null;
     if (marks) {
       const elements = [];
       marks.forEach((mark) => {
         console.debug('-- OUTPUT MARK', mark)
-        const marksToApply = SuperConverter.markTypes.filter((m) => m.type === mark.type)
-        marksToApply.forEach((m) => {
+
+        if (mark.type === 'textStyle') {
+          Object.keys(mark.attrs).forEach((key) => {
+            const value = mark.attrs[key];
+            if (!value) return;
+            const unwrappedMark = {
+              type: key,
+              attrs: mark.attrs,
+            }
+            const markElement = this.#mapOutputMarkToElement(unwrappedMark);
+            elements.push(markElement);
+          });
+        } else {
           const markElement = this.#mapOutputMarkToElement(mark);
           elements.push(markElement);
-        });
+        }
       });
 
       runProperties = {

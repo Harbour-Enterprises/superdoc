@@ -1,7 +1,11 @@
 import { getExtensionConfigField } from './helpers/getExtensionConfigField.js';
+import { getNodeType } from './helpers/getNodeType.js';
+import { getMarkType } from './helpers/getMarkType.js';
+import { getSchemaTypeNameByName } from './helpers/getSchemaTypeNameByName.js'
 
 /**
- * Attribute class is used to work with attributes. 
+ * Attribute class is a space that contains 
+ * methods for working with attributes. 
  */
 export class Attribute {
 
@@ -244,6 +248,77 @@ export class Attribute {
       return extensionAttr.attribute.keepOnSplit;
     });
     return Object.fromEntries(filtered);
+  }
+
+  /**
+   * Get mark attrs on the current editor state.
+   * @param state The current editor state.
+   * @param typeOrName The mark type or name.
+   * @returns The mark attrs.
+   */
+  static getMarkAttributes(state, typeOrName) {
+    const type = getMarkType(typeOrName, state.schema);
+    const { from, to, empty } = state.selection;
+    const marks = [];
+
+    if (empty) {
+      if (state.storedMarks) {
+        marks.push(...state.storedMarks);
+      }
+
+      marks.push(...state.selection.$head.marks())
+    } else {
+      state.doc.nodesBetween(from, to, (node) => {
+        marks.push(...node.marks);
+      });
+    }
+
+    const mark = marks.find((markItem) => markItem.type.name === type.name);
+    if (!mark) return {};
+
+    return { ...mark.attrs };
+  }
+
+  /**
+   * Get node attrs on the current editor state.
+   * @param state The current editor state.
+   * @param typeOrName The node type or name.
+   * @returns The node attrs.
+   */
+  static getNodeAttributes(state, typeOrName) {
+    const type = getNodeType(typeOrName, state.schema);
+    const { from, to } = state.selection;
+    const nodes = [];
+  
+    state.doc.nodesBetween(from, to, node => {
+      nodes.push(node);
+    });
+  
+    const node = nodes.reverse().find((nodeItem) => nodeItem.type.name === type.name);
+    if (!node) return {};
+  
+    return { ...node.attrs };
+  }
+  
+  /**
+  * Get node or mark attrs on the current editor state.
+  * @param state The current editor state.
+  * @param typeOrName The node/mark type or name.
+  * @returns The attrs of the node/mark or an empty object.
+  */
+  static getAttributes(state, typeOrName) {
+    const schemaType = getSchemaTypeNameByName(
+      typeof typeOrName === 'string' ? typeOrName : typeOrName.name,
+      state.schema,
+    );
+  
+    if (schemaType === 'node') {
+      return Attribute.getNodeAttributes(state, typeOrName);
+    }
+    if (schemaType === 'mark') {
+      return Attribute.getMarkAttributes(state, typeOrName);
+    }
+    return {};
   }
 }
 

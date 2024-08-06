@@ -1,7 +1,13 @@
-import { Mark } from '@core/index.js';
+import { Mark, Attribute } from '@core/index.js';
 
 export const Underline = Mark.create({
   name: 'underline',
+
+  addOptions() {
+    return {
+      htmlAttributes: {},
+    };
+  },
 
   parseDOM() {
     return [
@@ -11,12 +17,18 @@ export const Underline = Mark.create({
     ];
   },
 
-  renderDOM() {
-    return ['u', 0];
+  renderDOM({ htmlAttributes }) {
+    return ['u', Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes), 0];
   },
 
   addCommands() {
     return {
+      setUnderline: () => ({ commands }) => {
+        return commands.setMark(this.name);
+      },
+      unsetUnderline: () => ({ commands }) => {
+        return commands.unsetMark(this.name);
+      },
       toggleUnderline: () => ({ commands }) => {
         return commands.toggleMark(this.name);
       },
