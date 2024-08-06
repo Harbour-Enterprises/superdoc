@@ -1,6 +1,5 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, watch, defineProps } from 'vue';
-import { undoDepth, redoDepth } from 'prosemirror-history';
 import ToolbarButton from './ToolbarButton.vue';
 import ToolbarSeparator from './ToolbarSeparator.vue';
 import DropdownOptions from './DropdownOptions.vue';

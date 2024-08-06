@@ -96,14 +96,6 @@ const onCreate = ({ editor }) => {
   Object.assign(editorStyles, editor.converter.getDocumentDefaultStyles());
 }
 
-const lastTransaction = ref(null);
-const onUpdate = ({ editor, transaction }) => {
-  console.debug('[SuperEditor dev] Document updated', editor);
-  activeEditor = editor;
-
-  lastTransaction.value = transaction;
-}
-
 const editorStyles = reactive({ });
 const editorOptions = {
   onCreate,
