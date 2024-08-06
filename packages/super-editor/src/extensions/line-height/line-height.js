@@ -1,4 +1,5 @@
 import { Extension } from '@core/index.js';
+import { parseSizeUnit } from '@core/utilities/index.js';
 
 export const LineHeight = Extension.create({
   name: 'lineHeight',
@@ -6,6 +7,9 @@ export const LineHeight = Extension.create({
   addOptions() {
     return {
       types: ['heading', 'paragraph'],
+      defaults: {
+        unit: 'in',
+      },
     };
   },
 
@@ -19,7 +23,10 @@ export const LineHeight = Extension.create({
             parseDOM: (el) => el.style.lineHeight,
             renderDOM: (attrs) => {
               if (!attrs.lineHeight) return {};
-              return { style: `line-height: ${attrs.lineHeight}` };
+              let [value, unit] = parseSizeUnit(attrs.lineHeight);
+              if (Number.isNaN(value)) return {};
+              unit = unit ? unit : this.options.defaults.unit;
+              return { style: `line-height: ${value}${unit}` };
             },
           },
         },
