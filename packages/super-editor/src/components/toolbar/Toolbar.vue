@@ -8,6 +8,7 @@ import LinkInput from './LinkInput.vue';
 import { ToolbarItem } from './ToolbarItem';
 import { sanitizeNumber } from './helpers';
 import { undoDepth, redoDepth } from 'prosemirror-history';
+import { getMarksFromSelection } from '@helpers/getMarksFromSelection.js';
 
 const props = defineProps({
     editorInstance: {
@@ -51,9 +52,6 @@ const bold = makeToolbarItem({
     command: 'toggleBold',
     icon: 'fa fa-bold',
     tooltip: "Bold",
-    onTextMarkSelection(self, mark) {
-      self.active = mark.type.name === 'bold';
-    }
 });
 
 // font
@@ -172,10 +170,7 @@ const italic = makeToolbarItem({
     command: 'toggleItalic',
     icon: 'fa fa-italic',
     active: false,
-    tooltip: "Italic",
-    onTextMarkSelection(self, mark) {
-        self.active = mark.type.name == 'italic';
-    }
+    tooltip: "Italic"
 });
 
 // underline
@@ -186,9 +181,6 @@ const underline = makeToolbarItem({
     icon: 'fa fa-underline',
     active: false,
     tooltip: "Underline",
-    onTextMarkSelection(self, mark) {
-        self.active = mark.type.name == 'underline';
-    }
 });
 
 // color
@@ -315,16 +307,22 @@ const link = makeToolbarItem({
     name: 'link',
     icon: 'fa-link',
     active: false,
-    tooltip: "Link",
-    disabled: true,
+    tooltip: "Link"
 });
 
 const linkInput = makeToolbarItem({
     type: 'options',
     name: 'linkInput',
     command: 'toggleLink',
-    preCommand(self) {
-        self.parentItem.active = false;
+    preCommand(self, argument) {
+      if (!argument) return;
+      const {href} = argument;
+
+      const marks = getMarksFromSelection(self.editor.state)
+      const link = marks.find(mark => mark.type.name === 'link');
+      if (!link) return;
+
+      link.attrs.href = href;
     },
     active: false,
 });
@@ -847,7 +845,7 @@ defineExpose({
 
           <!-- link input -->
           <LinkInput v-if="showOptions(item.childItem, 'linkInput')"
-          :initial-url="item.childItem.argument?.href || ''"
+          :initial-url="editorInstance?.getAttributes('link')?.href"
           @submit="(anchor) => handleToolbarButtonClick(item.childItem, anchor)"
           @cancel="handleToolbarButtonClick({...item.childItem, command: null})"/>
 

@@ -17,3 +17,4 @@ export * from './isMarkActive.js';
 export * from './getSchemaTypeNameByName.js';
 export * from './isActive.js';
 export * from './isNodeActive.js';
+export * from './getMarksFromSelection.js';
