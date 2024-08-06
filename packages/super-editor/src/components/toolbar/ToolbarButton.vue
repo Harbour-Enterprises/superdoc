@@ -18,6 +18,10 @@ const props = defineProps({
     type: String,
     default: null,
   },
+  hideLabel: {
+    type: Boolean,
+    default: false,
+  },
   iconColor: {
     type: String,
     default: null,
@@ -93,7 +97,7 @@ const handleInputSubmit = () => {
       <div @click="handleClick"
       class="toolbar-button"
       :class="{ active: props.active, disabled, narrow: isNarrow, wide: isWide, 'has-inline-text-input': hasInlineTextInput}">
-        <span class="button-label" v-if="label">
+        <span class="button-label" v-if="label && !hideLabel">
           <input v-if="inlineTextInputVisible"
           v-model="inlineTextInput"
           @keydown.enter.prevent="handleInputSubmit"

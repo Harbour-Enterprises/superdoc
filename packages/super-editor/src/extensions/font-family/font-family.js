@@ -31,6 +31,7 @@ export const FontFamily = Extension.create({
     return {
       setFontFamily: (fontFamily) => ({ chain }) => {
         console.log({ fontFamily });
+        if (!fontFamily) return false;
         return chain()
           .setMark('textStyle', { fontFamily })
           .run();

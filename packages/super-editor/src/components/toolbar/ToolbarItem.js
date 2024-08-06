@@ -11,8 +11,13 @@ export class ToolbarItem {
             throw new Error('Invalid toolbar item name - ' + options.name);
         }
 
+        if (!options.editor) {
+            throw new Error('Invalid toolbar item editor - ' + options.editor);
+        }
+
         this.type = options.type
         this.name = options.name
+        this.editor = options.editor
 
         // nested options
         this.options = []
@@ -25,11 +30,6 @@ export class ToolbarItem {
         this.style = null
         this.isNarrow = false
         this.isWide = false
-
-        // handlers
-        this.onTextMarkSelection = this._onTextMarkSelection
-        this.onTextSelectionChange = this._onTextSelectionChange
-        this.preCommand = this._preCommand
 
         this.command = null
         this.argument = null
@@ -49,20 +49,38 @@ export class ToolbarItem {
         this.tooltipTimeout = null
 
         // behavior
-        this.label = null
+        this.defaultLabel = null
+        this.hideLabel = false
         this.disabled = false
         this.inlineTextInputVisible = false
         this.hasInlineTextInput = false
 
-        const handlers = ['onTextMarkSelection', 'onTextSelectionChange', 'preCommand'];
+        // mark
+        this.markName = null
+        this.labelAttr = null
+
+        const handlers = [
+            'onTextMarkSelection',
+            'onTextSelectionChange',
+            'preCommand',
+            'getAttr',
+            'getLabel',
+            'getIconColor',
+            'getActiveState',
+            'getIcon'
+        ];
+        // set default handlers
+        handlers.forEach(handler => {
+            this[handler] = this[`_${handler}`]
+        });
         Object.keys(options).forEach(key => {
             if (!this.hasOwnProperty(key)) throw new Error('Invalid toolbar item property - ' + key);
-            // handler assignment
+            // set custom handlers
             if (handlers.includes(key)) {
                 if (typeof options[key] !== 'function') throw new Error('Invalid toolbar item handler - ' + key);
                 this[key] = function(...args){
                     this[`_${key}`]()
-                    options[key](this, ...args) // callback
+                    return options[key](this, ...args) // callback
                 }
                 return;
             }
@@ -74,6 +92,23 @@ export class ToolbarItem {
         this.init(options)
     }
 
+    // handlers
+    _getActiveState() {
+        return this.editor.isActive(this.name)
+    }
+    _getAttr(attr) {
+        if (!this.markName || !attr) return null;
+        return this.editor.getAttributes(this.markName)[attr];
+    }
+    _getLabel() {
+        return this._getAttr(this.labelAttr) || this.defaultLabel;
+    }
+    _getIconColor() {
+        return this._getAttr('color') || this.iconColor;
+    }
+    _getIcon() {
+        return this.icon || null;
+    }
     _onTextMarkSelection() {}
     _onTextSelectionChange() {
         this.active = false;
