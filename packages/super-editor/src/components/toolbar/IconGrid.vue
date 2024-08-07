@@ -44,7 +44,7 @@ const props = defineProps({
     height: 20px;
     margin: 2px;
     cursor: pointer;
-    padding: .25em;
+    padding: 1px;
     text-align: center;
 }
 
