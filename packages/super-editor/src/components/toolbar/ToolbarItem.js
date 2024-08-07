@@ -58,6 +58,9 @@ export class ToolbarItem {
         this.disabled = false
         this.inlineTextInputVisible = false
         this.hasInlineTextInput = false
+        this.isMobile = true
+        this.isTablet = true
+        this.isDesktop = true
 
         // mark
         this.markName = null
