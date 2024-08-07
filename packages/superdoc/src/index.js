@@ -74,9 +74,9 @@ class Superdoc extends EventEmitter {
     if (!el) return;
     
     const app = createApp(SuperToolbar);
-    this.toolbar = app;
     app.config.globalProperties.$superdoc = instance;
     app.mount(el);
+    this.toolbar = app;
   }
 
   onToolbarCommand({ command, argument }) {
@@ -99,7 +99,13 @@ class Superdoc extends EventEmitter {
   }
 
   destroy() {
+    if (this.toolbar) {
+      console.debug('[superdoc] Unmounting toolbar');
+      this.toolbar.unmount();
+    }
+
     if (this.app) {
+      console.debug('[superdoc] Unmounting app');
       this.app.unmount();
     }
 
