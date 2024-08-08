@@ -76,7 +76,7 @@ const fullTooltip = computed(() => {
   return tooltip;
 })
 
-const inlineTextInput = ref(props.label || '');
+const inlineTextInput = ref('');
 
 const handleClick = () => {
   emit('buttonClick')
@@ -84,6 +84,7 @@ const handleClick = () => {
 
 const handleInputSubmit = () => {
   emit('textSubmit', inlineTextInput.value);
+  inlineTextInput.value = '';
 }
 </script>
 
@@ -100,6 +101,7 @@ const handleInputSubmit = () => {
         <span class="button-label" v-if="label && !hideLabel">
           <input v-if="inlineTextInputVisible"
           v-model="inlineTextInput"
+          :placeholder="label"
           @keydown.enter.prevent="handleInputSubmit"
           type="text"
           class="button-text-input"

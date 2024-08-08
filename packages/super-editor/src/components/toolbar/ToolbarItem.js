@@ -7,6 +7,14 @@ export class ToolbarItem {
             throw new Error('Invalid toolbar item type - ' + options.type);
         }
 
+        if (
+            options.type === 'button' && 
+            !options.defaultLabel &&
+            !options.icon
+        ) {
+            throw new Error('Toolbar button item needs either icon or label - ' + options.name);
+        }
+
         if (!options.name) {
             throw new Error('Invalid toolbar item name - ' + options.name);
         }
@@ -60,15 +68,16 @@ export class ToolbarItem {
             'onTextSelectionChange',
             'preCommand',
             'getAttr',
-            'getLabel',
+            'getActiveLabel',
             'getIconColor',
             'getActiveState',
             'getIcon'
         ];
+
         // set default handlers
-        handlers.forEach(handler => {
-            this[handler] = this[`_${handler}`]
-        });
+        handlers.forEach(handler => this[handler] = this[`_${handler}`]);
+
+        // set custom properties
         Object.keys(options).forEach(key => {
             if (!this.hasOwnProperty(key)) throw new Error('Invalid toolbar item property - ' + key);
             // set custom handlers
@@ -96,11 +105,11 @@ export class ToolbarItem {
         if (!this.markName || !attr) return null;
         return this.editor?.getAttributes(this.markName)[attr];
     }
-    _getLabel() {
-        return this._getAttr(this.labelAttr) || this.defaultLabel;
+    _getActiveLabel() {
+        return this._getAttr(this.labelAttr) || null;
     }
     _getIconColor() {
-        return this._getAttr('color') || this.iconColor;
+        return this._getAttr('color') || null;
     }
     _getIcon() {
         return this.icon || null;
