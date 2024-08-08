@@ -15,6 +15,7 @@ class SuperConverter {
     'w:r': 'run',
     'w:t': 'text',
     'w:br': 'pageBreak',
+    // 'w:hyperlink': 'link',
     // 'w:tab': 'tab',
 
     // Formatting only
@@ -33,7 +34,7 @@ class SuperConverter {
     { name: 'w:bCs', type: 'bold' },
     { name: 'w:i', type: 'italic' },
     { name: 'w:iCs', type: 'italic' },
-    { name: 'w:u', type: 'underline' },
+    { name: 'w:u', type: 'underline', mark: 'underline', property: 'underlineType' },
     { name: 'w:strike', type: 'strike' },
     { name: 'w:color', type: 'color', mark: 'textStyle', property: 'color' },
     { name: 'w:sz', type: 'fontSize', mark: 'textStyle', property: 'fontSize' },
@@ -42,6 +43,7 @@ class SuperConverter {
     { name: 'w:jc', type: 'textAlign', mark: 'textStyle', property: 'textAlign' },
     { name: 'w:ind', type: 'textIndent', mark: 'textStyle', property: 'textIndent' },
     { name: 'w:spacing', type: 'lineHeight', mark: 'textStyle', property: 'lineHeight' },
+    { name: 'link', type: 'link', mark: 'link', property: 'href' },
   ]
 
   static propertyTypes = Object.freeze({

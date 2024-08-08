@@ -53,6 +53,7 @@ const initializeApp = async () => {
     }
   }
   superdoc = new Superdoc(config);
+};
 
 onMounted(() => {
   initializeApp();

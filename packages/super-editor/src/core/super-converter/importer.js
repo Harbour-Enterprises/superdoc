@@ -58,8 +58,6 @@ export class DocxImporter {
           continue;
         case 'w:p':
           schemaNode = this.#handleParagraphNode(node, elements, index);
-          const attrs = schemaNode.attrs.paragraphProperties?.elements
-          console.debug('PATTRS:', attrs)
           break;
         case 'w:t':
           schemaNode = this.#handleTextNode(node);
@@ -67,6 +65,9 @@ export class DocxImporter {
         case 'w:tab':
           schemaNode = this.#handleStandardNode(node);
           schemaNode.content = [{ type: 'text', text: ' ' }];
+          break;
+        case 'w:hyperlink':
+          schemaNode = this.#handleHyperlinkNode(node);
           break;
         default:
           schemaNode = this.#handleStandardNode(node);
@@ -79,6 +80,33 @@ export class DocxImporter {
       }
     }
     return processedElements;
+  }
+  
+  #handleHyperlinkNode(node) {
+    const rels = this.converter.convertedXml['word/_rels/document.xml.rels'];
+    const relationships = rels.elements.find((el) => el.name === 'Relationships');
+    const { elements } = relationships;
+
+    const { attributes } = node;
+    const rId = attributes['r:id'];
+
+    // TODO: Check if we need this atr
+    const history = attributes['w:history'];
+
+    const rel = elements.find((el) => el.attributes['Id'] === rId);
+    const { attributes: relAttributes } = rel;
+    const href = relAttributes['Target'];
+
+    // Add marks to the run node and process it
+    const runNode = node.elements.find((el) => el.name === 'w:r');
+    const linkMark = { type: 'link', attrs: { href } };
+
+    if (!runNode.marks) runNode.marks = [];
+    runNode.marks.push(linkMark);
+
+    const updatedNode = this.#convertToSchema([runNode])[0];
+    console.debug('\n\n UPDATED NODE:', updatedNode, '\n\n')
+    return updatedNode
   }
 
   #handleStandardNode(node) {
@@ -134,7 +162,13 @@ export class DocxImporter {
   #handleParagraphNode(node, elements, index) {
     let schemaNode;
 
-    // Check if this paragraph node is a lsit
+    // We need to pre-process paragraph nodes to combine various possible elements we will find ie: lists, links.
+    const processedElements = this.#preProcessNodesForFldChar(node.elements);
+    console.debug('\n\n PROCESSED ELEMENTS:', processedElements, '\n\n')
+
+    node.elements = processedElements;
+
+    // Check if this paragraph node is a list
     if (this.#testForList(node)) {          
       // Get all siblings that are list items and haven't been processed yet.
       const siblings = [...elements.slice(index)];
@@ -152,8 +186,6 @@ export class DocxImporter {
         }
       }
 
-      console.debug('LIST WITH ITEMS:', listItems.length, elements.slice(index), '\n\n')
-
       // TODO - Check that this change is OK
       return this.#handleListNodes(listItems, 0, node);
     }      
@@ -169,6 +201,68 @@ export class DocxImporter {
       schemaNode.attrs['paragraphSpacing'] = { lineSpaceAfter, lineSpaceBefore };
     }
     return schemaNode;
+  }
+
+  /**
+   * We need to pre-process nodes in a paragraph to combine nodes together where necessary ie: links
+   * TODO: Likely will find more w:fldChar to deal with.
+   * 
+   * @param {*} nodes 
+   * @returns 
+   */
+  #preProcessNodesForFldChar(nodes) {
+    const processedNodes = [];
+    const nodesToCombine = [];
+    let isCombiningNodes = false;
+    nodes?.forEach((n) => {
+      const fldChar = n.elements?.find((el) => el.name === 'w:fldChar');
+      if (fldChar) {
+        const fldType = fldChar.attributes['w:fldCharType'];
+        if (fldType === 'begin') {
+          isCombiningNodes = true;
+          nodesToCombine.push(n);
+        } else if (fldType === 'end') {
+          nodesToCombine.push(n);
+          isCombiningNodes = false;
+        }
+      }
+
+      if (isCombiningNodes) {
+        nodesToCombine.push(n);
+      } else if (!isCombiningNodes && nodesToCombine.length) {
+
+        // Need to extract all nodes between 'separate' and 'end' fldChar nodes
+        const textStart = nodesToCombine.findIndex((n) => n.elements.some((el) => el.name === 'w:fldChar' && el.attributes['w:fldCharType'] === 'separate'));
+        const textEnd = nodesToCombine.findIndex((n) => n.elements.some((el) => el.name === 'w:fldChar' && el.attributes['w:fldCharType'] === 'end'));
+        const textNodes = nodesToCombine.slice(textStart + 1, textEnd);
+        const instrText = nodesToCombine.find((n) => n.elements.some((el) => el.name === 'w:instrText'))?.elements[0]?.elements[0].text;
+        const urlMatch = instrText.match(/HYPERLINK\s+"([^"]+)"/);
+        const url = urlMatch[1];
+
+        const textMarks = [];
+        textNodes.forEach((n) => {
+          const rPr = n.elements.find((el) => el.name === 'w:rPr');
+          if (!rPr) return;
+
+          const { elements } = rPr;
+          elements.forEach((el) => {
+            textMarks.push(el);
+          });
+        });
+
+        // Create a rPr and replace all nodes with the updated node.
+        const linkMark = { name: 'link', attributes: { href: url} };
+        const rPr = { name: 'w:rPr', type: 'element', elements: [linkMark, ...textMarks] }
+        processedNodes.push({
+          name: 'w:r',
+          type: 'element',
+          elements: [rPr, ...textNodes]
+        });
+      } else {
+        processedNodes.push(n);
+      }
+    })
+    return processedNodes;
   }
 
   #hasTextNode(elements) {
@@ -414,6 +508,8 @@ export class DocxImporter {
       fontFamily: () => attributes['w:ascii'],
       lineHeight: () => this.#getLineHeightValue(attributes),
       textAlign: () => attributes['w:val'],
+      link: () => attributes['href'],
+      underline: () => attributes['w:val'],
     }
 
     if (!(markType in markValueMapper)) {

@@ -33,9 +33,10 @@ class DocxZipper {
     const extractedFiles = await this.unzip(file);
     const files = Object.entries(extractedFiles.files);
 
+    const validTypes = ['xml', 'rels'];
     for (const file of files) {
       const [_, zipEntry] = file;
-      if (zipEntry.name.endsWith('.xml')) {
+      if (validTypes.some((validType) => zipEntry.name.endsWith(validType))) {
         const content = await zipEntry.async("string")
         this.files.push({
           name: zipEntry.name,

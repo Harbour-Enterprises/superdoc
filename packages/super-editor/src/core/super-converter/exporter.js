@@ -34,18 +34,30 @@ export class DocxExporter {
   #outputProcessNodes(nodes, parent = null) {
     const resultingElements = [];
     let index = 0;
+
     for (let node of nodes) {
       if (node.seen) continue;
       let skip = false;
-      const nodeToProcess = { ...node };
 
       // Special output handling
+      let resultingNode;
       switch (node.type) {
         case 'doc':
-          node = this.#outputHandleDocumentNode(node);
+          resultingNode = this.#outputHandleDocumentNode(node);
           break;
         case 'text':
-          node = this.#outputHandleTextNode(nodes.slice(index));
+          if (node.marks?.some((m) => m.type === 'link')) {
+            index++;
+            // const linkNodes = this.#outputHandleLinkNode(node);
+            // resultingElements.push(...linkNodes);
+
+            const newNode = this.#outputHandleLinkNode(node);
+            console.debug('NEW NODE', newNode)
+            resultingElements.push(newNode);
+            continue;
+          } else if (!node.seen) {
+            resultingNode = this.#outputHandleTextNode(nodes.slice(index));
+          }
           skip = true;
           break;
         case 'orderedList':
@@ -62,8 +74,6 @@ export class DocxExporter {
           // console.debug("\n\n OTHER NODE", node.type, node, '\n\n')
           break;
       }
-
-      let resultingNode = node;
 
       let name = this.getTagName(node.type);
       if (!skip) {
@@ -130,10 +140,10 @@ export class DocxExporter {
         markElement.type = 'element';
         break;
       case 'underline':
-        delete markElement.attributes
         markElement.type = 'element';
+        markElement.attributes['w:val'] = mark.attrs.underlineType;
         break;
-
+      
       // Cases for text styles
       case 'fontSize':
         value = mark.attrs.fontSize;
@@ -160,6 +170,8 @@ export class DocxExporter {
         break;
       case 'lineHeight':
         markElement.attributes['w:line'] = inchesToTwips(mark.attrs.lineHeight);
+        break;
+      case 'link':
         break;
     }
 
@@ -275,6 +287,92 @@ export class DocxExporter {
     return node;
   }
 
+  // Currently for hyperlinks but there will be other uses
+  #generateFldCharNode(type) {
+    return {
+      name: 'w:r',
+      type: 'element',
+      elements: [{ name: 'w:fldChar', attributes: { 'w:fldCharType': type } }]
+    }
+  }
+
+  // Used for generating hyperlinks
+  #generateInstrText(data) {
+    return {
+      name: 'w:r',
+      type: 'element',
+      elements: [{ name: 'w:instrText', elements: [{ type: 'text', text: data }], }]
+    }
+  }
+
+  // #outputHandleLinkNode(node) {
+
+  //   let marks = [...node.marks];
+  //   const linkMarkIndex = marks.findIndex((m) => m.type === 'link');
+  //   const linkMark = marks[linkMarkIndex];
+  //   marks.splice(linkMarkIndex, 1);
+
+  //   const processedMarks = this.#outputHandleMarks(marks);
+  //   node.marks = node.marks.filter((m) => m.type !== 'link');
+
+  //   const name = this.getTagName('run');
+  //   const begin = this.#generateFldCharNode('begin');
+  //   const instrText = this.#generateInstrText(`HYPERLINK "${linkMark.attrs.href}" \\h`);
+  //   const separate = this.#generateFldCharNode('separate');
+
+  //   // Generate the text node and append marks as run properties
+  //   const text = this.#getOutputNode(name, [this.#getOutputNode('w:t', [node], {})], {})
+    
+  //   const rPr = this.#getOutputNode('w:rPr', processedMarks, {});
+  //   if (rPr.elements.length) text.elements.unshift(rPr);
+
+  //   const end = this.#generateFldCharNode('end');
+  //   const nodes = [begin, instrText, separate, text, end];
+
+  //   return nodes.map((n) => ({ ...n, seen: true }));
+  // }
+
+  #outputHandleLinkNode(node) {
+    node.marks = node.marks.filter((m) => m.type !== 'link');
+    const outputNode = this.#outputProcessNodes([node]);
+    const newNode = {
+      name: 'w:hyperlink',
+      type: 'element',
+      attributes: {
+        'r:id': 'rId5',
+      },
+      elements: outputNode
+    }
+    return newNode;
+  }
+
+  #outputHandleMarks(marks) {
+    const elements = [];
+    marks.forEach((mark) => {
+      console.debug('-- OUTPUT MARK', mark)
+
+      if (mark.type === 'textStyle') {
+        Object.keys(mark.attrs).forEach((key) => {
+          const value = mark.attrs[key];
+          if (!value) return;
+          const unwrappedMark = {
+            type: key,
+            attrs: mark.attrs,
+          }
+          const markElement = this.#mapOutputMarkToElement(unwrappedMark);
+          elements.push(markElement);
+        });
+      } 
+
+      // All other marks
+      else {
+        const markElement = this.#mapOutputMarkToElement(mark);
+        elements.push(markElement);
+      }
+    });
+    return elements;
+  }
+
   #outputHandleTextNode(nodes) {
     const groupedTextNodes = [];
     let index = 0;
@@ -282,29 +380,12 @@ export class DocxExporter {
     const attrs = groupedNode?.attrs;
     const marks = groupedNode?.marks;
 
-
     let runProperties = null;
     if (marks) {
       const elements = [];
-      marks.forEach((mark) => {
-        console.debug('-- OUTPUT MARK', mark)
 
-        if (mark.type === 'textStyle') {
-          Object.keys(mark.attrs).forEach((key) => {
-            const value = mark.attrs[key];
-            if (!value) return;
-            const unwrappedMark = {
-              type: key,
-              attrs: mark.attrs,
-            }
-            const markElement = this.#mapOutputMarkToElement(unwrappedMark);
-            elements.push(markElement);
-          });
-        } else {
-          const markElement = this.#mapOutputMarkToElement(mark);
-          elements.push(markElement);
-        }
-      });
+      // Some marks have special handling - we process them here
+      elements.push(...this.#outputHandleMarks(marks));
 
       runProperties = {
         name: 'w:rPr',
@@ -344,22 +425,33 @@ export class DocxExporter {
 
   schemaToXml(data) {
     console.debug('[SuperConverter] schemaToXml:', data);
-    const result = this._generate_xml_as_list(data);
+    const result = this.#generate_xml_as_list(data);
+    console.debug('[SuperConverter] schemaToXml result:', result.join(''));
     return result.join('');
   }
 
-  _generate_xml_as_list(data) {
+  #generate_xml_as_list(data) {
     const json = JSON.parse(JSON.stringify(data));
     const firstElement = json.elements[0];
     const declaration = this.converter.declaration.attributes;    
     const xmlTag = `<?xml${Object.entries(declaration).map(([key, value]) => ` ${key}="${value}"`).join('')}?>`;
-    const result = this._generateXml(firstElement);
+    const result = this.#generateXml(firstElement);
     const final = [xmlTag, ...result];
     return final;
   }
 
-  _generateXml(node) {
+  #replaceSpecialCharacters(text) {
+    return text
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;');
+  }
+
+  #generateXml(node) {
     const { name, elements, attributes } = node;
+    if (!name)  {
+      console.debug('NO NAME', node);
+    }
     let tag = `<${name}`;
 
     for (let attr in attributes) {
@@ -371,19 +463,24 @@ export class DocxExporter {
     else tag += '>';
     let tags = [tag];
 
-    if (name === 'w:t') {
+    if (name === 'w:instrText') {
       tags.push(elements[0].text);
+    } else if (name === 'w:t') {
+      const text = this.#replaceSpecialCharacters(elements[0].text);
+      tags.push(text);
     } else {
-
-      // Recursively add the children
       if (elements) {
         for (let child of elements) {
-          tags.push(...this._generateXml(child));
+          tags.push(...this.#generateXml(child));
         }
       }
     }
 
     if (!selfClosing) tags.push(`</${name}>`);
+
+    if (name === 'w:instrText') {
+      console.debug('INSTR TEXT', tags);
+    }
     return tags;
   }
 };
