@@ -66,7 +66,6 @@ onMounted(() => {
 
 <style scoped>
 .super-editor {
-  overflow: auto;
   border: 1px solid #999;
 }
 </style>

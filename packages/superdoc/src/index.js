@@ -2,11 +2,13 @@ import './style.css';
 import EventEmitter from 'eventemitter3'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+
 import { useSuperdocStore } from './stores/superdoc-store';
 import { DOCX, PDF, HTML } from '@common/document-types';
 import clickOutside from '@/helpers/v-click-outside';
 import SuperToolbar from '@/components/SuperToolbar/SuperToolbar.vue';
 import App from './Superdoc.vue'
+import library from '@/helpers/import-icons';
 
 import BlankDOCX from '@common/data/blank.docx?url';
 
@@ -141,5 +143,10 @@ class Superdoc extends EventEmitter {
 
 export { 
   Superdoc,
-  BlankDOCX
+  BlankDOCX,
+
+  // Allowed types
+  DOCX,
+  PDF,
+  HTML,
 }

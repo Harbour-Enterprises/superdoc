@@ -869,8 +869,6 @@ defineExpose({
   display: flex;
   width: 100%;
   height: 39px;
-  border-top: 1px solid #e8e8e863;
-  border-bottom: 1px solid #e8e8e8;
   justify-content: space-around;
 }
 

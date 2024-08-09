@@ -347,7 +347,7 @@ export class Editor extends EventEmitter {
     this.element.style.width = pageSize.width + 'in';
     this.element.style.minWidth =  pageSize.width + 'in';
     this.element.style.maxWidth = pageSize.width + 'in';
-    this.element.style.height = pageSize.height + 'in';
+    this.element.style.minHeight = pageSize.height + 'in';
     this.element.style.paddingTop = pageMargins.top + 'in';
     this.element.style.paddingRight = pageMargins.right + 'in';
     this.element.style.paddingBottom = pageMargins.bottom + 'in';

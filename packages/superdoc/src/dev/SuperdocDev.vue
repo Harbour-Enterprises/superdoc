@@ -28,32 +28,18 @@ const handleNewFile = async (file) => {
 }
 
 const initializeApp = async () => {
-  console.debug('[superdoc-dev] Loading file...', currentFile.value);
   const config = {
     selector: '#superdoc',
     toolbar: 'toolbar',
     user: {
-      name: 'Nick Bernal',
-      email: 'nick@harbourshare.com',
+      name: 'Super Document Jr.',
+      email: 'user@harbourshare.com',
     },
     documents: [
-      // {
-      //   id: '456',
-      //   type: 'pdf',
-      //   data: pdfUrl,
-      //   fields,
-      //   annotations,
-      //   conversations,
-      // },
       {
         data: currentFile.value,
         id: '123',
       },
-      // {
-      //   id: '789',
-      //   type: 'pdf',
-      //   data: fw4,
-      // }
     ],
     modules: {
       // 'comments': {
@@ -70,45 +56,54 @@ onMounted(async () => {
   handleNewFile(await getFileObject(BlankDOCX, 'blank_document.docx', DOCX));
 });
 
-// const exportDocx = async () => {
-//   const result = await superdoc.activeEditor.exportDocx();
-//   const blob = new Blob([result], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-//   const url = URL.createObjectURL(blob);
-//   const a = document.createElement('a');
-//   a.href = url;
-//   a.download = 'exported.docx';
-//   a.click();
-// }
 </script>
 
 <template>
   <div class="dev-app">
     <div class="header">
       <div class="left-side">
-        <div class="title">
-          <h2>🦋 SuperDoc Dev</h2>
-        </div>
+        <div class="title"><h2>🦋 SuperDoc Dev</h2></div>
         <div>
-          Upload docx
+          Upload docx, pdf or (soon) html
           <BasicUpload @file-change="handleNewFile" />
         </div>
       </div>
 
-      <!-- <div class="right-side">
-        <button @click="exportDocx">Export</button>
-      </div> -->
     </div>
     <div class="content" v-if="currentFile">
-
-    <div class="content-inner">
-      <div id="toolbar" style="min-width: 800px;"></div>
-
-      <div id="superdoc"></div>
-    </div>
-
+      <div class="content-inner">
+        <div id="toolbar" class="sd-toolbar"></div>
+        <div id="superdoc"></div>
+      </div>
     </div>
   </div>
 </template>
+
+<style>
+.super-editor {
+  border: none !important;
+}
+.sd-toolbar {
+  min-width: 800px;
+}
+.superdoc .layers {
+  cursor: text;
+  background-color: white;
+  border-radius: 16px;
+  border: 1px solid #d3d3d3;
+  text-align: left;
+  box-shadow:0 0 5px hsla( 0,0%,0%,.05);
+  transition: all 0.18s ease-out;
+}
+.superdoc .layers:hover {
+  border: 1px solid #0160cc86;
+  box-shadow:0 0 5px hsla( 0,0%,0%,.1);
+}
+.superdoc .layers:focus-within {
+  border: 1px solid #015fcc;
+  box-shadow:0 0 5px hsla( 0,0%,0%,.3 );
+}
+</style>
 
 <style scoped>
 .dev-app {
@@ -153,8 +148,5 @@ onMounted(async () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-}
-.toolbar {
-  display: flex;
 }
 </style>

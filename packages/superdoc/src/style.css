@@ -87,6 +87,9 @@ body {
 .comment-box {
   width: 300px;
 }
+.superdoc {
+  display: flex;
+}
 @media (max-width: 768px) {
 
 }
