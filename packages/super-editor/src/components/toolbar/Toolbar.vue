@@ -354,6 +354,7 @@ const alignment = makeToolbarItem({
     getIcon(self) {
       let alignment = self.editor?.getAttributes('paragraph').textAlign;
       if (!alignment) alignment = 'left';
+      if (alignment === 'both') alignment = 'justify';
       return `fa-align-${alignment}`;
     }
   });

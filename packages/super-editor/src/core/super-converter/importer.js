@@ -125,8 +125,27 @@ export class DocxImporter {
     }
 
     const updatedNode = this.#convertToSchema([runNode])[0];
-    console.debug('\n\n UPDATED NODE:', updatedNode, '\n\n')
     return updatedNode
+  }
+
+  #createImportMarks(marks) {
+    const textStyleMarksToCombine = marks.filter((mark) => mark.type === 'textStyle');
+    const remainingMarks = marks.filter((mark) => mark.type !== 'textStyle');
+
+    // Combine text style marks
+    const combinedTextAttrs = {};
+    if (textStyleMarksToCombine.length) {
+      textStyleMarksToCombine.forEach((mark) => {
+        const { attrs } = mark;
+
+        Object.keys(attrs).forEach((attr) => {  
+          combinedTextAttrs[attr] = attrs[attr];
+        });
+      });
+    };
+    
+    const result = [...remainingMarks, { type: 'textStyle', attrs: combinedTextAttrs }];
+    return result;
   }
 
   #handleStandardNode(node) {
@@ -498,7 +517,7 @@ export class DocxImporter {
         marks.push(newMark);
       })
     });
-    return marks;
+    return this.#createImportMarks(marks);
   }
 
   #getIndentValue(attributes) {
