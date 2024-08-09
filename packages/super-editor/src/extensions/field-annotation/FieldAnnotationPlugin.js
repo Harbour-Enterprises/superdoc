@@ -1,0 +1,118 @@
+import { Plugin, PluginKey } from 'prosemirror-state';
+
+export const FieldAnnotationPlugin = (options = {}) => {
+  let { editor, annotationClass } = options;
+
+  return new Plugin({
+    key: new PluginKey('fieldAnnotation'),
+
+    props: {
+      handleDrop(view, event, slice, moved) {
+        if (moved) return false;
+
+        let fieldAnnotation = event?.dataTransfer.getData('fieldAnnotation');
+
+        if (fieldAnnotation) {
+          if (options.handleDropOutside) {
+            handleDropOutside({ 
+              fieldAnnotation,
+              editor, 
+              view, 
+              event, 
+            });
+          } else {
+            let annotationAttrs;
+
+            try {
+              let fieldAnnotationObj = JSON.parse(fieldAnnotation);
+              annotationAttrs = fieldAnnotationObj.attributes;
+            } catch {
+              return false;
+            }
+
+            const coordinates = view.posAtCoords({ 
+              left: event.clientX, 
+              top: event.clientY 
+            });
+
+            if (coordinates) {
+              editor.commands.addFieldAnnotation(coordinates.pos, { 
+                ...annotationAttrs
+              });
+            }
+          }
+          
+          return true;
+        }
+
+        return false;
+      },
+
+      handleClickOn(view, pos, node, nodePos, event) {
+        let isFieldAnnotation = node.type.name === 'fieldAnnotation';
+
+        if (isFieldAnnotation) {
+          editor.emit('fieldAnnotationClicked', {
+            editor,
+            node,
+            nodePos,
+            event,
+            target: event.target,
+          });
+
+          return true;
+        }
+
+        return false;
+      },
+
+      handleDOMEvents: {
+        dragstart: (view, event) => {
+          if (!event.target) return false;
+
+          let { target } = event;
+          let isAnnotationField = target.classList.contains(annotationClass);
+
+          if (isAnnotationField) {
+            event.dataTransfer?.setDragImage(target, 0, 0);
+          }
+
+          return false;
+        },
+
+        // drop: (view, event) => {
+        //   console.log({ view, event });
+        // },
+      },
+    },
+  });
+};
+
+function handleDropOutside({ 
+  fieldAnnotation,
+  editor, 
+  view, 
+  event, 
+}) {
+  let sourceField;
+  try {
+    let fieldAnnotationObj = JSON.parse(fieldAnnotation);
+    sourceField = fieldAnnotationObj.sourceField;
+  } catch {
+    return;
+  }
+
+  let coordinates = view.posAtCoords({ 
+    left: event.clientX, 
+    top: event.clientY 
+  });
+
+  if (coordinates) {
+    editor.emit('fieldAnnotationDropped', {
+      sourceField,
+      editor,
+      coordinates,
+      pos: coordinates.pos,
+    });
+  }
+}

@@ -18,3 +18,5 @@ export * from './getSchemaTypeNameByName.js';
 export * from './isActive.js';
 export * from './isNodeActive.js';
 export * from './getMarksFromSelection.js';
+export * from './findChildren.js';
+export * from './posToDOMRect.js';

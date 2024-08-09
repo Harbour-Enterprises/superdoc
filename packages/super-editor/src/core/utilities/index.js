@@ -6,3 +6,4 @@ export * from './isIOS.js';
 export * from './objectIncludes.js';
 export * from './deleteProps.js';
 export * from './parseSizeUnit.js';
+export * from './minMax.js';

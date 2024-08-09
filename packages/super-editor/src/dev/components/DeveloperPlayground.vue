@@ -7,6 +7,7 @@ import EditorInputs from './EditorInputs/EditorInputs.vue';
 import { DOCX } from '@common/document-types';
 import { INPUTS } from '../config/agreement-editor.js';
 import { SuperToolbar } from '@packages/super-toolbar/super-toolbar';
+import { fieldAnnotationHelpers } from '@extensions/index.js';
 
 import '@common/icons/icons.css';
 
@@ -38,6 +39,8 @@ const onCreate = ({ editor }) => {
   window.editor = editor;
 
   editor.setToolbar(initToolbar());
+
+  attachAnnotationEventHandlers();
 }
 
 const onCommentClicked = ({ conversation }) => {
@@ -59,8 +62,7 @@ const exportDocx = async () => {
   a.click();
 }
 
-/* Inputs pane */
-const inputTiles = INPUTS;
+/* Inputs pane and field annotations */
 const draggedInputId = ref(null)
 const activeSigner = ref(null);
 const signersListInfo = ref([
@@ -87,21 +89,84 @@ const signersListInfo = ref([
     sortorder: 1,
     signerid: "signerid-1723657671736-msk8e5qpd0c",
     iscreator: false
-  }
+  },
 ]);
 
 const updateDraggedInputId = (inputId) => {
   draggedInputId.value = inputId;
-  
-  let inputItem = inputTiles.find((i) => i.id === inputId);
-  let signer = signersListInfo.value.find((i) => i.signerindex === activeSigner.value);
-  console.log({ inputItem, signer });
 };
 
 const updateActiveSigner = (signerIdx) => {
   activeSigner.value = signerIdx;
 };
-/* Inputs pane */
+
+const attachAnnotationEventHandlers = () => {
+  // Handle field drop outside editor.
+  activeEditor?.on('fieldAnnotationDropped', ({ 
+    sourceField,
+    editor, 
+    coordinates, 
+    pos 
+  }) => {
+    console.log('fieldAnnotationDropped', { sourceField });
+
+    let signer = signersListInfo.value.find((signer) => signer.signerindex === activeSigner.value);
+
+    editor.commands.addFieldAnnotation(pos, {
+      displayLabel: 'Enter your info',
+      fieldId: `agreementinput-${Date.now()}-${Math.floor(Math.random() * 1000000000000)}`,
+      fieldType: 'TEXTINPUT',
+      fieldColor: signer?.signercolor,
+    });
+
+    // editor.commands.addFieldAnnotation(pos, {
+    //   displayLabel: 'Upload your image',
+    //   fieldId: `agreementinput-${Date.now()}-${Math.floor(Math.random() * 1000000000000)}`,
+    //   fieldType: 'IMAGEINPUT',
+    //   fieldColor: signer?.signercolor,
+    //   imageSrc: 'https://placehold.co/200x200?text=Image',
+    //   type: 'image',
+    // });
+
+    // editor.commands.addFieldAnnotation(pos, {
+    //   displayLabel: 'Signature',
+    //   fieldId: `agreementinput-${Date.now()}-${Math.floor(Math.random() * 1000000000000)}`,
+    //   fieldType: 'SIGNATUREINPUT',
+    //   fieldColor: signer?.signercolor,
+    //   imageSrc: 'https://placehold.co/85x25?text=Signature',
+    //   type: 'signature',
+    // });
+  });
+
+  activeEditor?.on('fieldAnnotationClicked', (params) => {
+    console.log('fieldAnnotationClicked', { params });
+  });
+
+  // Update annotations by fieldId.
+  // setTimeout(() => {
+  //   activeEditor?.commands.updateFieldAnnotations('agreementinput-1723720330834-228771403177', {
+  //     displayLabel: 'Updated!',
+  //     fieldColor: '#6943d0',
+  //   });
+  // }, 3000);
+
+  // Delete annotation by fieldId.
+  // setTimeout(() => {
+  //   activeEditor?.commands.deleteFieldAnnotations('agreementinput-1723720330834-228771403177');
+  // }, 3000);
+
+  // Get all field annotations with dom rect (to get coordinates).
+  // setTimeout(() => {
+  //   let fieldAnnotationsWithRect = fieldAnnotationHelpers.getAllFieldAnnotationsWithRect(
+  //     'fieldAnnotation', 
+  //     activeEditor.view,
+  //     activeEditor.state
+  //   );
+
+  //   console.log({ fieldAnnotationsWithRect });
+  // }, 3000);
+};
+/* Inputs pane and field annotations */
 
 const initToolbar = () => {
   return new SuperToolbar({ element: 'toolbar', editor: activeEditor });

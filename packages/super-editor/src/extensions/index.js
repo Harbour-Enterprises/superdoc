@@ -7,6 +7,7 @@ import { TextAlign } from './text-align/index.js';
 import { TextIndent } from './text-indent/index.js';
 import { LineHeight } from './line-height/index.js';
 import { FormatCommands } from './format-commands/index.js';
+import { DropCursor } from './dropcursor/index.js';
 
 // Nodes extensions
 import { Document } from './document/index.js';
@@ -24,6 +25,7 @@ import { Table } from './table/index.js';
 import { TableHeader } from './table-header/index.js';
 import { TableRow } from './table-row/index.js';
 import { TableCell } from './table-cell/index.js';
+import { FieldAnnotation, fieldAnnotationHelpers } from './field-annotation/index.js';
 
 // Marks extensions
 import { TextStyle } from './text-style/text-style.js';
@@ -88,6 +90,8 @@ const getStarterExtensions = () => [
   TableRow,
   TableCell,
   TableHeader,
+  FieldAnnotation,
+  DropCursor,
 ];
 
 export {
@@ -124,6 +128,9 @@ export {
   TableCell,
   TableHeader,
   Placeholder,
+  DropCursor,
+  FieldAnnotation,
+  fieldAnnotationHelpers,
   getStarterExtensions,
   getRichTextExtensions,
 };
