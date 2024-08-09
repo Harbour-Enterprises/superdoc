@@ -33,9 +33,10 @@ class DocxZipper {
     const extractedFiles = await this.unzip(file);
     const files = Object.entries(extractedFiles.files);
 
+    const validTypes = ['xml', 'rels'];
     for (const file of files) {
       const [_, zipEntry] = file;
-      if (zipEntry.name.endsWith('.xml')) {
+      if (validTypes.some((validType) => zipEntry.name.endsWith(validType))) {
         const content = await zipEntry.async("string")
         this.files.push({
           name: zipEntry.name,
@@ -51,7 +52,7 @@ class DocxZipper {
     return zip;
   }
 
-  async updateZip(originalDocx, newDocumentXmlContent) {
+  async updateZip(originalDocx, updatedDocs) {
     const updatedZip = new JSZip();
     const unzippedOriginalDocx = await this.unzip(originalDocx);
 
@@ -68,8 +69,13 @@ class DocxZipper {
     // Wait for all promises to resolve
     await Promise.all(filePromises);
   
+    Object.keys(updatedDocs).forEach((key) => {
+      unzippedOriginalDocx.file(key, updatedDocs[key]);
+    });
+  
     // Replace the document file in the new zip
-    unzippedOriginalDocx.file("word/document.xml", newDocumentXmlContent);
+    // unzippedOriginalDocx.file("word/document.xml", newDocumentXmlContent);
+    // unzippedOriginalDocx.file("word/_rels/document.xml.rels", rels);
 
     // Zip it up again and return
     return await unzippedOriginalDocx.generateAsync({ type: "blob" })

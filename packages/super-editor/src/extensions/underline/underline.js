@@ -21,6 +21,14 @@ export const Underline = Mark.create({
     return ['u', Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes), 0];
   },
 
+  addAttributes() {
+    return {
+      underlineType: {
+        default: 'single',
+      },
+    };
+  },
+
   addCommands() {
     return {
       setUnderline: () => ({ commands }) => {

@@ -19,9 +19,7 @@ export const CommentRangeStart = Node.create({
 
   addAttributes() {
     return {
-      attributes: {
-        rendered: false,
-      },
+      'w:id': { default: null },
     };
   },
 });
@@ -45,9 +43,7 @@ export const CommentRangeEnd = Node.create({
 
   addAttributes() {
     return {
-      attributes: {
-        rendered: false,
-      },
+      'w:id': { default: null },
     };
   },
 });
