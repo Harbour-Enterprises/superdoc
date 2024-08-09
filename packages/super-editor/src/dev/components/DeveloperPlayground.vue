@@ -50,7 +50,7 @@ const commandsMap = {
 const linkInputItem = ref(null);
 
 const handleSelectionChange = ({mark, coords}) => {
-  if (mark) {
+  if (mark?.type.name === 'link') {
     linkInputItem.value = {
       url: mark.attrs.href,
     };
@@ -62,8 +62,31 @@ const handleSelectionChange = ({mark, coords}) => {
   inlineMenuMouseY.value = coords.top + 20;
 }
 
-const handleToolbarCommand = ({ command, argument }) => {
-  console.debug('[SuperEditor dev] Toolbar command', command, argument, activeEditor?.commands);
+const closeOpenDropdowns = (currentItem) => {
+  const parentToolbarItems = toolbarItems.value.filter(item => item.childItem);
+  parentToolbarItems.forEach((item) => {
+    if (currentItem) {
+      if (item.name === currentItem.name) return;
+      if (item.childItem && item.childItem.name === currentItem.name) return;
+    }
+    item.active = false;
+    item.childItem.active = false;
+    item.inlineTextInputVisible = false;
+  });
+}
+
+const closeInlineMenus = () => {
+  linkInputItem.value = null;
+}
+
+const handleToolbarCommand = ({ item, argument }) => {
+  if (!item) return;
+  closeOpenDropdowns(item);
+  closeInlineMenus();
+
+  const { command } = item;
+
+  item.preCommand(argument);
 
   const commands = activeEditor?.commands;
     if (!commands) {
@@ -87,6 +110,9 @@ const handleToolbarCommand = ({ command, argument }) => {
 };
 
 const onSelectionUpdate = ({ editor, transaction }) => {
+  closeOpenDropdowns();
+  closeInlineMenus();
+
   const { from, to } = transaction.selection;
   activeEditor = editor;
   toolbarItems.value.forEach((item) => {
@@ -99,7 +125,6 @@ const onSelectionUpdate = ({ editor, transaction }) => {
   const marks = selection.$head.marks();
   const nodes = selection.$head.node();
   const coords = editor.view.coordsAtPos(selection.$head.pos);
-  console.log("COORDS", coords);
 
   toolbar.value.onTextSelectionChange(marks, selectionText, coords);
 }
@@ -120,12 +145,6 @@ const onCreate = ({ editor }) => {
   Object.assign(editorStyles, editor.converter.getDocumentDefaultStyles());
 }
 
-const handleLinkInputSubmit = (anchor) => {
-  const {href} = anchor;
-  // TODO - update existing mark
-  handleToolbarCommand({command: 'toggleLink', argument: {href}});
-}
-
 const exportDocx = async () => {
   const result = await activeEditor?.exportDocx();
   const blob = new Blob([result], { type: DOC_TYPE });
@@ -139,7 +158,7 @@ const exportDocx = async () => {
 // toolbar
 
 const makeToolbarItem = (item) => {
-  return new ToolbarItem({...item, editor: activeEditor});
+  return new ToolbarItem({...item});
 }
 
 // bold
@@ -242,7 +261,7 @@ const fontSize = makeToolbarItem({
         });
     },
     getActiveLabel(self) {
-      let label = self._getActiveLabel() || self.defaultLabel;
+      let label = self._getActiveLabel(activeEditor) || self.defaultLabel;
       let sanitizedValue = sanitizeNumber(label, 12);
       if (sanitizedValue < 8) sanitizedValue = 8;
       if (sanitizedValue > 96) sanitizedValue = 96;
@@ -419,6 +438,12 @@ const link = makeToolbarItem({
     type: 'button',
     name: 'link',
     markName: 'link',
+    command: 'toggleLink',
+    preCommand(self) {
+      const marks = getMarksFromSelection(activeEditor.view.state);
+      const mark = marks.find(mark => mark.type.name === 'link') || null;
+      if (mark) self.childItem.active = false;
+    },
     icon: 'fa-link',
     active: false,
     tooltip: "Link"
@@ -428,14 +453,6 @@ const linkInput = makeToolbarItem({
     type: 'options',
     name: 'linkInput',
     command: 'toggleLink',
-    preCommand(self, argument) {
-      if (!argument) return;
-      const {href} = argument;
-      const marks = getMarksFromSelection(activeEditor.view.state);
-      const mark = marks.find(mark => mark.type.name === 'link') || null;
-      console.log("Link mark", mark);
-      if (mark) mark.attrs.href = href;
-    },
     active: false,
 });
 link.childItem = linkInput;
@@ -462,7 +479,7 @@ const alignment = makeToolbarItem({
     markName: 'textAlign',
     labelAttr: 'textAlign',
     getIcon(self) {
-      let alignment = self.editor?.getAttributes('paragraph').textAlign;
+      let alignment = self.getAttr(activeEditor, 'textAlign');
       if (!alignment) alignment = 'left';
       return `fa-align-${alignment}`;
     }
@@ -472,6 +489,14 @@ const alignment = makeToolbarItem({
     type: 'options',
     name: 'alignmentOptions',
     command: 'setTextAlign',
+    options: [
+      [
+        {defaultLabel: 'Left', icon: 'fa-align-left', value: 'left'},
+        {defaultLabel: 'Center', icon: 'fa-align-center', value: 'center'},
+        {defaultLabel: 'Right', icon: 'fa-align-right', value: 'right'},
+        {defaultLabel: 'Justify', icon: 'fa-align-justify', value: 'justify'}
+      ]
+    ]
 })
 alignment.childItem = alignmentOptions;
 alignmentOptions.parentItem = alignment;
@@ -798,14 +823,9 @@ toolbarItems.value.forEach((item) => {
   item.isDesktop = desktopBreakpoint(item);
 })
 
-const alignments = [
-  [
-    {defaultLabel: 'Left', icon: 'fa-align-left', value: 'left'},
-    {defaultLabel: 'Center', icon: 'fa-align-center', value: 'center'},
-    {defaultLabel: 'Right', icon: 'fa-align-right', value: 'right'},
-    {defaultLabel: 'Justify', icon: 'fa-align-justify', value: 'justify'},
-  ]
-]
+const handleToolbarButtonClick = ({item, argument}) => {
+  executeItemCommands(item, argument);
+}
 
 
 onMounted(async () => {
@@ -840,9 +860,11 @@ onMounted(async () => {
     <div class="content" v-if="currentFile">
 
       <div class="content-inner">
-
+<!-- inline link input -->
         <LinkInput
         v-if="linkInputItem"
+        :show-input="false"
+        :show-link="true"
         :style="{top: inlineMenuMouseY+'px', left: inlineMenuMouseX+'px', zIndex: 3}"
         :initial-url="linkInputItem.url"
         @submit="handleLinkInputSubmit" />
@@ -850,6 +872,8 @@ onMounted(async () => {
         <Toolbar
         v-if="toolbarVisible"
         :toolbar-items="toolbarItems"
+        :editor-instance="activeEditor"
+        @buttonclick="handleToolbarButtonClick"
         @select="handleSelectionChange"
         @command="handleToolbarCommand" ref="toolbar" />
         <!-- SuperEditor expects its data to be a URL --> 

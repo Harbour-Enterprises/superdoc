@@ -1,5 +1,6 @@
 <script setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { onMounted } from 'vue'
 
 const emit = defineEmits(['select']);
 const props = defineProps({
@@ -8,6 +9,12 @@ const props = defineProps({
         required: true,
     },
 });
+
+onMounted(()=> {
+        const isMatrix = props.icons.every(row => Array.isArray(row))
+        if (!isMatrix) throw new Error('icon props must be 2d array')
+    }
+);
 
 </script>
 

@@ -13,6 +13,10 @@ const props = defineProps({
   toolbarItems: {
       type: Array,
       required: true,
+  },
+  editorInstance: {
+    type: Object,
+    required: true,
   }
 });
 
@@ -39,7 +43,11 @@ const handleButtonMouseLeave = (item) => {
   item.tooltipVisible = false;
 }
 
-const emit = defineEmits(['command', 'toggle', 'select']);
+const emit = defineEmits([
+  'command',
+  'toggle',
+  'select'
+]);
 
 
 const isButton = (item) => item.type === 'button';
@@ -52,7 +60,7 @@ const showOptions = (item, name) => item?.name === name && item?.active;
 
 let currentItem = null;
 
-const closeOpenDropdowns = () => {
+const closeOpenDropdowns = (currentItem) => {
   const parentToolbarItems = props.toolbarItems.filter(item => item.childItem);
   parentToolbarItems.forEach((item) => {
     if (currentItem) {
@@ -65,21 +73,10 @@ const closeOpenDropdowns = () => {
   });
 }
 
-const executeItemCommands = (item, argument = null) => {
-  console.log("Executing item commands", item, argument)
-
-  item.preCommand(argument);
-  closeOpenDropdowns();
-  
-
-  emit('command', {command: item.command, argument});
-}
-
 const handleToolbarButtonClick = (item, argument = null) => {
   currentItem = item;
   if (item.disabled) return;
-  console.log("Toolbar button click", argument)
-  executeItemCommands(item, argument);
+  emit('command', {item, argument});
 }
 
 const handleDropdownOptionMouseEnter = (item, optionIndex) => {
@@ -94,7 +91,8 @@ const handleDropdownOptionMouseLeave = (item, optionIndex) => {
 
 const handleToolbarButtonTextSubmit = (item, argument) => {
   if (item.disabled) return;
-  executeItemCommands(item, argument);
+  emit('command', {item, argument});
+
 }
 
 const onTextSelectionChange = (marks, selectionText = null, coords = null) => {
@@ -128,17 +126,17 @@ defineExpose({
       <!-- Toolbar button -->
       <ToolbarButton v-if="isButton(item)"
         :disabled="item.disabled"
-        :active="item.getActiveState()"
+        :active="item.getActiveState(editorInstance)"
         :tooltip="item.tooltip"
         :tooltip-visible="item.tooltipVisible"
         :name="item.name"
-        :icon="item.getIcon()"
-        :label="item.getActiveLabel() || item.defaultLabel"
+        :icon="item.getIcon(editorInstance)"
+        :label="item.getActiveLabel(editorInstance) || item.defaultLabel"
         :hide-label="item.hideLabel"
         :has-caret="item.hasCaret"
         :inline-text-input-visible="item.inlineTextInputVisible"
         :has-inline-text-input="item.hasInlineTextInput"
-        :icon-color="item.getIconColor()"
+        :icon-color="item.getIconColor(editorInstance)"
         :has-icon="hasIcon(item)"
         @mouseenter="handleButtonMouseEnter(item)"
         @mouseleave="handleButtonMouseLeave(item)"
@@ -177,14 +175,13 @@ defineExpose({
           <!-- alignment options  -->
           <IconGrid
           v-if="showOptions(item.childItem, 'alignmentOptions')"
-          :icons="alignments"
+          :icons="item.childItem.options"
           @select="(alignment) => handleToolbarButtonClick(item.childItem, alignment)"/>
 
           <!-- link input -->
           <LinkInput v-if="showOptions(item.childItem, 'linkInput')"
-          :initial-url="item.getAttr('href')"
-          @submit="(anchor) => handleToolbarButtonClick(item.childItem, anchor)"
-          @cancel="handleToolbarButtonClick({...item.childItem, command: null})"/>
+          :initial-url="item.getAttr(editorInstance, 'href')"
+          @submit="(anchor) => handleToolbarButtonClick(item.childItem, anchor)" />
 
           <!-- overflow options  -->
           <IconGrid
