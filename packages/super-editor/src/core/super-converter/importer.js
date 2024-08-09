@@ -69,6 +69,12 @@ export class DocxImporter {
         case 'w:hyperlink':
           schemaNode = this.#handleHyperlinkNode(node);
           break;
+        case 'w:commentRangeStart':
+          schemaNode = this.#handleStandardNode(node);
+          break;
+        case 'w:commentRangeStart':
+          schemaNode = this.#handleStandardNode(node);
+          break;
         default:
           schemaNode = this.#handleStandardNode(node);
       }
@@ -96,13 +102,27 @@ export class DocxImporter {
     const rel = elements.find((el) => el.attributes['Id'] === rId);
     const { attributes: relAttributes } = rel;
     const href = relAttributes['Target'];
-
+    
     // Add marks to the run node and process it
     const runNode = node.elements.find((el) => el.name === 'w:r');
     const linkMark = { type: 'link', attrs: { href } };
 
     if (!runNode.marks) runNode.marks = [];
     runNode.marks.push(linkMark);
+
+    const rPr = runNode.elements.find((el) => el.name === 'w:rPr');
+    if (rPr) {
+      const styleRel = rPr.elements.find((el) => el.name === 'w:rStyle');
+      if (styleRel) {
+        const styles = this.converter.convertedXml['word/styles.xml'];
+        const { elements } = styles.elements[0];
+
+        const styleElements = elements.filter((el) => el.name === 'w:style');
+        const style = styleElements.find((el) => el.attributes['w:styleId'] === 'Hyperlink');
+        const styleRpr = style.elements.find((el) => el.name === 'w:rPr');
+        if (styleRpr) runNode.elements.unshift(styleRpr);
+      }
+    }
 
     const updatedNode = this.#convertToSchema([runNode])[0];
     console.debug('\n\n UPDATED NODE:', updatedNode, '\n\n')

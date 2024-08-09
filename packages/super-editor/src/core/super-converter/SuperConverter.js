@@ -154,6 +154,11 @@ class SuperConverter {
     return importer.getSchema();
   }
 
+  schemaToXml(data) {
+    const exporter = new DocxExporter(this);
+    return exporter.schemaToXml(data);
+  }
+
   exportToDocx(jsonData) {
     const exporter = new DocxExporter(this);
     const jsonOutput = exporter.outputToJson(jsonData);

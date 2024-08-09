@@ -1,6 +1,7 @@
 import { SuperConverter } from './SuperConverter.js';
 import { toKebabCase } from '@common/key-transform.js';
 import { inchesToTwips } from './helpers.js';
+import { generateRandomId } from '@helpers/docxIdGenerator.js';
 
 export class DocxExporter {
 
@@ -52,7 +53,6 @@ export class DocxExporter {
             // resultingElements.push(...linkNodes);
 
             const newNode = this.#outputHandleLinkNode(node);
-            console.debug('NEW NODE', newNode)
             resultingElements.push(newNode);
             continue;
           } else if (!node.seen) {
@@ -332,14 +332,38 @@ export class DocxExporter {
   //   return nodes.map((n) => ({ ...n, seen: true }));
   // }
 
+  #addNewLinkRelationship(link) {
+    console.debug('Adding new link relationship:', link);
+    const newId = 'rId' + generateRandomId();
+    const relationship = {
+      "type": "element",
+      "name": "Relationship",
+      "attributes": {
+          "Id": newId,
+          "Type": "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink",
+          "Target": link,
+          "TargetMode": "External"
+      }
+    }
+    const relsData = this.converter.convertedXml['word/_rels/document.xml.rels'];
+    const relationships = relsData.elements.find(x => x.name === 'Relationships');
+    relationships.elements.push(relationship);
+    this.converter.convertedXml['word/_rels/document.xml.rels'] = relsData;
+    return newId;
+  }
+
   #outputHandleLinkNode(node) {
+    const linkMark = node.marks.find((m) => m.type === 'link');
+    const link = linkMark.attrs.href;
+    const newId = this.#addNewLinkRelationship(link);
+
     node.marks = node.marks.filter((m) => m.type !== 'link');
     const outputNode = this.#outputProcessNodes([node]);
     const newNode = {
       name: 'w:hyperlink',
       type: 'element',
       attributes: {
-        'r:id': 'rId5',
+        'r:id': newId,
       },
       elements: outputNode
     }
@@ -424,9 +448,9 @@ export class DocxExporter {
   }
 
   schemaToXml(data) {
-    console.debug('[SuperConverter] schemaToXml:', data);
+    // console.debug('[SuperConverter] schemaToXml:', data);
     const result = this.#generate_xml_as_list(data);
-    console.debug('[SuperConverter] schemaToXml result:', result.join(''));
+    // console.debug('[SuperConverter] schemaToXml result:', result.join(''));
     return result.join('');
   }
 
