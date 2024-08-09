@@ -1,7 +1,8 @@
 <script setup>
 import { nextTick, onMounted, ref } from 'vue';
 import { Superdoc } from '@/index';
-import { BasicUpload } from 'super-editor';
+import { DOCX, PDF, HTML } from '@common/document-types';
+import BasicUpload from '@common/components/BasicUpload.vue';
 import BlankDOCX from '@common/data/blank.docx?url';
 
 /* For local dev */
@@ -9,17 +10,17 @@ let activeEditor = null;
 let superdoc = null;
 
 const currentFile = ref(null);
-const getFileObject = async (fileUrl) => {
+const getFileObject = async (fileUrl, name, type) => {
   // Generate a file url
   const response = await fetch(fileUrl);
   const blob = await response.blob();
-  return new File([blob], 'docx-file.docx', { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  return new File([blob], name, { type });
 }
 
 const handleNewFile = async (file) => {
   // Generate a file url
   const url = URL.createObjectURL(file);
-  currentFile.value = await getFileObject(url);
+  currentFile.value = await getFileObject(url, file.name, file.type);
 
   nextTick(() => {
     initializeApp();
@@ -45,7 +46,6 @@ const initializeApp = async () => {
       //   conversations,
       // },
       {
-        type: 'docx',
         data: currentFile.value,
         id: '123',
       },
@@ -67,18 +67,18 @@ const initializeApp = async () => {
 };
 
 onMounted(async () => {
-  handleNewFile(await getFileObject(BlankDOCX));
+  handleNewFile(await getFileObject(BlankDOCX, 'blank_document.docx', DOCX));
 });
 
-const exportDocx = async () => {
-  const result = await superdoc.activeEditor.exportDocx();
-  const blob = new Blob([result], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'exported.docx';
-  a.click();
-}
+// const exportDocx = async () => {
+//   const result = await superdoc.activeEditor.exportDocx();
+//   const blob = new Blob([result], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+//   const url = URL.createObjectURL(blob);
+//   const a = document.createElement('a');
+//   a.href = url;
+//   a.download = 'exported.docx';
+//   a.click();
+// }
 </script>
 
 <template>
@@ -94,9 +94,9 @@ const exportDocx = async () => {
         </div>
       </div>
 
-      <div class="right-side">
+      <!-- <div class="right-side">
         <button @click="exportDocx">Export</button>
-      </div>
+      </div> -->
     </div>
     <div class="content" v-if="currentFile">
 

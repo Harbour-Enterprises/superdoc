@@ -13,6 +13,7 @@ import useDocument from '@/composables/use-document';
 import { useSuperdocStore } from '@/stores/superdoc-store';
 import { useCommentsStore } from '@/stores/comments-store';
 
+import { DOCX, PDF, HTML } from '@common/document-types';
 import { SuperEditor } from 'super-editor';
 import useConversation from './components/CommentsLayer/use-conversation';
 
@@ -176,16 +177,9 @@ const onFocus = ({ editor }) => {
   proxy.$superdoc.activeEditor = editor;
   proxy.$superdoc.addToolbar(proxy.$superdoc);
 }
-const onSelectionUpdate = ({ editor, transaction }) => {
-  // const { selection } = editor.view.state;
-  // const marks = selection.$head.marks();
-  // proxy.$superdoc.toolbar.onTextSelectionChange(marks);
-  // proxy.$superdoc.onSelectionUpdate({ editor, transaction });
-}
 
 const editorOptions = {
   onCreate,
-  // onSelectionUpdate,
   onFocus
 }
 
@@ -230,7 +224,7 @@ const editorOptions = {
       <div class="sub-document" v-for="doc in documents" ref="documentContainers">
         <!-- PDF renderer -->
         <PdfViewer
-            v-if="doc.type === 'pdf'"
+            v-if="doc.type === PDF"
             :document-data="doc"
             @selection-change="handleSelectionChange"
             @selection-drag="handleSelectionDrag"
@@ -239,7 +233,7 @@ const editorOptions = {
             @page-loaded="handlePageReady" />
 
           <SuperEditor
-              v-if="doc.type === 'docx'"
+              v-if="doc.type === DOCX"
               mode="docx"
               :file-source="doc.data"
               :document-id="doc.id" 
