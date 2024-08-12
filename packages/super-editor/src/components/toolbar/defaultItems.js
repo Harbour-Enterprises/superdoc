@@ -521,17 +521,6 @@ export const makeDefaultItems = (activeEditor) => {
         icon: 'fa-text-slash'
     });
 
-    const onUpdate = ({ editor, transaction }) => {
-        console.debug('[SuperEditor dev] Document updated', editor);
-        activeEditor = editor;
-
-        const undo = toolbarItems.find(item => item.name === 'undo');
-        const redo = toolbarItems.find(item => item.name === 'redo');
-
-        undo.disabled = undoDepth(activeEditor.state) <= 0;
-        redo.disabled = redoDepth(activeEditor.state) <= 0;
-    }
-
     const toolbarItemsMobile = [
         bold,
         italic,
@@ -554,7 +543,7 @@ export const makeDefaultItems = (activeEditor) => {
         ].map((item) => item.name)
     ]
 
-    const overflowItems = [];
+    let overflowItems = [];
 
     let windowResizeTimeout = null;
 
@@ -654,3 +643,15 @@ export const makeDefaultItems = (activeEditor) => {
 
     return toolbarItems;
 };
+
+export const setHistoryButtonStateOnUpdate = (toolbarItemsRef) => ({ editor, transaction }) => {
+    console.log("TOOLBAR", toolbarItemsRef)
+    console.debug('[SuperEditor dev] Document updated', editor);
+    // activeEditor = editor;
+
+    const undo = toolbarItemsRef.value.find(item => item.name === 'undo');
+    const redo = toolbarItemsRef.value.find(item => item.name === 'redo');
+
+    undo.disabled = undoDepth(editor.state) <= 0;
+    redo.disabled = redoDepth(editor.state) <= 0;
+}

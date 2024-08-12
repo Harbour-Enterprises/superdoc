@@ -3,7 +3,7 @@ import { ref, reactive, watch, onMounted, onUnmounted, computed } from 'vue';
 import BasicUpload from './BasicUpload.vue';
 import BlankDOCX from '@common/data/blank.docx?url';
 import LinkInput from '../../components/toolbar/LinkInput.vue';
-import { makeDefaultItems } from '../../components/toolbar/defaultItems.js';
+import { makeDefaultItems, setHistoryButtonStateOnUpdate } from '../../components/toolbar/defaultItems.js';
 import { ToolbarItem } from '@/components/toolbar/ToolbarItem';
 
 const inlineMenuMouseX = ref(0);
@@ -149,10 +149,9 @@ const onCreate = ({ editor }) => {
 const editorStyles = reactive({});
 const editorOptions = {
     onCreate,
-    onSelectionUpdate
+    onSelectionUpdate,
+    onUpdate: setHistoryButtonStateOnUpdate(toolbarItems),
 }
-
-
 const exportDocx = async () => {
   const result = await activeEditor?.exportDocx();
   const blob = new Blob([result], { type: DOC_TYPE });

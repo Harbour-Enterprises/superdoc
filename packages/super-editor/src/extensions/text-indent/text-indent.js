@@ -3,7 +3,6 @@ import { parseSizeUnit } from '@core/utilities/index.js';
 
 /**
  * Do we need a unit conversion system?
- * 'text-indent' or 'margin-left' for indentation.
  * 
  * For reference.
  * https://remirror.vercel.app/?path=/story/extensions-nodeformatting--basic
@@ -32,9 +31,10 @@ export const TextIndent = Extension.create({
             parseDOM: (el) => el.style.textIndent,
             renderDOM: (attrs) => {
               if (!attrs.textIndent) return {};
-              const [value, unit] = parseSizeUnit(attrs.textIndent);
-              const textIndent = `${value}${unit ? unit : this.options.defaults.unit}`;
-              return { style: `text-indent: ${textIndent}` };
+              let [value, unit] = parseSizeUnit(attrs.textIndent);
+              if (Number.isNaN(value)) return {};
+              unit = unit ? unit : this.options.defaults.unit;
+              return { style: `margin-left: ${value}${unit}` };
             },
           },
         },
@@ -58,46 +58,50 @@ export const TextIndent = Extension.create({
           .every((result) => result);
       },
 
-      // TODO
       increaseTextIndent: () => ({ commands }) => {
         return this.options.types
           .map((type) => {
-            const { textIndent } = this.editor.getAttributes(type);
+            let { textIndent } = this.editor.getAttributes(type);
 
             if (!textIndent) {
-              const { increment, unit } = this.options.defaults;
+              let { increment, unit } = this.options.defaults;
               return commands.updateAttributes(type, { 
                 textIndent: `${increment}${unit}`,
               });
             }
 
-            const [value, unit] = parseSizeUnit(textIndent);
-            const newValue = value + this.options.defaults.increment;
+            let [value, unit] = parseSizeUnit(textIndent);
+            value = value + this.options.defaults.increment;
+            unit = unit ? unit : this.options.defaults.unit;
+
+            if (Number.isNaN(value)) return false;
 
             return commands.updateAttributes(type, { 
-              textIndent: `${newValue}${unit ? unit : this.options.defaults.unit}`,
+              textIndent: `${value}${unit}`,
             });
           })
           .every((result) => result);
       },
 
-      // TODO
       decreaseTextIndent: () => ({ commands }) => {
         return this.options.types
           .map((type) => {
-            const { textIndent } = this.editor.getAttributes(type);
+            let { textIndent } = this.editor.getAttributes(type);
             
             if (!textIndent) return false;
 
-            const [value, unit] = parseSizeUnit(textIndent);
-            const newValue = value - this.options.defaults.increment;
+            let [value, unit] = parseSizeUnit(textIndent);
+            value = value - this.options.defaults.increment;
+            unit = unit ? unit : this.options.defaults.unit;
 
-            if (newValue <= 0) {
+            if (Number.isNaN(value)) return false;
+
+            if (value <= 0) {
               return commands.unsetTextIndent();
             }
 
             return commands.updateAttributes(type, { 
-              textIndent: `${newValue}${unit ? unit : this.options.defaults.unit}`,
+              textIndent: `${value}${unit}`,
             });
           })
           .every((result) => result);

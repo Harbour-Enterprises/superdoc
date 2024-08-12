@@ -1,6 +1,8 @@
 <script setup>
-import { getCurrentInstance, ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
+import { getCurrentInstance, ref, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
 import { storeToRefs } from 'pinia';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+
 import PdfViewer from './components/PdfViewer/PdfViewer.vue';
 import CommentsLayer from './components/CommentsLayer/CommentsLayer.vue';
 import DocumentEditor from './components/DocumentEditor/DocumentEditor.vue';
@@ -13,6 +15,7 @@ import useDocument from '@/composables/use-document';
 import { useSuperdocStore } from '@/stores/superdoc-store';
 import { useCommentsStore } from '@/stores/comments-store';
 
+import { DOCX, PDF, HTML } from '@common/document-types';
 import { SuperEditor } from 'super-editor';
 import useConversation from './components/CommentsLayer/use-conversation';
 
@@ -137,19 +140,8 @@ const handleDocumentMouseDown = (e) => {
   selectionPosition.value = null;;
 }
 
-const handleHighlightClick = () => {
-  toolsMenuPosition.value = null;
-}
-
-const cancelPendingComment = () => {
-  selectionPosition.value = null;
-}
-
-onMounted(() => {
-  if ('comments' in modules && !modules.comments.readOnly) {
-    document.addEventListener('mousedown', handleDocumentMouseDown);
-  }
-})
+const handleHighlightClick = () => toolsMenuPosition.value = null;
+const cancelPendingComment = () => selectionPosition.value = null;
 
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', handleDocumentMouseDown);
@@ -167,48 +159,48 @@ const receiveDocxComments = (data, doc) => {
 
 const onCreate = ({ editor }) => {
   proxy.$superdoc.activeEditor = editor;
+  proxy.$superdoc.broadcastLoaded();
+
   console.debug('[Superdoc] Editor created', proxy.$superdoc.activeEditor);
   console.debug('[Superdoc] Page styles (pixels)', editor.getPageStyles());
-  proxy.$superdoc.broadcastLoaded();
 }
 
 const onFocus = ({ editor }) => {
   proxy.$superdoc.activeEditor = editor;
   proxy.$superdoc.addToolbar(proxy.$superdoc);
 }
-const onSelectionUpdate = ({ editor, transaction }) => {
-  // const { selection } = editor.view.state;
-  // const marks = selection.$head.marks();
-  // proxy.$superdoc.toolbar.onTextSelectionChange(marks);
-  // proxy.$superdoc.onSelectionUpdate({ editor, transaction });
-}
 
 const editorOptions = {
   onCreate,
-  // onSelectionUpdate,
   onFocus
 }
 
+const showToolsFloatingMenu = computed(() => toolsMenuPosition.value && !getConfig.value?.readOnly)
+const showActiveSelection = computed(() => !getConfig?.readOnly && selectionPosition)
+onMounted(() => {
+  if ('comments' in modules && !modules.comments.readOnly) {
+    document.addEventListener('mousedown', handleDocumentMouseDown);
+  }
+});
 </script>
 
 <template>
 <div class="superdoc">
   <div class="layers" ref="layers">
 
-    <div 
-        v-if="toolsMenuPosition && !getConfig?.readOnly" 
-        class="tools"
-        :style="toolsMenuPosition">
-      <i class="fas fa-comment-alt-lines" data-id="is-tool" @click.stop.prevent="handleToolClick('comments')"></i>
+    <!-- Floating tools menu (shows up when user has text selection)-->
+    <div  v-if="showToolsFloatingMenu" class="tools" :style="toolsMenuPosition">
+      <FontAwesomeIcon
+          class="tool-icon"
+          icon="fa-comment"
+          data-id="is-tool"
+          @click.stop.prevent="handleToolClick('comments')" />
     </div>
 
-    <div
-        v-if="!getConfig?.readOnly && selectionPosition"
-        :style="selectionPosition" class="sd-highlight sd-initial-highlight">
-    </div>
+    <!-- Active selection on top of document-->
+    <div v-if="showActiveSelection" :style="selectionPosition" class="sd-highlight sd-initial-highlight"></div>
 
     <div class="document">
-
       <!-- Fields layer -->
       <HrbrFieldsLayer
           v-if="'hrbr-fields' in modules && layers"
@@ -230,7 +222,7 @@ const editorOptions = {
       <div class="sub-document" v-for="doc in documents" ref="documentContainers">
         <!-- PDF renderer -->
         <PdfViewer
-            v-if="doc.type === 'pdf'"
+            v-if="doc.type === PDF"
             :document-data="doc"
             @selection-change="handleSelectionChange"
             @selection-drag="handleSelectionDrag"
@@ -239,17 +231,17 @@ const editorOptions = {
             @page-loaded="handlePageReady" />
 
           <SuperEditor
-              v-if="doc.type === 'docx'"
+              v-if="doc.type === DOCX"
               mode="docx"
               :file-source="doc.data"
               :document-id="doc.id" 
               :options="editorOptions" />
-
-        </div>
       </div>
     </div>
+  </div>
+  
 
-  <div class="right-sidebar" v-if="(pendingComment || documentsWithConverations.length) && layers && isReady">
+    <div class="right-sidebar" v-if="(pendingComment || documentsWithConverations.length) && layers && isReady">
     <CommentDialog
         v-if="pendingComment"
         :data="pendingComment"
@@ -274,13 +266,14 @@ const editorOptions = {
   padding: 0 10px;
   min-height: 100%;
   position: relative;
+  border-left: 1px solid #DBDBDB;
 }
 
 /* General Styles */
 .box-sizing, .layers {
   box-sizing: border-box;
 }
-.cursor-pointer, .tools i, .toolbar-item {
+.cursor-pointer, .tools .tool-icon, .toolbar-item {
   cursor: pointer;
 }
 .flex {
@@ -348,7 +341,7 @@ const editorOptions = {
   align-items: center;
   justify-content: center;
 }
-.tools i {
+.tools .tool-icon {
   font-size: 20px;
   border-radius: 12px;
   border: none;

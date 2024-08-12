@@ -38,17 +38,34 @@ const getOriginalPageSize = (page) => {
   return { width, height };
 };
 
-async function loadPDF(blobUrl) {
-  const loadingTask = pdfjsLib.getDocument(blobUrl);
+async function initPdfLayer(arrayBuffer) {
+  const loadingTask = pdfjsLib.getDocument(arrayBuffer);
   return await loadingTask.promise;
+}
+
+async function loadPDF(fileObject) {
+  const fileReader = new FileReader();
+  fileReader.onload = async function(event) {
+    console.debug('File loaded');
+    const pdfDocument = await initPdfLayer(event.target.result);
+    await renderPages(pdfDocument);
+  }
+  fileReader.readAsArrayBuffer(fileObject);
 }
 
 const enableTextLayer = (container, state) => {
   const textLayer = container.querySelector('.textLayer');
-  if (textLayer) textLayer.style.pointerEvents = state ? 'auto' : 'none';
+if (textLayer) textLayer.style.pointerEvents = state ? 'auto' : 'none';
 }
 
-async function renderPages(pdfDocument) {
+
+const renderPages = (pdfDocument) => { 
+  setTimeout(() => {
+    _renderPages(pdfDocument);
+  }, 150);
+}
+
+async function _renderPages(pdfDocument) {
   try {
     const numPages = pdfDocument.numPages;
     totalPages.value = numPages;
@@ -235,10 +252,6 @@ const onTouchEnd = (e, container) => {
 
 onMounted(async () => {
   const doc = await loadPDF(pdfData);
-
-  setTimeout(async () => {
-    await renderPages(doc);
-  }, 150);
 });
 </script>
 
@@ -261,12 +274,26 @@ onMounted(async () => {
   position: relative;
   display: flex;
   flex-direction: column;
-
+  
   .pdf-page {
-    border: 1px solid #DFDFDF;
+    border-top: 1px solid #DFDFDF;
+    border-bottom: 1px solid #DFDFDF;
     margin: 0 0 20px 0;
     position: relative;
+    overflow: hidden;
   }
+
+  .pdf-page:first-child {
+    border-radius: 16px 16px 0 0;
+    border-top: none;
+  }
+  .pdf-page:last-child {
+    border-radius: 0 0 16px 16px;
+    border-bottom: none;
+  }
+  .pdf-page:first-child:last-child {
+    border-radius: 16px;
+}
 
   .textLayer {
     z-index: 2;

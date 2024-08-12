@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Most basic Superdoc loading example</title>
+    <script>const process = { env: {} };</script>
+    <style>
+      .super-editor {
+        width: 900px;
+        border: 1px solid black; /* Not necessary, but just so we can see where it is */
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- The container where we will render superdoc -->
+    <div id="superdoc">This will be replaced by the superdoc instance.</div>
+
+    <script type="module">
+      // Import ES6 module from CDN
+      import { Superdoc, BlankDOCX } from 'https://unpkg.com/@harbour-enterprises/superdoc@1.0.0-alpha.40/dist/superdoc.es.js';
+
+      /**
+        * Alternatively, if you have access to npm package, better to do:
+        * npm install @harbour-enterprises/superdoc
+        *
+        * then change the import to:
+        *
+        * import { Superdoc, BlankDOCX } from '@harbour-enterprises/superdoc';
+        */
+
+      // This example only loads a .docx file
+      const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
+      // SuperDoc expects a File object, so we need to convert the URL to a File
+      const convertDocUrlToFile = async (url) => {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        return new File([blob], 'blank_docx.docx', { type: DOCX });
+      }
+      
+      // Initialize Superdoc
+      const init = async () => {
+        const data = await convertDocUrlToFile(BlankDOCX);
+        let superdoc = new Superdoc({
+          selector: '#superdoc',
+          documents: [
+            {
+              id: 'test-doc',
+              type: 'docx',
+              data,
+            }
+          ],
+        });
+      };
+
+      init();
+    </script>
+  </body>
+</html>

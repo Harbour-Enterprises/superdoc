@@ -132,6 +132,7 @@ const handleInputSubmit = () => {
 <style scoped>
 .toolbar-item {
   position: relative;
+  z-index: 100;
 }
 
 .toolbar-button {

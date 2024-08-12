@@ -347,7 +347,7 @@ export class Editor extends EventEmitter {
     this.element.style.width = pageSize.width + 'in';
     this.element.style.minWidth =  pageSize.width + 'in';
     this.element.style.maxWidth = pageSize.width + 'in';
-    this.element.style.height = pageSize.height + 'in';
+    this.element.style.minHeight = pageSize.height + 'in';
     this.element.style.paddingTop = pageMargins.top + 'in';
     this.element.style.paddingRight = pageMargins.right + 'in';
     this.element.style.paddingBottom = pageMargins.bottom + 'in';
@@ -472,8 +472,15 @@ export class Editor extends EventEmitter {
    */
   async exportDocx() {
     const docx = this.converter.exportToDocx(this.getJSON());
+    const relsData = this.converter.convertedXml['word/_rels/document.xml.rels'];
+    const rels = this.converter.schemaToXml(relsData)
+    const docs = {
+      'word/document.xml': String(docx),
+      'word/_rels/document.xml.rels': String(rels),
+    }
+
     const zipper = new DocxZipper();
-    const newDocx = await zipper.updateZip(this.options.fileSource, String(docx));
+    const newDocx = await zipper.updateZip(this.options.fileSource, docs);
     return newDocx;
   }
 

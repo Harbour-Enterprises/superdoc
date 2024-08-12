@@ -2,10 +2,13 @@ import './style.css';
 import EventEmitter from 'eventemitter3'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+
 import { useSuperdocStore } from './stores/superdoc-store';
+import { DOCX, PDF, HTML } from '@common/document-types';
 import clickOutside from '@/helpers/v-click-outside';
 import SuperToolbar from '@/components/SuperToolbar/SuperToolbar.vue';
 import App from './Superdoc.vue'
+import library from '@/helpers/import-icons';
 
 import BlankDOCX from '@common/data/blank.docx?url';
 
@@ -24,13 +27,20 @@ const createMyApp = () => {
   * Expects a config object
 */
 class Superdoc extends EventEmitter {
+
+  static allowedTypes = [DOCX, PDF, HTML];
+
   constructor(config) {
-    console.debug('[superdoc] Initializing:', config);
     super();
+
+    config.documents = this.#preprocessDocuments(config.documents);
+    console.debug('[superdoc] Initializing:', config);
+
     const { app, pinia, superdocStore } = createMyApp(this);
     this.app = app;
     this.pinia = pinia;
     this.app.config.globalProperties.$config = config;
+
     this.app.config.globalProperties.$superdoc = this;
     this.superdocStore = superdocStore;
 
@@ -46,6 +56,22 @@ class Superdoc extends EventEmitter {
 
     // If a toolbar element is provided, render a toolbar
     if (this.toolbarElement) this.addToolbar(this);
+  }
+
+  #preprocessDocuments(documents) {
+    return documents.map((doc) => {
+      const { data } = doc;
+  
+      if (!(data instanceof File)) throw new Error('[superdoc] Documents in config must be File objects');
+  
+      const { type: documentType } = data;
+      if (!Superdoc.allowedTypes.includes(documentType)) {
+        const msg = `[superdoc] Invalid document type: ${documentType}. Allowed types: ${Superdoc.allowedTypes.join(', ')}`;
+        throw new Error(msg);
+      }
+  
+      return { ...doc, type: documentType };
+    });
   }
 
   broadcastLoaded() {
@@ -74,9 +100,9 @@ class Superdoc extends EventEmitter {
     if (!el) return;
     
     const app = createApp(SuperToolbar);
-    this.toolbar = app;
     app.config.globalProperties.$superdoc = instance;
     app.mount(el);
+    this.toolbar = app;
   }
 
   onToolbarCommand({ command, argument }) {
@@ -99,7 +125,13 @@ class Superdoc extends EventEmitter {
   }
 
   destroy() {
+    if (this.toolbar) {
+      console.debug('[superdoc] Unmounting toolbar');
+      this.toolbar.unmount();
+    }
+
     if (this.app) {
+      console.debug('[superdoc] Unmounting app');
       this.app.unmount();
     }
 
@@ -111,5 +143,10 @@ class Superdoc extends EventEmitter {
 
 export { 
   Superdoc,
-  BlankDOCX
+  BlankDOCX,
+
+  // Allowed types
+  DOCX,
+  PDF,
+  HTML,
 }
