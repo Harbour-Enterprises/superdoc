@@ -6,8 +6,6 @@ import LinkInput from '../../components/toolbar/LinkInput.vue';
 import { makeDefaultItems, setHistoryButtonStateOnUpdate } from '../../components/toolbar/defaultItems.js';
 import { ToolbarItem } from '@/components/toolbar/ToolbarItem';
 
-const inlineMenuMouseX = ref(0);
-const inlineMenuMouseY = ref(0);
 
 // Import the component the same you would in your app
 import { SuperEditor, Toolbar } from '@/index';
@@ -45,20 +43,6 @@ const commandsMap = {
   },
 };
 
-const linkInputItem = ref(null);
-
-const handleSelectionChange = ({mark, coords}) => {
-  if (mark?.type.name === 'link') {
-    linkInputItem.value = {
-      url: mark.attrs.href,
-    };
-  } else {
-    linkInputItem.value = null;
-  }
-
-  inlineMenuMouseX.value = coords.left;
-  inlineMenuMouseY.value = coords.top + 20;
-}
 
 const closeOpenDropdowns = (currentItem) => {
   const parentToolbarItems = toolbarItems.value.filter(item => item.childItem);
@@ -73,14 +57,9 @@ const closeOpenDropdowns = (currentItem) => {
   });
 }
 
-const closeInlineMenus = () => {
-  linkInputItem.value = null;
-}
-
 const handleToolbarCommand = ({ item, argument }) => {
   if (!item) return;
   closeOpenDropdowns(item);
-  closeInlineMenus();
 
   const { command } = item;
 
@@ -104,12 +83,11 @@ const handleToolbarCommand = ({ item, argument }) => {
     activeEditor.view.focus();
   } else {
     console.log('Command not found:', commandName);
-  }    
+  }
 };
 
 const onSelectionUpdate = ({ editor, transaction }) => {
   closeOpenDropdowns();
-  closeInlineMenus();
 
   const { from, to } = transaction.selection;
   activeEditor = editor;
@@ -198,21 +176,11 @@ onMounted(async () => {
     <div class="content" v-if="currentFile">
 
       <div class="content-inner">
-<!-- inline link input -->
-        <LinkInput
-        v-if="linkInputItem"
-        :show-input="false"
-        :show-link="true"
-        :style="{top: inlineMenuMouseY+'px', left: inlineMenuMouseX+'px', zIndex: 3}"
-        :initial-url="linkInputItem.url"
-        @submit="handleLinkInputSubmit" />
-
         <Toolbar
         v-if="toolbarVisible"
         :toolbar-items="toolbarItems"
         :editor-instance="activeEditor"
         @buttonclick="handleToolbarButtonClick"
-        @select="handleSelectionChange"
         @command="handleToolbarCommand" ref="toolbar" />
         <!-- SuperEditor expects its data to be a URL --> 
         <SuperEditor

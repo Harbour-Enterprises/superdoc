@@ -26,6 +26,24 @@ const props = defineProps({
  * One toolbar should work for many editors.
 */
 
+const inlineMenuMouseX = ref(0);
+const inlineMenuMouseY = ref(0);
+
+const linkInputItem = ref(null);
+
+const handleSelectionChange = ({mark, coords}) => {
+  if (mark?.type.name === 'link') {
+    linkInputItem.value = {
+      url: mark.attrs.href,
+    };
+  } else {
+    linkInputItem.value = null;
+  }
+
+  inlineMenuMouseX.value = coords.left;
+  inlineMenuMouseY.value = coords.top + 20;
+}
+
 const handleButtonMouseEnter = (item) => {
   if (item.childItem?.active) return;
   const now = Date.now();
@@ -98,6 +116,7 @@ const handleToolbarButtonTextSubmit = (item, argument) => {
 const onTextSelectionChange = (marks, selectionText = null, coords = null) => {
   console.log("Text selection change", marks, selectionText)
   const mark = marks.find(mark => mark.type.name === 'link') || null;
+  handleSelectionChange({mark, coords});
   emit('select', {mark, coords})
 }
 
@@ -108,6 +127,13 @@ defineExpose({
 
 <template>
   <div class="toolbar">
+    <!-- inline link input -->
+    <LinkInput
+        v-if="linkInputItem"
+        :show-input="false"
+        :show-link="true"
+        :style="{top: inlineMenuMouseY+'px', left: inlineMenuMouseX+'px', zIndex: 3}"
+        :initial-url="linkInputItem.url" />
 
     <div v-for="item, index in toolbarItems"
     :key="index"

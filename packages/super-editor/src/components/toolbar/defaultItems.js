@@ -645,8 +645,7 @@ export const makeDefaultItems = (activeEditor) => {
 };
 
 export const setHistoryButtonStateOnUpdate = (toolbarItemsRef) => ({ editor, transaction }) => {
-    console.log("TOOLBAR", toolbarItemsRef)
-    console.debug('[SuperEditor dev] Document updated', editor);
+    // console.debug('[SuperEditor dev] Document updated', editor);
     // activeEditor = editor;
 
     const undo = toolbarItemsRef.value.find(item => item.name === 'undo');
