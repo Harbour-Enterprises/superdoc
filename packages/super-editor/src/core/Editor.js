@@ -32,13 +32,12 @@ export class Editor extends EventEmitter {
 
   #css;
 
-  #docx;
-
   #comments;
 
   options = {
     element: document.createElement('div'),
-    content: '',
+    content: '', // XML content
+    converter: null,
     fileSource: null,
     documentId: null,
     injectCSS: true,
@@ -62,16 +61,14 @@ export class Editor extends EventEmitter {
 
   constructor(options) {
     super();
-    this.#initialize(options);
+    this.#init(options);
   }
 
-  async #initialize(options) {
+  #init(options) {
     this.setOptions(options);
     this.#createExtensionService();
     this.#createCommandService();
     this.#createSchema();
-
-    await this.#loadData();
     this.#createConverter();
 
     this.on('beforeCreate', this.options.onBeforeCreate);
@@ -267,9 +264,10 @@ export class Editor extends EventEmitter {
    * Creates a SuperConverter.
    */
   #createConverter() {
-    if (this.options.converter) this.converter = this.options.converter;
-    else {
-        this.converter = new SuperConverter({ 
+    if (this.options.converter) {
+      this.converter = this.options.converter;
+    } else {
+      this.converter = new SuperConverter({ 
         docx: this.options.content, 
         debug: true,
       });
@@ -280,14 +278,16 @@ export class Editor extends EventEmitter {
    * Load the data from DOCX to be used in the schema.
    * Expects a DOCX file.
    */
-  async #loadData() {
-    if (!this.options.fileSource) return;
-    else if (!(this.options.fileSource instanceof File)) {
+  static async loadXmlData(fileSource) {
+    if (!fileSource) return;
+
+    const isFile = fileSource instanceof File;
+    if (!isFile) {
       throw new Error('Content source must be a File object.');
     };
 
     const zipper = new DocxZipper();
-    this.options.content = await zipper.getXmlData(this.options.fileSource);
+    return await zipper.getXmlData(fileSource);
   }
 
   /**
@@ -307,7 +307,6 @@ export class Editor extends EventEmitter {
       doc = createDocument(
         this.converter,
         this.schema,
-        this.options.parseOptions,
       );
     } catch (err) {
       console.error(err);
@@ -334,7 +333,6 @@ export class Editor extends EventEmitter {
 
     const dom = this.view.dom;
     dom.editor = this;
-
   }
 
   /**
@@ -346,7 +344,9 @@ export class Editor extends EventEmitter {
     const proseMirror = this.element.querySelector('.ProseMirror');
     if (!proseMirror) return;
 
-    const { pageSize, pageMargins } = this.converter.pageStyles; 
+    const { pageSize, pageMargins } = this.converter.pageStyles ?? {};
+    if (!pageSize || !pageMargins) return;
+
     this.element.style.boxSizing = 'border-box';
     this.element.style.width = pageSize.width + 'in';
     this.element.style.minWidth =  pageSize.width + 'in';
@@ -364,7 +364,9 @@ export class Editor extends EventEmitter {
     proseMirror.style.width = '100%';
     proseMirror.style.paddingBottom = pageMargins.bottom + 'in';
 
-    const { typeface, fontSizePt } = this.converter.getDocumentDefaultStyles();
+    const { typeface, fontSizePt } = this.converter.getDocumentDefaultStyles() ?? {};
+    if (!typeface || !fontSizePt) return;
+
     this.element.style.fontFamily = typeface;
     this.element.style.fontSize = fontSizePt + 'pt';
   }
@@ -482,15 +484,14 @@ export class Editor extends EventEmitter {
   async exportDocx() {
     const docx = this.converter.exportToDocx(this.getJSON());
     const relsData = this.converter.convertedXml['word/_rels/document.xml.rels'];
-    const rels = this.converter.schemaToXml(relsData)
+    const rels = this.converter.schemaToXml(relsData);
     const docs = {
       'word/document.xml': String(docx),
       'word/_rels/document.xml.rels': String(rels),
-    }
+    };
 
     const zipper = new DocxZipper();
-    const newDocx = await zipper.updateZip(this.options.fileSource, docs);
-    return newDocx;
+    return await zipper.updateZip(this.options.fileSource, docs);
   }
 
   /**

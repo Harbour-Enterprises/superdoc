@@ -35,13 +35,16 @@ const props = defineProps({
 
 const editorElem = ref(null);
 
-const initEditor = () => {
+const initEditor = async () => {
   console.debug('[super-editor] Loading file...', props.fileSource);
-  const editor  = new Editor({
+
+  const content = await Editor.loadXmlData(props.fileSource);
+  const editor = new Editor({
     element: editorElem.value,
     fileSource: props.fileSource,
     extensions: getStarterExtensions(),
     documentId: props.documentId,
+    content,
     ...props.options,
   });
 };
