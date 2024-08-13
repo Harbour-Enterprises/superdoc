@@ -137,7 +137,7 @@ const handleClickOutside = (e) => {
 
     emit('dialog-exit');
     if (e.target.dataset.id) activeComment.value = e.target.dataset.id;
-    else activeComment.value = null;
+    else if (!e.target.dataset.threadId) activeComment.value = null;
     cleanConversations();
   }
 }

@@ -1,4 +1,5 @@
 <script setup>
+import '@common/styles/common-styles.css';
 import { nextTick, onMounted, ref } from 'vue';
 import { Superdoc } from '@/index';
 import { DOCX, PDF, HTML } from '@common/document-types';
@@ -42,11 +43,11 @@ const initializeApp = async () => {
       },
     ],
     modules: {
-      // 'comments': {
-      //   // readOnly: true,
-      //   // allowResolve: false,
-      // },
-      // 'hrbr-fields': {},
+      'comments': {
+        // readOnly: true,
+        // allowResolve: false,
+      },
+      'hrbr-fields': {},
     }
   }
   superdoc = new Superdoc(config);

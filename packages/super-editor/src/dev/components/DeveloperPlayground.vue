@@ -1,7 +1,12 @@
 <script setup>
+import '@common/styles/common-styles.css';
 import { ref, reactive, watch, onMounted } from 'vue';
 import BasicUpload from './BasicUpload.vue';
 import BlankDOCX from '@common/data/blank.docx?url';
+import LinkInput from '../../components/toolbar/LinkInput.vue';
+import { makeDefaultItems, setHistoryButtonStateOnUpdate } from '../../components/toolbar/defaultItems.js';
+import { ToolbarItem } from '@/components/toolbar/ToolbarItem';
+
 
 // Import the component the same you would in your app
 import { SuperEditor, Toolbar } from '@/index';
@@ -39,15 +44,34 @@ const commandsMap = {
   },
 };
 
-const handleToolbarCommand = ({ command, argument }) => {
-  console.debug('[SuperEditor dev] Toolbar command', command, argument, activeEditor?.commands);
+
+const closeOpenDropdowns = (currentItem) => {
+  const parentToolbarItems = toolbarItems.value.filter(item => item.childItem);
+  parentToolbarItems.forEach((item) => {
+    if (currentItem) {
+      if (item.name === currentItem.name) return;
+      if (item.childItem && item.childItem.name === currentItem.name) return;
+    }
+    item.active = false;
+    item.childItem.active = false;
+    item.inlineTextInputVisible = false;
+  });
+}
+
+const handleToolbarCommand = ({ item, argument }) => {
+  if (!item) return;
+  closeOpenDropdowns(item);
+
+  const { command } = item;
+
+  item.preCommand(argument);
 
   const commands = activeEditor?.commands;
     if (!commands) {
     console.error('No commands');
     return;
   }
-
+  
   const commandName = command;
   if (commandName in commands) {
     console.log('Executing command:', commandName);
@@ -60,49 +84,58 @@ const handleToolbarCommand = ({ command, argument }) => {
     activeEditor.view.focus();
   } else {
     console.log('Command not found:', commandName);
-  }    
+  }
 };
 
-const lastTransaction = ref(null);
-const onUpdate = ({ editor, transaction }) => {
-  console.debug('[SuperEditor dev] Document updated', editor);
-  activeEditor = editor;
-
-  lastTransaction.value = transaction;
-}
-
 const onSelectionUpdate = ({ editor, transaction }) => {
+  closeOpenDropdowns();
+
   const { from, to } = transaction.selection;
-  // console.debug('[SuperEditor dev] Selection update', from, to);
   activeEditor = editor;
+  toolbarItems.value.forEach((item) => {
+    item.editor = editor;
+  })
 
   // This logic should maybe be inside the Editor.js rather than here?
   const { selection } = editor.view.state;
   const selectionText = selection.$head.parent.textContent;
   const marks = selection.$head.marks();
+  const nodes = selection.$head.node();
+  const coords = editor.view.coordsAtPos(selection.$head.pos);
 
-  toolbar.value.onTextSelectionChange(marks, selectionText);
+  toolbar.value.onTextSelectionChange(marks, selectionText, coords);
 }
+
+const toolbarItems = ref([]);
 
 const onCreate = ({ editor }) => {
   console.debug('[Dev] Editor created', editor);
   activeEditor = editor;
   toolbarVisible.value = true;
+  toolbarItems.value = makeDefaultItems(activeEditor);
 
   window.editor = editor;
   console.debug('[Dev] Page styles (pixels)', editor.getPageStyles());
   console.debug('[Dev] document styles', editor.converter.getDocumentDefaultStyles());
 
+  toolbarItems.value.forEach((item) => {
+    item.editor = editor;
+  })
+
   Object.assign(editorStyles, editor.converter.getDocumentDefaultStyles());
 }
 
-const editorStyles = reactive({ });
-const editorOptions = {
-  onCreate,
-  onSelectionUpdate,
-  onUpdate
-}
+const onCommentClicked = ({ conversation }) => {
+  console.debug('💬 [Dev] Comment active', conversation);
+};
 
+const editorStyles = reactive({});
+const editorOptions = {
+    onCreate,
+    onSelectionUpdate,
+    onUpdate: setHistoryButtonStateOnUpdate(toolbarItems),
+    onCommentClicked
+}
 const exportDocx = async () => {
   const result = await activeEditor?.exportDocx();
   const blob = new Blob([result], { type: DOC_TYPE });
@@ -111,6 +144,10 @@ const exportDocx = async () => {
   a.href = url;
   a.download = 'exported.docx';
   a.click();
+}
+
+const handleToolbarButtonClick = ({item, argument}) => {
+  executeItemCommands(item, argument);
 }
 
 onMounted(async () => {
@@ -147,8 +184,9 @@ onMounted(async () => {
       <div class="content-inner">
         <Toolbar
         v-if="toolbarVisible"
+        :toolbar-items="toolbarItems"
         :editor-instance="activeEditor"
-        :update-transaction="lastTransaction"
+        @buttonclick="handleToolbarButtonClick"
         @command="handleToolbarCommand" ref="toolbar" />
         <!-- SuperEditor expects its data to be a URL --> 
         <SuperEditor
@@ -166,6 +204,9 @@ onMounted(async () => {
 .ProseMirror p {
   margin: 0;
   padding: 0;
+}
+.comment-highlight {
+  background-color: red;
 }
 </style>
 

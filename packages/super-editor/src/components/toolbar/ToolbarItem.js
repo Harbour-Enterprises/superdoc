@@ -21,7 +21,6 @@ export class ToolbarItem {
 
         this.type = options.type
         this.name = options.name
-        this.editor = options.editor
 
         // nested options
         this.options = []
@@ -58,6 +57,9 @@ export class ToolbarItem {
         this.disabled = false
         this.inlineTextInputVisible = false
         this.hasInlineTextInput = false
+        this.isMobile = true
+        this.isTablet = true
+        this.isDesktop = true
 
         // mark
         this.markName = null
@@ -84,7 +86,7 @@ export class ToolbarItem {
             if (handlers.includes(key)) {
                 if (typeof options[key] !== 'function') throw new Error('Invalid toolbar item handler - ' + key);
                 this[key] = function(...args){
-                    this[`_${key}`]()
+                    this[`_${key}`](...args)
                     return options[key](this, ...args) // callback
                 }
                 return;
@@ -98,18 +100,20 @@ export class ToolbarItem {
     }
 
     // handlers
-    _getActiveState() {
-        return this.editor?.isActive(this.name)
+    _getActiveState(editorInstance = null) {
+        if (!editorInstance) throw new Error('Editor instance is required to get active state');
+        return editorInstance.isActive(this.name)
     }
-    _getAttr(attr) {
+    _getAttr(editorInstance, attr) {
+        if (!editorInstance) throw new Error('Editor instance is required to get attribute '+attr);
         if (!this.markName || !attr) return null;
-        return this.editor?.getAttributes(this.markName)[attr];
+        return editorInstance.getAttributes(this.markName)[attr];
     }
-    _getActiveLabel() {
-        return this._getAttr(this.labelAttr) || null;
+    _getActiveLabel(editorInstance = null) {
+        return this._getAttr(editorInstance, this.labelAttr) || null;
     }
-    _getIconColor() {
-        return this._getAttr('color') || null;
+    _getIconColor(editorInstance = null) {
+        return this._getAttr(editorInstance, 'color') || null;
     }
     _getIcon() {
         return this.icon || null;
