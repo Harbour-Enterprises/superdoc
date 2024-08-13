@@ -2,6 +2,7 @@ import { getExtensionConfigField } from './helpers/getExtensionConfigField.js';
 import { getNodeType } from './helpers/getNodeType.js';
 import { getMarkType } from './helpers/getMarkType.js';
 import { getSchemaTypeNameByName } from './helpers/getSchemaTypeNameByName.js'
+import { getMarksFromSelection } from './helpers/getMarksFromSelection.js';
 
 /**
  * Attribute class is a space that contains 
@@ -258,20 +259,7 @@ export class Attribute {
    */
   static getMarkAttributes(state, typeOrName) {
     const type = getMarkType(typeOrName, state.schema);
-    const { from, to, empty } = state.selection;
-    const marks = [];
-
-    if (empty) {
-      if (state.storedMarks) {
-        marks.push(...state.storedMarks);
-      }
-
-      marks.push(...state.selection.$head.marks())
-    } else {
-      state.doc.nodesBetween(from, to, (node) => {
-        marks.push(...node.marks);
-      });
-    }
+    const marks = getMarksFromSelection(state);
 
     const mark = marks.find((markItem) => markItem.type.name === type.name);
     if (!mark) return {};

@@ -51,7 +51,9 @@ export const Link = Mark.create({
 
   addCommands() {
     return {
-      toggleLink: ({href, text}) => ({ commands }) => {
+      toggleLink: (options) => ({ commands }) => {
+        if (!options) return commands.unsetMark(this.name);
+        const { href, text } = options;
         const attrs = {
           attributes: {
             href

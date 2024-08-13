@@ -12,6 +12,14 @@ const props = defineProps({
     initialUrl: {
         type: String,
         default: '',
+    },
+    showInput: {
+        type: Boolean,
+        default: true,
+    },
+    showLink: {
+        type: Boolean,
+        default: true,
     }
 });
 
@@ -56,18 +64,16 @@ const validUrl = computed(() => {
         </div> -->
         
         <!-- url input -->
-        <div class="input-row">
+        <div class="input-row" v-if="showInput" :class="{hasBottomMargin: showLink && showInput}">
             <input type="text" placeholder="Address" 
             :class="{error: urlError}"
             v-model="rawUrl"
-            @keydown="urlError = false"
-            @keydown.escape="handleCancel"
-            @keydown.enter="handleSubmit" />
+            @keydown="urlError = false"/>
             <span class="submit" @click="handleSubmit">Apply</span>
         </div>
 
         <!-- link preview -->
-        <div class="input-row">
+        <div class="input-row" v-if="showLink">
             <FontAwesomeIcon icon="link" :style="{marginRight: '5px'}" />
             <a v-if="validUrl" :href="url" target="_blank">{{ rawUrl }}</a>
             <span v-else>{{ rawUrl }}</span>
@@ -78,6 +84,10 @@ const validUrl = computed(() => {
 </template>
 
 <style scoped>
+.hasBottomMargin {
+    margin-bottom: 1em;
+}
+
 .link-input-ctn {
     width: 250px;
     /* height: 100px; */
@@ -92,7 +102,6 @@ const validUrl = computed(() => {
 }
 
 .input-row {
-    margin-bottom: 1em;
     align-content: baseline;
 }
 
