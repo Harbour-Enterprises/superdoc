@@ -6,6 +6,9 @@ import { getExtensionConfigField } from './helpers/getExtensionConfigField.js';
 import { getSchemaTypeByName } from './helpers/getSchemaTypeByName.js'
 import { callOrGet } from './utilities/callOrGet.js';
 
+import { CommentsPlugin } from '@/plugins/comments/comments-plugin.js';
+import { DecorationClick } from '@/plugins/decorationClick/decoration-click.js';
+
 /**
  * ExtensionService is the main class to work with extensions.
  */
@@ -124,7 +127,6 @@ export class ExtensionService {
       const keymapPlugin = keymap(bindingsContainer);
       plugins.push(keymapPlugin);
 
-
       const addPmPlugins = getExtensionConfigField(extension, 'addPmPlugins', context);
       if (addPmPlugins) {
         const pmPlugins = addPmPlugins();
@@ -133,6 +135,11 @@ export class ExtensionService {
 
       return plugins;
     }).flat();
+
+    const commentsPlugin = CommentsPlugin();
+    const decorationClick = DecorationClick(editor);
+    const customPlugins = [commentsPlugin, decorationClick];
+    allPlugins.push(...customPlugins);
 
     return [
       ...allPlugins,

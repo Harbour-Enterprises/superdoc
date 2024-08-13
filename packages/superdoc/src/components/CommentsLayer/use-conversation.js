@@ -11,7 +11,8 @@ export default function useConversation(params) {
   const creatorName = params.creatorName;
   const comments = ref(params.comments ? params.comments.map((c) => useComment(c)) : []);
   const selection = useSelection(params.selection);
-  
+  const suppressHighlight = ref(params.suppressHighlight);
+
   /* Mark done (resolve) conversations */
   const markedDone = ref(params.markedDone || null);
   const markedDoneByEmail = ref(params.markedDoneByEmail || null);
@@ -65,6 +66,7 @@ export default function useConversation(params) {
     isFocused,
     group,
     conversationElement,
+    suppressHighlight,
   }
   return {
     ...exposedData,
