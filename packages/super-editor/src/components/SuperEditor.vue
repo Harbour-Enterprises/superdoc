@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 // import { Editor } from '@core/index.js';
-import { Editor } from './Editor/Editor.js';
+import { Editor } from '@vue-3';
 import { getStarterExtensions } from '@extensions/index.js';
 
 const emit = defineEmits([
