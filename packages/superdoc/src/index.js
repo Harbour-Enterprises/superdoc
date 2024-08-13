@@ -65,6 +65,7 @@ class Superdoc extends EventEmitter {
       if (!(data instanceof File)) throw new Error('[superdoc] Documents in config must be File objects');
   
       const { type: documentType } = data;
+      console.debug('[superdoc] Preprocessing document:', documentType);
       if (!Superdoc.allowedTypes.includes(documentType)) {
         const msg = `[superdoc] Invalid document type: ${documentType}. Allowed types: ${Superdoc.allowedTypes.join(', ')}`;
         throw new Error(msg);
