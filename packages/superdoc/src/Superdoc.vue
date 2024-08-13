@@ -1,4 +1,5 @@
 <script setup>
+import '@common/styles/common-styles.css';
 import { getCurrentInstance, ref, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
 import { storeToRefs } from 'pinia';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
@@ -38,7 +39,7 @@ const {
   getConfig,
   documentsWithConverations,
   pendingComment,
-  floatingCommentsOffset
+  activeComment
 } = storeToRefs(commentsStore);
 const { initialCheck, showAddComment } = commentsStore;
 const { proxy } = getCurrentInstance();
@@ -147,9 +148,9 @@ onBeforeUnmount(() => {
   document.removeEventListener('mousedown', handleDocumentMouseDown);
 });
 
-const receiveDocxComments = (data, doc) => {
-  console.debug('[superdoc] receiveDocxComments', data, doc);
-  data.forEach((c, index) => {
+const onCommentsLoaded = ({ comments }) => {
+  console.debug('[superdoc] onCommentsLoaded', comments);
+  comments.forEach((c) => {
     const convo = useConversation(c);
     const doc = getDocument(c.documentId);
     doc.conversations.push(convo);
@@ -170,10 +171,18 @@ const onFocus = ({ editor }) => {
   proxy.$superdoc.addToolbar(proxy.$superdoc);
 }
 
+const onCommentClicked = ({ conversation }) => {
+  const { conversationId } = conversation;
+  activeComment.value = conversationId;
+}
+
 const editorOptions = {
   onCreate,
-  onFocus
+  onFocus,
+  onCommentsLoaded,
+  onCommentClicked
 }
+
 
 const showToolsFloatingMenu = computed(() => toolsMenuPosition.value && !getConfig.value?.readOnly)
 const showActiveSelection = computed(() => !getConfig?.readOnly && selectionPosition)
@@ -213,7 +222,7 @@ onMounted(() => {
       <CommentsLayer
           class="comments-layer"
           v-if="isReady && 'comments' in modules && layers && isReady"
-          style="z-index: 3; margin-left: -20px;"
+          style="z-index: 3;"
           ref="commentsLayer"
           :parent="layers"
           :user="user"
@@ -234,8 +243,9 @@ onMounted(() => {
               v-if="doc.type === DOCX"
               mode="docx"
               :file-source="doc.data"
-              :document-id="doc.id" 
+              :document-id="doc.id"
               :options="editorOptions" />
+
       </div>
     </div>
   </div>

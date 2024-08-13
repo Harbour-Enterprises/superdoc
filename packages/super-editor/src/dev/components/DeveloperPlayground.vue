@@ -1,5 +1,6 @@
 <script setup>
-import { ref, reactive, watch, onMounted, onUnmounted, computed } from 'vue';
+import '@common/styles/common-styles.css';
+import { ref, reactive, watch, onMounted } from 'vue';
 import BasicUpload from './BasicUpload.vue';
 import BlankDOCX from '@common/data/blank.docx?url';
 import LinkInput from '../../components/toolbar/LinkInput.vue';
@@ -124,11 +125,16 @@ const onCreate = ({ editor }) => {
   Object.assign(editorStyles, editor.converter.getDocumentDefaultStyles());
 }
 
+const onCommentClicked = ({ conversation }) => {
+  console.debug('💬 [Dev] Comment active', conversation);
+};
+
 const editorStyles = reactive({});
 const editorOptions = {
     onCreate,
     onSelectionUpdate,
     onUpdate: setHistoryButtonStateOnUpdate(toolbarItems),
+    onCommentClicked
 }
 const exportDocx = async () => {
   const result = await activeEditor?.exportDocx();
@@ -198,6 +204,9 @@ onMounted(async () => {
 .ProseMirror p {
   margin: 0;
   padding: 0;
+}
+.comment-highlight {
+  background-color: red;
 }
 </style>
 

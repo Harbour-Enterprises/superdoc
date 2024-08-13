@@ -34,6 +34,8 @@ export class Editor extends EventEmitter {
 
   #docx;
 
+  #comments;
+
   options = {
     element: document.createElement('div'),
     content: '',
@@ -55,6 +57,7 @@ export class Editor extends EventEmitter {
     onDestroy: () => null,
     onContentError: ({ error }) => { throw error },
     onCommentsLoaded: () => null,
+    onCommentClicked: () => null
   }
 
   constructor(options) {
@@ -87,6 +90,7 @@ export class Editor extends EventEmitter {
     this.on('blur', this.options.onBlur);
     this.on('destroy', this.options.onDestroy);
     this.on('commentsLoaded', this.options.onCommentsLoaded);
+    this.on('commentClick', this.options.onCommentClicked);
 
     this.#loadComments();
 
@@ -423,12 +427,17 @@ export class Editor extends EventEmitter {
    * Load the document comments.
    */
   #loadComments() {
-    const comments = initComments(
-      this.view, 
+    this.#comments = initComments(
+      this,
       this.converter, 
       this.options.documentId,
     );
-    this.emit('commentsLoaded', { comments });
+
+    this.emit('commentsLoaded', { comments: this.#comments });
+  }
+
+  getComment(id) {
+    return this.#comments.find((c) => c.thread == id);
   }
 
   /**

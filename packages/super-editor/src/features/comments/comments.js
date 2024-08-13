@@ -1,7 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { conversation, comment } from '../../../../superdoc/src/components/CommentsLayer/comment-schemas';
 
-console.debug('Comments:', conversation, comment);
 const commentsFiles = {};
 
 // Comments
@@ -39,10 +38,11 @@ const _getCommentTextFromNode = (c) => {
   }
 }
 
-const parseCommentsForSuperdoc = (comments, documentId) => {
+const parseCommentsForSuperdoc = (comments, documentId, editor) => {
   const conversations = [];
+  const editorElement = editor.options.element
+  const editorBounds = editorElement.getBoundingClientRect();
   comments.forEach((c) => {
-    console.debug('Comment:', c);
 
     // If this is a child comment, append to the parent conversation
     const parentThread = conversations.find((item) => item.thread === c.parentThread);
@@ -62,9 +62,9 @@ const parseCommentsForSuperdoc = (comments, documentId) => {
       page: 1,
       selectionBounds: {
         top: c.start.top,
-        left: c.start.left,
+        left: c.start.left - editorBounds.left,
         bottom: c.end.bottom,
-        right: c.end.right,
+        right: c.end.right - editorBounds.left,
       }
     };
   
@@ -76,6 +76,7 @@ const parseCommentsForSuperdoc = (comments, documentId) => {
       creatorName,
       comments: [comment],
       selection,
+      suppressHighlight: true,
     };
 
     conversations.push(convo);
@@ -83,10 +84,11 @@ const parseCommentsForSuperdoc = (comments, documentId) => {
   return conversations;
 }
 
-const initComments = (editorView, converter, documentId) => {
+const initComments = (editor, converter, documentId) => {
   const comments = [];
 
   // Get the doc state
+  const { view: editorView } = editor;
   const { doc } = editorView.state;
 
   // Initialize refs to comments files
@@ -97,13 +99,11 @@ const initComments = (editorView, converter, documentId) => {
   // Load comments from the schema
   doc.descendants((node, pos) => {
     if (node.type.name === 'commentRangeStart') {
-      console.debug('\n\n COMMENT START NODE:', node, '\n\n');
       if (!('w:id' in node.attrs)) return
       const id = parseInt(node.attrs['w:id']);
       const coords = editorView.coordsAtPos(pos);
       const parentThread = getParentCommentId(id);
       const comment = getComment(id);
-      console.debug('Comment:', comment);
 
       comments.push({
         id,
@@ -112,7 +112,6 @@ const initComments = (editorView, converter, documentId) => {
         comment,
       });
     } else if (node.type.name === 'commentRangeEnd') {
-      console.debug('\n\n COMMENT START NODE:', node, '\n\n');
       if (!('w:id' in node.attrs)) return
       const id = parseInt(node.attrs['w:id']);
       const match = comments.find(item => item.id === id);
@@ -121,7 +120,9 @@ const initComments = (editorView, converter, documentId) => {
     }
   });
 
-  return parseCommentsForSuperdoc(comments, documentId);
+  const parsedComments = parseCommentsForSuperdoc(comments, documentId, editor);
+  console.debug('[comments] Parsed comments:', parsedComments);
+  return parsedComments;
 }
 
 export {

@@ -6,6 +6,7 @@ import { getExtensionConfigField } from './helpers/getExtensionConfigField.js';
 import { getSchemaTypeByName } from './helpers/getSchemaTypeByName.js'
 import { callOrGet } from './utilities/callOrGet.js';
 
+
 /**
  * ExtensionService is the main class to work with extensions.
  */
@@ -124,7 +125,6 @@ export class ExtensionService {
       const keymapPlugin = keymap(bindingsContainer);
       plugins.push(keymapPlugin);
 
-
       const addPmPlugins = getExtensionConfigField(extension, 'addPmPlugins', context);
       if (addPmPlugins) {
         const pmPlugins = addPmPlugins();
@@ -139,7 +139,7 @@ export class ExtensionService {
     ];
   }
 
-  /**
+/**
    * Get all attributes defined in the extensions.
    * @returns Array of attributes.
    */

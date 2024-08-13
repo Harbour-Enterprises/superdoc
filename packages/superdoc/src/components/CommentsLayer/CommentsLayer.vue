@@ -57,7 +57,6 @@ const addCommentEntry = (selection) => {
   const newConvo = useConversation(params);
   activeComment.value = newConvo.conversationId;
 
-
   matchedDocument.conversations.push(newConvo);
   proxy.$superdoc.broadcastComments(COMMENT_EVENTS.NEW, newConvo.getValues());
 }
@@ -76,21 +75,14 @@ const getStyle = (conversation) => {
   }
 }
 
-const setFloatingCommentOffset = (conversation, e) => {
-  const floatingConvo = visibleConversations.value.find((c) => c.id === conversation.conversationId);
-  const convoTop = conversation.selection.getContainerLocation(props.parent).top;
-
-  const parentTop = props.parent.getBoundingClientRect().top;
-  const top = floatingConvo.position.top;
-  const eTop = e.target.getBoundingClientRect().top;
-
-  floatingCommentsOffset.value = conversation.selection.selectionBounds.top; //top - eTop + parentTop;
+const setFloatingCommentOffset = (conversation) => {
+  floatingCommentsOffset.value = conversation.selection.selectionBounds.top;
 }
 
-const handleHighlightClick = (conversation, e) => {
+const activateComment = (conversation) => {
   conversation.isFocused = true;
   activeComment.value = conversation.conversationId;
-  setFloatingCommentOffset(conversation, e);
+  setFloatingCommentOffset(conversation);
   emit('highlight-click', conversation);
 }
 
@@ -100,8 +92,17 @@ const getAllConversations = computed(() => {
   }, []);
 });
 
+const getHighlightClasses = computed(() => (conversation) => {
+  const classes = [];
+  const { conversationId } = conversation;
+  if (activeComment.value === conversationId) classes.push('sd-highlight-active');
+  if (conversation.suppressHighlight) classes.push('bypass');
+  return classes
+})
+
 defineExpose({
-  addCommentEntry
+  addCommentEntry,
+  activateComment
 });
 
 </script>
@@ -110,10 +111,10 @@ defineExpose({
   <div class="comments-container" id="commentsContainer">
     <div class="comments-layer">
       <div
-          :class="{ 'sd-highlight-active': activeComment === conversation.conversationId }"
+          :class="getHighlightClasses(conversation)"
           v-for="conversation in getAllConversations"
           class="comment-anchor sd-highlight"
-          @click="(e) => handleHighlightClick(conversation, e)"
+          @click="(e) => activateComment(conversation, e)"
           :data-id="conversation.conversationId"
           :style="getStyle(conversation)"></div>
     </div>
@@ -133,6 +134,9 @@ defineExpose({
   z-index: 3;
   border-radius: 4px;
   transition: background-color 250ms ease;
+}
+.bypass {
+  display: none;
 }
 .comments-container {
   /* pointer-events: none;  */
