@@ -29,6 +29,11 @@ import { Underline } from './underline/index.js';
 import { Strike } from './strike/index.js';
 import { Link } from './link/index.js';
 
+// Plugins
+import { DecorationClick } from './decoration-click/decoration-click.js';
+import { CommentsPlugin } from './comment/index.js';
+
+
 const getStarterExtensions = () => [
   Bold,
   BulletList,
@@ -57,6 +62,8 @@ const getStarterExtensions = () => [
   TextStyle,
   Underline,
   FormatCommands,
+  DecorationClick,
+  CommentsPlugin
 ];
 
 export {
@@ -86,5 +93,7 @@ export {
   TextStyle,
   LineHeight,
   FormatCommands,
+  DecorationClick,
+  CommentsPlugin,
   getStarterExtensions,
 };

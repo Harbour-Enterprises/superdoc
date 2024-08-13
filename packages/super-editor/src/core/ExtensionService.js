@@ -136,17 +136,12 @@ export class ExtensionService {
       return plugins;
     }).flat();
 
-    const commentsPlugin = CommentsPlugin();
-    const decorationClick = DecorationClick(editor);
-    const customPlugins = [commentsPlugin, decorationClick];
-    allPlugins.push(...customPlugins);
-
     return [
       ...allPlugins,
     ];
   }
 
-  /**
+/**
    * Get all attributes defined in the extensions.
    * @returns Array of attributes.
    */
