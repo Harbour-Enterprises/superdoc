@@ -6,8 +6,6 @@ import { getExtensionConfigField } from './helpers/getExtensionConfigField.js';
 import { getSchemaTypeByName } from './helpers/getSchemaTypeByName.js'
 import { callOrGet } from './utilities/callOrGet.js';
 
-import { CommentsPlugin } from '@/plugins/comments/comments-plugin.js';
-import { DecorationClick } from '@/plugins/decorationClick/decoration-click.js';
 
 /**
  * ExtensionService is the main class to work with extensions.
