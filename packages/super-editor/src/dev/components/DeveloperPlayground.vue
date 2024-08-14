@@ -3,10 +3,9 @@ import '@common/styles/common-styles.css';
 import { ref, reactive, watch, onMounted } from 'vue';
 import BasicUpload from './BasicUpload.vue';
 import BlankDOCX from '@common/data/blank.docx?url';
-import LinkInput from '../../components/toolbar/LinkInput.vue';
-import { makeDefaultItems, setHistoryButtonStateOnUpdate } from '../../components/toolbar/defaultItems.js';
-import { ToolbarItem } from '@/components/toolbar/ToolbarItem';
-
+import { makeDefaultItems, setHistoryButtonStateOnUpdate } from '@components/toolbar/defaultItems.js';
+import EditorInputs from './EditorInputs/EditorInputs.vue';
+import { INPUTS } from '../config/agreement-editor.js';
 
 // Import the component the same you would in your app
 import { SuperEditor, Toolbar } from '@/index';
@@ -150,57 +149,119 @@ const handleToolbarButtonClick = ({item, argument}) => {
   executeItemCommands(item, argument);
 }
 
+/* Inputs pane */
+const inputTiles = INPUTS;
+const draggedInputId = ref(null)
+const activeSigner = ref(null);
+const signersListInfo = ref([
+  {
+    signerindex: 0,
+    signername: "Signer 1",
+    signeremail: "signer1@harbourshare.com",
+    isactive: true,
+    signercolor: "#016c59",
+    iselementvisible: true,
+    signeriseditable: true,
+    sortorder: 0,
+    signerid: "signerid-1723657655732-7x1vne6lq1r",
+    iscreator: false
+  },
+  {
+    signerindex: 1,
+    signername: "Signer 2",
+    signeremail: "signer2@harbourshare.com",
+    isactive: true,
+    signercolor: "#6943d0",
+    iselementvisible: true,
+    signeriseditable: true,
+    sortorder: 1,
+    signerid: "signerid-1723657671736-msk8e5qpd0c",
+    iscreator: false
+  }
+]);
+
+const updateDraggedInputId = (inputId) => {
+  draggedInputId.value = inputId;
+  
+  let inputItem = inputTiles.find((i) => i.id === inputId);
+  let signer = signersListInfo.value.find((i) => i.signerindex === activeSigner.value);
+  console.log({ inputItem, signer });
+};
+
+const updateActiveSigner = (signerIdx) => {
+  activeSigner.value = signerIdx;
+};
+/* Inputs pane */
+
 onMounted(async () => {
   // set document to blank
   currentFile.value = await getFileObject(BlankDOCX);
-})
+});
 </script>
 
 <template>
   <div class="dev-app">
-    <div class="header">
-      <div class="left-side">
-        <div class="title">
-          <h2>Super Editor Dev Area</h2>
-        </div>
+    <div class="dev-app__layout">
 
-        <!--
-            A user using SuperEditor is expected to handle file uplodas and data sources on their own.
-            SuperEditor just expects a URL to a docx file. This basic uploader is here for testing.
-            You can also replace currentFile directly with a URL (ie: sampleDocxUrl).
-        -->
-        <div>
-          Upload docx
-          <BasicUpload @file-change="handleNewFile" />
+      <div class="dev-app__header">
+        <div class="dev-app__header-side dev-app__header-side--left">
+          <div class="dev-app__header-title">
+            <h2>Super Editor Dev Area</h2>
+          </div>
+          <div class="dev-app__header-upload">
+            Upload docx
+            <BasicUpload @file-change="handleNewFile" />
+          </div>
+        </div>
+        <div class="dev-app__header-side dev-app__header-side--right">
+          <button class="dev-app__header-export-btn" @click="exportDocx">Export</button>
         </div>
       </div>
 
-      <div class="right-side">
-        <button @click="exportDocx">Export</button>
+      <div class="dev-app__main">
+        <div class="dev-app__inputs-panel">
+          <div class="dev-app__inputs-panel-content">
+            <EditorInputs
+              v-bind="{ activeSigner, signersListInfo }" 
+              @dragged-input-id-change="updateDraggedInputId"
+              @active-signer-change="updateActiveSigner"
+            />
+          </div>
+        </div>
+
+        <div class="dev-app__view">
+            <div class="dev-app__content" v-if="currentFile">
+              <div class="dev-app__content-container">
+                <Toolbar
+                  v-if="toolbarVisible"
+                  :toolbar-items="toolbarItems"
+                  :editor-instance="activeEditor"
+                  @buttonclick="handleToolbarButtonClick"
+                  @command="handleToolbarCommand" 
+                  ref="toolbar"
+                />
+                <SuperEditor
+                  mode="docx"
+                  documentId="ID-122"
+                  :file-source="currentFile" 
+                  :options="editorOptions" 
+                />
+              </div>
+            </div>
+        </div>
       </div>
+
     </div>
-    <div class="content" v-if="currentFile">
-
-      <div class="content-inner">
-        <Toolbar
-        v-if="toolbarVisible"
-        :toolbar-items="toolbarItems"
-        :editor-instance="activeEditor"
-        @buttonclick="handleToolbarButtonClick"
-        @command="handleToolbarCommand" ref="toolbar" />
-        <!-- SuperEditor expects its data to be a URL --> 
-        <SuperEditor
-            mode="docx"
-            documentId="ID-122"
-            :file-source="currentFile" 
-            :options="editorOptions" />
-      </div>
-
-      </div>
   </div>
 </template>
 
 <style>
+*,
+::before,
+::after {
+  box-sizing: border-box;
+}
+
 .ProseMirror p {
   margin: 0;
   padding: 0;
@@ -212,33 +273,72 @@ onMounted(async () => {
 
 <style scoped>
 .dev-app {
-  display: flex;
-  flex-direction: column;
+  --header-height: 148px;
+
+  width: 100%;
+  height: 100vh;
 }
-.header {
-  background-color: rgb(222, 237, 243);
+
+.dev-app__layout {
+  display: grid;
+  grid-template-rows: var(--header-height) 1fr; /* 1fr */
+  width: 100%;
+  height: 100vh;
+}
+
+.dev-app__header {
   display: flex;
   justify-content: space-between;
+  background-color: rgb(222, 237, 243);
   padding: 20px;
-  margin-bottom: 20px;
 }
-.left-side {
+
+.dev-app__header-side {
   display: flex;
+}
+.dev-app__header-side--left {
   flex-direction: column;
 }
-.right-side {
-  display: flex;
+.dev-app__header-side--right {
   align-items: flex-end;
 }
-.content {
+
+.dev-app__main {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr) 340px;
+  overflow-y: auto;
+}
+
+.dev-app__view {
+  display: flex;
+  padding-top: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  overflow-y: auto;
+}
+
+.dev-app__content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  width: 100%;
 }
 
-.content-inner {
+.dev-app__content-container {
   width: 100%;
   max-width: 8.5in;
+}
+
+.dev-app__inputs-panel {
+  display: grid;
+  height: calc(100vh - var(--header-height));
+  background: #fff;
+  border-right: 1px solid #dbdbdb;
+}
+
+.dev-app__inputs-panel-content {
+  display: grid;
+  overflow-y: auto;
+  scrollbar-width: none;
 }
 </style>
