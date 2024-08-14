@@ -369,17 +369,7 @@ export const makeDefaultItems = () => {
         render: renderAlignmentButtons,
         key: "alignment",
       }
-      // { defaultLabel: "Left", icon: "fa-align-left", key: "left" },
-      // { defaultLabel: "Center", icon: "fa-align-center", key: "center" },
-      // { defaultLabel: "Right", icon: "fa-align-right", key: "right" },
-      // { defaultLabel: "Justify", icon: "fa-align-justify", key: "justify" },
     ],
-    getIcon(self) {
-      return "fa-align-left";
-      // let alignment = self.getAttr(activeEditor, 'textAlign');
-      // if (!alignment) alignment = 'left';
-      // return `fa-align-${alignment}`;
-    },
   });
 
   function renderAlignmentButtons() {
