@@ -2,6 +2,7 @@
 import { keymap } from 'prosemirror-keymap';
 import { Schema } from './Schema.js';
 import { Attribute } from './Attribute.js';
+import { getNodeType } from './helpers/getNodeType.js';
 import { getExtensionConfigField } from './helpers/getExtensionConfigField.js';
 import { getSchemaTypeByName } from './helpers/getSchemaTypeByName.js'
 import { callOrGet } from './utilities/callOrGet.js';
@@ -145,6 +146,47 @@ export class ExtensionService {
    */
   get attributes() {
     return Attribute.getAttributesFromExtensions(this.extensions);
+  }
+
+  /**
+   * Get all node views from the extensions.
+   * @returns An object with all node views.
+   */
+  get nodeViews() {
+    const { editor } = this;
+    const nodeExtensions = this.extensions.filter((e) => e.type === 'node');
+
+    const entries = nodeExtensions
+      .filter((extension) => !!getExtensionConfigField(extension, 'addNodeView'))
+      .map((extension) => {
+        const extensionAttrs = this.attributes.filter((a) => a.type === extension.name);
+        const context = {
+          name: extension.name,
+          options: extension.options,
+          storage: extension.storage,
+          editor,
+          type: getNodeType(extension.name, this.schema),
+        };
+
+        const addNodeView = getExtensionConfigField(extension, 'addNodeView', context);
+        if (!addNodeView) return [];
+
+        const nodeview = (node, view, getPos, decorations) => {
+          const htmlAttributes = Attribute.getAttributesToRender(node, extensionAttrs);
+          return addNodeView()({
+            editor,
+            node,
+            getPos,
+            decorations,
+            htmlAttributes,
+            extension,
+          });
+        };
+
+        return [extension.name, nodeview];
+      });
+
+    return Object.fromEntries(entries);
   }
 
   /**

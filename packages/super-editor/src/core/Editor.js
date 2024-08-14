@@ -331,8 +331,19 @@ export class Editor extends EventEmitter {
 
     this.view.updateState(newState);
 
+    this.createNodeViews();
+
     const dom = this.view.dom;
     dom.editor = this;
+  }
+  
+  /**
+   * Creates all node views.
+   */
+  createNodeViews() {
+    this.view.setProps({
+      nodeViews: this.extensionService.nodeViews,
+    });
   }
 
   /**

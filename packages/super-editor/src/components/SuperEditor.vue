@@ -1,7 +1,6 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-// import { Editor } from '@core/index.js';
-import { Editor } from '@vue-3';
+import { ref, shallowRef, onMounted, onBeforeUnmount } from 'vue';
+import { Editor } from '@vue-3/index.js';
 import { getStarterExtensions } from '@extensions/index.js';
 
 const emit = defineEmits([
@@ -33,13 +32,14 @@ const props = defineProps({
   },
 });
 
+const editor = shallowRef();
 const editorElem = ref(null);
 
 const initEditor = async () => {
   console.debug('[super-editor] Loading file...', props.fileSource);
 
   const content = await Editor.loadXmlData(props.fileSource);
-  const editor = new Editor({
+  editor.value = new Editor({
     element: editorElem.value,
     fileSource: props.fileSource,
     extensions: getStarterExtensions(),
@@ -51,6 +51,11 @@ const initEditor = async () => {
 
 onMounted(() => {
   initEditor();
+});
+
+onBeforeUnmount(() => {
+  editor.value?.destroy();
+  editor.value = null;
 });
 </script>
 
