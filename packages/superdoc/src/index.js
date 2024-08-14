@@ -5,8 +5,8 @@ import { createPinia } from 'pinia'
 
 import { useSuperdocStore } from './stores/superdoc-store';
 import { DOCX, PDF, HTML } from '@common/document-types';
-import clickOutside from '@/helpers/v-click-outside';
-import SuperToolbar from '@/components/SuperToolbar/SuperToolbar.vue';
+import clickOutside from '@common/helpers/v-click-outside';
+import { SuperToolbar } from '../../super-toolbar/super-toolbar';
 import App from './Superdoc.vue'
 import library from '@/helpers/import-icons';
 
@@ -86,33 +86,28 @@ class Superdoc extends EventEmitter {
   onSelectionUpdate({ editor, transaction }) {
     this.activeEditor = editor;
     this.emit('selection-update', { editor, transaction });
+    console.debug('[superdoc] Selection update:', editor, transaction);
   }
 
-  addToolbar(instance) {
+  addToolbar() {
     if (!this.toolbarElement) return;
-
-    if (this.toolbar) {
-      console.debug('[superdoc] Unmounting existing toolbar');
-      this.toolbar.unmount();
-    }
-
     const el = document.getElementById(this.toolbarElement);
     if (!el) return;
-    
-    const app = createApp(SuperToolbar);
-    app.config.globalProperties.$superdoc = instance;
-    app.mount(el);
-    this.toolbar = app;
+
+    const config = {
+      element: el,
+      onToolbarCommand: this.onToolbarCommand.bind(this),
+    }
+    this.toolbar = new SuperToolbar(config);
   }
 
-  onToolbarCommand({ command, argument }) {
+  onToolbarCommand({ item, argument }) {
+    const { command } = item;
     if (!command) return;
 
-    if (command in this.activeEditor.commands) {
-      this.activeEditor.commands[command](argument);
-    } else { 
-      console.error('[superdoc] Command not yet implemented:', command);
-    }
+    console.debug('[superdoc] Toolbar command:', command, argument);
+    if (command in this.activeEditor.commands) this.activeEditor.commands[command](argument);
+    else throw new Error('[superdoc] Command not yet implemented:', command);
   }
 
   saveAll() {

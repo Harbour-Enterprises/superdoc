@@ -489,6 +489,22 @@ export class Editor extends EventEmitter {
     return this.converter.pageStyles;
   }
 
+  getActiveMarks() {
+    const state = this.state;
+    const { from, to } = state.selection;
+    let marks = [];
+    
+    if (from === to) {
+      marks = state.storedMarks || state.selection.$from.marks();
+    } else {
+      state.doc.nodesBetween(from, to, node => {
+        marks = marks.concat(node.marks);
+      });
+    }
+  
+    return marks;
+  };
+
   /**
    * Export the editor document to DOCX.
    */

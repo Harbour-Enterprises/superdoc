@@ -38,9 +38,6 @@ onMounted(()=> {
     padding: 5px;
     border-radius: 5px;
     background-color: #fff;
-    position: absolute;
-    top: 32px;
-    right: 0;
     z-index: 3;
 }
 .option-row {

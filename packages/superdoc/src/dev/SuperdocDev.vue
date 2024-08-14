@@ -71,9 +71,11 @@ onMounted(async () => {
       </div>
 
     </div>
+
+    <div id="toolbar" class="sd-toolbar"></div>
+
     <div class="content" v-if="currentFile">
       <div class="content-inner">
-        <div id="toolbar" class="sd-toolbar"></div>
         <div id="superdoc"></div>
       </div>
     </div>
@@ -86,6 +88,7 @@ onMounted(async () => {
 }
 .sd-toolbar {
   min-width: 800px;
+  width: 100%;
 }
 .superdoc .layers {
   cursor: text;

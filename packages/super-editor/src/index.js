@@ -1,4 +1,5 @@
 import { SuperConverter } from "@core/super-converter/SuperConverter";
+import { makeDefaultItems } from '@/components/toolbar/defaultItems.js';
 import DocxZipper from '@core/DocxZipper';
 import SuperEditor from '@components/SuperEditor.vue';
 import BasicUpload from './dev/components/BasicUpload.vue';
@@ -32,7 +33,10 @@ import {
   faMagnifyingGlassPlus,
   faTextHeight,
   faPalette,
-  faTextSlash
+  faTextSlash,
+  faPaintRoller,
+  faPencilAlt,
+  faCheckSquare,
 } from '@fortawesome/free-solid-svg-icons';
 
 
@@ -64,7 +68,10 @@ library.add(
   faFont,
   faTextHeight,
   faPalette,
-  faTextSlash
+  faTextSlash,
+  faPaintRoller,
+  faPencilAlt,
+  faCheckSquare
 );
 
 /**
@@ -83,5 +90,8 @@ export {
   // Components
   SuperEditor,
   BasicUpload,
-  Toolbar
+  Toolbar,
+
+  // Helpers
+  makeDefaultItems
 }

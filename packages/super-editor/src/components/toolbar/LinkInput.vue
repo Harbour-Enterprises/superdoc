@@ -55,30 +55,17 @@ const validUrl = computed(() => {
 
 <template>
     <div class="link-input-ctn">
-        <!-- text input -->
-        <!-- <div class="input-row">
-            <input type="text" placeholder="Text"
-            v-model="text"
-            @keydown.escape="handleCancel"
-            @keydown.enter="handleSubmit" />
-        </div> -->
         
         <!-- url input -->
-        <div class="input-row" v-if="showInput" :class="{hasBottomMargin: showLink && showInput}">
+        <div class="input-row" v-if="showInput">
             <input type="text" placeholder="Address" 
             :class="{error: urlError}"
             v-model="rawUrl"
             @keydown="urlError = false"/>
-            <span class="submit" @click="handleSubmit">Apply</span>
+            <span class="submit" @click="handleSubmit">
+                <FontAwesomeIcon icon="check-square" />
+            </span>
         </div>
-
-        <!-- link preview -->
-        <div class="input-row" v-if="showLink">
-            <FontAwesomeIcon icon="link" :style="{marginRight: '5px'}" />
-            <a v-if="validUrl" :href="url" target="_blank">{{ rawUrl }}</a>
-            <span v-else>{{ rawUrl }}</span>
-        </div>
-
 
     </div>
 </template>
@@ -90,24 +77,22 @@ const validUrl = computed(() => {
 
 .link-input-ctn {
     width: 250px;
-    /* height: 100px; */
     display: flex;
     flex-direction: column;
     padding: 1em;
     border-radius: 5px;
     background-color: #fff;
-    position: absolute;
-    top: 32px;
-    left: 0;
 }
 
 .input-row {
     align-content: baseline;
+    display: flex;
+    align-items: center;
 }
 
 .input-row input {
-    font-size: 16px;
-    width: 70%;
+    font-size: 14px;
+    flex-grow: 1;
     padding: 5px;
     border-radius: 5px;
     margin-right: 1em;
@@ -121,7 +106,6 @@ const validUrl = computed(() => {
 .error {
     border-color: red !important;
     background-color: #ff00001a;
-
 }
 
 .submit {

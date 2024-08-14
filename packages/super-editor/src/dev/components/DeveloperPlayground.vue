@@ -59,31 +59,26 @@ const closeOpenDropdowns = (currentItem) => {
 
 const handleToolbarCommand = ({ item, argument }) => {
   if (!item) return;
-  closeOpenDropdowns(item);
+  // closeOpenDropdowns(item);
 
-  const { command } = item;
+  console.debug('[Dev] Toolbar command', item, argument);
+  // const { command } = item;
+  // item.preCommand(argument);
 
-  item.preCommand(argument);
+  // const commands = activeEditor.commands;
+  // const commandName = command;
+  // if (commandName in commands) {
+  //   console.log('Executing command:', commandName);
 
-  const commands = activeEditor?.commands;
-    if (!commands) {
-    console.error('No commands');
-    return;
-  }
-  
-  const commandName = command;
-  if (commandName in commands) {
-    console.log('Executing command:', commandName);
+  //   const command = commandsMap[commandName] 
+  //     ? commandsMap[commandName] 
+  //     : activeEditor.commands[commandName];
 
-    const command = commandsMap[commandName] 
-      ? commandsMap[commandName] 
-      : activeEditor.commands[commandName];
-
-    command(argument);
-    activeEditor.view.focus();
-  } else {
-    console.log('Command not found:', commandName);
-  }
+  //   command(argument);
+  //   activeEditor.view.focus();
+  // } else {
+  //   console.log('Command not found:', commandName);
+  // }
 };
 
 const onSelectionUpdate = ({ editor, transaction }) => {
@@ -228,6 +223,9 @@ onMounted(async () => {
             />
           </div>
         </div>
+
+    <Toolbar v-if="toolbarVisible" @command="handleToolbarCommand" ref="toolbar" />
+
 
         <div class="dev-app__view">
             <div class="dev-app__content" v-if="currentFile">

@@ -21,6 +21,7 @@ export class ToolbarItem {
 
         this.type = options.type
         this.name = options.name
+        this.group = options.group || 'center'
 
         // nested options
         this.options = []
@@ -53,6 +54,7 @@ export class ToolbarItem {
 
         // behavior
         this.defaultLabel = null
+        this.label = null;
         this.hideLabel = false
         this.disabled = false
         this.inlineTextInputVisible = false
@@ -73,48 +75,60 @@ export class ToolbarItem {
             'getActiveLabel',
             'getIconColor',
             'getActiveState',
-            'getIcon'
+            'getIcon',
+            'activate'
         ];
 
-        // set default handlers
-        handlers.forEach(handler => this[handler] = this[`_${handler}`]);
+        // // set default handlers
+        // handlers.forEach(handler => this[handler] = this[`_${handler}`]);
 
-        // set custom properties
-        Object.keys(options).forEach(key => {
-            if (!this.hasOwnProperty(key)) throw new Error('Invalid toolbar item property - ' + key);
-            // set custom handlers
-            if (handlers.includes(key)) {
-                if (typeof options[key] !== 'function') throw new Error('Invalid toolbar item handler - ' + key);
-                this[key] = function(...args){
-                    this[`_${key}`](...args)
-                    return options[key](this, ...args) // callback
-                }
-                return;
-            }
-            this[key] = options[key]
-        });
+        // // set custom properties
+        // Object.keys(options).forEach(key => {
+        //     if (!this.hasOwnProperty(key)) throw new Error('Invalid toolbar item property - ' + key);
+        //     // set custom handlers
+        //     if (handlers.includes(key)) {
+        //         if (typeof options[key] !== 'function') throw new Error('Invalid toolbar item handler - ' + key);
+
+        //         console.debug('\n\n HANDLER', this, key, '\n\n')
+        //         this[key] = function(...args){
+        //             this[`_${key}`](...args)
+        //             return options[key](this, ...args) // callback
+        //         }
+        //         return;
+        //     }
+        //     this[key] = options[key]
+        // });
     }
 
     constructor(options = {}) {
         this.init(options)
     }
 
+    activate() {
+        console.debug('activate', this);
+    }
+
     // handlers
     _getActiveState(editorInstance = null) {
+        return true;
         if (!editorInstance) throw new Error('Editor instance is required to get active state');
         return editorInstance.isActive(this.name)
     }
-    _getAttr(editorInstance, attr) {
-        if (!editorInstance) throw new Error('Editor instance is required to get attribute '+attr);
-        if (!this.markName || !attr) return null;
-        return editorInstance.getAttributes(this.markName)[attr];
+    _getAttr() {
+        return 'ok'
+        // if (!editorInstance) throw new Error('Editor instance is required to get attribute '+attr);
+        // if (!this.markName || !attr) return null;
+        // return editorInstance.getAttributes(this.markName)[attr];
     }
-    _getActiveLabel(editorInstance = null) {
-        return this._getAttr(editorInstance, this.labelAttr) || null;
+    _getActiveLabel() {
+        console.debug('getActiveLabel', this);
+        return this._getAttr() || null;
     }
     _getIconColor(editorInstance = null) {
+        return '#ff0000';
         return this._getAttr(editorInstance, 'color') || null;
     }
+
     _getIcon() {
         return this.icon || null;
     }

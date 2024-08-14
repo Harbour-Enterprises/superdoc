@@ -168,7 +168,7 @@ const onCreate = ({ editor }) => {
 
 const onFocus = ({ editor }) => {
   proxy.$superdoc.activeEditor = editor;
-  proxy.$superdoc.addToolbar(proxy.$superdoc);
+  console.debug('[Superdoc] Editor focused', editor);
 }
 
 const onCommentClicked = ({ conversation }) => {
@@ -176,13 +176,28 @@ const onCommentClicked = ({ conversation }) => {
   activeComment.value = conversationId;
 }
 
+const onSelectionUpdate = ({ editor, transaction }) => {
+  const marks = editor.getActiveMarks();
+  const parsedMarks = marks.map((mark) => {
+    const { attrs, type } = mark;
+    const { name } = type;
+    return {
+      name,
+      attrs,
+    }
+  })
+
+  proxy.$superdoc.onSelectionUpdate({ editor, transaction })
+  proxy.$superdoc.toolbar.updateState(parsedMarks)
+}
+
 const editorOptions = {
   onCreate,
   onFocus,
+  onSelectionUpdate,
   onCommentsLoaded,
-  onCommentClicked
+  onCommentClicked,
 }
-
 
 const showToolsFloatingMenu = computed(() => toolsMenuPosition.value && !getConfig.value?.readOnly)
 const showActiveSelection = computed(() => !getConfig?.readOnly && selectionPosition)
@@ -239,12 +254,12 @@ onMounted(() => {
             @ready="handlePdfReady" 
             @page-loaded="handlePageReady" />
 
-          <SuperEditor
-              v-if="doc.type === DOCX"
-              mode="docx"
-              :file-source="doc.data"
-              :document-id="doc.id"
-              :options="editorOptions" />
+        <SuperEditor
+            v-if="doc.type === DOCX"
+            mode="docx"
+            :file-source="doc.data"
+            :document-id="doc.id"
+            :options="editorOptions" />
 
       </div>
     </div>
