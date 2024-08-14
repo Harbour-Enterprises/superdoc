@@ -31,36 +31,30 @@ function useDebouncedRef(value) {
  * https://github.com/ueberdosis/tiptap/blob/develop/packages/vue-3/src/Editor.ts
  */
 export class Editor extends CoreEditor {
-  #reactiveState;
+  reactiveState;
 
-  #reactiveExtensionStorage;
+  reactiveExtensionStorage;
 
   constructor(options = {}) {
     super(options);
 
-    this.on('create', () => {
-      this.#reactiveState = useDebouncedRef(this.view.state);
-      this.#reactiveExtensionStorage = useDebouncedRef(this.extensionStorage);
-    });
+    this.reactiveState = useDebouncedRef(this.view.state);
+    this.reactiveExtensionStorage = useDebouncedRef(this.extensionStorage);
 
     this.on('transaction', () => {
-      if (this.#reactiveState) {
-        this.#reactiveState.value = this.view.state;
-      }
-      if (this.#reactiveExtensionStorage) {
-        this.#reactiveExtensionStorage.value = this.extensionStorage;
-      }
+      this.reactiveState.value = this.view.state;
+      this.reactiveExtensionStorage.value = this.extensionStorage;
     });
 
     return markRaw(this);
   }
 
   get state() {
-    return this.#reactiveState ? this.#reactiveState.value : this.view.state;
+    return this.reactiveState ? this.reactiveState.value : this.view.state;
   }
 
   get storage() {
-    return this.#reactiveExtensionStorage ? this.#reactiveExtensionStorage.value : super.storage;
+    return this.reactiveExtensionStorage ? this.reactiveExtensionStorage.value : super.storage;
   }
 
   /**
@@ -68,7 +62,7 @@ export class Editor extends CoreEditor {
    */
   registerPlugin(plugin, handlePlugins) {
     super.registerPlugin(plugin, handlePlugins);
-    this.#reactiveState.value = this.view.state;
+    this.reactiveState.value = this.view.state;
   }
 
   /**

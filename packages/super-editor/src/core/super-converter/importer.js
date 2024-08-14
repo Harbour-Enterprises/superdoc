@@ -17,6 +17,7 @@ export class DocxImporter {
 
   getSchema() {
     const json = JSON.parse(JSON.stringify(this.converter.initialJSON));
+    if (!json) return null;
 
     console.debug('\n\n JSON', json,)
     const result = {
