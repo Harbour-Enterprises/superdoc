@@ -23,7 +23,7 @@ export const OrderedList = Node.create({
     return {
       order: {
         default: 1,
-        parseHTML: (element) => {
+        parseDOM: (element) => {
           return element.hasAttribute('start')
             ? parseInt(element.getAttribute('start') || '', 10)
             : 1;
