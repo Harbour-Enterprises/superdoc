@@ -24,6 +24,7 @@ export const useToolbarItem = (options) => {
   const command = options.command;
   const icon = ref(options.icon);
   const group = ref(options.group || 'center');
+  const attributes = ref(options.attributes || {});
 
   const disabled = ref(options.disabled);
   const active = ref(false);
@@ -61,7 +62,6 @@ export const useToolbarItem = (options) => {
   const markName = ref(options.markName);
   const labelAttr = ref(options.labelAttr);
 
-  const expand = ref(false);
   const nestedOptions = ref([]);
   if (options.options) {
     if (!Array.isArray(options.options)) throw new Error('Invalid toolbar item options - ' + options.options);
@@ -70,7 +70,7 @@ export const useToolbarItem = (options) => {
 
   // Activation & Deactivation
   const textStyles = ['fontFamily', 'fontSize', 'color'];
-  const attributes = ['textAlign']
+  const textAttributes = ['textAlign']
 
   const updateState = (marks) => {
     const itemMarkName = name.value;
@@ -80,17 +80,22 @@ export const useToolbarItem = (options) => {
     if (isTextStyle) markName = 'textStyle';
     const activeMark = marks.find(mark => mark.name === markName);
 
-
     if (activeMark) {
-
       const { attrs } = activeMark || {};
-      const attrValue = attrs[itemMarkName];
 
-      const isAttribute = attributes.includes(itemMarkName);
+      let attrValue = attrs[itemMarkName];
+      if (itemMarkName === 'link') { 
+        attrValue = attrs['href'];
+        if (!attrValue) return _setActive(false);
+      }
+
+      const isAttribute = textAttributes.includes(itemMarkName);
       if (isTextStyle || isAttribute) {
         return onActivate(attrValue)
-      } else return _setActive(true);
-    }
+      } else {
+        return _setActive(true, attrValue);
+      }
+  }
 
     // Deactivated by default
     _setActive(false);
@@ -122,10 +127,10 @@ export const useToolbarItem = (options) => {
     icon,
     tooltip,
     group,
+    attributes,
     disabled,
     active,
     nestedOptions,
-    expand,
 
     style,
     isNarrow,

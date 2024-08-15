@@ -30,14 +30,14 @@ export const Color = Extension.create({
   addCommands() {
     return {
       setColor: (color) => ({ chain }) => {
-        if (!color) return false;
+        if (!color) return;
         return chain()
-          .setMark('textStyle', { color })
+          .setMark('textStyle', { 'color': color })
           .run();
       },
       unsetColor: () => ({ chain }) => {
         return chain()
-          .setMark('textStyle', { color: null })
+          .setMark('textStyle', { 'color': null })
           .removeEmptyTextStyle()
           .run();
       },

@@ -92,6 +92,7 @@ const handleInputSubmit = () => {
               type="text"
               class="button-text-input"
               :id="'inlineTextInput-' + name" 
+              autoccomplete="off"
               ref="inlineInput" />
         </span>
 
@@ -110,12 +111,12 @@ const handleInputSubmit = () => {
   position: relative;
   z-index: 100;
   margin: 0 1px;
-  min-width: 35px;
+  min-width: 30px;
 }
 
 .toolbar-button {
-  padding: 0 4px;
-  height: 32px;
+  padding: 0;
+  height: 30px;
   border-radius: 6px;
   margin-top: 3.5px;
   margin-bottom: 4px;
@@ -132,7 +133,7 @@ const handleInputSubmit = () => {
 }
 
 .toolbar-button:hover {
-  background-color: #d8dee5;
+  background-color: #DBDBDB;
 }
 .toolbar-button:active,
 .active {

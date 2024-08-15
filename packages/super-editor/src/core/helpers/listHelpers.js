@@ -8,7 +8,6 @@ export function generateDocxListAttributes(listType) {
     orderedList: 2,
   }
 
-  console.debug('[generateDocxListAttributes] Generating list attributes for:', listType, listTypesMap[listType]);
   return {
     attributes: {
       "parentAttributes": {

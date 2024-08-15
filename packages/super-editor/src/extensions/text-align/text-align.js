@@ -7,7 +7,6 @@ export const TextAlign = Extension.create({
     return {
       types: ['heading', 'paragraph'],
       alignments: ['left', 'center', 'right', 'justify'],
-      defaultAlignment: 'left',
     }
   },
 

@@ -3,10 +3,6 @@ import { ref, getCurrentInstance, reactive } from 'vue';
 import ButtonGroup from './ButtonGroup.vue';
 
 const { proxy } = getCurrentInstance();
-const inlineMenuMouseX = ref(0);
-const inlineMenuMouseY = ref(0);
-const linkInputItem = ref(null);
-
 const emit = defineEmits([
   'command',
   'toggle',
@@ -24,14 +20,6 @@ const handleCommand = ({ item, argument }) => {
 
 <template>
   <div class="toolbar">
-  
-    <!-- inline link input -->
-    <!-- <LinkInput
-        v-if="linkInputItem"
-        :show-input="false"
-        :show-link="true"
-        :style="{top: inlineMenuMouseY+'px', left: inlineMenuMouseX+'px', zIndex: 3}"
-        :initial-url="linkInputItem.url" /> -->
 
     <ButtonGroup :toolbar-items="leftItems" position="left" @command="handleCommand" />
     <ButtonGroup :toolbar-items="centerItems" position="center" @command="handleCommand" />

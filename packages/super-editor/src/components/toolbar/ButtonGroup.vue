@@ -3,9 +3,6 @@ import { computed, ref } from 'vue';
 import ToolbarButton from './ToolbarButton.vue';
 import ToolbarSeparator from './ToolbarSeparator.vue';
 import { NDropdown, NTooltip } from 'naive-ui';
-import DropdownOptions from './DropdownOptions.vue';
-import IconGrid from './IconGrid.vue';
-import LinkInput from './LinkInput.vue';
 
 const emit = defineEmits([
   'command',
@@ -48,11 +45,6 @@ const getPositionStyle = computed(() => {
 
 const isButton = (item) => item.type === 'button';
 const isSeparator = (item) => item.type === 'separator';
-const isDropdown = (item) => item.type === 'dropdown';
-const isToggle = (item) => item.type === 'toggle';
-const isColorPicker = (item) => item.type === 'colorpicker';
-const hasIcon = (item) => item.icon !== null;
-
 const handleToolbarButtonClick = (item, argument = null) => {
   currentItem.value = item;
   if (item.disabled.value) return;
@@ -61,11 +53,26 @@ const handleToolbarButtonClick = (item, argument = null) => {
 
 const handleToolbarButtonTextSubmit = (item, argument) => {
   if (item.disabled.value) return;
+  currentItem.value = null;
   emit('command', { item, argument });
 }
 
 const handleSelect = (item, argument) => {
+  console.debug('Selected', item, argument);
+  currentItem.value = null;
   emit('command', { item, argument });
+}
+
+const showDropdown = computed(() => (item) => {
+  if (currentItem.value?.name === item.name.value) {
+    return true
+  }
+  return false;
+})
+
+const handleClickOutside = (e) => {
+  currentItem.value = null;
+  console.debug('Clicked outside');
 }
 </script>
 
@@ -95,7 +102,8 @@ const handleSelect = (item, argument) => {
           size="medium"
           placement="bottom-start"
           class="toolbar-button"
-          @select="handleSelect(item, $event)">
+          @select="handleSelect(item, $event)"
+          @clickoutside="handleClickOutside">
             <n-tooltip trigger="hover">
               <template #trigger>
                 <ToolbarButton
@@ -122,56 +130,6 @@ const handleSelect = (item, argument) => {
           <span v-if="item.disabled.value">(disabled)</span>
         </div>
       </n-tooltip>
-
-          <!-- font dropdown -->
-          <!-- <DropdownOptions
-            v-if="showOptions(item)"
-            :command="item.childItem.command"
-            @optionEnter="(optionIndex) => handleDropdownOptionMouseEnter(item.childItem, optionIndex)"
-            @optionLeave="(optionIndex) => handleDropdownOptionMouseLeave(item.childItem, optionIndex)"
-            @optionClick="(option) => handleToolbarButtonClick(item, option)"
-            :options="item.childItem.nestedOptions.value"/> -->
-
-          <!-- zoom dropdown -->
-          <!-- <DropdownOptions
-            v-if="showOptions(item)"
-            :command="item.childItem.command"
-            @optionClick="(option) => handleToolbarButtonClick(item.childItem, option)"
-            :options="item.childItem.nestedOptions.value"/> -->
-          
-          <!-- font size dropdown -->
-          <!-- <DropdownOptions
-            v-if="showOptions(item)"
-            v-click-outside="(e) => handleClickOutside(e, item)"
-            :command="item.childItem.command"
-            @optionClick="(option) => handleToolbarButtonClick(item.childItem, option)"
-            :options="item.nestedOptions.value" /> -->
-
-          <!-- color picker  -->
-          <!-- <IconGrid
-            v-if="showOptions(item.childItem, 'colorOptions')"
-            :icons="item.childItem.options"
-            @select="(color) => handleToolbarButtonClick(item, color)"/> -->
-
-          <!-- alignment options  -->
-          <!-- <IconGrid
-          v-if="showOptions(item.childItem, 'alignmentOptions')"
-          :icons="item.childItem.options"
-          @select="(alignment) => handleToolbarButtonClick(item.childItem, alignment)"/> -->
-
-          <!-- link input -->
-          <!-- <LinkInput v-if="showOptions(item.childItem, 'linkInput')"
-          :initial-url="item.getAttr(editorInstance, 'href')"
-          @submit="(anchor) => handleToolbarButtonClick(item.childItem, anchor)" /> -->
-
-          <!-- overflow options  -->
-          <!-- <IconGrid
-          v-if="showOptions(item.childItem, 'overflowOptions')"
-          :icons="overflowIconGrid"
-          @select="(alignment) => handleToolbarButtonClick(item.childItem, alignment)"/> -->
-      <!-- </ToolbarButton> -->
-
-      <!-- toolbar options -->
     </div>
   </div>
 </template>

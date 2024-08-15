@@ -1,5 +1,6 @@
 import { SuperConverter } from "@core/super-converter/SuperConverter";
 import { makeDefaultItems } from '@/components/toolbar/defaultItems.js';
+import { getMarksFromSelection, getActiveFormatting } from '@/core/helpers/getMarksFromSelection.js';
 import DocxZipper from '@core/DocxZipper';
 import SuperEditor from '@components/SuperEditor.vue';
 import BasicUpload from './dev/components/BasicUpload.vue';
@@ -37,6 +38,7 @@ import {
   faPaintRoller,
   faPencilAlt,
   faCheckSquare,
+  faCheck,
 } from '@fortawesome/free-solid-svg-icons';
 
 
@@ -71,7 +73,8 @@ library.add(
   faTextSlash,
   faPaintRoller,
   faPencilAlt,
-  faCheckSquare
+  faCheckSquare,
+  faCheck,
 );
 
 /**
@@ -93,5 +96,7 @@ export {
   Toolbar,
 
   // Helpers
-  makeDefaultItems
+  makeDefaultItems,
+  getMarksFromSelection,
+  getActiveFormatting
 }

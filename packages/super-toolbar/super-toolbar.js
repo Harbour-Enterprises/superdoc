@@ -41,6 +41,11 @@ export class SuperToolbar extends EventEmitter {
     });
   }
 
+  updateToolbarHistory(history = {}) {
+    this.undoDepth = history.undoDepth;
+    this.redoDepth = history.redoDepth;
+  }
+
   emitCommand({ item, argument }) {
     console.debug('[super-toolbar] Command:', item.command, item, argument);
     this.config.onToolbarCommand({ item, argument });

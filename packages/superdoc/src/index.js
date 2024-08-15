@@ -5,8 +5,9 @@ import { createPinia } from 'pinia'
 
 import { useSuperdocStore } from './stores/superdoc-store';
 import { DOCX, PDF, HTML } from '@common/document-types';
-import clickOutside from '@common/helpers/v-click-outside';
 import { SuperToolbar } from '../../super-toolbar/super-toolbar';
+import { getActiveFormatting } from 'super-editor';
+import clickOutside from '@common/helpers/v-click-outside';
 import App from './Superdoc.vue'
 import library from '@/helpers/import-icons';
 
@@ -83,10 +84,10 @@ class Superdoc extends EventEmitter {
     this.emit('comments-update', type, data);
   }
 
-  onSelectionUpdate({ editor, transaction }) {
+  onSelectionUpdate({ editor, transaction, history }) {
     this.activeEditor = editor;
+    this.toolbar.updateToolbarHistory(history);
     this.emit('selection-update', { editor, transaction });
-    console.debug('[superdoc] Selection update:', editor, transaction);
   }
 
   addToolbar() {
@@ -126,9 +127,7 @@ class Superdoc extends EventEmitter {
     if (command in this.activeEditor.commands) this.activeEditor.commands[command](argument);
     else if (command in customCommands) customCommands[command]({ item, argument });
 
-    const activeMarks = this.activeEditor.commands.getActiveMarks();
-    const toolbarMarks = activeMarks.map((mark) => ({ name: mark.type.name, attrs: mark.attrs }));
-    this.toolbar.updateToolbarState(toolbarMarks);
+    this.toolbar.updateToolbarState(getActiveFormatting(this.activeEditor));
   }
 
   #handleNonEditorCommand({ item, argument }) {
@@ -147,11 +146,6 @@ class Superdoc extends EventEmitter {
   }
 
   destroy() {
-    if (this.toolbar) {
-      console.debug('[superdoc] Unmounting toolbar');
-      this.toolbar.unmount();
-    }
-
     if (this.app) {
       console.debug('[superdoc] Unmounting app');
       this.app.unmount();

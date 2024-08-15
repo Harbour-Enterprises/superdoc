@@ -1,7 +1,7 @@
 import { undoDepth, redoDepth } from "prosemirror-history";
 import { ToolbarItem } from "./ToolbarItem-old";
 import { sanitizeNumber } from "./helpers";
-import { computed, h, onDeactivated } from "vue";
+import { computed, h, onActivated, onDeactivated } from "vue";
 import { useToolbarItem } from "./use-toolbar-item";
 import IconGrid from "./IconGrid.vue";
 import AlignmentButtons from "./AlignmentButtons.vue";
@@ -36,21 +36,33 @@ export const makeDefaultItems = (superToolbar) => {
         label: "Georgia",
         key: "Georgia, serif",
         fontWeight: 400,
+        props: {
+          style: { fontFamily: "Georgia, serif" },
+        }
       },
       {
         label: "Arial",
         key: "Arial, sans-serif",
         fontWeight: 400,
+        props: {
+          style: { fontFamily: "Arial, sans-serif" },
+        }
       },
       {
         label: "Courier New",
         key: "Courier New, monospace",
         fontWeight: 400,
+        props: {
+          style: { fontFamily: "Courier New, monospace" },
+        }
       },
       {
         label: "Times New Roman",
         key: "Times New Roman, serif",
         fontWeight: 400,
+        props: {
+          style: { fontFamily: "Times New Roman, serif" },
+        }
       },
     ],
     onActivate: (fontFamily) => {
@@ -94,7 +106,7 @@ export const makeDefaultItems = (superToolbar) => {
       { label: "96", key: "96pt" },
     ],
     onActivate: (size) => {
-      if (!size) return;
+      if (!size) return fontSize.label.value = fontSize.defaultLabel.value;
 
       let sanitizedValue = sanitizeNumber(size, 12);
       if (sanitizedValue < 8) sanitizedValue = 8;
@@ -153,7 +165,9 @@ export const makeDefaultItems = (superToolbar) => {
         render: () => renderColorOptions(colorButton),
       },
     ],
-    onActivate: (color) => colorButton.iconColor.value = color,
+    onActivate: (color) => {
+      colorButton.iconColor.value = color;
+    },
     onDeactivate: () => colorButton.iconColor.value = '#000',
   });
 
@@ -261,6 +275,7 @@ export const makeDefaultItems = (superToolbar) => {
     return h('div', {}, [
       h(IconGrid, {
         icons,
+        activeColor: colorButton.iconColor,
         onSelect: handleSelect,
       })
     ]);
@@ -271,12 +286,6 @@ export const makeDefaultItems = (superToolbar) => {
     type: "button",
     name: "link",
     markName: "link",
-    command: "toggleLink",
-    // preCommand(self) {
-    //     const marks = getMarksFromSelection(activeEditor.view.state);
-    //     const mark = marks.find(mark => mark.type.name === 'link') || null;
-    //     if (mark) self.childItem.active = false;
-    // },
     icon: "fa-link",
     active: false,
     tooltip: "Link",
@@ -284,17 +293,25 @@ export const makeDefaultItems = (superToolbar) => {
       {
         type: 'render',
         key: 'linkDropdown',
-        render: renderLinkDropdown,
-        props: {
-          test: 'hello'
-        }
+        render: () => renderLinkDropdown(link),
       }
-    ]
+    ],
   });
 
-  function renderLinkDropdown() {
+  function renderLinkDropdown(link) {
+    const handleSubmit = ({ href, text }) => {
+      link.attributes.value.link = { href };
+      const itemWithCommand = { ...link, command: "toggleLink", };
+      superToolbar.emitCommand({ item: itemWithCommand, argument: { href, text: "test" } });
+
+      if (!href) link.active.value = false
+    };
+
     return h('div', {}, [
-      h(LinkInput, { })
+      h(LinkInput, {
+        onSubmit: handleSubmit,
+        initialUrl: link.attributes.value?.link?.href
+      })
     ]);
   }
 
@@ -333,7 +350,9 @@ export const makeDefaultItems = (superToolbar) => {
         type: "render",
         render: () => {
           const handleSelect = (e) => {
-            superToolbar.emitCommand({ item: alignment, argument: e });
+            const buttonWithCommand = { ...alignment, command: "setTextAlign" };
+            buttonWithCommand.command = "setTextAlign";
+            superToolbar.emitCommand({ item: buttonWithCommand, argument: e });
             setAlignmentIcon(alignment, e);
           };
         
@@ -348,6 +367,7 @@ export const makeDefaultItems = (superToolbar) => {
     ],
     onActivate: (value) => {
       setAlignmentIcon(alignment, value);
+      console.debug('Alignment activated:', value);
     },
     onDeactivate: () => {
       setAlignmentIcon(alignment, 'left');
@@ -408,7 +428,6 @@ export const makeDefaultItems = (superToolbar) => {
     command: "toggleOverflow",
     icon: "fa-ellipsis-vertical",
     active: false,
-    tooltip: "More options",
     disabled: true,
   });
 
@@ -453,13 +472,16 @@ export const makeDefaultItems = (superToolbar) => {
   // undo
   const undo = useToolbarItem({
     type: "button",
-    disabled: true,
     name: "undo",
     disabled: true,
     tooltip: "Undo",
     command: "undo",
     icon: "fa-solid fa-rotate-left",
     group: "left",
+    onDeactivate: () => {
+      if (superToolbar.undoDepth <= 0) undo.disabled.value = true;
+      else undo.disabled.value = false;
+    }
   });
 
   // redo
@@ -472,6 +494,10 @@ export const makeDefaultItems = (superToolbar) => {
     command: "redo",
     icon: "fa fa-rotate-right",
     group: "left",
+    onDeactivate: () => {
+      if (superToolbar.redoDepth <= 0) redo.disabled.value = true;
+      else redo.disabled.value = false;
+    }
   });
 
   // search
@@ -561,15 +587,15 @@ export const makeDefaultItems = (superToolbar) => {
     });
 
     overflowItems = items;
-    console.log("Overflow items", overflowItems);
   };
 
-  const formatPainter = useToolbarItem({
+  const copyFormat = useToolbarItem({
     type: "button",
-    name: "formatPainter",
+    name: "copyFormat",
     tooltip: "Format painter",
     icon: "fa-solid fa-paint-roller",
     command: "copyFormat",
+    active: false,
   });
 
   const documentMode = useToolbarItem({
@@ -617,7 +643,7 @@ export const makeDefaultItems = (superToolbar) => {
     indentLeft,
     indentRight,
     separator,
-    formatPainter,
+    copyFormat,
     clearFormatting,
     overflow,
     documentMode,
@@ -642,9 +668,7 @@ export const makeDefaultItems = (superToolbar) => {
   return toolbarItems;
 };
 
-export const setHistoryButtonStateOnUpdate =
-  (toolbarItemsRef) =>
-  ({ editor, transaction }) => {
+export const setHistoryButtonStateOnUpdate = (toolbarItemsRef) => ({ editor, transaction }) => {
     // console.debug('[SuperEditor dev] Document updated', editor);
     // activeEditor = editor;
 
