@@ -68,21 +68,41 @@ export const useToolbarItem = (options) => {
     nestedOptions.value.push(...options.options);
   }
 
+  // Activation & Deactivation
+  const textStyles = ['fontFamily', 'fontSize', 'color'];
+  const attributes = ['textAlign']
+
   const updateState = (marks) => {
-    console.debug('[super-toolbar] Updating state:', marks);
-    const activeMark = marks.find(mark => mark.name === name.value);
+    const itemMarkName = name.value;
+    let markName = itemMarkName;
 
-    if (!activeMark) return _deactivate();
-    _activate(activeMark);
+    const isTextStyle = textStyles.includes(itemMarkName);
+    if (isTextStyle) markName = 'textStyle';
+    const activeMark = marks.find(mark => mark.name === markName);
+
+
+    if (activeMark) {
+
+      const { attrs } = activeMark || {};
+      const attrValue = attrs[itemMarkName];
+
+      const isAttribute = attributes.includes(itemMarkName);
+      if (isTextStyle || isAttribute) {
+        return onActivate(attrValue)
+      } else return _setActive(true);
+    }
+
+    // Deactivated by default
+    _setActive(false);
   }
 
-  const _deactivate = () => {
-    active.value = false
-  }
-  const _activate = (activeMark) => {
-    const { attrs } = activeMark || {};
-    console.debug('[super-toolbar] Active mark:', attrs);
-    active.value = true;
+  // User can override this behavior
+  const onActivate = options.onActivate || (() => null);
+  const onDeactivate = options.onDeactivate || (() => null);
+
+  const _setActive = (state, attributeValue = null) => {
+    active.value = state;
+    state ? onActivate(attributeValue) : onDeactivate();
   }
 
   const unref = () => {
@@ -136,5 +156,7 @@ export const useToolbarItem = (options) => {
     ...refs,
     updateState,
     unref,
+    onActivate,
+    onDeactivate,
   };
 }

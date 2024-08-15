@@ -16,7 +16,7 @@ export class SuperToolbar extends EventEmitter {
     super();
     this.config = { ...this.config, ...config };
 
-    this.#makeToolbarItems();
+    this.#makeToolbarItems(this);
 
     const el = this.config.element;
     this.app = createApp(Toolbar);
@@ -25,8 +25,8 @@ export class SuperToolbar extends EventEmitter {
     this.toolbar = this.app.mount(el);
   }
 
-  #makeToolbarItems() {
-    const defaultItems = makeDefaultItems();
+  #makeToolbarItems(superToolbar) {
+    const defaultItems = makeDefaultItems(superToolbar);
     this.toolbarItems = defaultItems;
     console.debug('[super-toolbar] Toolbar items:', this.toolbarItems);
   }
@@ -35,47 +35,14 @@ export class SuperToolbar extends EventEmitter {
    * Update the toolbar state. Expects a list of marks in the form: { name, attrs }
    * @param {Object} marks
    */
-  updateState(marks) {
-    console.debug('[super-toolbar] Updating state:', marks);
-
-    const textStyles = ['fontFamily', 'fontSize', 'color'];
-    
+  updateToolbarState(marks) {
     this.toolbarItems.forEach((item) => {
-      let markName = item.name.value;
-      console.debug('--- item name', item.name)
-      if (textStyles.includes(item.name)) markName = 'textStyle';
-
-      const activeMark = marks.find(mark => mark.name === markName);
-      const { attrs } = activeMark || {};
-
-      // let value;
-      // if (attrs) {
-      //   console.debug('[super-toolbar] Active mark:', attrs[item.name]);
-      //   value = attrs[item.name];
-      // }
-
       item.updateState(marks);
-      // if (activeMark) {
-      //   console.debug('[super-toolbar] Active mark:', activeMark);
-      //   item.active.value = true;
-      //   item
-      //   // if (value) item.label = value;
-
-      //   // if (!!item.activate && typeof item.activate === 'function') {
-      //   //   item.activate();
-      //   // }
-      // } else {
-      //   item.active.value = false;
-      //   // item.label = item.defaultLabel;
-      // }
     });
-
-    console.debug('[super-toolbar] Updated state:', this.toolbarItems);
   }
 
-  emitCommand(params) {
-    // this.emit('command', params);
-    console.debug('[super-toolbar] Command:', params, this.config.onToolbarCommand);
-    this.config.onToolbarCommand(params);
+  emitCommand({ item, argument }) {
+    console.debug('[super-toolbar] Command:', item.command, item, argument);
+    this.config.onToolbarCommand({ item, argument });
   }
 }

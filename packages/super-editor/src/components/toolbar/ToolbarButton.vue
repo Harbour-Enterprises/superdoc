@@ -47,7 +47,7 @@ const {
 } = props.toolbarItem;
 
 
-const inlineTextInput = ref('');
+const inlineTextInput = ref(props.label);
 const inlineInput = ref(null);
 
 const handleClick = () => {
@@ -60,6 +60,7 @@ const handleClick = () => {
 
 const handleInputSubmit = () => {
   emit('textSubmit', inlineTextInput.value);
+  inlineTextInput.value = '';
 }
 
 </script>

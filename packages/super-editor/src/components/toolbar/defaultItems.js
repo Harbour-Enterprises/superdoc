@@ -1,13 +1,13 @@
 import { undoDepth, redoDepth } from "prosemirror-history";
 import { ToolbarItem } from "./ToolbarItem-old";
 import { sanitizeNumber } from "./helpers";
-import { computed, h } from "vue";
+import { computed, h, onDeactivated } from "vue";
 import { useToolbarItem } from "./use-toolbar-item";
 import IconGrid from "./IconGrid.vue";
 import AlignmentButtons from "./AlignmentButtons.vue";
 import LinkInput from "./LinkInput.vue";
 
-export const makeDefaultItems = () => {
+export const makeDefaultItems = (superToolbar) => {
   // bold
   const bold = useToolbarItem({
     type: "button",
@@ -53,41 +53,12 @@ export const makeDefaultItems = () => {
         fontWeight: 400,
       },
     ],
+    onActivate: (fontFamily) => {
+      if (!fontFamily) return;
+      fontButton.label.value = fontFamily;
+    },
+    onDeactivate: () => fontButton.iconColor.value = fontButton.defaultLabel.value,
   });
-
-  const fontOptions = useToolbarItem({
-    type: "options",
-    name: "fontFamilyDropdown",
-    options: [
-      {
-        label: "Georgia",
-        fontName: "Georgia, serif",
-        fontWeight: 400,
-      },
-      {
-        label: "Arial",
-        fontName: "Arial, sans-serif",
-        fontWeight: 400,
-      },
-      {
-        label: "Courier New",
-        fontName: "Courier New, monospace",
-        fontWeight: 400,
-        active: false,
-        // options: [
-        //   { label: 'Regular', fontWeight: 400 },
-        //   { label: 'Bold', fontWeight: 700 },
-        // ],
-      },
-      {
-        label: "Times New Roman",
-        fontName: "Times New Roman, serif",
-        fontWeight: 400,
-      },
-    ],
-  });
-  fontButton.childItem = fontOptions;
-  fontOptions.parentItem = fontButton;
 
   // font size
   const fontSize = useToolbarItem({
@@ -122,39 +93,18 @@ export const makeDefaultItems = () => {
       { label: "72", key: "72pt" },
       { label: "96", key: "96pt" },
     ],
-    // preCommand(self) {
-    //   self.inlineTextInputVisible = self.inlineTextInputVisible ? false : true;
-    //   setTimeout(() => {
-    //     const input = document.querySelector("#inlineTextInput-fontSize");
-    //     if (input) input.focus();
-    //   });
-    // },
-    // getActiveLabel(self) {
-    //     let label = self._getActiveLabel(activeEditor) || self.defaultLabel;
-    //     let sanitizedValue = sanitizeNumber(label, 12);
-    //     if (sanitizedValue < 8) sanitizedValue = 8;
-    //     if (sanitizedValue > 96) sanitizedValue = 96;
+    onActivate: (size) => {
+      if (!size) return;
 
-    //     // no units
-    //     label = String(sanitizedValue);
+      let sanitizedValue = sanitizeNumber(size, 12);
+      if (sanitizedValue < 8) sanitizedValue = 8;
+      if (sanitizedValue > 96) sanitizedValue = 96;
 
-    //     return label;
-    // }
-  });
-
-  const fontSizeOptions = useToolbarItem({
-    type: "options",
-    name: "fontSizeDropdown",
-    command: "setFontSize",
-    preCommand(self, argument) {
-      self.parentItem.inlineTextInputVisible = false;
-
-      const { label } = argument;
-      self.parentItem.label = label;
+      // no units
+      fontSize.label.value = String(sanitizedValue);
     },
+    onDeactivate: () => fontSize.label.value = fontSize.defaultLabel.value,
   });
-  fontSize.childItem = fontSizeOptions;
-  fontSizeOptions.parentItem = fontSize;
 
   // separator
   const separator = useToolbarItem({
@@ -200,9 +150,11 @@ export const makeDefaultItems = () => {
       {
         key: "color",
         type: "render",
-        render: renderColorOptions,
+        render: () => renderColorOptions(colorButton),
       },
-    ]
+    ],
+    onActivate: (color) => colorButton.iconColor.value = color,
+    onDeactivate: () => colorButton.iconColor.value = '#000',
   });
 
   const makeColorOption = (color, label = null) => {
@@ -220,17 +172,17 @@ export const makeDefaultItems = () => {
   };
   const icons = [
     [
-      makeColorOption("#111", "Black"),
-      makeColorOption("#333", "Darker Grey"),
-      makeColorOption("##5C5C5C", "Dark Grey"),
-      makeColorOption("#858585", "Grey"),
-      makeColorOption("#ADADAD", "Light Grey"),
-      makeColorOption("#D6D6D6", "Lighter Grey"),
-      makeColorOption("#FFF", "White"),
+      makeColorOption("#111111"),
+      makeColorOption("#333333"),
+      makeColorOption("##5C5C5C"),
+      makeColorOption("#858585"),
+      makeColorOption("#ADADAD"),
+      makeColorOption("#D6D6D6"),
+      makeColorOption("#FFFFFF"),
     ],
 
     [
-      makeColorOption("#860028", "Dark Red"),
+      makeColorOption("#860028"),
       makeColorOption("#D2003F"),
       makeColorOption("#DB3365"),
       makeColorOption("#E4668C"),
@@ -298,12 +250,21 @@ export const makeDefaultItems = () => {
       makeColorOption("#DFCDF2"),
       makeColorOption("#A91DFF"),
     ],
-  ]
-  function renderColorOptions() {
+  ];
+
+  function renderColorOptions(colorButton) {
+    const handleSelect = (e) => {
+      colorButton.iconColor.value = e;
+      superToolbar.emitCommand({ item: colorButton, argument: e });
+    };
+  
     return h('div', {}, [
-      h(IconGrid, { icons })
+      h(IconGrid, {
+        icons,
+        onSelect: handleSelect,
+      })
     ]);
-  };
+  }
 
   // link
   const link = useToolbarItem({
@@ -324,6 +285,9 @@ export const makeDefaultItems = () => {
         type: 'render',
         key: 'linkDropdown',
         render: renderLinkDropdown,
+        props: {
+          test: 'hello'
+        }
       }
     ]
   });
@@ -360,37 +324,40 @@ export const makeDefaultItems = () => {
     name: "textAlign",
     tooltip: "Alignment",
     icon: "fa-align-left",
+    command: "setTextAlign",
     hasCaret: true,
     markName: "textAlign",
     labelAttr: "textAlign",
     options: [
       {
         type: "render",
-        render: renderAlignmentButtons,
+        render: () => {
+          const handleSelect = (e) => {
+            superToolbar.emitCommand({ item: alignment, argument: e });
+            setAlignmentIcon(alignment, e);
+          };
+        
+          return h('div', {}, [
+            h(AlignmentButtons, {
+              onSelect: handleSelect,
+            })
+          ]);
+        },
         key: "alignment",
       }
     ],
+    onActivate: (value) => {
+      setAlignmentIcon(alignment, value);
+    },
+    onDeactivate: () => {
+      setAlignmentIcon(alignment, 'left');
+    }
   });
 
-  function renderAlignmentButtons() {
-    return h('div', {}, [
-      h(AlignmentButtons, { })
-    ]);
-  };
-
-  const alignmentOptions = useToolbarItem({
-    type: "options",
-    name: "alignmentOptions",
-    command: "setTextAlign",
-    options: [
-      [
-        { defaultLabel: "Left", icon: "fa-align-left", key: "left" },
-        { defaultLabel: "Center", icon: "fa-align-center", key: "center" },
-        { defaultLabel: "Right", icon: "fa-align-right", key: "right" },
-        { defaultLabel: "Justify", icon: "fa-align-justify", key: "justify" },
-      ],
-    ],
-  });
+  const setAlignmentIcon = (alignment, e) => {
+    let alignValue = e === 'both' ? 'justify' : e;
+    alignment.icon.value = `fa-align-${alignValue}`;
+  }
 
   // bullet list
   const bulletedList = useToolbarItem({
@@ -462,13 +429,11 @@ export const makeDefaultItems = () => {
     defaultLabel: "100%",
     label: "100%",
     hasCaret: true,
+    command: "setZoom",
     isWide: true,
     style: { width: "100px" },
     inlineTextInputVisible: false,
     hasInlineTextInput: true,
-    // getActiveLabel(self) {
-    //     return self.label || self.defaultLabel;
-    // },
     options: [
       { label: "50%", key: 0.5 },
       { label: "75%", key: 0.75 },
@@ -478,53 +443,12 @@ export const makeDefaultItems = () => {
       { label: "150%", key: 1.5 },
       { label: "200%", key: 2 },
     ],
-    // preCommand(self, argument) {
-    //   clearTimeout(self.tooltipTimeout);
-    //   self.inlineTextInputVisible = self.inlineTextInputVisible ? false : true;
-    //   setTimeout(() => {
-    //     const input = document.querySelector("#inlineTextInput-zoom");
-    //     if (input) input.focus();
-    //   });
-
-    //   // from text input
-    //   if (!argument) return;
-
-    //   const editor = document.querySelector(".super-editor");
-    //   const value = argument;
-    //   let sanitizedValue = sanitizeNumber(value, 100);
-    //   if (sanitizedValue < 0) sanitizedValue = 10;
-    //   if (sanitizedValue > 200) sanitizedValue = 200;
-
-    //   const label = String(sanitizedValue) + "%";
-    //   self.label = label;
-    //   editor.style.zoom = sanitizedValue / 100;
-
-    //   return sanitizedValue;
-    // },
-  });
-
-  const zoomOptions = useToolbarItem({
-    type: "options",
-    name: "zoomDropdown",
-    preCommand(self, argument) {
-      self.parentItem.active = false;
-      self.parentItem.inlineTextInputVisible = false;
-
-      const editor = document.querySelector(".super-editor");
-      const { value, label } = argument;
-      self.parentItem.label = label;
-      editor.style.zoom = value;
+    onActivate: (value) => {
+      if (!value) return;
+      zoom.label.value = String(value * 100) + "%";
     },
-    options: [
-      { label: "50%", value: 0.5 },
-      { label: "75%", value: 0.75 },
-      { label: "90%", value: 0.9 },
-      { label: "100%", value: 1 },
-      { label: "125%", value: 1.25 },
-      { label: "150%", value: 1.5 },
-      { label: "200%", value: 2 },
-    ],
   });
+
 
   // undo
   const undo = useToolbarItem({
@@ -565,8 +489,6 @@ export const makeDefaultItems = () => {
     name: "searchDropdown",
     command: "search",
   });
-  search.childItem = searchOptions;
-  searchOptions.parentItem = search;
 
   const clearFormatting = useToolbarItem({
     type: "button",
@@ -671,13 +593,7 @@ export const makeDefaultItems = () => {
     ],
   });
 
-  const overflowIconGrid = computed(() => [
-    overflowItems.map((item) => ({
-      defaultLabel: item.name,
-      icon: item.overflowIcon || null,
-      value: "test",
-    })),
-  ]);
+
   const toolbarItems = [
     undo,
     redo,

@@ -1,15 +1,16 @@
 <script setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
+const emit = defineEmits(['select'])
 </script>
 
 <template>
   <div class="alignment-buttons">
 
-    <div class="button-icon"><font-awesome-icon icon="align-left" /></div>
-    <div class="button-icon"><font-awesome-icon icon="align-center" /></div>
-    <div class="button-icon"><font-awesome-icon icon="align-right" /></div>
-    <div class="button-icon"><font-awesome-icon icon="align-justify" /></div>
+    <div class="button-icon" @click="emit('select', 'left')"><font-awesome-icon icon="align-left" /></div>
+    <div class="button-icon" @click="emit('select', 'center')"><font-awesome-icon icon="align-center" /></div>
+    <div class="button-icon" @click="emit('select', 'right')"><font-awesome-icon icon="align-right" /></div>
+    <div class="button-icon" @click="emit('select', 'justify')"><font-awesome-icon icon="align-justify" /></div>
 
   </div>
 </template>

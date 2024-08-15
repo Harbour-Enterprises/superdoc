@@ -53,30 +53,19 @@ const isToggle = (item) => item.type === 'toggle';
 const isColorPicker = (item) => item.type === 'colorpicker';
 const hasIcon = (item) => item.icon !== null;
 
-const showOptions = computed(() => (item) => {
-  const name = currentItem.value?.name;
-  if (!name) return false;
-
-  return item?.name?.value === name;
-});
-
 const handleToolbarButtonClick = (item, argument = null) => {
   currentItem.value = item;
   if (item.disabled.value) return;
-
-  if (item.type === 'dropdown') {
-    item.expand.value = true;
-  }
   emit('command', { item, argument });
 }
 
 const handleToolbarButtonTextSubmit = (item, argument) => {
-  if (item.disabled) return;
-  emit('command', {item, argument});
+  if (item.disabled.value) return;
+  emit('command', { item, argument });
 }
 
 const handleSelect = (item, argument) => {
-  console.debug('command', item, argument);
+  emit('command', { item, argument });
 }
 </script>
 
@@ -111,7 +100,7 @@ const handleSelect = (item, argument) => {
               <template #trigger>
                 <ToolbarButton
                   :toolbar-item="item"
-                  @textSubmit="(argument) => handleToolbarButtonTextSubmit(item, argument)"
+                  @textSubmit="handleToolbarButtonTextSubmit(item, $event)"
                   @buttonClick="handleToolbarButtonClick(item)" />
               </template>
               <div v-if="item.tooltip">
@@ -125,7 +114,7 @@ const handleSelect = (item, argument) => {
         <template #trigger>
           <ToolbarButton
             :toolbar-item="item"
-            @textSubmit="(argument) => handleToolbarButtonTextSubmit(item, argument)"
+            @textSubmit="handleToolbarButtonTextSubmit(item, $event)"
             @buttonClick="handleToolbarButtonClick(item)" />
         </template>
         <div v-if="item.tooltip">

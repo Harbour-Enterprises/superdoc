@@ -11,13 +11,6 @@ const handleToolbarCommand = ({ item, argument }) => {
   proxy.$superdoc.onToolbarCommand({ item, argument });
 }
 
-const onTextSelectionChange = (marks, selectionText = null, coords = null) => {
-  console.log("Text selection change", marks, selectionText)
-  // const mark = marks.find(mark => mark.type.name === 'link') || null;
-  // handleSelectionChange({mark, coords});
-  // emit('select', {mark, coords})
-}
-
 defineExpose({
   innerToolbar
 });
@@ -26,7 +19,6 @@ defineExpose({
 <template>
   <div ref="toolbar">
     <Toolbar class="toolbar" @command="handleToolbarCommand" ref="innerToolbar" />
-
   </div>
 </template>
 

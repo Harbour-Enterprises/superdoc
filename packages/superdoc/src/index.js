@@ -101,13 +101,40 @@ class Superdoc extends EventEmitter {
     this.toolbar = new SuperToolbar(config);
   }
 
-  onToolbarCommand({ item, argument }) {
-    const { command } = item;
-    if (!command) return;
+  getCustomCommands() {
+    return {
+      setZoom: ({ item, argument }) => {
+        if (!argument) return;
+        console.debug('[superdoc] Setting zoom:', argument);
+        item.onActivate(argument);
 
-    console.debug('[superdoc] Toolbar command:', command, argument);
+        const layers = document.querySelector('.layers')
+        layers.style.zoom = argument;
+      }
+    }    
+  }
+
+  onToolbarCommand({ item, argument }) {
+    if (!item) return;
+
+    const { command } = item;
+
+    // If no active editor, attempt to handle non-editor commands
+    if (!this.activeEditor) return this.#handleNonEditorCommand({ item, argument });
+
+    const customCommands = this.getCustomCommands();
     if (command in this.activeEditor.commands) this.activeEditor.commands[command](argument);
-    else throw new Error('[superdoc] Command not yet implemented:', command);
+    else if (command in customCommands) customCommands[command]({ item, argument });
+
+    const activeMarks = this.activeEditor.commands.getActiveMarks();
+    const toolbarMarks = activeMarks.map((mark) => ({ name: mark.type.name, attrs: mark.attrs }));
+    this.toolbar.updateToolbarState(toolbarMarks);
+  }
+
+  #handleNonEditorCommand({ item, argument }) {
+    console.debug('[superdoc] Non-editor command:', item, argument);
+    const customCommands = this.getCustomCommands();
+    if (item.command in customCommands) customCommands[item.command]({ item, argument });
   }
 
   saveAll() {

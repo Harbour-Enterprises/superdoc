@@ -176,19 +176,12 @@ const onCommentClicked = ({ conversation }) => {
   activeComment.value = conversationId;
 }
 
-const onSelectionUpdate = ({ editor, transaction }) => {
-  const marks = editor.getActiveMarks();
-  const parsedMarks = marks.map((mark) => {
-    const { attrs, type } = mark;
-    const { name } = type;
-    return {
-      name,
-      attrs,
-    }
-  })
 
+const onSelectionUpdate = ({ editor, transaction }) => {
+  console.debug('[Superdoc] Selection update', editor, transaction);
+  const parsedMarks = editor.commands.getActiveFormatting();
   proxy.$superdoc.onSelectionUpdate({ editor, transaction })
-  proxy.$superdoc.toolbar.updateState(parsedMarks)
+  proxy.$superdoc.toolbar.updateToolbarState(parsedMarks)
 }
 
 const editorOptions = {

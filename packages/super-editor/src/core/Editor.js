@@ -34,6 +34,10 @@ export class Editor extends EventEmitter {
 
   #comments;
 
+  // I am guessing this isn't the place to put this - doing it for now to get it to work
+  // TODO: Double check with Artem to figure out where one would store temp info like this
+  storedStyle;
+
   options = {
     element: document.createElement('div'),
     content: '', // XML content
@@ -488,22 +492,6 @@ export class Editor extends EventEmitter {
   getPageStyles() {
     return this.converter.pageStyles;
   }
-
-  getActiveMarks() {
-    const state = this.state;
-    const { from, to } = state.selection;
-    let marks = [];
-    
-    if (from === to) {
-      marks = state.storedMarks || state.selection.$from.marks();
-    } else {
-      state.doc.nodesBetween(from, to, node => {
-        marks = marks.concat(node.marks);
-      });
-    }
-  
-    return marks;
-  };
 
   /**
    * Export the editor document to DOCX.
