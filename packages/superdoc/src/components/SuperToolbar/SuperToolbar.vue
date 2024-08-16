@@ -2,21 +2,23 @@
 import 'super-editor/style.css';
 import { getCurrentInstance, ref, onMounted } from 'vue';
 import { Toolbar } from 'super-editor';
-import { watch } from 'vue';
 
 const { proxy } = getCurrentInstance();
 const toolbar = ref(null);
+const innerToolbar = ref(null);
 
-const handleToolbarCommand = (command) => {
-  console.debug('[SuperToolbar] Toolbar command', command);
-  proxy.$superdoc.onToolbarCommand(command);
+const handleToolbarCommand = ({ item, argument }) => {
+  proxy.$superdoc.onToolbarCommand({ item, argument });
 }
 
+defineExpose({
+  innerToolbar
+});
 </script>
 
 <template>
   <div ref="toolbar">
-    <Toolbar class="toolbar" :editorInstance="$superdoc.activeEditor" @command="handleToolbarCommand" />
+    <Toolbar class="toolbar" @command="handleToolbarCommand" ref="innerToolbar" />
   </div>
 </template>
 

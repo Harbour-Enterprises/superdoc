@@ -1,5 +1,4 @@
 <script setup>
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 const emit = defineEmits(['command']);
 const props = defineProps({
@@ -12,7 +11,6 @@ const props = defineProps({
 
 <template>
   <div class="toolbar-separator">
-    <!-- <FontAwesomeIcon :icon="'fa fa-grip-lines-vertical'" /> -->
     <div class="separator-inner"></div>
   </div>
 </template>

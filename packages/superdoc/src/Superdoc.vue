@@ -2,7 +2,6 @@
 import '@common/styles/common-styles.css';
 import { getCurrentInstance, ref, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
 import { storeToRefs } from 'pinia';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 
 import PdfViewer from './components/PdfViewer/PdfViewer.vue';
 import CommentsLayer from './components/CommentsLayer/CommentsLayer.vue';
@@ -164,7 +163,7 @@ onBeforeUnmount(() => {
 });
 
 const onCommentsLoaded = ({ comments }) => {
-  console.debug('[superdoc] onCommentsLoaded', comments);
+  proxy.$superdoc.log('[superdoc] onCommentsLoaded', comments);
   comments.forEach((c) => {
     const convo = useConversation(c);
     const doc = getDocument(c.documentId);
@@ -177,13 +176,12 @@ const onCreate = ({ editor }) => {
   proxy.$superdoc.activeEditor = editor;
   proxy.$superdoc.broadcastLoaded();
 
-  console.debug('[Superdoc] Editor created', proxy.$superdoc.activeEditor);
-  console.debug('[Superdoc] Page styles (pixels)', editor.getPageStyles());
+  proxy.$superdoc.log('[Superdoc] Editor created', proxy.$superdoc.activeEditor);
+  proxy.$superdoc.log('[Superdoc] Page styles (pixels)', editor.getPageStyles());
 }
 
 const onFocus = ({ editor }) => {
-  proxy.$superdoc.activeEditor = editor;
-  proxy.$superdoc.addToolbar(proxy.$superdoc);
+  proxy.$superdoc.setActiveEditor(editor);
 }
 
 const onCommentClicked = ({ conversation }) => {
@@ -195,9 +193,8 @@ const editorOptions = {
   onCreate,
   onFocus,
   onCommentsLoaded,
-  onCommentClicked
+  onCommentClicked,
 }
-
 
 const showToolsFloatingMenu = computed(() => toolsMenuPosition.value && !getConfig.value?.readOnly)
 const showActiveSelection = computed(() => !getConfig?.readOnly && selectionPosition)
@@ -214,9 +211,8 @@ onMounted(() => {
 
     <!-- Floating tools menu (shows up when user has text selection)-->
     <div  v-if="showToolsFloatingMenu" class="tools" :style="toolsMenuPosition">
-      <FontAwesomeIcon
-          class="tool-icon"
-          icon="fa-comment"
+      <i
+          class="fal fa-comment fa-tool-icon"
           data-id="is-tool"
           @click.stop.prevent="handleToolClick('comments')" />
     </div>
@@ -255,12 +251,12 @@ onMounted(() => {
             @ready="handlePdfReady" 
             @page-loaded="handlePageReady" />
 
-          <SuperEditor
-              v-if="doc.type === DOCX"
-              mode="docx"
-              :file-source="doc.data"
-              :document-id="doc.id"
-              :options="editorOptions" />
+        <SuperEditor
+            v-if="doc.type === DOCX"
+            mode="docx"
+            :file-source="doc.data"
+            :document-id="doc.id"
+            :options="editorOptions" />
 
           <!-- omitting field props -->
           <HtmlViewer

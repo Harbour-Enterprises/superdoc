@@ -1,62 +1,85 @@
 <script setup>
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { onMounted } from 'vue'
+import { onMounted, computed } from "vue";
 
-const emit = defineEmits(['select']);
+const emit = defineEmits(["select", "clickoutside"]);
 const props = defineProps({
-    icons: {
-        type: Array,
-        required: true,
-    },
+  icons: {
+    type: Array,
+    required: true,
+  },
+  activeColor: {
+    type: Object,
+    required: false,
+  }
 });
 
-onMounted(()=> {
-        const isMatrix = props.icons.every(row => Array.isArray(row))
-        if (!isMatrix) throw new Error('icon props must be 2d array')
-    }
-);
+const handleClick = (option) => {
+  emit('select', option.value);
+}
 
+const isActive = computed(() => (option) => {
+  if (!props.activeColor.value) return false;
+  return props.activeColor.value === option.value;
+});
+
+const getCheckStyle = (color, optionIndex) => {
+  const lightColors = ['#FFFFFF', '#FAFF09']
+  if (optionIndex === 5 || lightColors.includes(color)) return { color: '#000' };
+  return { color: '#FFF' };
+}
+
+onMounted(() => {
+  const isMatrix = props.icons.every((row) => Array.isArray(row));
+  if (!isMatrix) throw new Error("icon props must be 2d array");
+});
 </script>
 
 <template>
-
-    <div class="option-grid-ctn">
-        <div class="option-row" v-for="(row, rowIndex) in icons" :key="rowIndex">
-            <div class="option" v-for="(option, optionIndex) in row"
-            :key="optionIndex"
-            @click.stop.prevent="emit('select', option.value)">
-                <FontAwesomeIcon :icon="option.icon" :style="option.style"/>
-            </div>
-        </div>
+  <div class="option-grid-ctn">
+    <div class="option-row" v-for="(row, rowIndex) in icons" :key="rowIndex">
+      <div
+        class="option"
+        v-for="(option, optionIndex) in row"
+        :key="optionIndex"
+        @click.stop.prevent="handleClick(option)"
+      >
+        <i :class="option.icon" :style="option.style"></i>
+        <i
+            class="fas fa-check active-check"
+            :style="getCheckStyle(option.value, optionIndex)"
+            v-if="isActive(option)"></i>
+      </div>
     </div>
+  </div>
 </template>
 
 <style scoped>
 .option-grid-ctn {
-    display: flex;
-    flex-direction: column;
-    padding: 5px;
-    border-radius: 5px;
-    background-color: #fff;
-    position: absolute;
-    top: 32px;
-    right: 0;
-    z-index: 3;
+  display: flex;
+  flex-direction: column;
+  padding: 5px;
+  border-radius: 5px;
+  background-color: #fff;
+  z-index: 3;
 }
 .option-row {
-    display: flex;
-    flex-direction: row;
+  display: flex;
+  flex-direction: row;
 }
 .option {
-    width: 20px;
-    height: 20px;
-    margin: 2px;
-    cursor: pointer;
-    padding: 1px;
-    text-align: center;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
 .option:hover {
-    background-color: #ddd;
+  background-color: #DBDBDB;
+}
+.active-check {
+  position: absolute;
 }
 </style>

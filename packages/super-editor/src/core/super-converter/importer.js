@@ -323,9 +323,9 @@ export class DocxImporter {
     const pPr = elements?.find(el => el.name === 'w:pPr')
     if (!pPr) return false;
 
-    const paragraphStyle = pPr.elements.find(el => el.name === 'w:pStyle');
+    const paragraphStyle = pPr.elements?.find(el => el.name === 'w:pStyle');
     const isList = paragraphStyle?.attributes['w:val'] === 'ListParagraph';
-    const hasNumPr = pPr.elements.find(el => el.name === 'w:numPr');
+    const hasNumPr = pPr.elements?.find(el => el.name === 'w:numPr');
     return isList || hasNumPr;
   }
 
