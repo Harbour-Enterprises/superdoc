@@ -1,14 +1,14 @@
 import './style.css';
+import '@common/icons/icons.css';
 import EventEmitter from 'eventemitter3'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
 import { useSuperdocStore } from './stores/superdoc-store';
 import { DOCX, PDF, HTML } from '@common/document-types';
-import clickOutside from '@/helpers/v-click-outside';
-import SuperToolbar from '@/components/SuperToolbar/SuperToolbar.vue';
+import { SuperToolbar } from '../../super-toolbar/super-toolbar';
+import clickOutside from '@common/helpers/v-click-outside';
 import App from './Superdoc.vue'
-import library from '@/helpers/import-icons';
 
 import BlankDOCX from '@common/data/blank.docx?url';
 
@@ -34,7 +34,7 @@ class Superdoc extends EventEmitter {
     super();
 
     config.documents = this.#preprocessDocuments(config.documents);
-    console.debug('[superdoc] Initializing:', config);
+    this.log('Initializing:', config);
 
     const { app, pinia, superdocStore } = createMyApp(this);
     this.app = app;
@@ -80,59 +80,44 @@ class Superdoc extends EventEmitter {
   }
 
   broadcastComments(type, data) {
-    console.debug('[comments] Broadcasting:', type, data);
+    this.log('[comments] Broadcasting:', type, data);
     this.emit('comments-update', type, data);
   }
 
-  onSelectionUpdate({ editor, transaction }) {
+  log(...args) {
+    console.debug('🦋 🦸‍♀️ [superdoc]', ...args);
+  }
+
+  setActiveEditor(editor) {
     this.activeEditor = editor;
-    this.emit('selection-update', { editor, transaction });
+    if (this.toolbar) this.toolbar.setActiveEditor(editor);
   }
 
-  addToolbar(instance) {
+  addToolbar() {
     if (!this.toolbarElement) return;
-
-    if (this.toolbar) {
-      console.debug('[superdoc] Unmounting existing toolbar');
-      this.toolbar.unmount();
+    const config = {
+      element: this.toolbarElement,
+      onToolbarCommand: this.onToolbarCommand.bind(this),
     }
-
-    const el = document.getElementById(this.toolbarElement);
-    if (!el) return;
-    
-    const app = createApp(SuperToolbar);
-    app.config.globalProperties.$superdoc = instance;
-    app.mount(el);
-    this.toolbar = app;
+    this.toolbar = new SuperToolbar(config);
   }
 
-  onToolbarCommand({ command, argument }) {
-    if (!command) return;
-
-    if (command in this.activeEditor.commands) {
-      this.activeEditor.commands[command](argument);
-    } else { 
-      console.error('[superdoc] Command not yet implemented:', command);
-    }
+  onToolbarCommand({ item, argument }) {
+    this.log('Toolbar command:', item, argument);
   }
 
-  saveAll() {
-    console.debug('[superdoc] Saving all');
-    const documents = this.superdocStore.documents;
-    documents.forEach((doc) => {
-      console.debug('[superdoc] Saving:', doc.id, doc.core);
-      doc.core.save();
-    })
-  }
+  // saveAll() {
+  //   this.log('[superdoc] Saving all');
+  //   const documents = this.superdocStore.documents;
+  //   documents.forEach((doc) => {
+  //     this.log('[superdoc] Saving:', doc.id, doc.core);
+  //     doc.core.save();
+  //   })
+  // }
 
   destroy() {
-    if (this.toolbar) {
-      console.debug('[superdoc] Unmounting toolbar');
-      this.toolbar.unmount();
-    }
-
     if (this.app) {
-      console.debug('[superdoc] Unmounting app');
+      this.log('[superdoc] Unmounting app');
       this.app.unmount();
     }
 

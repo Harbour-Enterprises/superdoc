@@ -34,6 +34,10 @@ export class Editor extends EventEmitter {
 
   #comments;
 
+  // I am guessing this isn't the place to put this - doing it for now to get it to work
+  // TODO: Double check with Artem to figure out where one would store temp info like this
+  storedStyle;
+
   options = {
     element: document.createElement('div'),
     content: '', // XML content
@@ -83,7 +87,7 @@ export class Editor extends EventEmitter {
     this.on('update', this.options.onUpdate);
     this.on('selectionUpdate', this.options.onSelectionUpdate);
     this.on('transaction', this.options.onTransaction);
-    this.on('focus', this.options.onFocus);
+    this.on('focus', this.#onFocus);
     this.on('blur', this.options.onBlur);
     this.on('destroy', this.options.onDestroy);
     this.on('commentsLoaded', this.options.onCommentsLoaded);
@@ -95,6 +99,15 @@ export class Editor extends EventEmitter {
       if (this.isDestroyed) return;
       this.emit('create', { editor: this });
     }, 0);
+  }
+
+  #onFocus({ editor, event }) {
+    this.toolbar?.setActiveEditor(editor);
+    this.options.onFocus({ editor, event });
+  }
+
+  setToolbar(toolbar) {
+    this.toolbar = toolbar;
   }
 
   /**

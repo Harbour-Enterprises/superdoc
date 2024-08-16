@@ -1,5 +1,4 @@
 <script setup>
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { computed } from 'vue';
 
 const props = defineProps({
@@ -17,39 +16,28 @@ const props = defineProps({
   },
 });
 
-const colorStyle = computed(() => {
-  if (props.name === 'color') return {
-    borderBottomColor: props.color
-  };
-  return { color: props.color };
+const getBarColor = computed(() => {
+  if (props.name === 'color') return { backgroundColor: props.color || '#111111' };
 });
 
 </script>
 
 <template>
-  <div :class="['toolbar-button-icon', name]"  :style="colorStyle">
-    <font-awesome-icon :icon="icon"/>
+  <div class="toolbar-icon">
+    <i :class="icon" v-if="props.name !== 'color'"></i>
+    <i :class="icon" size="xs" v-else class="font-icon"></i>
+    
+    <div class="color-bar" v-if="props.name === 'color'" :style="getBarColor"></div>
   </div>
 </template>
 
 <style scoped>
-.toolbar-button {
-  height: 32px;
-  padding-left: 12px;
-  padding-right: 12px;
-  border-radius: 6px;
-  margin-top: 3.5px;
-  margin-bottom: 4px;
-  text-overflow: ellipsis;
-  overflow-y: visible;
+.toolbar-icon {
   display: flex;
   align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #47484a;
-  transition: all 0.2s ease-out;
-  user-select: none;
-  overflow: hidden;
+}
+.toolbar-button-icon {
+  max-height: 100%;
 }
 .toolbar-button:hover {
   color: black;
@@ -60,34 +48,17 @@ const colorStyle = computed(() => {
   background-color: #c8d0d8;
 }
 
-.color {
-  border-bottom: solid 4px #47484a;
-  position: relative;
-  top: -2px;
+.color-bar {
+  border-radius: 4px;
+  position: absolute;
+  z-index: 5;
+  height: 4px;
+  left: 50%;
+  bottom: 6px;
+  transform: translateX(-50%);
   width: 16px;
-  text-align: center;
 }
-
-.color svg {
-  zoom: .75;
+.font-icon {
+  margin-top: -3px;
 }
-
-.indentleft {
-  transform: scale(-1, 1);
-}
-
-
-/* 'bold'
-italic'
-underline'
-'color'
-'separator'
-'link'
-'separator'
-paragraph'
-'list'
-'numberedlist'
-'indentleft'
-'indentright'
-'overflow' */
 </style>

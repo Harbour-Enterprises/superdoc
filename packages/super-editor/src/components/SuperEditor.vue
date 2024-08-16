@@ -30,6 +30,7 @@ const props = defineProps({
     required: false,
     default: () => ({}),
   },
+
 });
 
 const editor = shallowRef();

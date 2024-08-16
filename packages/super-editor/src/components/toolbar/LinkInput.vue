@@ -1,130 +1,183 @@
 <script setup>
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { ref, computed } from 'vue';
+import { ref, computed } from "vue";
 
-
-const emit = defineEmits(['submit', 'cancel']);
+const emit = defineEmits(["submit", "cancel"]);
 const props = defineProps({
-    initialText: {
-        type: String,
-        default: '',
-    },
-    initialUrl: {
-        type: String,
-        default: '',
-    },
-    showInput: {
-        type: Boolean,
-        default: true,
-    },
-    showLink: {
-        type: Boolean,
-        default: true,
-    }
+  initialText: {
+    type: String,
+    default: "",
+  },
+  initialUrl: {
+    type: String,
+    default: "",
+  },
+  showInput: {
+    type: Boolean,
+    default: true,
+  },
+  showLink: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const handleSubmit = () => {
-    if (rawUrl.value === '' || validUrl.value) {
-        emit('submit', { text: text.value, href: url.value });
-        return;
-    }
-    console.log('invalid url')
-    urlError.value = true;
-}
+  if (rawUrl.value && validUrl.value) {
+    emit("submit", { text: text.value, href: url.value });
+    return;
+  } else if (!rawUrl.value) {
+    emit("submit", { text: text.value, href: null });
+    return;
+  }
+  console.debug("[LinkInput] Invalid URL in handleSubmit");
+  urlError.value = true;
+};
 
-const handleCancel = () => {
-    emit('cancel');
-}
 
 const urlError = ref(false);
-
 const text = ref(props.initialText);
 const rawUrl = ref(props.initialUrl);
 const url = computed(() => {
-    if (!rawUrl.value.startsWith('http')) return 'http://' + rawUrl.value;
-    return rawUrl.value;
+  if (!rawUrl.value?.startsWith("http")) return "http://" + rawUrl.value;
+  return rawUrl.value;
 });
 
 const validUrl = computed(() => {
-    const urlSplit = url.value.split('.').filter(Boolean);
-    return url.value.includes('.') && urlSplit.length > 1;
-})
+  const urlSplit = url.value.split(".").filter(Boolean);
+  return url.value.includes(".") && urlSplit.length > 1;
+});
 
-
+const getApplyText = computed(() => {
+  return showApply.value ? "Apply" : "Remove";
+});
+const isDisabled = computed(() => {
+  return !validUrl.value;
+});
+const showApply = computed(() => {
+  return !showRemove.value;
+});
+const showRemove = computed(() => {
+  return props.initialUrl && !rawUrl.value
+});
 </script>
 
 <template>
-    <div class="link-input-ctn">
-        <!-- text input -->
-        <!-- <div class="input-row">
-            <input type="text" placeholder="Text"
-            v-model="text"
-            @keydown.escape="handleCancel"
-            @keydown.enter="handleSubmit" />
-        </div> -->
-        
-        <!-- url input -->
-        <div class="input-row" v-if="showInput" :class="{hasBottomMargin: showLink && showInput}">
-            <input type="text" placeholder="Address" 
-            :class="{error: urlError}"
-            v-model="rawUrl"
-            @keydown="urlError = false"/>
-            <span class="submit" @click="handleSubmit">Apply</span>
-        </div>
-
-        <!-- link preview -->
-        <div class="input-row" v-if="showLink">
-            <FontAwesomeIcon icon="link" :style="{marginRight: '5px'}" />
-            <a v-if="validUrl" :href="url" target="_blank">{{ rawUrl }}</a>
-            <span v-else>{{ rawUrl }}</span>
-        </div>
-
-
+  <div class="link-input-ctn">
+    <div class="link-title">
+      Add link
     </div>
+    <div class="input-row" v-if="showInput">
+      <i class="fas fa-link input-icon"></i>
+      <input
+        type="text"
+        placeholder="Type or paste a link"
+        :class="{ error: urlError }"
+        v-model="rawUrl"
+        @keydown.enter.stop.prevent="handleSubmit"
+        @keydown="urlError = false"
+      />
+
+      <button class="submit-btn" v-if="showApply" @click="handleSubmit" :class="{ 'disable-btn': isDisabled }">{{ getApplyText }}</button>
+      <button class="remove-btn" v-if="showRemove" @click="handleSubmit">Remove</button>
+    </div>
+  </div>
 </template>
 
 <style scoped>
+.disable-btn {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.link-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.input-icon {
+  position: absolute;
+  transform: rotate(45deg);
+  left: 25px;
+  font-size: 12px;
+  color: #999;
+}
 .hasBottomMargin {
-    margin-bottom: 1em;
+  margin-bottom: 1em;
 }
 
 .link-input-ctn {
-    width: 250px;
-    /* height: 100px; */
-    display: flex;
-    flex-direction: column;
-    padding: 1em;
-    border-radius: 5px;
-    background-color: #fff;
-    position: absolute;
-    top: 32px;
-    left: 0;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  padding: 1em;
+  border-radius: 5px;
+  background-color: #fff;
+}
+.remove-btn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  outline: none;
+  background-color: white;
+  color: black;
+  font-weight: 400;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid #EBEBEB;
+}
+.remove-btn:hover {
+  background-color: #DBDBDB;
+}
+.submit-btn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  outline: none;
+  border: none;
+  background-color: #1355FF;
+  color: white;
+  font-weight: 400;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.submit-btn:hover {
+  background-color: #0d47c1;
 }
 
 .input-row {
-    align-content: baseline;
+  align-content: baseline;
+  display: flex;
+  align-items: center;
 }
 
 .input-row input {
-    font-size: 16px;
-    width: 70%;
-    padding: 5px;
-    border-radius: 5px;
-    margin-right: 1em;
-    border: 1px solid #ddd;
+  font-size: 13px;
+  flex-grow: 1;
+  padding: 5px;
+  margin-right: 1em;
+  padding: 10px;
+  border-radius: 8px;
+  padding-left: 32px;
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.15);
+  color: #666;
+  border: 1px solid #ddd;
+}
+.input-row input:active,
+.input-row input:focus {
+  outline: none;
+  border: 1px solid #1355FF;
 }
 
 .input-row {
-    font-size: 16px;
+  font-size: 16px;
 }
 
 .error {
-    border-color: red !important;
-    background-color: #ff00001a;
-
+  border-color: red !important;
+  background-color: #ff00001a;
 }
 
 .submit {
-    cursor: pointer;
+  cursor: pointer;
 }
 </style>

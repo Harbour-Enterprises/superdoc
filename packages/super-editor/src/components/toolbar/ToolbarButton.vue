@@ -1,60 +1,15 @@
 <script setup>
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import ToolbarButtonIcon from './ToolbarButtonIcon.vue'
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 
 const emit = defineEmits(['buttonClick', 'textSubmit']);
 
 const props = defineProps({
-  name: {
-    type: String,
-    required: true,
-  },
-  icon: {
-    type: String,
-    default: null,
-  },
-  label: {
-    type: String,
-    default: null,
-  },
-  hideLabel: {
-    type: Boolean,
-    default: false,
-  },
   iconColor: {
     type: String,
     default: null,
   },
-  tooltip: {
-    type: String,
-    required: true,
-  },
-  tooltipVisible: {
-    type: Boolean,
-    default: false,
-  },
   active: {
-    type: Boolean,
-    default: false,
-  },
-  hasCaret: {
-    type: Boolean,
-    default: false,
-  },
-  hasIcon: {
-    type: Boolean,
-    default: false,
-  },
-  disabled: {
-    type: Boolean,
-    default: false,
-  },
-  inlineTextInputVisible: {
-    type: Boolean,
-    default: false,
-  },
-  hasInlineTextInput: {
     type: Boolean,
     default: false,
   },
@@ -65,20 +20,40 @@ const props = defineProps({
   isWide: {
     type: Boolean,
     default: false,
-  }
+  },
+  toolbarItem: {
+    type: Object,
+    required: true,
+  },
+  label: {
+    type: String,
+    default: null,
+  },
 });
 
-const fullTooltip = computed(() => {
-  let tooltip = props.tooltip;
-  if (props.disabled) {
-    tooltip += ' (disabled)';
-  }
-  return tooltip;
-})
+const {
+  name,
+  active,
+  icon,
+  label,
+  hideLabel,
+  iconColor,
+  hasCaret,
+  disabled,
+  inlineTextInputVisible,
+  hasInlineTextInput,
+  minWidth,
+} = props.toolbarItem;
 
-const inlineTextInput = ref('');
+
+const inlineTextInput = ref(props.label);
+const inlineInput = ref(null);
 
 const handleClick = () => {
+  if (hasInlineTextInput) {
+    inlineInput.value?.focus();
+    inlineInput.value?.select();
+  }
   emit('buttonClick')
 }
 
@@ -86,46 +61,46 @@ const handleInputSubmit = () => {
   emit('textSubmit', inlineTextInput.value);
   inlineTextInput.value = '';
 }
+
 </script>
 
 <template>
-  <div
-      class="toolbar-item">
-      <div class="tooltip" :style="{visibility: tooltipVisible ? 'visible' : 'hidden', width: `${fullTooltip.length * 5}px`}">
-        <span>{{ fullTooltip }}</span>
-      </div>
+  <div class="toolbar-item" :style="{minWidth}">
 
       <div @click="handleClick"
-      class="toolbar-button"
-      :class="{ active: props.active, disabled, narrow: isNarrow, wide: isWide, 'has-inline-text-input': hasInlineTextInput}">
-        <span class="button-label" v-if="label && !hideLabel">
-          <input v-if="inlineTextInputVisible"
-          v-model="inlineTextInput"
-          :placeholder="label"
-          @keydown.enter.prevent="handleInputSubmit"
-          type="text"
-          class="button-text-input"
-          :id="'inlineTextInput-' + name"/>
+          class="toolbar-button"
+          :class="{ active, disabled, narrow: isNarrow, wide: isWide, 'has-inline-text-input': hasInlineTextInput}">
 
-          <span v-else>{{label}}</span>
-        </span>
-        
         <ToolbarButtonIcon
-          v-if="hasIcon"
-          :color="iconColor"
-          class="icon"
-          :icon="icon"
-          :name="name">
+            v-if="icon"
+            :color="iconColor"
+            class="toolbar-icon"
+            :icon="icon"
+            :name="name">
         </ToolbarButtonIcon>
 
-        <font-awesome-icon v-if="hasCaret"
-        class="caret"
-        :class="{disabled}"
-        :icon="active ? 'fa-caret-up' : 'fa-caret-down'"
-        :style="{opacity: disabled ? 0.6 : 1}"
-        />
+        <span class="button-label" v-if="label && !hideLabel && !inlineTextInputVisible">
+          {{label}}
+        </span>
+
+        <span v-if=inlineTextInputVisible>
+          <input
+              v-model="inlineTextInput"
+              :placeholder="label"
+              @keydown.enter.prevent="handleInputSubmit"
+              type="text"
+              class="button-text-input"
+              :id="'inlineTextInput-' + name" 
+              autoccomplete="off"
+              ref="inlineInput" />
+        </span>
+
+        <i v-if="hasCaret"
+            class="fas"
+            :class="active ? 'fa-caret-up' : 'fa-caret-down'"
+            :style="{opacity: disabled ? 0.6 : 1}"></i>
+
       </div>
-      <slot></slot>
   </div>
 </template>
 
@@ -133,10 +108,14 @@ const handleInputSubmit = () => {
 .toolbar-item {
   position: relative;
   z-index: 100;
+  margin: 0 1px;
+  min-width: 30px;
 }
 
 .toolbar-button {
+  padding: 0;
   height: 32px;
+  max-height: 32px;
   border-radius: 6px;
   margin-top: 3.5px;
   margin-bottom: 4px;
@@ -144,7 +123,7 @@ const handleInputSubmit = () => {
   overflow-y: visible;
   display: flex;
   align-items: center;
-  justify-content: space-around;
+  justify-content: center;
   cursor: pointer;
   color: #47484a;
   transition: all 0.2s ease-out;
@@ -153,7 +132,7 @@ const handleInputSubmit = () => {
 }
 
 .toolbar-button:hover {
-  background-color: #d8dee5;
+  background-color: #DBDBDB;
 }
 .toolbar-button:active,
 .active {
@@ -165,9 +144,12 @@ const handleInputSubmit = () => {
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: 100;
-  font-size: .9em;
+  font-weight: 400;
+  font-size: 15px;
   text-align: center;
+}
+.toolbar-icon {
+  margin: 0 5px;
 }
 
 .left, .right {
@@ -175,31 +157,6 @@ const handleInputSubmit = () => {
   height: 100%;
   background-color: #DBDBDB;
   border-radius: 60%;
-}
-
-.tooltip {
-  position: absolute;
-  top: -30px;
-  background-color: white;
-  padding: 5px;
-  border-radius: 3%;
-  color: #555555;
-  font-size: 10px;
-  text-align: center;
-  left: 50%;
-  transform: translateX(-50%);
-  display: table;
-}
-
-.tooltip::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: white transparent transparent transparent;
 }
 
 .has-inline-text-input:hover {
@@ -213,32 +170,26 @@ const handleInputSubmit = () => {
   cursor: default;
   background-color: initial;
 }
-.disabled .icon, .disabled .caret, .disabled .button-label {
+.disabled .toolbar-icon, .disabled .caret, .disabled .button-label {
   opacity: .35;
 }
 .caret {
-  font-size: .6em;
+  font-size: 1em;
+  padding-left: 2px;
+  padding-right: 2px;
 }
 .button-text-input {
-  background-color: #c8d0d8;
   border: none;
-  font-size: 1em;
-  /* border-bottom: solid 1px#47484a; */
-  text-align: center;
-  width: 90%;
-  font-size: 1em;
-  font-weight: 100;
-}
-
-.button-text-input:focus {
   outline: none;
+  border-radius: 4px;
+  text-align: center;
+  width: 30px;
+  font-size: 14px;
+  margin-right: 5px;
+  font-weight: 100;
+  background-color: transparent;
+  padding: 2px 0;
+  outline: none;
+  border: 1px solid #d8dee5;
 }
-
-/* .button-text-input {
-  font-size: 16px;
-  width: 70%;
-  border-radius: 5px;
-  margin-right: 1em;
-  border: 1px solid #ddd;
-} */
 </style>
