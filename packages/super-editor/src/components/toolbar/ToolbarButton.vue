@@ -150,6 +150,9 @@ const handleInputSubmit = () => {
   font-size: 15px;
   text-align: center;
 }
+.toolbar-icon {
+  margin: 0 5px;
+}
 
 .left, .right {
   width: 50%;

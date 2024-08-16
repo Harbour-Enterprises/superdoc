@@ -2,7 +2,7 @@ import { ref } from 'vue';
 
 export const useToolbarItem = (options) => {
 
-  const types = ['button', 'options', 'separator'];
+  const types = ['button', 'options', 'separator', 'select'];
   if (!types.includes(options.type)) {
     throw new Error('Invalid toolbar item type - ' + options.type);
   }

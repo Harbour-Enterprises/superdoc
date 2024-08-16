@@ -5,6 +5,7 @@ import { useToolbarItem } from "./use-toolbar-item";
 import IconGrid from "./IconGrid.vue";
 import AlignmentButtons from "./AlignmentButtons.vue";
 import LinkInput from "./LinkInput.vue";
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
 export const makeDefaultItems = (superToolbar) => {
   // bold
@@ -600,7 +601,7 @@ export const makeDefaultItems = (superToolbar) => {
     type: "button",
     name: "documentMode",
     tooltip: "Document editing mode",
-    icon: "fa-solid fa-pencil-alt",
+    icon: "fa-solid fa-user-edit",
     defaultLabel: "Editing",
     label: "Editing",
     hasCaret: true,
@@ -610,12 +611,18 @@ export const makeDefaultItems = (superToolbar) => {
     hasInlineTextInput: true,
     group: 'right',
     options: [
-      { label: "Editng", key: "editing" },
-      { label: "Suggesting", key: "suggesting" },
-      { label: "Commenting", key: "commenting" },
-      { label: "Viewing", key: "viewing" },
+      { label: "Editng", value: "editing", icon: renderIcon('fa-user-edit') },
+      { label: "Suggesting", value: "suggesting", icon: renderIcon('fa-comment-dots') },
+      { label: "Commenting", value: "commenting", icon: renderIcon('fa-comment-dots') },
+      { label: "Viewing", value: "viewing", icon: renderIcon('fa-eye') },
     ],
   });
+
+  function renderIcon(icon) {
+    return () => {
+      return h(FontAwesomeIcon, { icon: icon });
+    }
+  }
 
 
   const toolbarItems = [

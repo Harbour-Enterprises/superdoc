@@ -39,6 +39,9 @@ import {
   faPencilAlt,
   faCheckSquare,
   faCheck,
+  faUserEdit,
+  faCommentDots,
+  faEye,
 } from '@fortawesome/free-solid-svg-icons';
 
 
@@ -75,6 +78,9 @@ library.add(
   faPencilAlt,
   faCheckSquare,
   faCheck,
+  faUserEdit,
+  faCommentDots,
+  faEye
 );
 
 /**

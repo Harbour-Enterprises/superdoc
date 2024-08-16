@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue';
 import ToolbarButton from './ToolbarButton.vue';
 import ToolbarSeparator from './ToolbarSeparator.vue';
-import { NDropdown, NTooltip } from 'naive-ui';
+import { NDropdown, NTooltip, NSelect } from 'naive-ui';
 
 const emit = defineEmits([
   'command',
@@ -45,6 +45,7 @@ const getPositionStyle = computed(() => {
 
 const isButton = (item) => item.type === 'button';
 const isSeparator = (item) => item.type === 'separator';
+const isSelect = (item) => item.type === 'select';
 const handleToolbarButtonClick = (item, argument = null) => {
   currentItem.value = item;
   if (item.disabled.value) return;
@@ -61,13 +62,6 @@ const handleSelect = (item, argument) => {
   currentItem.value = null;
   emit('command', { item, argument });
 }
-
-const showDropdown = computed(() => (item) => {
-  if (currentItem.value?.name === item.name.value) {
-    return true
-  }
-  return false;
-})
 
 const handleClickOutside = (e) => {
   currentItem.value = null;
