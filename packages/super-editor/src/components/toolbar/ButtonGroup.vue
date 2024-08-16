@@ -58,7 +58,6 @@ const handleToolbarButtonTextSubmit = (item, argument) => {
 }
 
 const handleSelect = (item, argument) => {
-  console.debug('Selected', item, argument);
   currentItem.value = null;
   emit('command', { item, argument });
 }
@@ -72,7 +71,6 @@ const showDropdown = computed(() => (item) => {
 
 const handleClickOutside = (e) => {
   currentItem.value = null;
-  console.debug('Clicked outside');
 }
 </script>
 

@@ -28,7 +28,6 @@ export class SuperToolbar extends EventEmitter {
   #makeToolbarItems(superToolbar) {
     const defaultItems = makeDefaultItems(superToolbar);
     this.toolbarItems = defaultItems;
-    console.debug('[super-toolbar] Toolbar items:', this.toolbarItems);
   }
 
   /**

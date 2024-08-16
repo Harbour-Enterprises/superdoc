@@ -23,6 +23,12 @@ const isActive = computed(() => (option) => {
   return props.activeColor.value === option.value;
 });
 
+const getCheckStyle = (color, optionIndex) => {
+  const lightColors = ['#FFFFFF', '#FAFF09']
+  if (optionIndex === 5 || lightColors.includes(color)) return { color: '#000' };
+  return { color: '#FFF' };
+}
+
 onMounted(() => {
   const isMatrix = props.icons.every((row) => Array.isArray(row));
   if (!isMatrix) throw new Error("icon props must be 2d array");
@@ -30,7 +36,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="option-grid-ctn">TEST {{ activeColor }}
+  <div class="option-grid-ctn">
     <div class="option-row" v-for="(row, rowIndex) in icons" :key="rowIndex">
       <div
         class="option"
@@ -39,7 +45,11 @@ onMounted(() => {
         @click.stop.prevent="handleClick(option)"
       >
         <FontAwesomeIcon :icon="option.icon" :style="option.style" />
-        <FontAwesomeIcon icon="fa-check" class="active-check" v-if="isActive(option)" />
+        <FontAwesomeIcon
+            icon="fa-check"
+            class="active-check"
+            :style="getCheckStyle(option.value, optionIndex)"
+            v-if="isActive(option)" />
       </div>
     </div>
   </div>

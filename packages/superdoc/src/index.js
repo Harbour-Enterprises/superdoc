@@ -106,7 +106,6 @@ class Superdoc extends EventEmitter {
     return {
       setZoom: ({ item, argument }) => {
         if (!argument) return;
-        console.debug('[superdoc] Setting zoom:', argument);
         item.onActivate(argument);
 
         const layers = document.querySelector('.layers')

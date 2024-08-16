@@ -1,5 +1,4 @@
 import { undoDepth, redoDepth } from "prosemirror-history";
-import { ToolbarItem } from "./ToolbarItem-old";
 import { sanitizeNumber } from "./helpers";
 import { computed, h, onActivated, onDeactivated } from "vue";
 import { useToolbarItem } from "./use-toolbar-item";
@@ -69,7 +68,7 @@ export const makeDefaultItems = (superToolbar) => {
       if (!fontFamily) return;
       fontButton.label.value = fontFamily;
     },
-    onDeactivate: () => fontButton.iconColor.value = fontButton.defaultLabel.value,
+    onDeactivate: () => fontButton.label.value = fontButton.defaultLabel.value,
   });
 
   // font size
@@ -210,7 +209,7 @@ export const makeDefaultItems = (superToolbar) => {
       makeColorOption("#CD0194"),
       makeColorOption("#D734A9"),
       makeColorOption("#E167BF"),
-      makeColorOption("#E167BF"),
+      makeColorOption("#EB99D4"),
       makeColorOption("#F5CCEA"),
       makeColorOption("#FF00A8"),
     ],
@@ -220,7 +219,7 @@ export const makeDefaultItems = (superToolbar) => {
       makeColorOption("#DD340F"),
       makeColorOption("#E45C3F"),
       makeColorOption("#EB856F"),
-      makeColorOption("#DD340F"),
+      makeColorOption("#F1AE9F"),
       makeColorOption("#F8D6CF"),
       makeColorOption("#FF7A00"),
     ],
@@ -367,7 +366,6 @@ export const makeDefaultItems = (superToolbar) => {
     ],
     onActivate: (value) => {
       setAlignmentIcon(alignment, value);
-      console.debug('Alignment activated:', value);
     },
     onDeactivate: () => {
       setAlignmentIcon(alignment, 'left');

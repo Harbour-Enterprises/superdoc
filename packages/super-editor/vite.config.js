@@ -48,6 +48,7 @@ export default defineConfig(({ mode }) => {
         '@features': fileURLToPath(new URL('./src/features', import.meta.url)),
         '@components': fileURLToPath(new URL('./src/components', import.meta.url)),
         '@helpers': fileURLToPath(new URL('./src/core/helpers', import.meta.url)),
+        '@packages': fileURLToPath(new URL('../', import.meta.url)),
         '@vue-3': fileURLToPath(new URL('./src/vue-3', import.meta.url)),
       },
       extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json'],
