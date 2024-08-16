@@ -1,7 +1,6 @@
 <script setup>
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import ToolbarButtonIcon from './ToolbarButtonIcon.vue'
-import { ref, computed, onMounted } from 'vue';
+import { ref } from 'vue';
 
 const emit = defineEmits(['buttonClick', 'textSubmit']);
 
@@ -96,11 +95,10 @@ const handleInputSubmit = () => {
               ref="inlineInput" />
         </span>
 
-        <font-awesome-icon v-if="hasCaret"
-            class="caret"
-            :class="{disabled}"
-            :icon="active ? 'fa-caret-up' : 'fa-caret-down'"
-            :style="{opacity: disabled ? 0.6 : 1}" />
+        <i v-if="hasCaret"
+            class="fas"
+            :class="active ? 'fa-caret-up' : 'fa-caret-down'"
+            :style="{opacity: disabled ? 0.6 : 1}"></i>
 
       </div>
   </div>

@@ -2,8 +2,6 @@
 import '@common/styles/common-styles.css';
 import { getCurrentInstance, ref, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
 import { storeToRefs } from 'pinia';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { undoDepth, redoDepth } from "prosemirror-history";
 
 import PdfViewer from './components/PdfViewer/PdfViewer.vue';
 import CommentsLayer from './components/CommentsLayer/CommentsLayer.vue';
@@ -14,7 +12,6 @@ import HrbrFieldsLayer from '@/components/HrbrFieldsLayer/HrbrFieldsLayer.vue';
 import docxWithComments from './assets/lists_and_comments.docx?url'
 import useDocument from '@/composables/use-document';
 
-import { getActiveFormatting } from 'super-editor';
 import { useSuperdocStore } from '@/stores/superdoc-store';
 import { useCommentsStore } from '@/stores/comments-store';
 
@@ -180,13 +177,7 @@ const onCommentClicked = ({ conversation }) => {
 
 
 const onSelectionUpdate = ({ editor, transaction }) => {
-  const parsedMarks = getActiveFormatting(editor);
-  const history = {
-    undoDepth: undoDepth(editor.state),
-    redoDepth: redoDepth(editor.state),
-  }
   proxy.$superdoc.onSelectionUpdate({ editor, transaction, history })
-  proxy.$superdoc.toolbar.updateToolbarState(parsedMarks)
 }
 
 const editorOptions = {

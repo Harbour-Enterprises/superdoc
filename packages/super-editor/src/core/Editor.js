@@ -87,7 +87,7 @@ export class Editor extends EventEmitter {
     this.on('update', this.options.onUpdate);
     this.on('selectionUpdate', this.options.onSelectionUpdate);
     this.on('transaction', this.options.onTransaction);
-    this.on('focus', this.options.onFocus);
+    this.on('focus', this.#onFocus);
     this.on('blur', this.options.onBlur);
     this.on('destroy', this.options.onDestroy);
     this.on('commentsLoaded', this.options.onCommentsLoaded);
@@ -99,6 +99,17 @@ export class Editor extends EventEmitter {
       if (this.isDestroyed) return;
       this.emit('create', { editor: this });
     }, 0);
+  }
+
+  #onFocus({ editor, event }) {
+    console.debug('editor focused', this.toolbar);
+    this.toolbar?.setActiveEditor(editor);
+    this.options.onFocus({ editor, event });
+  }
+
+  setToolbar(toolbar) {
+    console.debug('setting toolbar', toolbar);
+    this.toolbar = toolbar;
   }
 
   /**

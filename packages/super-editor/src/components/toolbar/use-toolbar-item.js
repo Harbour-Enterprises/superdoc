@@ -2,7 +2,7 @@ import { ref } from 'vue';
 
 export const useToolbarItem = (options) => {
 
-  const types = ['button', 'options', 'separator', 'select'];
+  const types = ['button', 'options', 'separator', 'dropdown'];
   if (!types.includes(options.type)) {
     throw new Error('Invalid toolbar item type - ' + options.type);
   }
@@ -24,8 +24,10 @@ export const useToolbarItem = (options) => {
   const command = options.command;
   const icon = ref(options.icon);
   const group = ref(options.group || 'center');
+  const allowWithoutEditor = ref(options.allowWithoutEditor);
   const attributes = ref(options.attributes || {});
 
+  const initiallyDisabled = options.disabled || false;
   const disabled = ref(options.disabled);
   const active = ref(false);
 
@@ -34,6 +36,7 @@ export const useToolbarItem = (options) => {
   const isNarrow = ref(options.isNarrow)
   const isWide = ref(options.isWide)
   const minWidth = ref(options.minWidth)
+  const suppressActiveHighlight = ref(options.suppressActiveHighlight || false);
 
   const argument = ref(options.argument);
   const childItem = ref(null)
@@ -69,46 +72,29 @@ export const useToolbarItem = (options) => {
   }
 
   // Activation & Deactivation
-  const textStyles = ['fontFamily', 'fontSize', 'color'];
-  const textAttributes = ['textAlign']
+  const activate = (attrs) => {
+    onActivate(attrs);
 
-  const updateState = (marks) => {
-    const itemMarkName = name.value;
-    let markName = itemMarkName;
-
-    const isTextStyle = textStyles.includes(itemMarkName);
-    if (isTextStyle) markName = 'textStyle';
-    const activeMark = marks.find(mark => mark.name === markName);
-
-    if (activeMark) {
-      const { attrs } = activeMark || {};
-
-      let attrValue = attrs[itemMarkName];
-      if (itemMarkName === 'link') { 
-        attrValue = attrs['href'];
-        if (!attrValue) return _setActive(false);
-      }
-
-      const isAttribute = textAttributes.includes(itemMarkName);
-      if (isTextStyle || isAttribute) {
-        return onActivate(attrValue)
-      } else {
-        return _setActive(true, attrValue);
-      }
+    if (suppressActiveHighlight.value) return;
+    active.value = true;
   }
 
-    // Deactivated by default
-    _setActive(false);
+  const deactivate = () => {
+    onDeactivate();
+    active.value = false;
+  }
+
+  const setDisabled = (state) => {
+    disabled.value = state;
+  }
+
+  const resetDisabled = () => {
+    disabled.value = initiallyDisabled;
   }
 
   // User can override this behavior
   const onActivate = options.onActivate || (() => null);
   const onDeactivate = options.onDeactivate || (() => null);
-
-  const _setActive = (state, attributeValue = null) => {
-    active.value = state;
-    state ? onActivate(attributeValue) : onDeactivate();
-  }
 
   const unref = () => {
     const flattened = {};
@@ -155,12 +141,17 @@ export const useToolbarItem = (options) => {
     markName,
     labelAttr,
     childItem,
+
+    allowWithoutEditor,
   }
 
   return {
     ...refs,
-    updateState,
     unref,
+    activate,
+    deactivate,
+    setDisabled,
+    resetDisabled,
     onActivate,
     onDeactivate,
   };

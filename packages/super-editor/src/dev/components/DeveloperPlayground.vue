@@ -4,17 +4,17 @@ import { ref, reactive, onMounted } from 'vue';
 import BasicUpload from './BasicUpload.vue';
 import BlankDOCX from '@common/data/blank.docx?url';
 import EditorInputs from './EditorInputs/EditorInputs.vue';
+import { DOCX } from '@common/document-types';
 import { INPUTS } from '../config/agreement-editor.js';
 import { SuperToolbar } from '@packages/super-toolbar/super-toolbar';
-import { getActiveFormatting } from '@/core/helpers/getMarksFromSelection.js';
+
+import '@common/icons/icons.css';
 
 // Import the component the same you would in your app
 import { SuperEditor } from '@/index';
 
-let activeEditor = null;
-const toolbarVisible = ref(false);
+let activeEditor;
 const currentFile = ref(null);
-const DOC_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 
 const handleNewFile = async (file) => {
   currentFile.value = null;
@@ -26,38 +26,29 @@ const getFileObject = async (fileUrl) => {
   // Generate a file url
   const response = await fetch(fileUrl);
   const blob = await response.blob();
-  return new File([blob], 'docx-file.docx', { type: DOC_TYPE});
-}
-
-const onSelectionUpdate = ({ editor, transaction, history }) => {
-  console.debug('[Dev] Selection updated', transaction);
-  toolbar.updateToolbarState(getActiveFormatting(activeEditor));
-  toolbar.updateToolbarHistory(history);
+  return new File([blob], 'docx-file.docx', { type: DOCX});
 }
 
 const onCreate = ({ editor }) => {
   console.debug('[Dev] Editor created', editor);
-  activeEditor = editor;
-  toolbarVisible.value = true;
-  initToolbar();
-
-  window.editor = editor;
   console.debug('[Dev] Page styles (pixels)', editor.getPageStyles());
   console.debug('[Dev] document styles', editor.converter.getDocumentDefaultStyles());
 
-  Object.assign(editorStyles, editor.converter.getDocumentDefaultStyles());
+  activeEditor = editor;
+  window.editor = editor;
+
+  editor.setToolbar(initToolbar());
 }
 
 const onCommentClicked = ({ conversation }) => {
   console.debug('💬 [Dev] Comment active', conversation);
 };
 
-const editorStyles = reactive({});
 const editorOptions = {
     onCreate,
-    onSelectionUpdate,
-    onCommentClicked
+    onCommentClicked,
 }
+
 const exportDocx = async () => {
   const result = await activeEditor?.exportDocx();
   const blob = new Blob([result], { type: DOC_TYPE });
@@ -112,25 +103,8 @@ const updateActiveSigner = (signerIdx) => {
 };
 /* Inputs pane */
 
-
-/* Toolbar */
-let toolbar;
-const toolbarItems = ref([]);
-const handleToolbarCommand = ({ item, argument }) => {
-  console.debug('[Dev] Toolbar command', item, argument);
-
-  const { command } = item;
-  if (command in activeEditor.commands) {
-    activeEditor.commands[item.command](argument);
-  }
-  toolbar.updateToolbarState(getActiveFormatting(activeEditor));
-}
-
 const initToolbar = () => {
-  toolbar = new SuperToolbar({
-    element: document.getElementById('toolbar'),
-    onToolbarCommand: handleToolbarCommand
-  });
+  return new SuperToolbar({ element: 'toolbar', editor: activeEditor });
 }
 
 onMounted(async () => {
@@ -158,7 +132,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div id="toolbar" class="sd-toolbar">xxx</div>
+      <div id="toolbar" class="sd-toolbar"></div>
 
       <div class="dev-app__main">
         <div class="dev-app__inputs-panel">
@@ -178,7 +152,7 @@ onMounted(async () => {
                   mode="docx"
                   documentId="ID-122"
                   :file-source="currentFile" 
-                  :options="editorOptions" 
+                  :options="editorOptions"
                 />
               </div>
             </div>

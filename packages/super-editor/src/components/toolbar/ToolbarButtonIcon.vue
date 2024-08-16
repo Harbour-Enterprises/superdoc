@@ -1,5 +1,4 @@
 <script setup>
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { computed } from 'vue';
 
 const props = defineProps({
@@ -25,8 +24,8 @@ const getBarColor = computed(() => {
 
 <template>
   <div class="toolbar-icon">
-    <font-awesome-icon :icon="icon" v-if="props.name !== 'color'"/>
-    <font-awesome-icon :icon="icon" size="xs" v-else class="font-icon" />
+    <i :class="icon" v-if="props.name !== 'color'"></i>
+    <i :class="icon" size="xs" v-else class="font-icon"></i>
     
     <div class="color-bar" v-if="props.name === 'color'" :style="getBarColor"></div>
   </div>

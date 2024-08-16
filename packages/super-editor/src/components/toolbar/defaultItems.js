@@ -1,11 +1,12 @@
 import { undoDepth, redoDepth } from "prosemirror-history";
+import { h } from "vue";
+
 import { sanitizeNumber } from "./helpers";
-import { computed, h, onActivated, onDeactivated } from "vue";
 import { useToolbarItem } from "./use-toolbar-item";
 import IconGrid from "./IconGrid.vue";
 import AlignmentButtons from "./AlignmentButtons.vue";
 import LinkInput from "./LinkInput.vue";
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+
 
 export const makeDefaultItems = (superToolbar) => {
   // bold
@@ -13,17 +14,16 @@ export const makeDefaultItems = (superToolbar) => {
     type: "button",
     name: "bold",
     command: "toggleBold",
-    icon: "fa fa-bold",
+    icon: "fas fa-bold",
     tooltip: "Bold",
   });
 
   // font
   const fontButton = useToolbarItem({
-    type: "button",
+    type: "dropdown",
     name: "fontFamily",
     tooltip: "Font",
     command: "setFontFamily",
-    overflowIcon: "fa-font",
     defaultLabel: "Arial",
     label: "Arial",
     markName: "textStyle",
@@ -65,7 +65,7 @@ export const makeDefaultItems = (superToolbar) => {
         }
       },
     ],
-    onActivate: (fontFamily) => {
+    onActivate: ({ fontFamily }) => {
       if (!fontFamily) return;
       fontButton.label.value = fontFamily;
     },
@@ -74,7 +74,7 @@ export const makeDefaultItems = (superToolbar) => {
 
   // font size
   const fontSize = useToolbarItem({
-    type: "button",
+    type: "dropdown",
     name: "fontSize",
     defaultLabel: "12",
     label: "12",
@@ -105,7 +105,7 @@ export const makeDefaultItems = (superToolbar) => {
       { label: "72", key: "72pt" },
       { label: "96", key: "96pt" },
     ],
-    onActivate: (size) => {
+    onActivate: ({ fontSize: size }) => {
       if (!size) return fontSize.label.value = fontSize.defaultLabel.value;
 
       let sanitizedValue = sanitizeNumber(size, 12);
@@ -148,9 +148,9 @@ export const makeDefaultItems = (superToolbar) => {
 
   // color
   const colorButton = useToolbarItem({
-    type: "button",
+    type: "dropdown",
     name: "color",
-    icon: "fa-font",
+    icon: "fas fa-font",
     hideLabel: true,
     markName: "textStyle",
     labelAttr: "color",
@@ -165,7 +165,7 @@ export const makeDefaultItems = (superToolbar) => {
         render: () => renderColorOptions(colorButton),
       },
     ],
-    onActivate: (color) => {
+    onActivate: ({ color }) => {
       colorButton.iconColor.value = color;
     },
     onDeactivate: () => colorButton.iconColor.value = '#000',
@@ -174,7 +174,7 @@ export const makeDefaultItems = (superToolbar) => {
   const makeColorOption = (color, label = null) => {
     return {
       label,
-      icon: "fa-circle",
+      icon: "fas fa-circle",
       value: color,
       style: {
         color,
@@ -283,10 +283,10 @@ export const makeDefaultItems = (superToolbar) => {
 
   // link
   const link = useToolbarItem({
-    type: "button",
+    type: "dropdown",
     name: "link",
     markName: "link",
-    icon: "fa-link",
+    icon: "fas fa-link",
     active: false,
     tooltip: "Link",
     options: [
@@ -329,7 +329,7 @@ export const makeDefaultItems = (superToolbar) => {
     type: "button",
     name: "image",
     command: "toggleImage",
-    icon: "fa-image",
+    icon: "fas fa-image",
     active: false,
     tooltip: "Image",
     disabled: true,
@@ -337,14 +337,15 @@ export const makeDefaultItems = (superToolbar) => {
 
   // alignment
   const alignment = useToolbarItem({
-    type: "button",
+    type: "dropdown",
     name: "textAlign",
     tooltip: "Alignment",
-    icon: "fa-align-left",
+    icon: "fas fa-align-left",
     command: "setTextAlign",
     hasCaret: true,
     markName: "textAlign",
     labelAttr: "textAlign",
+    suppressActiveHighlight: true,
     options: [
       {
         type: "render",
@@ -365,8 +366,8 @@ export const makeDefaultItems = (superToolbar) => {
         key: "alignment",
       }
     ],
-    onActivate: (value) => {
-      setAlignmentIcon(alignment, value);
+    onActivate: ({ textAlign }) => {
+      setAlignmentIcon(alignment, textAlign);
     },
     onDeactivate: () => {
       setAlignmentIcon(alignment, 'left');
@@ -375,7 +376,7 @@ export const makeDefaultItems = (superToolbar) => {
 
   const setAlignmentIcon = (alignment, e) => {
     let alignValue = e === 'both' ? 'justify' : e;
-    alignment.icon.value = `fa-align-${alignValue}`;
+    alignment.icon.value = `fas fa-align-${alignValue}`;
   }
 
   // bullet list
@@ -383,7 +384,7 @@ export const makeDefaultItems = (superToolbar) => {
     type: "button",
     name: "list",
     command: "toggleBulletList",
-    icon: "fa-list",
+    icon: "fas fa-list",
     active: false,
     tooltip: "Bullet list",
   });
@@ -393,7 +394,7 @@ export const makeDefaultItems = (superToolbar) => {
     type: "button",
     name: "numberedlist",
     command: "toggleOrderedList",
-    icon: "fa-list-numeric",
+    icon: "fas fa-list-numeric",
     active: false,
     tooltip: "Numbered list",
   });
@@ -403,7 +404,7 @@ export const makeDefaultItems = (superToolbar) => {
     type: "button",
     name: "indentleft",
     command: "decreaseTextIndent",
-    icon: "fa-indent",
+    icon: "fas fa-indent",
     active: false,
     tooltip: "Left indent",
     disabled: false,
@@ -414,7 +415,7 @@ export const makeDefaultItems = (superToolbar) => {
     type: "button",
     name: "indentright",
     command: "increaseTextIndent",
-    icon: "fa-indent",
+    icon: "fas fa-outdent",
     active: false,
     tooltip: "Right indent",
     disabled: false,
@@ -422,10 +423,10 @@ export const makeDefaultItems = (superToolbar) => {
 
   // overflow
   const overflow = useToolbarItem({
-    type: "button",
+    type: "dropdown",
     name: "overflow",
     command: "toggleOverflow",
-    icon: "fa-ellipsis-vertical",
+    icon: "fas fa-ellipsis-vertical",
     active: false,
     disabled: true,
   });
@@ -440,8 +441,9 @@ export const makeDefaultItems = (superToolbar) => {
 
   // zoom
   const zoom = useToolbarItem({
-    type: "button",
+    type: "dropdown",
     name: "zoom",
+    allowWithoutEditor: true,
     tooltip: "Zoom",
     overflowIcon: "fa-magnifying-glass-plus",
     defaultLabel: "100%",
@@ -461,7 +463,7 @@ export const makeDefaultItems = (superToolbar) => {
       { label: "150%", key: 1.5 },
       { label: "200%", key: 2 },
     ],
-    onActivate: (value) => {
+    onActivate: ({ zoom: value }) => {
       if (!value) return;
       zoom.label.value = String(value * 100) + "%";
     },
@@ -478,7 +480,7 @@ export const makeDefaultItems = (superToolbar) => {
     icon: "fa-solid fa-rotate-left",
     group: "left",
     onDeactivate: () => {
-      if (superToolbar.undoDepth <= 0) undo.disabled.value = true;
+      if (!superToolbar.undoDepth) undo.disabled.value = true;
       else undo.disabled.value = false;
     }
   });
@@ -494,7 +496,7 @@ export const makeDefaultItems = (superToolbar) => {
     icon: "fa fa-rotate-right",
     group: "left",
     onDeactivate: () => {
-      if (superToolbar.redoDepth <= 0) redo.disabled.value = true;
+      if (!superToolbar.redoDepth) redo.disabled.value = true;
       else redo.disabled.value = false;
     }
   });
@@ -502,17 +504,12 @@ export const makeDefaultItems = (superToolbar) => {
   // search
   const search = useToolbarItem({
     type: "button",
+    allowWithoutEditor: true,
     name: "search",
     tooltip: "Search",
     disabled: true,
-    icon: "fa-solid fa-magnifying-glass",
+    icon: "fas fa-magnifying-glass",
     group: "right",
-  });
-
-  const searchOptions = useToolbarItem({
-    type: "options",
-    name: "searchDropdown",
-    command: "search",
   });
 
   const clearFormatting = useToolbarItem({
@@ -520,7 +517,7 @@ export const makeDefaultItems = (superToolbar) => {
     name: "clearFormatting",
     command: "clearFormat",
     tooltip: "Clear formatting",
-    icon: "fa-text-slash",
+    icon: "fas fa-text-slash",
   });
 
   const toolbarItemsMobile = [
@@ -592,16 +589,17 @@ export const makeDefaultItems = (superToolbar) => {
     type: "button",
     name: "copyFormat",
     tooltip: "Format painter",
-    icon: "fa-solid fa-paint-roller",
+    icon: "fal fa-paint-roller",
     command: "copyFormat",
     active: false,
   });
 
   const documentMode = useToolbarItem({
-    type: "button",
+    type: "dropdown",
     name: "documentMode",
+    allowWithoutEditor: true,
     tooltip: "Document editing mode",
-    icon: "fa-solid fa-user-edit",
+    icon: "fal fa-user-edit",
     defaultLabel: "Editing",
     label: "Editing",
     hasCaret: true,
@@ -611,17 +609,17 @@ export const makeDefaultItems = (superToolbar) => {
     hasInlineTextInput: true,
     group: 'right',
     options: [
-      { label: "Editng", value: "editing", icon: renderIcon('fa-user-edit') },
-      { label: "Suggesting", value: "suggesting", icon: renderIcon('fa-comment-dots') },
-      { label: "Commenting", value: "commenting", icon: renderIcon('fa-comment-dots') },
-      { label: "Viewing", value: "viewing", icon: renderIcon('fa-eye') },
+      { label: "Editing", value: "editing", icon: renderIcon('fal fa-user-edit') },
+      { label: "Suggesting", value: "suggesting", icon: renderIcon('fal fa-edit') },
+      { label: "Commenting", value: "commenting", icon: renderIcon('fal fa-comments') },
+      { label: "Viewing", value: "viewing", icon: renderIcon('fal fa-eye') },
     ],
   });
 
   function renderIcon(icon) {
     return () => {
-      return h(FontAwesomeIcon, { icon: icon });
-    }
+      return h('i', { class: icon });
+    };
   }
 
 

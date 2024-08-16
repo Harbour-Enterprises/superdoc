@@ -16,16 +16,22 @@ export function getMarksFromSelection(state) {
   return marks;
 }
 
+function unwrapTextMarks(textStyleMark) {
+  const processedMarks = [];
+  const { attrs } = textStyleMark;
+  Object.keys(attrs).forEach((key) => {
+    if (!attrs[key]) return;
+    processedMarks.push({ name: key, attrs: { [key]: attrs[key] } });
+  });
+  return processedMarks;
+}
+
 export function getActiveFormatting(editor) {
   const marks = getMarksFromSelection(editor.state);
-  const parsedMarks = marks.map((mark) => {
-    const { attrs, type } = mark;
-    const { name } = type;
-    return {
-      name,
-      attrs,
-    }
-  });
+  const marksToProcess = marks.filter((mark) => mark.type.name !== 'textStyle')
+                              .map((mark) => ({ name: mark.type.name, attrs: mark.attrs }));
+  const textStyleMarks = marks.filter(mark => mark.type.name === 'textStyle');
+  marksToProcess.push(...textStyleMarks.flatMap(unwrapTextMarks));
 
   const ignoreKeys = ['paragraphSpacing']
   const attributes = getActiveAttributes(editor.state);
@@ -33,12 +39,13 @@ export function getActiveFormatting(editor) {
     if (ignoreKeys.includes(key)) return;
     const attrs = {};
     attrs[key] = attributes[key];
-    parsedMarks.push({ name: key, attrs })
+    marksToProcess.push({ name: key, attrs })
   })
 
   const hasPendingFormatting = !!editor.storage.formatCommands.storedStyle;
-  if (hasPendingFormatting) parsedMarks.push({ name: 'copyFormat', attrs: true });
-  return parsedMarks;
+  if (hasPendingFormatting) marksToProcess.push({ name: 'copyFormat', attrs: true });
+
+  return marksToProcess;
 };
 
 export function getActiveAttributes(state) {

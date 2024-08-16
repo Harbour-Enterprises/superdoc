@@ -1,5 +1,4 @@
 <script setup>
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { ref, computed } from "vue";
 
 const emit = defineEmits(["submit", "cancel"]);
@@ -68,7 +67,7 @@ const showRemove = computed(() => {
       Add link
     </div>
     <div class="input-row" v-if="showInput">
-      <FontAwesomeIcon icon="link" class="input-icon" />
+      <i class="fas fa-link input-icon"></i>
       <input
         type="text"
         placeholder="Type or paste a link"
@@ -107,7 +106,7 @@ const showRemove = computed(() => {
 }
 
 .link-input-ctn {
-  width: 300px;
+  width: 320px;
   display: flex;
   flex-direction: column;
   padding: 1em;

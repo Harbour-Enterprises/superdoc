@@ -44,8 +44,8 @@ const getPositionStyle = computed(() => {
 });
 
 const isButton = (item) => item.type === 'button';
+const isDropdown = (item) => item.type === 'dropdown';
 const isSeparator = (item) => item.type === 'separator';
-const isSelect = (item) => item.type === 'select';
 const handleToolbarButtonClick = (item, argument = null) => {
   currentItem.value = item;
   if (item.disabled.value) return;
@@ -88,9 +88,9 @@ const handleClickOutside = (e) => {
 
       <!-- Toolbar button -->
       <n-dropdown
-          v-if="isButton(item) && item.nestedOptions?.value?.length"
+          v-if="isDropdown(item) && item.nestedOptions?.value?.length"
           :options="item.nestedOptions.value"
-          trigger="click"
+          :trigger="item.disabled.value ? null : 'click'"
           size="medium"
           placement="bottom-start"
           class="toolbar-button"
@@ -104,7 +104,7 @@ const handleClickOutside = (e) => {
                   @buttonClick="handleToolbarButtonClick(item)" />
               </template>
               <div v-if="item.tooltip">
-                {{ item.tooltip }} 
+                {{ item.tooltip }}
                 <span v-if="item.disabled.value">(disabled)</span>
               </div>
             </n-tooltip>

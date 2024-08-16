@@ -1,5 +1,4 @@
 <script setup>
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { onMounted, computed } from "vue";
 
 const emit = defineEmits(["select", "clickoutside"]);
@@ -44,12 +43,11 @@ onMounted(() => {
         :key="optionIndex"
         @click.stop.prevent="handleClick(option)"
       >
-        <FontAwesomeIcon :icon="option.icon" :style="option.style" />
-        <FontAwesomeIcon
-            icon="fa-check"
-            class="active-check"
+        <i :class="option.icon" :style="option.style"></i>
+        <i
+            class="fas fa-check active-check"
             :style="getCheckStyle(option.value, optionIndex)"
-            v-if="isActive(option)" />
+            v-if="isActive(option)"></i>
       </div>
     </div>
   </div>
