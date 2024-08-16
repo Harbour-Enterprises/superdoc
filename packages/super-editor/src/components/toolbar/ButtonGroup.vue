@@ -139,7 +139,7 @@ const handleClickOutside = (e) => {
 }
 .n-tooltip, .n-popover {
   background-color: #333333 !important;
-  font-size: 12px;
+  font-size: 14px;
   border-radius: 8px !important;
 }
 .n-dropdown-option-body:hover::before,

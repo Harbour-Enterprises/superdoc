@@ -75,7 +75,7 @@ const handleInputSubmit = () => {
         <ToolbarButtonIcon
             v-if="icon"
             :color="iconColor"
-            class="icon"
+            class="toolbar-icon"
             :icon="icon"
             :name="name">
         </ToolbarButtonIcon>
@@ -116,7 +116,8 @@ const handleInputSubmit = () => {
 
 .toolbar-button {
   padding: 0;
-  height: 30px;
+  height: 32px;
+  max-height: 32px;
   border-radius: 6px;
   margin-top: 3.5px;
   margin-bottom: 4px;
@@ -124,7 +125,7 @@ const handleInputSubmit = () => {
   overflow-y: visible;
   display: flex;
   align-items: center;
-  justify-content: space-around;
+  justify-content: center;
   cursor: pointer;
   color: #47484a;
   transition: all 0.2s ease-out;
@@ -146,7 +147,7 @@ const handleInputSubmit = () => {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: 400;
-  font-size: .9em;
+  font-size: 15px;
   text-align: center;
 }
 
@@ -168,7 +169,7 @@ const handleInputSubmit = () => {
   cursor: default;
   background-color: initial;
 }
-.disabled .icon, .disabled .caret, .disabled .button-label {
+.disabled .toolbar-icon, .disabled .caret, .disabled .button-label {
   opacity: .35;
 }
 .caret {
@@ -180,10 +181,10 @@ const handleInputSubmit = () => {
   border: none;
   outline: none;
   border-radius: 4px;
-  font-size: 1em;
   text-align: center;
   width: 30px;
-  font-size: 1em;
+  font-size: 14px;
+  margin-right: 5px;
   font-weight: 100;
   background-color: transparent;
   padding: 2px 0;
