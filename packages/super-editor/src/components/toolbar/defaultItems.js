@@ -610,7 +610,7 @@ export const makeDefaultItems = (superToolbar) => {
     group: 'right',
     options: [
       { label: "Editing", value: "editing", icon: renderIcon('fal fa-user-edit') },
-      { label: "Suggesting", value: "suggesting", icon: renderIcon('fal fa-edit') },
+      { label: "Suggesting", value: "suggesting", icon: renderIcon('fal fa-comment-edit') },
       { label: "Commenting", value: "commenting", icon: renderIcon('fal fa-comments') },
       { label: "Viewing", value: "viewing", icon: renderIcon('fal fa-eye') },
     ],
