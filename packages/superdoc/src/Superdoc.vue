@@ -18,6 +18,7 @@ import { useCommentsStore } from '@/stores/comments-store';
 
 import { DOCX, PDF, HTML } from '@common/document-types';
 import { SuperEditor } from 'super-editor';
+import HtmlViewer from './components/HtmlViewer/HtmlViewer.vue';
 import useConversation from './components/CommentsLayer/use-conversation';
 
 // Stores
@@ -34,6 +35,20 @@ const {
   activeSelection
 } = storeToRefs(superdocStore);
 const { handlePageReady, modules, user, getDocument } = superdocStore;
+
+// for html viewer
+// union of all field classes
+const fieldClasses = ['annotation'];
+// union of all field properties regardless of type
+const fieldFormat = {
+    id: (field) => field.getAttribute('data-itemid') || null,
+    value: (field) =>  field.querySelector('.annotation-text')?.innerHTML || null,
+    type: (field) => field.getAttribute('data-itemfieldtype') || null
+}
+
+documents.value.forEach(doc => {
+  console.log('Document', doc.data);
+});
 
 const {
   getConfig,
@@ -228,8 +243,9 @@ onMounted(() => {
           :user="user"
           @highlight-click="handleHighlightClick" />
 
-      <div class="sub-document" v-for="doc in documents" ref="documentContainers">
+      <div class="sub-document" v-for="doc in documents" :key="doc.id" ref="documentContainers">
         <!-- PDF renderer -->
+
         <PdfViewer
             v-if="doc.type === PDF"
             :document-data="doc"
@@ -246,6 +262,11 @@ onMounted(() => {
               :document-id="doc.id"
               :options="editorOptions" />
 
+          <!-- omitting field props -->
+          <HtmlViewer
+              v-if="doc.type === HTML"
+              :file-source="doc.data"
+              :document-id="doc.id" />
       </div>
     </div>
   </div>
