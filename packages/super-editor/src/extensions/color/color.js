@@ -30,7 +30,6 @@ export const Color = Extension.create({
   addCommands() {
     return {
       setColor: (color) => ({ chain }) => {
-        if (!color) return;
         return chain()
           .setMark('textStyle', { 'color': color })
           .run();
