@@ -123,16 +123,17 @@ export class DocxImporter {
     const verticalAlignTag = tcPr?.elements?.find((el) => el.name === 'w:vAlign');
     const verticalAlign = verticalAlignTag?.attributes['w:val'];
 
+    const attributes = {};
+    if (width) attributes['width'] = width;
+    if (widthType) attributes['widthType'] = widthType;
+    if (colspan) attributes['colspan'] = colspan;
+    if (background) attributes['background'] = background;
+    if (verticalAlign) attributes['verticalAlign'] = verticalAlign;
+
     return {
       type: 'tableCell',
       content: this.#convertToSchema(node.elements),
-      attrs: {
-        width,
-        widthType,
-        borders,
-        background,
-        colspan,
-      },
+      attrs: attributes,
     }
   }
 
@@ -200,14 +201,16 @@ export class DocxImporter {
     const rowHeight = rowHeightTag?.attributes['w:val'];
     const rowHeightRule = rowHeightTag?.attributes['w:hRule'];
 
-    newNode.attrs['borders'] = {
-      top: rowBorders?.insideH || {},
-      right: rowBorders?.insideV || {},
-    };
+    const borders = {};
+    if (rowBorders?.insideH) borders['bottom'] = rowBorders.insideH;
+    if (rowBorders?.insideV) borders['right'] = rowBorders.insideV;
+    newNode.attrs['borders'] = borders;
 
-    if (rowHeight) {
+    if (rowHeight && newNode.attrs['rowHeight']) {
       newNode.attrs['rowHeight'] = twipsToPixels(rowHeight);
     }
+
+    console.debug('Row node:', newNode);
     return newNode;
   }
 
@@ -236,6 +239,7 @@ export class DocxImporter {
     const borderData = Object.keys(borders)?.length ? borders : referencedStyles.borders;
     const borderRowData = Object.keys(rowBorders)?.length ? rowBorders : referencedStyles.rowBorders;
     const content = rows.map((row) => this.#handleTableRowNode(row, borderRowData));
+
     return {
       type: 'table',
       content,
