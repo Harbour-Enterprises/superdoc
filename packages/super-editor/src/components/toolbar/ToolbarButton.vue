@@ -1,6 +1,6 @@
 <script setup>
 import ToolbarButtonIcon from './ToolbarButtonIcon.vue'
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 
 const emit = defineEmits(['buttonClick', 'textSubmit']);
 
@@ -43,6 +43,7 @@ const {
   inlineTextInputVisible,
   hasInlineTextInput,
   minWidth,
+  style,
 } = props.toolbarItem;
 
 
@@ -62,10 +63,17 @@ const handleInputSubmit = () => {
   inlineTextInput.value = '';
 }
 
+const getStyle = computed(() => {
+  if (style.value) return style.value;
+  return {
+    minWidth: props.minWidth,
+  }
+})
+
 </script>
 
 <template>
-  <div class="toolbar-item" :style="{minWidth}">
+  <div class="toolbar-item" :style="getStyle">
 
       <div @click="handleClick"
           class="toolbar-button"
@@ -79,9 +87,9 @@ const handleInputSubmit = () => {
             :name="name">
         </ToolbarButtonIcon>
 
-        <span class="button-label" v-if="label && !hideLabel && !inlineTextInputVisible">
+        <div class="button-label" v-if="label && !hideLabel && !inlineTextInputVisible">
           {{label}}
-        </span>
+        </div>
 
         <span v-if=inlineTextInputVisible>
           <input
@@ -96,7 +104,7 @@ const handleInputSubmit = () => {
         </span>
 
         <i v-if="hasCaret"
-            class="fas"
+            class="dropdown-caret fas"
             :class="active ? 'fa-caret-up' : 'fa-caret-down'"
             :style="{opacity: disabled ? 0.6 : 1}"></i>
 
@@ -130,7 +138,9 @@ const handleInputSubmit = () => {
   user-select: none;
   position: relative;
 }
-
+.dropdown-caret {
+  margin-right: 5px;
+}
 .toolbar-button:hover {
   background-color: #DBDBDB;
 }
@@ -140,12 +150,13 @@ const handleInputSubmit = () => {
 }
 .button-label {
   overflow: hidden;
-  width: 50px;
+  width: 100%;
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: 400;
   font-size: 15px;
+  margin: 5px;
   text-align: center;
 }
 .toolbar-icon {

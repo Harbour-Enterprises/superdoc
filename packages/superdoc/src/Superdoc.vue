@@ -212,7 +212,7 @@ onMounted(() => {
     <!-- Floating tools menu (shows up when user has text selection)-->
     <div  v-if="showToolsFloatingMenu" class="tools" :style="toolsMenuPosition">
       <i
-          class="fal fa-comment fa-tool-icon"
+          class="fas fa-comment fa-tool-icon"
           data-id="is-tool"
           @click.stop.prevent="handleToolClick('comments')" />
     </div>
@@ -294,6 +294,9 @@ onMounted(() => {
   min-height: 100%;
   position: relative;
   border-left: 1px solid #DBDBDB;
+}
+.fa-tool-icon {
+  cursor: pointer;
 }
 
 /* General Styles */

@@ -73,15 +73,15 @@ const handleClickOutside = (e) => {
   <div :style="getPositionStyle" class="button-group">
     
     <div v-for="item, index in toolbarItems"
-    :key="index"
-    :class="{
-      narrow: item.isNarrow.value,
-      wide: item.isWide.value,
-      mobile: item.isMobile.value,
-      tablet: item.isTablet.value,
-      desktop: item.isDesktop.value,
-    }"
-    class="toolbar-item-ctn">
+      :key="index"
+      :class="{
+        narrow: item.isNarrow.value,
+        wide: item.isWide.value,
+        mobile: item.isMobile.value,
+        tablet: item.isTablet.value,
+        desktop: item.isDesktop.value,
+      }"
+      class="toolbar-item-ctn">
 
       <!-- toolbar separator -->
       <ToolbarSeparator v-if="isSeparator(item)" style="width: 20px" />
