@@ -26,8 +26,8 @@ export const Paragraph = Node.create({
 
           const { lineSpaceBefore, lineSpaceAfter } = paragraphSpacing;
           const style = `
-            ${lineSpaceBefore ? `margin-top: ${lineSpaceBefore.toFixed(2)}px;` : ''}
-            ${lineSpaceAfter ? `margin-bottom: ${lineSpaceAfter.toFixed(2)}px;` : ''}
+            ${lineSpaceBefore ? `margin-top: ${lineSpaceBefore}px;` : ''}
+            ${lineSpaceAfter ? `margin-bottom: ${lineSpaceAfter}px;` : ''}
           `.trim();
           
           return { style };

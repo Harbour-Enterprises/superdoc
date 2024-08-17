@@ -1,16 +1,20 @@
 function inchesToTwips(inches) {
   if (inches instanceof String || typeof inches === 'string') inches = parseFloat(inches)
-  return inches * 1440;
+  return (inches * 1440).toFixed(2);
 }
 
 function twipsToInches(twips) {
   if (twips instanceof String || typeof inches === 'string') twips = int(twips)
-  return twips / 1440;
+  return (twips / 1440).toFixed(2);
 }
 
 function twipsToPixels(twips) {
   twips = twipsToInches(twips);
-  return twips * 96;
+  return (twips * 96).toFixed(2);
 }
 
-export { inchesToTwips, twipsToInches, twipsToPixels };
+function halfPointToPixels(halfPoints) {
+  return (96 / 72).toFixed(2)
+}
+
+export { inchesToTwips, twipsToInches, twipsToPixels, halfPointToPixels };

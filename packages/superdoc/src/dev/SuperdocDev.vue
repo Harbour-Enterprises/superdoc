@@ -107,6 +107,15 @@ onMounted(async () => {
   border: 1px solid #015fcc;
   box-shadow:0 0 5px hsla( 0,0%,0%,.3 );
 }
+tr {
+  height: 5px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+p {
+  margin: 0 !important;
+  padding: 0 !important;
+}
 </style>
 
 <style scoped>

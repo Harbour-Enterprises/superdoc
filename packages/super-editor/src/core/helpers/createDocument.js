@@ -6,6 +6,7 @@
  */
 export function createDocument(converter, schema) {
   const documentData = converter.getSchema();
+  console.debug('[createDocument] Document data:', documentData);
   if (documentData) {
     return schema.nodeFromJSON(documentData);
   }
