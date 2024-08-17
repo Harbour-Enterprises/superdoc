@@ -23,6 +23,7 @@ export const TableRow = Node.create({
     return {
       borders: {
         renderDOM({ borders = {} }) {
+          if (!borders) return {};
           const style = Object.entries(borders).reduce((acc, [key, { size, color }]) => {
             return `${acc}border-${key}: ${size}px solid ${color || 'black'};`;
           }, '');
@@ -31,7 +32,7 @@ export const TableRow = Node.create({
       },
       rowHeight: {
         renderDOM({ rowHeight }) {
-          console.debug('rowHeight', rowHeight);
+          if (!rowHeight) return {};
           const style = `height: ${rowHeight}px;`;
           return { style };
         },

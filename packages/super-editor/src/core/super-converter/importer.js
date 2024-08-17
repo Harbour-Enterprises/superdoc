@@ -208,9 +208,9 @@ export class DocxImporter {
 
     if (rowHeight && newNode.attrs['rowHeight']) {
       newNode.attrs['rowHeight'] = twipsToPixels(rowHeight);
+      console.debug('Row node:', newNode);
     }
 
-    console.debug('Row node:', newNode);
     return newNode;
   }
 

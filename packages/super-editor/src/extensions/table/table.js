@@ -28,6 +28,7 @@ export const Table = Node.create({
       borders: {
         default: {},
         renderDOM({ borders = {} }) {
+          if (!borders) return {};
           const style = Object.entries(borders).reduce((acc, [key, { size, color }]) => {
             return `${acc}border-${key}: ${size}px solid ${color || 'black'};`;
           }, 'border-collapse: collapse;');

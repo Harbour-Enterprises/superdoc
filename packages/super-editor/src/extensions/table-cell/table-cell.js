@@ -26,8 +26,8 @@ export const TableCell = Node.create({
   addAttributes() {
     return {
       width: {
-        renderDOM: (attrs) => {
-          const { width } = attrs;
+        renderDOM: ({ width }) => {
+          if (!width) return {};
           const style = `width: ${width}in;`;
           return { style };
         },
@@ -36,6 +36,7 @@ export const TableCell = Node.create({
       rowspan: { default: 1, },
       background: {
         renderDOM ({ background }) {
+          if (!background) return {};
           const { color } = background || {};
           const style = `background-color: #${color || 'transparent'};`;
           return { style };
