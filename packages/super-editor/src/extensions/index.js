@@ -20,6 +20,10 @@ import { Heading } from './heading/index.js';
 import { CommentRangeStart, CommentRangeEnd, CommentReference } from './comment/index.js';
 import { TabNode } from './tab/index.js';
 import { PageBreak } from './page-break/index.js';
+import { Table } from './table/index.js';
+import { TableHeader } from './table-header/index.js';
+import { TableRow } from './table-row/index.js';
+import { TableCell } from './table-cell/index.js';
 
 // Marks extensions
 import { TextStyle } from './text-style/text-style.js';
@@ -63,7 +67,11 @@ const getStarterExtensions = () => [
   Underline,
   FormatCommands,
   DecorationClick,
-  CommentsPlugin
+  CommentsPlugin,
+  Table,
+  TableRow,
+  TableCell,
+  TableHeader,
 ];
 
 export {
@@ -95,5 +103,9 @@ export {
   FormatCommands,
   DecorationClick,
   CommentsPlugin,
+  Table,
+  TableRow,
+  TableCell,
+  TableHeader,
   getStarterExtensions,
 };

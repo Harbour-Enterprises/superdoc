@@ -5,3 +5,8 @@ body, html {
   min-height: 100%;
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.ProseMirror p {
+  margin: 0;
+  padding: 0;
+}

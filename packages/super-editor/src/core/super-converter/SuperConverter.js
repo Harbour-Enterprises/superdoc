@@ -15,7 +15,9 @@ class SuperConverter {
     'w:r': 'run',
     'w:t': 'text',
     'w:br': 'pageBreak',
-    // 'w:hyperlink': 'link',
+    'w:tbl': 'table',
+    'w:tr': 'tableRow',
+    'w:tc': 'tableCell',
     // 'w:tab': 'tab',
 
     // Formatting only

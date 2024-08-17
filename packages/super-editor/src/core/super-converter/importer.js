@@ -1,5 +1,5 @@
 import { SuperConverter } from './SuperConverter';
-import { twipsToPixels, twipsToInches } from './helpers.js';
+import { twipsToPixels, twipsToInches, halfPointToPixels } from './helpers.js';
 import { toKebabCase } from '@common/key-transform.js';
 
 
@@ -76,6 +76,15 @@ export class DocxImporter {
         case 'w:commentRangeStart':
           schemaNode = this.#handleStandardNode(node);
           break;
+        case 'w:tbl':
+          schemaNode = this.#handleTableNode(node);
+          break;
+        case 'w:tr':
+          schemaNode = this.#handleTableRowNode(node);
+          break;
+        case 'w:tc':
+          schemaNode = this.#handleTableCellNode(node);
+          break;
         default:
           schemaNode = this.#handleStandardNode(node);
       }
@@ -89,6 +98,160 @@ export class DocxImporter {
     return processedElements;
   }
   
+  #handleTableCellNode(node) {
+    const tcPr = node.elements.find((el) => el.name === 'w:tcPr');
+    const borders = tcPr?.elements?.find((el) => el.name === 'w:tcBorders');
+    const tcWidth = tcPr?.elements?.find((el) => el.name === 'w:tcW');
+    const width = tcWidth ? twipsToInches(tcWidth.attributes['w:w']) : null;
+    const widthType = tcWidth?.attributes['w:type'];
+
+    // TODO: Do we need other background attrs?
+    const backgroundColor = tcPr?.elements?.find((el) => el.name === 'w:shd');
+    const background = {
+      color: backgroundColor?.attributes['w:fill'],
+    }
+
+    const colspanTag = tcPr?.elements?.find((el) => el.name === 'w:gridSpan');
+    const colspan = colspanTag?.attributes['w:val'];
+
+    const marginTag = tcPr?.elements?.find((el) => el.name === 'w:tcMar');
+    const marginLeft = marginTag?.elements?.find((el) => el.name === 'w:left');
+    const marginRight = marginTag?.elements?.find((el) => el.name === 'w:right');
+    const marginTop = marginTag?.elements?.find((el) => el.name === 'w:top'); 
+    const marginBottom = marginTag?.elements?.find((el) => el.name === 'w:bottom');
+
+    const verticalAlignTag = tcPr?.elements?.find((el) => el.name === 'w:vAlign');
+    const verticalAlign = verticalAlignTag?.attributes['w:val'];
+
+    const attributes = {};
+    if (width) attributes['width'] = width;
+    if (widthType) attributes['widthType'] = widthType;
+    if (colspan) attributes['colspan'] = colspan;
+    if (background) attributes['background'] = background;
+    if (verticalAlign) attributes['verticalAlign'] = verticalAlign;
+
+    return {
+      type: 'tableCell',
+      content: this.#convertToSchema(node.elements),
+      attrs: attributes,
+    }
+  }
+
+  #getReferencedTableStyles(tblStyleTag) {
+    if (!tblStyleTag) return null;
+
+    const { attributes } = tblStyleTag;
+    const tableStyleReference = attributes['w:val'];
+    if (!tableStyleReference) return null;
+
+    const styles = this.converter.convertedXml['word/styles.xml'];
+    const { elements } = styles.elements[0];
+    const styleElements = elements.filter((el) => el.name === 'w:style');
+    const styleTag = styleElements.find((el) => el.attributes['w:styleId'] === tableStyleReference);
+    if (!styleTag) return null;
+
+    const name = styleTag.elements.find((el) => el.name === 'w:name');
+    const basedOn = styleTag.elements.find((el) => el.name === 'w:basedOn');
+    const uiPriotity = styleTag.elements.find((el) => el.name === 'w:uiPriority');
+
+    const tblPr = styleTag.elements.find((el) => el.name === 'w:tblPr');
+    const tableBorders = tblPr?.elements.find((el) => el.name === 'w:tblBorders');
+    const { elements: borderElements = [] } = tableBorders || {};
+    const { borders, rowBorders } = this.#processTableBorders(borderElements);
+    
+    return {
+      name,
+      basedOn,
+      uiPriotity,
+      borders,
+      rowBorders,
+    }
+  }
+
+  #processTableBorders(borderElements) {
+    const borders = {};
+    const rowBorders = {};
+    borderElements.forEach((borderElement) => {
+      const { name } = borderElement;
+      const borderName = name.split('w:')[1];
+      const { attributes } = borderElement;
+
+      const attrs = {};
+      const color = attributes['w:color'];
+      const size = attributes['w:sz'];
+      if (color && color !== 'auto') attrs['color'] = `#${color}`;
+      if (size && size !== 'auto') attrs['size'] = halfPointToPixels(size);
+
+      const rowBorderNames = ['insideH', 'insideV'];
+      if (rowBorderNames.includes(borderName)) rowBorders[borderName] = attrs;
+      borders[borderName] = attrs;
+    });
+
+    return {
+      borders,
+      rowBorders
+    }
+  }
+
+  #handleTableRowNode(node, rowBorders) {
+    const newNode = this.#handleStandardNode(node);
+
+    const tPr = node.elements.find((el) => el.name === 'w:trPr');
+    const rowHeightTag = tPr?.elements.find((el) => el.name === 'w:trHeight');
+    const rowHeight = rowHeightTag?.attributes['w:val'];
+    const rowHeightRule = rowHeightTag?.attributes['w:hRule'];
+
+    const borders = {};
+    if (rowBorders?.insideH) borders['bottom'] = rowBorders.insideH;
+    if (rowBorders?.insideV) borders['right'] = rowBorders.insideV;
+    newNode.attrs['borders'] = borders;
+
+    if (rowHeight && newNode.attrs['rowHeight']) {
+      newNode.attrs['rowHeight'] = twipsToPixels(rowHeight);
+      console.debug('Row node:', newNode);
+    }
+
+    return newNode;
+  }
+
+  #handleTableNode(node) {
+    // Table styles
+    const tblPr = node.elements.find((el) => el.name === 'w:tblPr');
+
+    // Table borders can be specified in tblPr or inside a referenced style tag
+    const tableBordersElement = tblPr.elements.find((el) => el.name === 'w:tblBorders');
+    const tableBorders = tableBordersElement?.elements || [];
+    const { borders, rowBorders } = this.#processTableBorders(tableBorders);
+    const tblStyleTag = tblPr.elements.find((el) => el.name === 'w:tblStyle');
+    const referencedStyles = this.#getReferencedTableStyles(tblStyleTag);
+
+    const tblW = tblPr.elements.find((el) => el.name === 'w:tblW');
+    const tableWidth = twipsToInches(tblW.attributes['w:w']);
+    const tableWidthType = tblW.attributes['w:type'];
+
+    // TODO: What does this do?
+    // const tblLook = tblPr.elements.find((el) => el.name === 'w:tblLook');
+    const tblGrid = node.elements.find((el) => el.name === 'w:tblGrid');
+    const gridColumnWidths = tblGrid.elements.map((el) => twipsToInches(el.attributes['w:w']));
+
+    const rows = node.elements.filter((el) => el.name === 'w:tr');
+
+    const borderData = Object.keys(borders)?.length ? borders : referencedStyles.borders;
+    const borderRowData = Object.keys(rowBorders)?.length ? rowBorders : referencedStyles.rowBorders;
+    const content = rows.map((row) => this.#handleTableRowNode(row, borderRowData));
+
+    return {
+      type: 'table',
+      content,
+      attrs: {
+        tableWidth,
+        tableWidthType,
+        gridColumnWidths,
+        borders: borderData
+      }
+    }
+  }
+
   #handleHyperlinkNode(node) {
     const rels = this.converter.convertedXml['word/_rels/document.xml.rels'];
     const relationships = rels.elements.find((el) => el.name === 'Relationships');
@@ -204,8 +367,6 @@ export class DocxImporter {
 
     // We need to pre-process paragraph nodes to combine various possible elements we will find ie: lists, links.
     const processedElements = this.#preProcessNodesForFldChar(node.elements);
-    console.debug('\n\n PROCESSED ELEMENTS:', processedElements, '\n\n')
-
     node.elements = processedElements;
 
     // Check if this paragraph node is a list
@@ -524,7 +685,7 @@ export class DocxImporter {
   #getIndentValue(attributes) {
     let value  = attributes['w:left'];
     if (!value) value = attributes['w:firstLine'];
-    return `${twipsToInches(value).toFixed(2)}in`
+    return `${twipsToInches(value)}in`
   }
 
   #getLineHeightValue(attributes) {
@@ -535,7 +696,7 @@ export class DocxImporter {
     // if (!value) value = attributes['w:after'];
     // if (!value) value = attributes['w:before'];
     if (!value || value == 0) return null;
-    return `${twipsToInches(value).toFixed(2)}in`;
+    return `${twipsToInches(value)}in`;
   }
 
   #getMarkValue(markType, attributes) {
