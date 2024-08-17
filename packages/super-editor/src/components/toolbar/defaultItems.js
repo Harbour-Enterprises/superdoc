@@ -6,6 +6,7 @@ import { useToolbarItem } from "./use-toolbar-item";
 import IconGrid from "./IconGrid.vue";
 import AlignmentButtons from "./AlignmentButtons.vue";
 import LinkInput from "./LinkInput.vue";
+import DocumentMode from "./DocumentMode.vue";
 
 
 export const makeDefaultItems = (superToolbar) => {
@@ -30,7 +31,8 @@ export const makeDefaultItems = (superToolbar) => {
     labelAttr: "fontFamily",
     hasCaret: true,
     isWide: true,
-    style: { width: "120px" },
+    style: { width: "150px" },
+    suppressActiveHighlight: true,
     options: [
       {
         label: "Georgia",
@@ -86,6 +88,7 @@ export const makeDefaultItems = (superToolbar) => {
     hasCaret: true,
     hasInlineTextInput: false,
     inlineTextInputVisible: true,
+    suppressActiveHighlight: true,
     isWide: true,
     command: "setFontSize",
     style: { width: "90px" },
@@ -158,6 +161,7 @@ export const makeDefaultItems = (superToolbar) => {
     active: false,
     tooltip: "Text color",
     command: "setColor",
+    suppressActiveHighlight: true,
     options: [
       {
         key: "color",
@@ -451,7 +455,6 @@ export const makeDefaultItems = (superToolbar) => {
     hasCaret: true,
     command: "setZoom",
     isWide: true,
-    style: { width: "100px" },
     inlineTextInputVisible: false,
     hasInlineTextInput: true,
     options: [
@@ -604,17 +607,39 @@ export const makeDefaultItems = (superToolbar) => {
     label: "Editing",
     hasCaret: true,
     isWide: true,
-    style: { width: "100px" },
+    style: { width: "250px", display: "flex", justifyContent: "flex-end" },
     inlineTextInputVisible: false,
     hasInlineTextInput: true,
     group: 'right',
+    attributes: {
+      dropdownPostion: "right",
+    },
     options: [
-      { label: "Editing", value: "editing", icon: renderIcon('fal fa-user-edit') },
-      { label: "Suggesting", value: "suggesting", icon: renderIcon('fal fa-comment-edit') },
-      { label: "Commenting", value: "commenting", icon: renderIcon('fal fa-comments') },
-      { label: "Viewing", value: "viewing", icon: renderIcon('fal fa-eye') },
-    ],
+      {
+        type: "render",
+        render: () => renderDocumentMode(documentMode),
+      }
+    ]
   });
+
+  const documentOptions = [
+    { label: "Editing", value: "editing", icon: 'fal fa-user-edit', description: "Edit document directly", },
+    { label: "Suggesting", value: "suggesting", icon: 'fal fa-comment-edit', description: "Edits become suggestions" },
+    { label: "Commenting", value: "commenting", icon: 'fal fa-comments', description: "Add comments to document" },
+    { label: "Viewing", value: "viewing", icon: 'fal fa-eye', description: "View clean version of document only" },
+  ];
+
+  function renderDocumentMode() {
+    return h(DocumentMode, 
+      {
+        options: documentOptions,
+        onSelect: ({ label, icon }) => {
+          documentMode.label.value = label;
+          documentMode.icon.value = icon;
+        }
+      }
+    );
+  }
 
   function renderIcon(icon) {
     return () => {

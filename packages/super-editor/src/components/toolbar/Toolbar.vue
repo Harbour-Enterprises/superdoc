@@ -19,20 +19,23 @@ const handleCommand = ({ item, argument }) => {
 </script>
 
 <template>
-  <div class="toolbar">
+  <div class="superdoc-toolbar">
 
-    <ButtonGroup :toolbar-items="leftItems" position="left" @command="handleCommand" />
+    <ButtonGroup :toolbar-items="leftItems" position="left" @command="handleCommand" class="superdoc-toolbar-group-side" />
     <ButtonGroup :toolbar-items="centerItems" position="center" @command="handleCommand" />
-    <ButtonGroup :toolbar-items="rightItems" position="right" @command="handleCommand" />
+    <ButtonGroup :toolbar-items="rightItems" position="right" @command="handleCommand" class="superdoc-toolbar-group-side" />
 
   </div>
 </template>
 
 <style scoped>
-.toolbar {
+.superdoc-toolbar {
   display: flex;
   width: 100%;
   height: 39px;
   justify-content: space-between;
+}
+.superdoc-toolbar-group-side {
+  width: 200px;
 }
 </style>
