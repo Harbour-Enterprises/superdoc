@@ -18,6 +18,7 @@ export default function useConversation(params) {
   const markedDoneByEmail = ref(params.markedDoneByEmail || null);
   const markedDoneByName = ref(params.markedDoneByName || null);
   const group = ref(null);
+  const isInternal = ref(params.isInternal || true);
 
   const conversationElement = ref(null);
 
@@ -67,6 +68,7 @@ export default function useConversation(params) {
     group,
     conversationElement,
     suppressHighlight,
+    isInternal,
   }
   return {
     ...exposedData,

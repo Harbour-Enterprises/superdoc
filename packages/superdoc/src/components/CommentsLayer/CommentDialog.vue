@@ -1,11 +1,13 @@
 <script setup>
 import { computed, toRefs, ref, getCurrentInstance, onMounted } from 'vue';
+import { NDropdown, NTooltip, NSelect } from 'naive-ui';
 import { storeToRefs } from 'pinia';
 import { useCommentsStore } from '@/stores/comments-store';
 import { useSuperdocStore } from '@/stores/superdoc-store';
 import useSelection from '@/helpers/use-selection';
 import useComment from '@/components/CommentsLayer/use-comment';
 import Avatar from '@/components/general/Avatar.vue';
+import InternalDropdown from './InternalDropdown.vue'
 
 const superdocStore = useSuperdocStore();
 const commentsStore = useCommentsStore();
@@ -37,6 +39,9 @@ const props = defineProps({
 const emit = defineEmits(['click-outside', 'ready', 'dialog-exit']);
 const currentElement = ref(null);
 const inputIsFocused = ref(false);
+const isInternal = ref(props.data.isInternal);
+const isEditing = ref(false);
+
 const input = ref(null);
 const addComment = () => {
   if (!input.value?.value) return;
@@ -75,6 +80,7 @@ const addComment = () => {
     // Reset the original selection
     selectionPosition.value = null;
     newConversation.comments.push(comment);
+    newConversation.isInternal = isInternal.value;
     props.currentDocument.conversations.push(newConversation);
     proxy.$superdoc.broadcastComments(COMMENT_EVENTS.ADD, props.data.getValues());
   } else {
@@ -116,7 +122,6 @@ const getSidebarCommentStyle = computed(() => {
     const parentTop = props.parent.getBoundingClientRect().top;
     const currentBounds = currentElement.value.getBoundingClientRect();
     style.top = bounds.top + selectionBounds.top + 'px';
-    style.width = 300 + 'px';
   }
 
   return style;
@@ -132,6 +137,7 @@ const cleanConversations = () => {
 }
 
 const handleClickOutside = (e) => {
+  if (e.target.classList.contains('n-dropdown-option-body__label')) return;
   if (activeComment.value === props.data.conversationId) {
     floatingCommentsOffset.value = 0;
 
@@ -147,7 +153,7 @@ const setFocus = () => {
 }
 
 const markDone = () => {
-  const convo = props.currentDocument.conversations.find((c) => c.conversationId === props.data.conversationId);
+  const convo = getCurrentConvo();
   convo.markDone(props.user.email, props.user.name);
   props.currentDocument.removeConversation(convo.conversationId);
   proxy.$superdoc.broadcastComments(COMMENT_EVENTS.RESOLVED, convo.getValues());
@@ -165,6 +171,60 @@ const isActiveComment = computed(() => {
   return activeComment.value === props.data.conversationId;
 });
 
+const setConversationInternal = (state) => {
+  isInternal.value = state === 'internal';
+  const convo = getCurrentConvo();
+  if (convo) {
+    convo.isInternal = isInternal.value;
+    proxy.$superdoc.broadcastComments(COMMENT_EVENTS.UPDATE, convo.getValues());
+  }
+}
+
+const overflowOptions = [
+  {
+    label: 'Edit',
+    key: 'edit',
+  },
+  {
+    label: 'Delete',
+    key: 'delete',
+  },
+  {
+    label: 'Quote',
+    key: 'delete',
+    disabled: true,
+  }
+];
+
+const getCurrentConvo = () => {
+  return props.currentDocument.conversations.find((c) => c.conversationId === props.data.conversationId);
+}
+
+const handleOverflowSelection = (index, item, key) => {
+  if (key === 'edit') {
+    isEditing.value = item;
+  } else if (key === 'delete') {
+    const convo = getCurrentConvo();
+    if (convo) {
+      convo.comments.splice(index, 1);
+    }
+    console.log('Delete');
+  } else if (key === 'quote') {
+    console.log('Quote');
+  }
+};
+
+const updateComment = () => {
+  const convo = getCurrentConvo();
+  proxy.$superdoc.broadcastComments(COMMENT_EVENTS.UPDATE, convo.getValues());
+}
+
+const showButtons = computed(() => {
+  return !getConfig.readOnly && isActiveComment && !props.data.markedDone && !isEditing.value;
+})
+const showInputSection = computed(() => {
+  return !getConfig.readOnly && isActiveComment && !props.data.markedDone && !isEditing.value;
+});
 
 onMounted(() => {
   emit('ready', props.data.conversationId, currentElement);
@@ -177,10 +237,17 @@ onMounted(() => {
       class="comments-dialog"
       :class="{ 'is-active': isActiveComment }"
       @click.stop.prevent="setFocus"
-      v-click-outside="handleClickOutside"
       :id="data.conversationId"
       :style="getSidebarCommentStyle"
+      v-click-outside="handleClickOutside"
       ref="currentElement">
+
+    <div v-if="!pendingComment" >
+      <InternalDropdown
+          class="internal-dropdown"
+          :state="props.data.isInternal ? 'internal' : 'external'"
+          @select="setConversationInternal($event)" />
+    </div>
 
     <div v-for="(item, index) in data.comments" class="comment-container">
       <div class="card-section comment-header">
@@ -200,49 +267,88 @@ onMounted(() => {
               @click.stop.prevent="markDone"
               title="Mark done and hide comment thread">
           </i>
+          
+          <n-dropdown
+              trigger="click"
+              :options="overflowOptions"
+              @select="handleOverflowSelection(index, item, $event)">
+                <i class="fal fa-ellipsis-v" title="More options"></i>
+          </n-dropdown>
         </div>
       </div>
       <div class="card-section comment-body">
-        <div class="comment">
+        <div class="comment" v-if="!isEditing">
           {{ item.comment }}
         </div>
+        <div class="comment comment-editing" v-else-if="item === isEditing">
+          <input type="text" class="comments-input" v-model="item.comment" />
+          <button class="sd-button" @click.stop.prevent="updateComment"><i class="fal fa-thumbs-up"></i></button>
+        </div>
       </div>
+
+      <div class="comment-separator"></div>
     </div>
 
-    <div class="card-section input-section" v-if="!getConfig.readOnly && isActiveComment && !props.data.markedDone">
+    
+    <div class="card-section input-section" v-if="showInputSection">
+      <div class="card-section comment-header">
+        <div class="comment-header-left">
+          <div class="avatar">
+            <Avatar :user="props.user" />
+          </div>
+          <div class="user-info">
+            <div class="user-name">{{ props.user.name }}</div>
+            <div class="user-timestamp"></div>
+          </div>
+        </div>
+      </div>
       <div class="comment-entry">
         <input
             ref="input"
             type="text"
-            placeholder="Add a comment..."
+            class="comments-input" 
+            placeholder="Leave a comment..."
             @keyup.enter="handleKeyUp"
             @focus="inputIsFocused = true;"
             @click.stop.prevent />
       </div>
+
+      <InternalDropdown
+          class="internal-dropdown"
+          v-if="pendingComment"
+          @select="setConversationInternal($event)" />
+
     </div>
 
     <div
         class="card-section comment-footer"
-        v-if="!getConfig.readOnly && isActiveComment && !props.data.markedDone">
-      <button class="sd-button primary" @click.stop.prevent="addComment">Comment</button>
+        v-if="showButtons">
       <button class="sd-button" @click.stop.prevent="cancelComment">Cancel</button>
+      <button class="sd-button primary" @click.stop.prevent="addComment">Comment</button>
     </div>
   </div>
 </template>
 
 <style scoped>
+.comment-separator {
+  background-color: #DBDBDB;
+  height: 1px;
+  width: 100%;
+  margin: 15px 0;
+}
 .comments-dialog {
   position: absolute;
   display: flex;
   flex-direction: column;
-  padding: 12px;
+  padding: 10px 15px;
   border-radius: 12px;
-  background-color: #EDEDED;
+  background-color: #F3F6FD;
   transition: background-color 250ms ease;
   -webkit-box-shadow: 0px 0px 1px 1px rgba(50, 50, 50, 0.15);
   -moz-box-shadow: 0px 0px 1px 1px rgba(50, 50, 50, 0.15);
   box-shadow: 0px 0px 1px 1px rgba(50, 50, 50, 0.15);
   z-index: 5;
+  width: 300px;    
 }
 .is-active {
   z-index: 10;
@@ -271,18 +377,24 @@ onMounted(() => {
   flex-grow: 1;
   margin: 5px 0;
 }
-.comment-entry input {
-  border-radius: 12px;
-  padding: 6px 10px;
+.comments-input {
+  border-radius: 8px;
+  padding: 12px;
   outline: none;
   border: 1px solid #DBDBDB;
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.15);
   width: 100%;
+}
+.comments-input:focus,
+.comments-input:active {
+  border: 1px solid #1355FF;
 }
 
 .comment-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 10px;
 }
 .comment-header-left {
   display: flex;
@@ -320,5 +432,20 @@ onMounted(() => {
 }
 .comment-footer {
   margin: 5px 0;
+  display: flex;
+  justify-content: flex-end;
+
+}
+.internal-dropdown {
+  margin: 10px 0;
+  display: inline-block;
+}
+.comment-editing {
+  display: flex;
+  align-items: center;
+  padding: 10px 0 20px 0;
+}
+.comment-editing button {
+  margin-left: 5px;
 }
 </style>
