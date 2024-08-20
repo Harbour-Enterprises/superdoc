@@ -4,6 +4,12 @@ import { ref, shallowRef, onMounted, onBeforeUnmount } from 'vue';
 import { Editor } from '@vue-3/index.js';
 import { getStarterExtensions } from '@extensions/index.js';
 
+// import * as Y from 'yjs';
+// import { WebsocketProvider } from 'y-websocket'
+import { Collaboration } from '@extensions/index.js';
+import { CollaborationCursor } from '@extensions/index.js';
+
+
 const emit = defineEmits([
   'editor-ready',
   'comments-loaded',
@@ -33,15 +39,39 @@ const props = defineProps({
 const editor = shallowRef();
 const editorElem = ref(null);
 
+const initCollaboration = () => {
+  Collaboration.options.document = props.options.collaboration.document;
+  CollaborationCursor.options.provider = props.options.collaboration.provider;
+  CollaborationCursor.options.user = props.options.user;
+}
+
 const initEditor = async () => {
   console.debug('[super-editor] Loading file...', props.fileSource);
+
+  const extensions = getStarterExtensions();
+
+  // If collaboration is configured, add the extensions
+  if (props.options.collaboration?.document && props.options.collaboration.provider) {
+    initCollaboration();
+    extensions.push(Collaboration);
+    extensions.push(CollaborationCursor);
+  }
+
+  const extensions = getStarterExtensions();
+
+  // If collaboration is configured, add the extensions
+  if (props.options.collaboration?.document && props.options.collaboration.provider) {
+    initCollaboration();
+    extensions.push(Collaboration);
+    extensions.push(CollaborationCursor);
+  }
 
   const [content, media] = await Editor.loadXmlData(props.fileSource);
   editor.value = new Editor({
     mode: 'docx',
     element: editorElem.value,
     fileSource: props.fileSource,
-    extensions: getStarterExtensions(),
+    extensions,
     documentId: props.documentId,
     content,
     media,
@@ -56,6 +86,7 @@ const initEditor = async () => {
 };
 
 onMounted(() => {
+  console.debug('[super-editor] Mounted');
   initEditor();
 });
 
@@ -71,6 +102,42 @@ onBeforeUnmount(() => {
   </div>
 </template>
 
+<style>
+.ProseMirror > .ProseMirror-yjs-cursor:first-child {
+  margin-top: 16px;
+}
+.ProseMirror p:first-child, .ProseMirror h1:first-child, .ProseMirror h2:first-child, .ProseMirror h3:first-child, .ProseMirror h4:first-child, .ProseMirror h5:first-child, .ProseMirror h6:first-child {
+  margin-top: 16px
+}
+/* This gives the remote user caret. The colors are automatically overwritten*/
+.ProseMirror-yjs-cursor {
+  position: relative;
+  margin-left: -1px;
+  margin-right: -1px;
+  border-left: 1px solid black;
+  border-right: 1px solid black;
+  border-color: orange;
+  word-break: normal;
+  pointer-events: none;
+}
+/* This renders the username above the caret */
+.ProseMirror-yjs-cursor > div {
+  position: absolute;
+  top: -1.05em;
+  left: -1px;
+  font-size: 13px;
+  background-color: rgb(250, 129, 0);
+  font-family: serif;
+  font-style: normal;
+  font-weight: normal;
+  line-height: normal;
+  user-select: none;
+  color: white;
+  padding-left: 2px;
+  padding-right: 2px;
+  white-space: nowrap;
+}
+</style>
 <style scoped>
 .super-editor {
   position: relative;

@@ -19,14 +19,14 @@ const currentFile = ref(null);
 const handleNewFile = async (file) => {
   currentFile.value = null;
   const fileUrl = URL.createObjectURL(file);
-  currentFile.value = await getFileObject(fileUrl);
+  currentFile.value = await getFileObject(fileUrl, file.name);
 }
 
-const getFileObject = async (fileUrl) => {
+const getFileObject = async (fileUrl, fileName) => {
   // Generate a file url
   const response = await fetch(fileUrl);
   const blob = await response.blob();
-  return new File([blob], 'docx-file.docx', { type: DOCX});
+  return new File([blob], fileName, { type: DOCX});
 }
 
 const onCreate = ({ editor }) => {
@@ -51,7 +51,12 @@ const onCommentClicked = ({ conversation }) => {
   console.debug('💬 [Dev] Comment active', conversation);
 };
 
+const user = {
+  name: 'Super doc user',
+  color: '#339933',
+}
 const editorOptions = {
+    user,
     onCreate,
     onCommentClicked,
 }
@@ -178,7 +183,7 @@ const initToolbar = () => {
 
 onMounted(async () => {
   // set document to blank
-  currentFile.value = await getFileObject(BlankDOCX);
+  currentFile.value = await getFileObject(BlankDOCX, 'blank-doc.docx');
 });
 </script>
 

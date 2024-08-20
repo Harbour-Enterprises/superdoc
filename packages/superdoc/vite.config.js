@@ -1,13 +1,16 @@
 import { defineConfig } from 'vite'
 import { fileURLToPath, URL } from 'node:url';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import vue from '@vitejs/plugin-vue'
 
+
 // https://vitejs.dev/config/
-export default defineConfig((data) => {
+export default defineConfig(({ mode, command}) => {
+  const plugins = [vue()];
+  if (mode === 'development') plugins.push(nodePolyfills());
+
   return {
-    plugins: [
-      vue(),
-    ],
+    plugins,
     build: {
       target: 'es2020',
       lib: {

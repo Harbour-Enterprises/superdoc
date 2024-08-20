@@ -13,7 +13,9 @@ import { isActive } from './helpers/isActive.js';
 import { createStyleTag } from './utilities/createStyleTag.js';
 import { initComments } from '@features/index.js';
 import { style } from './config/style.js';
+
 import DocxZipper from '@core/DocxZipper.js';
+
 
 /**
  * Editor main class.
@@ -51,6 +53,11 @@ export class Editor extends EventEmitter {
     editorProps: {},
     parseOptions: {},
     coreExtensionOptions: {},
+    user: null,
+    collaboration: {
+      provider: null,
+      ydoc: null,
+    },
     onBeforeCreate: () => null,
     onCreate: () => null,
     onUpdate: () => null,
@@ -87,7 +94,7 @@ export class Editor extends EventEmitter {
     this.#createCommandService();
     this.#createSchema();
     this.#createConverter();
-
+    
     this.on('beforeCreate', this.options.onBeforeCreate);
     this.emit('beforeCreate', { editor: this });
     this.on('contentError', this.options.onContentError);
@@ -95,6 +102,8 @@ export class Editor extends EventEmitter {
     this.#createView();
     this.#initDefaultStyles();
     this.#injectCSS()
+
+    // this.#syncCollaboration();
 
     this.on('create', this.options.onCreate);
     this.on('update', this.options.onUpdate);
@@ -113,6 +122,16 @@ export class Editor extends EventEmitter {
       this.emit('create', { editor: this });
     }, 0);
   }
+
+  // #syncCollaboration() {
+  //   console.debug('syncCollaboration');
+
+  //   const ydoc = new Y.Doc();
+  //   const wsProvider = new WebsocketProvider(wsUrl, roomName, ydoc)
+  //   Collaboration.options.document = ydoc;
+  //   Collaboration.options.provider = wsProvider;
+  //   CollaborationCursor.options.provider = wsProvider;
+  // }
 
   #initRichText(options) {
     console.debug('Initializing rich text editor:', options);

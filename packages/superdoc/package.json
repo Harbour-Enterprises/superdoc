@@ -23,7 +23,9 @@
   },
   "dependencies": {
     "@harbour-enterprises/super-editor": "0.0.1-alpha.0",
+    "@gmcfall/yjs-firestore-provider": "^1.0.0-rc.5",
     "eventemitter3": "^5.0.1",
+    "firebase": "^9.23.0",
     "pdfjs-dist": "^4.3.136",
     "pinia": "^2.1.7",
     "tippy": "^0.0.0",

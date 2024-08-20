@@ -1,5 +1,6 @@
 <script setup>
 import '@harbour-enterprises/common/styles/common-styles.css';
+// import * as Y from 'yjs';
 import { getCurrentInstance, ref, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
 import { storeToRefs } from 'pinia';
 
@@ -54,6 +55,8 @@ const {
 } = storeToRefs(commentsStore);
 const { initialCheck, showAddComment } = commentsStore;
 const { proxy } = getCurrentInstance();
+const activeUser = ref(proxy.$superdoc.user)
+
 commentsStore.proxy = proxy;
 
 // Refs
@@ -195,6 +198,11 @@ const onCommentClicked = ({ conversation }) => {
 
 const editorOptions = computed(() => {
   return {
+  user: activeUser.value,
+  collaboration: {
+    provider: proxy.$superdoc.provider,
+    document: proxy.$superdoc.ydoc,
+  },
     onCreate,
     onFocus,
     onCommentsLoaded,
@@ -213,6 +221,7 @@ const showCommentsSidebar = computed(() => {
         )
 });
 
+console.debug('[Superdoc] Editor options', editorOptions);  
 const showToolsFloatingMenu = computed(() => toolsMenuPosition.value && !getConfig.value?.readOnly)
 const showActiveSelection = computed(() => !getConfig?.readOnly && selectionPosition)
 onMounted(() => {
@@ -273,7 +282,8 @@ onMounted(() => {
             v-if="doc.type === DOCX"
             :file-source="doc.data"
             :document-id="doc.id"
-            :options="{ ...editorOptions, id: doc.id }" />
+            :options="editorOptions"
+            :user="proxy.$superdoc.user" />
 
           <!-- omitting field props -->
           <HtmlViewer

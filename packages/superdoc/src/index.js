@@ -5,6 +5,11 @@ import EventEmitter from 'eventemitter3'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
+import * as Y from 'yjs';
+import { FirestoreProvider } from '@gmcfall/yjs-firestore-provider'
+import { WebsocketProvider } from 'y-websocket'
+import { initializeApp } from 'firebase/app';
+import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 import { useSuperdocStore } from './stores/superdoc-store';
 import { DOCX, PDF, HTML } from '@harbour-enterprises/common';
 import { SuperToolbar } from '@harbour-enterprises/super-editor';
@@ -28,6 +33,7 @@ const createMyApp = () => {
   * Superdoc class
   * Expects a config object
 */
+let colors = [];
 class Superdoc extends EventEmitter {
 
   static allowedTypes = [DOCX, PDF, HTML];
@@ -63,6 +69,13 @@ class Superdoc extends EventEmitter {
     this.toolbarElement = config.toolbar;
     this.toolbar = null;
 
+    // Active user
+    this.user = config.user;
+    this.user.color = getRandomColor(config.colors);
+
+    // Modules
+    this.modules = this.#initializeModules(config.modules || {});
+
     this.superdocStore.init(config);
     this.activeEditor = null;
 
@@ -77,7 +90,53 @@ class Superdoc extends EventEmitter {
     ]
 
     // If a toolbar element is provided, render a toolbar
-    this.addToolbar(this);
+    if (this.toolbarElement) this.addToolbar(this);
+  }
+
+  async #initializeModules(modules) {
+    this.log('Modules:', modules);
+    if ('collaboration' in modules) {
+      const module = modules.collaboration;
+      const config = modules.collaboration.config;
+
+      const handleAwarenessChange = (update) => {
+        const users = getUsers(this.provider, this.colors);
+        this.log('Awareness update:', update);
+        this.emit('copresence-update', users)
+      }
+      
+      if (module.providerType === 'firestore') {
+        const app = initializeApp(config.firebaseConfig);
+        this.log('Initializing collaboration with firestore', app);
+
+        this.ydoc = new Y.Doc();
+        const basePath = 'superdoc/tests/documents/test'.split('/');
+        this.provider = new FirestoreProvider(app, this.ydoc, basePath);
+
+        // console.debug('[superdoc] Provider:', provider);
+
+        // const db = getFirestore(config.firebaseApp);
+        // const docRef = doc(db, 'superdoc/test');
+
+        // const docSnap = await getDoc(docRef);
+        // if (docSnap.exists()) {
+        //   this.log('Document data:', docSnap.data());
+        // } else {
+        //   this.log('No such document!');
+        //   await setDoc(docRef, { message: 'hello world' });
+        // }
+      } else if (module.providerType === 'socket') {
+        this.ydoc = new Y.Doc();
+        console.debug('[superdoc] YDoc:', this.ydoc, config.socketUrl, config.documentId);
+        this.provider = new WebsocketProvider(config.socketUrl, config.documentID, this.ydoc);
+      }
+
+      if (this.provider) {
+        this.provider.awareness.setLocalStateField('user', this.user);
+        this.provider.awareness.on('update', handleAwarenessChange);
+      }
+
+    }
   }
 
   #preprocessDocuments(documents) {

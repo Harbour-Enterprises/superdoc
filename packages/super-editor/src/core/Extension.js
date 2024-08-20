@@ -23,6 +23,7 @@ export class Extension {
       ...config,
     }
 
+
     this.name = this.config.name;
 
     if (this.config.addOptions) {

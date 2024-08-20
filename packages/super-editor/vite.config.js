@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
         fileName: (format) => `super-editor.${format}.js`
       },
       rollupOptions: {
-        external: ['vue', 'tippy.js'],
+        external: ['vue', 'yjs', 'tippy.js'],
         output: {
           globals: {
             vue: 'Vue'
