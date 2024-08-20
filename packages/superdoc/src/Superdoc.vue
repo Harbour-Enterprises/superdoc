@@ -152,11 +152,14 @@ const handleToolClick = (tool) => {
 
 const handleDocumentMouseDown = (e) => {
   if (pendingComment.value) return;
-  selectionPosition.value = null;;
+  selectionPosition.value = null;
 }
 
 const handleHighlightClick = () => toolsMenuPosition.value = null;
-const cancelPendingComment = () => selectionPosition.value = null;
+const cancelPendingComment = (e) => {
+  if (e.target.classList.contains('n-dropdown-option-body__label')) return;
+  selectionPosition.value = null;
+}
 
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', handleDocumentMouseDown);
@@ -214,7 +217,7 @@ onMounted(() => {
       <i
           class="fas fa-comment fa-tool-icon"
           data-id="is-tool"
-          @click.stop.prevent="handleToolClick('comments')" />
+          @click.stop.prevent="handleToolClick('comments')"></i>
     </div>
 
     <!-- Active selection on top of document-->
