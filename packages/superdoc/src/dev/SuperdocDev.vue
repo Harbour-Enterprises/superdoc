@@ -33,8 +33,8 @@ const handleNewFile = async (file) => {
 }
 
 let wsProvider;
-const initCollaboration = () => {
-  const firebaseConfig = {
+const getFirebaseConfig = () => {
+  return {
     apiKey: "AIzaSyCp2UcE6rd6fEARbFq24hySs5Thoa0LVfw",
     authDomain: "firestore-db-test-8db0d.firebaseapp.com",
     projectId: "firestore-db-test-8db0d",
@@ -42,11 +42,9 @@ const initCollaboration = () => {
     messagingSenderId: "439692670335",
     appId: "1:439692670335:web:53f3d91de63939eac3564a"
   };
-  return firebaseConfig;
 }
 
 const initializeApp = async () => {
-  const firebaseApp = initCollaboration();
   const config = {
     selector: '#superdoc',
     toolbar: 'toolbar',
@@ -63,13 +61,13 @@ const initializeApp = async () => {
       },
     ],
     modules: {
-      collaboration: {
-        providerType: 'firestore',
-        config: {
-          firebaseApp,
-          collection: 'superdoc-dev',
-        }
-      },
+      // collaboration: {
+      //   providerType: 'firestore',
+      //   config: {
+      //     firebaseConfig: getFirebaseConfig(),
+      //     collection: 'superdoc-dev',
+      //   }
+      // },
       'comments': {
         // readOnly: true,
         // allowResolve: false,
@@ -97,7 +95,7 @@ onMounted(async () => {
       <div class="left-side">
         <div class="title"><h2>🦋 SuperDoc Dev</h2></div>
         <div>
-          Upload docx, pdf or (soon) html
+          Upload docx, pdf or html
           <BasicUpload @file-change="handleNewFile" />
         </div>
       </div>

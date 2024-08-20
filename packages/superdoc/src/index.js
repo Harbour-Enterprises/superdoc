@@ -70,7 +70,7 @@ class Superdoc extends EventEmitter {
     this.toolbar = null;
 
     // Active user
-    this.user = config.user;
+    this.user = config.user || {};
     this.user.color = getRandomColor(config.colors);
 
     // Modules
