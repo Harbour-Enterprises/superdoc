@@ -32,7 +32,7 @@ const getFileObject = async (fileUrl) => {
 const onCreate = ({ editor }) => {
   console.debug('[Dev] Editor created', editor);
   console.debug('[Dev] Page styles (pixels)', editor.getPageStyles());
-  console.debug('[Dev] document styles', editor.converter.getDocumentDefaultStyles());
+  console.debug('[Dev] document styles', editor.converter?.getDocumentDefaultStyles());
 
   activeEditor = editor;
   window.editor = editor;
