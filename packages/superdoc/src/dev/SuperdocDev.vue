@@ -2,6 +2,7 @@
 import '@common/styles/common-styles.css';
 import { nextTick, onMounted, ref } from 'vue';
 import { Superdoc } from '@/index';
+import { SuperEditor } from 'super-editor';
 import { DOCX, PDF, HTML } from '@common/document-types';
 import BasicUpload from '@common/components/BasicUpload.vue';
 import BlankDOCX from '@common/data/blank.docx?url';
@@ -48,7 +49,11 @@ const initializeApp = async () => {
         // allowResolve: false,
       },
       'hrbr-fields': {},
-    }
+    },
+    users: [
+      { name: 'Nick Bernal', email: 'nick@harbourshare.com' },
+      { name: 'Eric Doversberger', email: 'eric@harbourshare.com' },
+    ]
   }
   superdoc = new Superdoc(config);
 };
@@ -61,6 +66,7 @@ onMounted(async () => {
 
 <template>
   <div class="dev-app">
+
     <div class="header">
       <div class="left-side">
         <div class="title"><h2>🦋 SuperDoc Dev</h2></div>

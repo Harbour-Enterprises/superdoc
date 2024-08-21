@@ -1,0 +1,83 @@
+<script setup>
+import { ref, shallowRef, onMounted, onBeforeUnmount } from 'vue';
+import { Editor } from '@vue-3/index.js';
+import { getRichTextExtensions, Placeholder } from '@extensions/index.js';
+
+const emit = defineEmits(['update:modelValue']);
+const props = defineProps({
+  modelValue: {
+    type: String,
+    required: true
+  },
+
+  placeholder: {
+    type: String,
+    required: false,
+    default: 'Type something...',
+  },
+
+  options: {
+    type: Object,
+    required: false,
+    default: () => ({}),
+  },
+
+});
+
+const editor = shallowRef();
+const editorElem = ref(null);
+
+const onTransaction = ({ editor, transaction}) => {
+  const contents = editor.getHTML();
+  console.debug('\n\n\n HTML', contents, '\n\n\n')
+  emit('update:modelValue', contents);
+};
+
+const initEditor = async () => {
+  Placeholder.options.placeholder = props.placeholder || 'Type something...';
+
+  props.options.onTransaction = onTransaction;
+  editor.value = new Editor({
+    mode: "text",
+    element: editorElem.value,
+    extensions: getRichTextExtensions(),
+    ...props.options,
+  });
+};
+
+onMounted(() => {
+  initEditor();
+});
+
+onBeforeUnmount(() => {
+  editor.value?.destroy();
+  editor.value = null;
+});
+</script>
+
+<template>
+  <div class="super-editor">
+    <div ref="editorElem" class="editor-element"></div>
+  </div>
+</template>
+
+<style>
+.ProseMirror {
+  min-height: 100%;
+  min-width: 100%;
+  height: 100%;
+  width: 100%;
+}
+</style>
+
+<style scoped>
+.super-editor {
+  border: 1px solid #999;
+  height: 100%;
+  width: 100%;
+}
+.editor-element {
+  height: 100%;
+  width: 100%;
+}
+</style>

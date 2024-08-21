@@ -11,7 +11,7 @@ This will load the Vue 3 app with test data. The main entry points are:
 - main.js (test data)
 - Superdoc.vue
 
-For document editor (prose mirror), please see DocumentEditor.vue
+For document editor (prose mirror), please see the super-editor package
 ```
 
 ### Installation

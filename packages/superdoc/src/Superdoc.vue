@@ -5,12 +5,9 @@ import { storeToRefs } from 'pinia';
 
 import PdfViewer from './components/PdfViewer/PdfViewer.vue';
 import CommentsLayer from './components/CommentsLayer/CommentsLayer.vue';
-import DocumentEditor from './components/DocumentEditor/DocumentEditor.vue';
 import CommentDialog from '@/components/CommentsLayer/CommentDialog.vue';
 import FloatingComments from '@/components/CommentsLayer/FloatingComments.vue';
 import HrbrFieldsLayer from '@/components/HrbrFieldsLayer/HrbrFieldsLayer.vue';
-import docxWithComments from './assets/lists_and_comments.docx?url'
-import useDocument from '@/composables/use-document';
 
 import { useSuperdocStore } from '@/stores/superdoc-store';
 import { useCommentsStore } from '@/stores/comments-store';

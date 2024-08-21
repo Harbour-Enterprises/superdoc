@@ -4,10 +4,12 @@ import { NDropdown, NTooltip, NSelect } from 'naive-ui';
 import { storeToRefs } from 'pinia';
 import { useCommentsStore } from '@/stores/comments-store';
 import { useSuperdocStore } from '@/stores/superdoc-store';
+import { SuperInput } from 'super-editor';
 import useSelection from '@/helpers/use-selection';
 import useComment from '@/components/CommentsLayer/use-comment';
 import Avatar from '@/components/general/Avatar.vue';
 import InternalDropdown from './InternalDropdown.vue'
+import DocumentUsers from '@/components/general/DocumentUsers.vue';
 
 const superdocStore = useSuperdocStore();
 const commentsStore = useCommentsStore();
@@ -41,10 +43,12 @@ const currentElement = ref(null);
 const inputIsFocused = ref(false);
 const isInternal = ref(props.data.isInternal);
 const isEditing = ref(false);
+const currentComment = ref('');
 
 const input = ref(null);
 const addComment = () => {
-  if (!input.value?.value) return;
+  const value = currentComment.value; // input.value?.value;
+  if (!value) return;
 
   // create the new comment for the conversation
   const comment = useComment({
@@ -53,7 +57,7 @@ const addComment = () => {
       name: props.user.name,
     },
     timestamp: new Date(),
-    comment: input.value.value,
+    comment: value,
   });
 
   // If this conversation is pending addition, add to the document first
@@ -88,7 +92,7 @@ const addComment = () => {
     proxy.$superdoc.broadcastComments(COMMENT_EVENTS.ADD, props.data.getValues());
   }
 
-  input.value.value = '';
+  currentComment.value = '';
 }
 
 function formatDate(timestamp) {
@@ -202,6 +206,7 @@ const getCurrentConvo = () => {
 
 const handleOverflowSelection = (index, item, key) => {
   if (key === 'edit') {
+    currentComment.value = item.comment;
     isEditing.value = item;
   } else if (key === 'delete') {
     const convo = getCurrentConvo();
@@ -214,16 +219,19 @@ const handleOverflowSelection = (index, item, key) => {
   }
 };
 
-const updateComment = () => {
+const updateComment = (item) => {
+  item.comment = currentComment.value;
+  currentComment.value = '';
   const convo = getCurrentConvo();
   proxy.$superdoc.broadcastComments(COMMENT_EVENTS.UPDATE, convo.getValues());
+  isEditing.value = false;
 }
 
 const showButtons = computed(() => {
-  return !getConfig.readOnly && isActiveComment && !props.data.markedDone && !isEditing.value;
+  return !getConfig.readOnly && isActiveComment.value && !props.data.markedDone && !isEditing.value;
 })
 const showInputSection = computed(() => {
-  return !getConfig.readOnly && isActiveComment && !props.data.markedDone && !isEditing.value;
+  return !getConfig.readOnly && isActiveComment.value && !props.data.markedDone && !isEditing.value;
 });
 
 onMounted(() => {
@@ -241,7 +249,8 @@ onMounted(() => {
       :style="getSidebarCommentStyle"
       v-click-outside="handleClickOutside"
       ref="currentElement">
-
+    
+    <!-- internal/external dropdown when conversation has comments -->
     <div v-if="!pendingComment" >
       <InternalDropdown
           class="internal-dropdown"
@@ -249,6 +258,7 @@ onMounted(() => {
           @select="setConversationInternal($event)" />
     </div>
 
+    <!-- Comments -->
     <div v-for="(item, index) in data.comments" class="comment-container">
       <div class="card-section comment-header">
         <div class="comment-header-left">
@@ -277,19 +287,24 @@ onMounted(() => {
         </div>
       </div>
       <div class="card-section comment-body">
-        <div class="comment" v-if="!isEditing">
-          {{ item.comment }}
-        </div>
+        <div class="comment" v-if="item !== isEditing" v-html="item.comment"></div>
         <div class="comment comment-editing" v-else-if="item === isEditing">
-          <input type="text" class="comments-input" v-model="item.comment" />
-          <button class="sd-button" @click.stop.prevent="updateComment"><i class="fal fa-thumbs-up"></i></button>
+            <SuperInput 
+              class="superdoc-field" 
+              placeholder="Add a comment"
+              v-model="currentComment" />
+
+            <div class="comment-footer">
+              <button class="sd-button" @click.stop.prevent="cancelComment">Cancel</button>
+              <button class="sd-button primary" @click.stop.prevent="updateComment(item)">Update</button>
+            </div>
+
         </div>
       </div>
-
-      <div class="comment-separator"></div>
+      <div class="comment-separator" v-if="data.length > 1"></div>
     </div>
 
-    
+    <!-- New comment entry -->
     <div class="card-section input-section" v-if="showInputSection">
       <div class="card-section comment-header">
         <div class="comment-header-left">
@@ -303,33 +318,28 @@ onMounted(() => {
         </div>
       </div>
       <div class="comment-entry">
-        <input
-            ref="input"
-            type="text"
-            class="comments-input" 
-            placeholder="Leave a comment..."
-            @keyup.enter="handleKeyUp"
-            @focus="inputIsFocused = true;"
-            @click.stop.prevent />
+        <SuperInput 
+            class="superdoc-field" 
+            placeholder="Add a comment"
+            v-model="currentComment" />
       </div>
-
       <InternalDropdown
           class="internal-dropdown"
           v-if="pendingComment"
           @select="setConversationInternal($event)" />
-
     </div>
 
-    <div
-        class="card-section comment-footer"
-        v-if="showButtons">
+    <!-- footer buttons -->
+    <div class="card-section comment-footer" v-if="showButtons">
       <button class="sd-button" @click.stop.prevent="cancelComment">Cancel</button>
       <button class="sd-button primary" @click.stop.prevent="addComment">Comment</button>
     </div>
+
   </div>
 </template>
 
 <style scoped>
+
 .comment-separator {
   background-color: #DBDBDB;
   height: 1px;
@@ -418,6 +428,9 @@ onMounted(() => {
   font-size: 12px;
   color: #999;
 }
+.input-section {
+  margin-top: 10px;
+}
 .sd-button {
   margin-right: 5px;
   font-size: 12px;
@@ -434,7 +447,7 @@ onMounted(() => {
   margin: 5px 0;
   display: flex;
   justify-content: flex-end;
-
+  width: 100%;
 }
 .internal-dropdown {
   margin: 10px 0;
@@ -442,7 +455,8 @@ onMounted(() => {
 }
 .comment-editing {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   padding: 10px 0 20px 0;
 }
 .comment-editing button {

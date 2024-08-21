@@ -34,9 +34,25 @@ import { Strike } from './strike/index.js';
 import { Link } from './link/index.js';
 
 // Plugins
-import { DecorationClick } from './decoration-click/decoration-click.js';
+import { DecorationClick } from './decoration-click/index.js';
 import { CommentsPlugin } from './comment/index.js';
+import { Placeholder } from './placeholder/index.js';
 
+const getRichTextExtensions = () => [
+  Bold,
+  Color,
+  Document,
+  History,
+  Italic,
+  Link,,
+  Paragraph,
+  Strike,
+  Text,
+  TextStyle,
+  Underline,
+  DecorationClick,
+  Placeholder,
+];
 
 const getStarterExtensions = () => [
   Bold,
@@ -107,5 +123,7 @@ export {
   TableRow,
   TableCell,
   TableHeader,
+  Placeholder,
   getStarterExtensions,
+  getRichTextExtensions,
 };

@@ -8,6 +8,7 @@ export const useSuperdocStore = defineStore('superdoc', () => {
   const documentContainers = ref([]);
   const documentBounds = ref([]);
   const pages = reactive({});
+  const documentUsers = ref([]);
 
   const isReady = ref(false);
 
@@ -18,8 +19,10 @@ export const useSuperdocStore = defineStore('superdoc', () => {
   const selectionPosition = ref(null);
 
   const init = (config) => {
-    const { documents: docs, modules: configModules, user: configUser } = config;
-    
+    const { documents: docs, modules: configModules, user: configUser, users: configUsers } = config;
+
+    documentUsers.value = configUsers || [];
+
     // Init current user
     Object.assign(user, configUser);
   
@@ -73,6 +76,7 @@ export const useSuperdocStore = defineStore('superdoc', () => {
     documentContainers,
     documentBounds,
     pages,
+    documentUsers,
 
     selectionPosition,
     activeSelection,

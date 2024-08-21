@@ -1,6 +1,7 @@
 import { EditorState, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
+import { DOMSerializer } from "prosemirror-model";
 import { EventEmitter } from './EventEmitter.js';
 import { ExtensionService } from './ExtensionService.js';
 import { CommandService } from './CommandService.js';
@@ -65,7 +66,32 @@ export class Editor extends EventEmitter {
 
   constructor(options) {
     super();
-    this.#init(options);
+
+    if (options.mode === 'docx') this.#init(options);
+    else if (options.mode === 'text') this.#initRichText(options);
+  }
+
+  #initRichText(options) {
+    console.debug('Initializing rich text editor:', options);
+
+    this.setOptions(options);
+    this.#createExtensionService();
+    this.#createCommandService();
+    this.#createSchema();
+
+    this.on('beforeCreate', this.options.onBeforeCreate);
+    this.emit('beforeCreate', { editor: this });
+    this.on('contentError', this.options.onContentError);
+
+    this.#createView();
+    this.#injectCSS()
+
+    this.#initListeners();
+
+    window.setTimeout(() => {
+      if (this.isDestroyed) return;
+      this.emit('create', { editor: this });
+    }, 0);
   }
 
   #init(options) {
@@ -83,6 +109,17 @@ export class Editor extends EventEmitter {
     this.#initDefaultStyles();
     this.#injectCSS()
 
+    this.#initListeners();
+
+    this.#loadComments();
+
+    window.setTimeout(() => {
+      if (this.isDestroyed) return;
+      this.emit('create', { editor: this });
+    }, 0);
+  }
+
+  #initListeners() {
     this.on('create', this.options.onCreate);
     this.on('update', this.options.onUpdate);
     this.on('selectionUpdate', this.options.onSelectionUpdate);
@@ -92,13 +129,6 @@ export class Editor extends EventEmitter {
     this.on('destroy', this.options.onDestroy);
     this.on('commentsLoaded', this.options.onCommentsLoaded);
     this.on('commentClick', this.options.onCommentClicked);
-
-    this.#loadComments();
-
-    window.setTimeout(() => {
-      if (this.isDestroyed) return;
-      this.emit('create', { editor: this });
-    }, 0);
   }
 
   #onFocus({ editor, event }) {
@@ -317,10 +347,14 @@ export class Editor extends EventEmitter {
     let doc;
 
     try {
-      doc = createDocument(
-        this.converter,
-        this.schema,
-      );
+      if (this.options.mode === 'docx') {
+        doc = createDocument(
+          this.converter,
+          this.schema,
+        );
+      } else if (this.options.mode === 'text') {
+        doc = this.schema.topNodeType.createAndFill();
+      }
     } catch (err) {
       console.error(err);
 
@@ -364,7 +398,7 @@ export class Editor extends EventEmitter {
    * Get page size and margins from the converter.
    * Set document default font and font size.
    */
-  #initDefaultStyles() {    
+  #initDefaultStyles() {
     const proseMirror = this.element.querySelector('.ProseMirror');
     if (!proseMirror) return;
 
@@ -441,8 +475,6 @@ export class Editor extends EventEmitter {
       return;
     }
 
-    console.debug('state:', this.state.toJSON());
-
     this.emit('update', {
       editor: this,
       transaction,
@@ -495,6 +527,19 @@ export class Editor extends EventEmitter {
     return this.state.doc.toJSON();
   }
 
+  /**
+   * Get HTML string of the document
+   */
+  getHTML() {
+    const div = document.createElement('div')
+    const fragment = DOMSerializer
+      .fromSchema(this.schema)
+      .serializeFragment(this.state.doc.content)
+
+    div.appendChild(fragment)
+    return div.innerHTML
+  }
+  
   /**
    * Get page styles
    */

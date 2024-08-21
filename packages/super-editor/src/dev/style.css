@@ -10,3 +10,13 @@ body, html {
   margin: 0;
   padding: 0;
 }
+
+.super-editor-placeholder::before {
+  content: attr(data-placeholder);
+  color: #aaa;
+  pointer-events: none;
+  display: block;
+  height: 0;
+  font-family: 'Arial, sans-serif';
+  font-size: 12px;
+}
