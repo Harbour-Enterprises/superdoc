@@ -40,14 +40,13 @@ const props = defineProps({
 
 const emit = defineEmits(['click-outside', 'ready', 'dialog-exit']);
 const currentElement = ref(null);
-const inputIsFocused = ref(false);
 const isInternal = ref(props.data.isInternal);
 const isEditing = ref(false);
 const currentComment = ref('');
+const isFocused = ref(false);
 
-const input = ref(null);
 const addComment = () => {
-  const value = currentComment.value; // input.value?.value;
+  const value = currentComment.value;
   if (!value) return;
 
   // create the new comment for the conversation
@@ -93,6 +92,8 @@ const addComment = () => {
   }
 
   currentComment.value = '';
+  emit('dialog-exit');
+  activeComment.value = null;
 }
 
 function formatDate(timestamp) {
@@ -306,19 +307,22 @@ onMounted(() => {
       </div>
       <div class="card-section comment-body">
         <div class="comment" v-if="item !== isEditing" v-html="item.comment"></div>
-        <div class="comment comment-editing" v-else-if="item === isEditing">
 
+        <div class="comment-editing" v-else-if="item === isEditing">
+          <div class="comment-entry" :class="{ 'input-active': isFocused }">
             <SuperInput 
               class="superdoc-field" 
               placeholder="Add a comment"
-              v-model="currentComment" />
-
-            <div class="comment-footer">
-              <button class="sd-button" @click.stop.prevent="cancelComment">Cancel</button>
-              <button class="sd-button primary" @click.stop.prevent="updateComment(item)">Update</button>
-            </div>
-
+              v-model="currentComment"
+              @focus="isFocused = true;" 
+              @blur="isFocused = false;" />
+          </div>
+          <div class="comment-footer">
+            <button class="sd-button" @click.stop.prevent="cancelComment">Cancel</button>
+            <button class="sd-button primary" @click.stop.prevent="updateComment(item)">Update</button>
+          </div>
         </div>
+
       </div>
       <div class="comment-separator" v-if="data.length > 1"></div>
     </div>
@@ -336,11 +340,13 @@ onMounted(() => {
           </div>
         </div>
       </div>
-      <div class="comment-entry">
+      <div class="comment-entry" :class="{ 'input-active': isFocused }">
         <SuperInput 
-            class="superdoc-field" 
+            class="superdoc-field"
             placeholder="Add a comment"
-            v-model="currentComment" />
+            v-model="currentComment"
+            @focus="isFocused = true;" 
+            @blur="isFocused = false;" />
       </div>
       <InternalDropdown
           class="internal-dropdown"
@@ -373,11 +379,11 @@ onMounted(() => {
   border-radius: 12px;
   background-color: #F3F6FD;
   transition: background-color 250ms ease;
-  -webkit-box-shadow: 0px 0px 1px 1px rgba(50, 50, 50, 0.15);
-  -moz-box-shadow: 0px 0px 1px 1px rgba(50, 50, 50, 0.15);
-  box-shadow: 0px 0px 1px 1px rgba(50, 50, 50, 0.15);
+  -webkit-box-shadow: 0px 4px 12px 0px rgba(50, 50, 50, 0.15);
+  -moz-box-shadow: 0px 4px 12px 0px rgba(50, 50, 50, 0.15);
+  box-shadow: 0px 4px 12px 0px rgba(50, 50, 50, 0.15);
   z-index: 5;
-  width: 300px;    
+  width: 300px;
 }
 .is-active {
   z-index: 10;
@@ -401,24 +407,6 @@ onMounted(() => {
 .overflow-menu i:hover {
   background-color: #DBDBDB;
 }
-
-.comment-entry {
-  flex-grow: 1;
-  margin: 5px 0;
-}
-.comments-input {
-  border-radius: 8px;
-  padding: 12px;
-  outline: none;
-  border: 1px solid #DBDBDB;
-  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.15);
-  width: 100%;
-}
-.comments-input:focus,
-.comments-input:active {
-  border: 1px solid #1355FF;
-}
-
 .comment-header {
   display: flex;
   align-items: center;
@@ -451,19 +439,19 @@ onMounted(() => {
   margin-top: 10px;
 }
 .sd-button {
-  margin-right: 5px;
   font-size: 12px;
+  margin-left: 5px;
 }
 .comment {
   font-size: 14px;
-  margin: 5px 0;
+  margin: 10px 0;
 }
 .conversation-item {
   border-bottom: 1px solid #DBDBDB;
   padding-bottom: 10px;
 }
 .comment-footer {
-  margin: 5px 0;
+  margin: 10px 0 5px;
   display: flex;
   justify-content: flex-end;
   width: 100%;
@@ -472,13 +460,20 @@ onMounted(() => {
   margin: 10px 0;
   display: inline-block;
 }
+
 .comment-editing {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 10px 0 20px 0;
+  padding-bottom: 10px;
 }
 .comment-editing button {
   margin-left: 5px;
+}
+.comment-entry {
+  border-radius: 8px;
+  border: 1px solid #DBDBDB !important;
+  width: 100%;
+  transition: all 250ms ease;
+}
+.input-active {
+  border: 1px solid #1355FF !important;
 }
 </style>

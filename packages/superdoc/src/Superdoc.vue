@@ -293,6 +293,7 @@ onMounted(() => {
   min-height: 100%;
   position: relative;
   border-left: 1px solid #DBDBDB;
+  z-index: 100;
 }
 .fa-tool-icon {
   cursor: pointer;

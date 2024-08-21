@@ -91,7 +91,7 @@ handleSelect(props.state || 'internal');
   transition: all 250ms ease;
   display: inline-block;
   cursor: pointer;
-  border-radius: 12px;
+  border-radius: 50px;
   padding: 2px 8px;
 }
 .internal-dropdown:hover {

@@ -3,7 +3,7 @@ import { ref, shallowRef, onMounted, onBeforeUnmount } from 'vue';
 import { Editor } from '@vue-3/index.js';
 import { getRichTextExtensions, Placeholder } from '@extensions/index.js';
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'focus', 'blur']);
 const props = defineProps({
   modelValue: {
     type: String,
@@ -32,10 +32,20 @@ const onTransaction = ({ editor, transaction}) => {
   emit('update:modelValue', contents);
 };
 
+const onFocus = ({ editor, transaction }) => {
+  emit('focus', { editor, transaction });
+};
+
+const onBlur = ({ editor, transaction }) => {
+  emit('blur', { editor, transaction });
+};
+
 const initEditor = async () => {
   Placeholder.options.placeholder = props.placeholder || 'Type something...';
 
   props.options.onTransaction = onTransaction;
+  props.options.onFocus = onFocus;
+  props.options.onBlur = onBlur;
   editor.value = new Editor({
     mode: "text",
     content: document.getElementById('currentContent'),
