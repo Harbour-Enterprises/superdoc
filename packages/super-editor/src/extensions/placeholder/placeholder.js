@@ -13,27 +13,27 @@ export const Placeholder = Extension.create({
   },
 
   addPmPlugins() {
-    const pluginKey = new PluginKey('placeholder');
-    const applyDecoration = (newState) => {
-      const { $from } = newState.selection;
-      return Decoration.node($from.before(), $from.after(), {
+
+    const applyDecoration = (state) => {
+      const plainText = state.doc.textBetween(0, state.doc.content.size, ' ', ' ');
+      if (plainText !== '') return DecorationSet.empty;
+
+      const { $from } = state.selection;
+      const decoration = Decoration.node($from.before(), $from.after(), {
         'data-placeholder': this.options.placeholder,
         class: 'super-editor-placeholder'
       });
+      return DecorationSet.create(state.doc, [decoration]);
     };
 
     const placeholderPlugin = new Plugin({
-      key: pluginKey,
+      key: new PluginKey('placeholder'),
       state: {
         init: (_, state) => {
-          return DecorationSet.create(state.doc, [applyDecoration(state)]);
+          return applyDecoration(state);
         },
         apply: (tr, oldValue, oldState, newState) => {
-          const plainText = newState.doc.textBetween(0, newState.doc.content.size, ' ', ' ');
-          if (plainText === '') {
-            return DecorationSet.create(newState.doc, [applyDecoration(newState)]);
-          }
-          return DecorationSet.empty;
+          return applyDecoration(newState);
         },
       },
       props: {

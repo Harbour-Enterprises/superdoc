@@ -10,10 +10,6 @@ const emit = defineEmits([
 ]);
 
 const props = defineProps({
-  mode: {
-    type: String,
-    default: 'docx'
-  },
 
   documentId: {
     type: String,
@@ -41,6 +37,7 @@ const initEditor = async () => {
 
   const content = await Editor.loadXmlData(props.fileSource);
   editor.value = new Editor({
+    mode: 'docx',
     element: editorElem.value,
     fileSource: props.fileSource,
     extensions: getStarterExtensions(),

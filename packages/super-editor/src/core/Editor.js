@@ -1,7 +1,7 @@
 import { EditorState, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
-import { DOMSerializer } from "prosemirror-model";
+import { DOMParser, DOMSerializer } from "prosemirror-model"
 import { EventEmitter } from './EventEmitter.js';
 import { ExtensionService } from './ExtensionService.js';
 import { CommandService } from './CommandService.js';
@@ -363,7 +363,13 @@ export class Editor extends EventEmitter {
           this.schema,
         );
       } else if (this.options.mode === 'text') {
-        doc = this.schema.topNodeType.createAndFill();
+        if (this.options.content) {
+          const div = document.createElement('div');
+          div.innerHTML = this.options.content;
+          doc = DOMParser.fromSchema(this.schema).parse(div);
+        } else {
+          doc = this.schema.topNodeType.createAndFill();
+        }
       }
     } catch (err) {
       console.error(err);

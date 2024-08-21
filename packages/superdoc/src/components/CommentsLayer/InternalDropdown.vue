@@ -38,6 +38,8 @@ const getState = computed(() => {
 });
 
 const getStyle = computed(() => {
+  if (!props.state) return {};
+
   const activeOption = options.find((o) => o.key === activeState.value);
   if (!activeOption) return {};
   if (activeOption.key === 'internal') {

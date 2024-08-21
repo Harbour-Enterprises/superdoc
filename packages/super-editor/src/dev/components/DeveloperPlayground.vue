@@ -149,7 +149,6 @@ onMounted(async () => {
             <div class="dev-app__content" v-if="currentFile">
               <div class="dev-app__content-container">
                 <SuperEditor
-                  mode="docx"
                   documentId="ID-122"
                   :file-source="currentFile" 
                   :options="editorOptions"

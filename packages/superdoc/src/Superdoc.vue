@@ -253,7 +253,6 @@ onMounted(() => {
 
         <SuperEditor
             v-if="doc.type === DOCX"
-            mode="docx"
             :file-source="doc.data"
             :document-id="doc.id"
             :options="editorOptions" />

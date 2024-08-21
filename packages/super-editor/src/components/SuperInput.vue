@@ -29,7 +29,6 @@ const editorElem = ref(null);
 
 const onTransaction = ({ editor, transaction}) => {
   const contents = editor.getHTML();
-  console.debug('\n\n\n HTML', contents, '\n\n\n')
   emit('update:modelValue', contents);
 };
 
@@ -39,6 +38,7 @@ const initEditor = async () => {
   props.options.onTransaction = onTransaction;
   editor.value = new Editor({
     mode: "text",
+    content: props.modelValue,
     element: editorElem.value,
     extensions: getRichTextExtensions(),
     ...props.options,
@@ -60,15 +60,6 @@ onBeforeUnmount(() => {
     <div ref="editorElem" class="editor-element"></div>
   </div>
 </template>
-
-<style>
-.ProseMirror {
-  min-height: 100%;
-  min-width: 100%;
-  height: 100%;
-  width: 100%;
-}
-</style>
 
 <style scoped>
 .super-editor {

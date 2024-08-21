@@ -109,10 +109,6 @@ function formatDate(timestamp) {
   return formattedDate;
 }
 
-const handleKeyUp = () => {
-  addComment();
-}
-
 const getSidebarCommentStyle = computed(() => {
   const style = {};
   if (isActiveComment.value) {
@@ -205,18 +201,40 @@ const getCurrentConvo = () => {
 }
 
 const handleOverflowSelection = (index, item, key) => {
-  if (key === 'edit') {
-    currentComment.value = item.comment;
-    isEditing.value = item;
-  } else if (key === 'delete') {
-    const convo = getCurrentConvo();
-    if (convo) {
-      convo.comments.splice(index, 1);
-    }
-    console.log('Delete');
-  } else if (key === 'quote') {
-    console.log('Quote');
+  switch (key) {
+    case 'edit':
+      handleEdit(item);
+      break;
+    case 'delete':
+      handleDelete(index);
+      break;
+    case 'quote':
+      handleQuote();
+      break;
   }
+};
+
+const handleEdit = (item) => {
+  currentComment.value = item.comment;
+  isEditing.value = item;
+};
+
+const handleDelete = (index) => {
+  const convo = getCurrentConvo();
+  if (!convo) return;
+
+  if (convo.comments.length === 1) {
+    props.currentDocument.removeConversation(convo.conversationId);
+  } else {
+    convo.comments.splice(index, 1);
+  }
+
+  proxy.$superdoc.broadcastComments(COMMENT_EVENTS.DELETED, convo.conversationId);
+};
+
+const handleQuote = () => {
+  // TODO: Implement quote functionality
+  console.log('Quote');
 };
 
 const updateComment = (item) => {
@@ -289,6 +307,7 @@ onMounted(() => {
       <div class="card-section comment-body">
         <div class="comment" v-if="item !== isEditing" v-html="item.comment"></div>
         <div class="comment comment-editing" v-else-if="item === isEditing">
+
             <SuperInput 
               class="superdoc-field" 
               placeholder="Add a comment"
