@@ -35,13 +35,10 @@ export class Editor extends EventEmitter {
 
   #comments;
 
-  // I am guessing this isn't the place to put this - doing it for now to get it to work
-  // TODO: Double check with Artem to figure out where one would store temp info like this
-  storedStyle;
-
   options = {
     element: document.createElement('div'),
     content: '', // XML content
+    mode: 'docx',
     converter: null,
     fileSource: null,
     documentId: null,
@@ -66,36 +63,23 @@ export class Editor extends EventEmitter {
 
   constructor(options) {
     super();
-
-    if (options.mode === 'docx') this.#init(options);
-    else if (options.mode === 'text') this.#initRichText(options);
-  }
-
-  #initRichText(options) {
-    console.debug('Initializing rich text editor:', options);
-
+    
     this.setOptions(options);
-    this.#createExtensionService();
-    this.#createCommandService();
-    this.#createSchema();
 
-    this.on('beforeCreate', this.options.onBeforeCreate);
-    this.emit('beforeCreate', { editor: this });
-    this.on('contentError', this.options.onContentError);
+    let modes = {
+      docx: () => this.#init(this.options),
+      text: () => this.#initRichText(this.options),
+      default: () => {
+        console.log('Not implemented.');
+      },
+    };
+  
+    let initMode = modes[this.options.mode] ?? modes.default;
 
-    this.#createView();
-    this.#injectCSS()
-
-    this.#initListeners();
-
-    window.setTimeout(() => {
-      if (this.isDestroyed) return;
-      this.emit('create', { editor: this });
-    }, 0);
+    initMode();
   }
 
   #init(options) {
-    this.setOptions(options);
     this.#createExtensionService();
     this.#createCommandService();
     this.#createSchema();
@@ -109,17 +93,6 @@ export class Editor extends EventEmitter {
     this.#initDefaultStyles();
     this.#injectCSS()
 
-    this.#initListeners();
-
-    this.#loadComments();
-
-    window.setTimeout(() => {
-      if (this.isDestroyed) return;
-      this.emit('create', { editor: this });
-    }, 0);
-  }
-
-  #initListeners() {
     this.on('create', this.options.onCreate);
     this.on('update', this.options.onUpdate);
     this.on('selectionUpdate', this.options.onSelectionUpdate);
@@ -129,6 +102,43 @@ export class Editor extends EventEmitter {
     this.on('destroy', this.options.onDestroy);
     this.on('commentsLoaded', this.options.onCommentsLoaded);
     this.on('commentClick', this.options.onCommentClicked);
+
+    this.#loadComments();
+
+    window.setTimeout(() => {
+      if (this.isDestroyed) return;
+      this.emit('create', { editor: this });
+    }, 0);
+  }
+
+  #initRichText(options) {
+    console.debug('Initializing rich text editor:', options);
+
+    this.#createExtensionService();
+    this.#createCommandService();
+    this.#createSchema();
+
+    this.on('beforeCreate', this.options.onBeforeCreate);
+    this.emit('beforeCreate', { editor: this });
+    this.on('contentError', this.options.onContentError);
+
+    this.#createView();
+    this.#injectCSS()
+
+    this.on('create', this.options.onCreate);
+    this.on('update', this.options.onUpdate);
+    this.on('selectionUpdate', this.options.onSelectionUpdate);
+    this.on('transaction', this.options.onTransaction);
+    this.on('focus', this.#onFocus);
+    this.on('blur', this.options.onBlur);
+    this.on('destroy', this.options.onDestroy);
+    this.on('commentsLoaded', this.options.onCommentsLoaded);
+    this.on('commentClick', this.options.onCommentClicked);
+
+    window.setTimeout(() => {
+      if (this.isDestroyed) return;
+      this.emit('create', { editor: this });
+    }, 0);
   }
 
   #onFocus({ editor, event }) {
@@ -544,7 +554,7 @@ export class Editor extends EventEmitter {
    * Get page styles
    */
   getPageStyles() {
-    return this.converter.pageStyles;
+    return this.converter?.pageStyles;
   }
 
   /**
