@@ -364,9 +364,7 @@ export class Editor extends EventEmitter {
         );
       } else if (this.options.mode === 'text') {
         if (this.options.content) {
-          const div = document.createElement('div');
-          div.innerHTML = this.options.content;
-          doc = DOMParser.fromSchema(this.schema).parse(div);
+          doc = DOMParser.fromSchema(this.schema).parse(this.options.content);
         } else {
           doc = this.schema.topNodeType.createAndFill();
         }

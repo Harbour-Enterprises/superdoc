@@ -38,7 +38,7 @@ const initEditor = async () => {
   props.options.onTransaction = onTransaction;
   editor.value = new Editor({
     mode: "text",
-    content: props.modelValue,
+    content: document.getElementById('currentContent'),
     element: editorElem.value,
     extensions: getRichTextExtensions(),
     ...props.options,
@@ -57,6 +57,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="super-editor">
+    <div id="currentContent" style="display: none;" v-html="modelValue"></div>
     <div ref="editorElem" class="editor-element"></div>
   </div>
 </template>
