@@ -29,8 +29,11 @@ export class FieldAnnotationView {
     this.annotationClass = options.annotationClass;
     this.annotationContentClass = options.annotationContentClass;
     this.borderColor = options.borderColor;
+
+    this.handleAnnotationClick = this.handleAnnotationClick.bind(this);
     
     this.buildView();
+    this.attachEventListeners();
   }
 
   buildView() {
@@ -143,6 +146,24 @@ export class FieldAnnotationView {
     };
   }
 
+  attachEventListeners() {
+    this.dom.addEventListener('click', this.handleAnnotationClick);
+  }
+
+  removeEventListeners() {
+    this.dom.removeEventListener('click', this.handleAnnotationClick);
+  }
+
+  handleAnnotationClick(event) {
+    this.editor.emit('fieldAnnotationClicked', {
+      editor: this.editor,
+      node: this.node,
+      nodePos: this.getPos(),
+      event,
+      currentTarget: event.currentTarget,
+    });
+  }
+
   stopEvent(event) {
     return false;
   }
@@ -159,7 +180,9 @@ export class FieldAnnotationView {
 
   // update(node) {}
 
-  // destroy() {}
+  destroy() {
+    this.removeEventListeners();
+  }
 
   updateAttributes(attributes) {
     this.editor.commands.command(({ tr }) => {
