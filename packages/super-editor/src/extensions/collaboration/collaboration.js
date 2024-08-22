@@ -1,10 +1,6 @@
 import { Extension } from '@core/index.js';
 import {
-  redo,
-  undo,
   ySyncPlugin,
-  yUndoPlugin,
-  yUndoPluginKey,
 } from 'y-prosemirror'
 
 export const Collaboration = Extension.create({
@@ -21,11 +17,11 @@ export const Collaboration = Extension.create({
   },
 
   addPmPlugins() {
-
     const fragment = this.options.fragment
       ? this.options.fragment
-      : this.options.document.getXmlFragment(this.options.field)
+      : this.options.document.getXmlFragment(this.options.field);
 
+    // Can set custom config here
     const ySyncPluginOptions = {
       ...this.options.ySyncOptions,
       onFirstRender: this.options.onFirstRender,
@@ -34,4 +30,5 @@ export const Collaboration = Extension.create({
     const ySyncPluginInstance = ySyncPlugin(fragment, ySyncPluginOptions)
     return [ySyncPluginInstance]
   },
+
 });

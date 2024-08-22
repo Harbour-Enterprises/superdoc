@@ -13,10 +13,8 @@ import { isActive } from './helpers/isActive.js';
 import { createStyleTag } from './utilities/createStyleTag.js';
 import { initComments } from '@features/index.js';
 import { style } from './config/style.js';
-
+import { validateCollaboration } from './helpers/validateCollaboration.js';
 import DocxZipper from '@core/DocxZipper.js';
-
-
 /**
  * Editor main class.
  */
@@ -89,12 +87,12 @@ export class Editor extends EventEmitter {
     initMode();
   }
 
-  #init(options) {
+  #init() {
     this.#createExtensionService();
     this.#createCommandService();
     this.#createSchema();
     this.#createConverter();
-    
+
     this.on('beforeCreate', this.options.onBeforeCreate);
     this.emit('beforeCreate', { editor: this });
     this.on('contentError', this.options.onContentError);
@@ -102,8 +100,6 @@ export class Editor extends EventEmitter {
     this.#createView();
     this.#initDefaultStyles();
     this.#injectCSS()
-
-    // this.#syncCollaboration();
 
     this.on('create', this.options.onCreate);
     this.on('update', this.options.onUpdate);
@@ -116,22 +112,13 @@ export class Editor extends EventEmitter {
     this.on('commentClick', this.options.onCommentClicked);
 
     this.#loadComments();
+    this.#syncCollaboration();
 
     window.setTimeout(() => {
       if (this.isDestroyed) return;
       this.emit('create', { editor: this });
     }, 0);
   }
-
-  // #syncCollaboration() {
-  //   console.debug('syncCollaboration');
-
-  //   const ydoc = new Y.Doc();
-  //   const wsProvider = new WebsocketProvider(wsUrl, roomName, ydoc)
-  //   Collaboration.options.document = ydoc;
-  //   Collaboration.options.provider = wsProvider;
-  //   CollaborationCursor.options.provider = wsProvider;
-  // }
 
   #initRichText(options) {
     console.debug('Initializing rich text editor:', options);
@@ -166,6 +153,19 @@ export class Editor extends EventEmitter {
   #onFocus({ editor, event }) {
     this.toolbar?.setActiveEditor(editor);
     this.options.onFocus({ editor, event });
+  }
+
+  // TODO: Rethink this 
+  #syncCollaboration() {
+    const hasCollaboration = this.extensionService.extensions.some((e) => e.name === 'collaboration');
+    if (!hasCollaboration) return;
+
+    const documentData = this.converter.getSchema();
+    const data = this.schema.nodeFromJSON(documentData);
+
+    const tr = this.view.state.tr;
+    tr.replaceWith(0, this.view.state.doc.content.size, data);
+    this.view.dispatch(tr);
   }
 
   setToolbar(toolbar) {
@@ -275,10 +275,14 @@ export class Editor extends EventEmitter {
    * @param options List of options.
    */
   setOptions(options) {
+    
     this.options = {
       ...this.options,
       ...options,
     };
+
+    // Attach collaboration if it is configured
+    validateCollaboration(this.options);
 
     if (!this.view || !this.state || this.isDestroyed) {
       return;
@@ -419,7 +423,7 @@ export class Editor extends EventEmitter {
   /**
    * Creates PM View.
    */
-  #createView() {
+  async #createView() {
     let doc;
 
     try {

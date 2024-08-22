@@ -4,12 +4,6 @@ import { ref, shallowRef, onMounted, onBeforeUnmount } from 'vue';
 import { Editor } from '@vue-3/index.js';
 import { getStarterExtensions } from '@extensions/index.js';
 
-// import * as Y from 'yjs';
-// import { WebsocketProvider } from 'y-websocket'
-import { Collaboration } from '@extensions/index.js';
-import { CollaborationCursor } from '@extensions/index.js';
-
-
 const emit = defineEmits([
   'editor-ready',
   'comments-loaded',
@@ -39,24 +33,8 @@ const props = defineProps({
 const editor = shallowRef();
 const editorElem = ref(null);
 
-const initCollaboration = () => {
-  Collaboration.options.document = props.options.collaboration.document;
-  CollaborationCursor.options.provider = props.options.collaboration.provider;
-  CollaborationCursor.options.user = props.options.user;
-}
-
 const initEditor = async () => {
   console.debug('[super-editor] Loading file...', props.fileSource);
-
-  const extensions = getStarterExtensions();
-
-  // If collaboration is configured, add the extensions
-  if (props.options.collaboration?.document && props.options.collaboration.provider) {
-    initCollaboration();
-    extensions.push(Collaboration);
-    extensions.push(CollaborationCursor);
-  }
-
   const extensions = getStarterExtensions();
 
   // If collaboration is configured, add the extensions
@@ -71,9 +49,9 @@ const initEditor = async () => {
     mode: 'docx',
     element: editorElem.value,
     fileSource: props.fileSource,
-    extensions,
+    extensions: getStarterExtensions(),
     documentId: props.documentId,
-    content,
+    content, 
     media,
     users: [
       { name: 'Nick Bernal', email: 'nick@harbourshare.com' },
@@ -81,6 +59,10 @@ const initEditor = async () => {
       { name: 'Matthew Connelly', email: 'matthew@harbourshare.com' },
       { name: 'Eric Doversberger', email: 'eric@harbourshare.com'} 
     ],
+    collaboration: {
+      document: props.options.collaboration?.document,
+      provider: props.options.collaboration?.provider,
+    },
     ...props.options,
   });
 };

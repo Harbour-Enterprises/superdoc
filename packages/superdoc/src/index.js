@@ -97,11 +97,10 @@ class Superdoc extends EventEmitter {
     this.log('Modules:', modules);
     if ('collaboration' in modules) {
       const module = modules.collaboration;
-      const config = modules.collaboration.config;
+      const { config = {} } = module;
 
-      const handleAwarenessChange = (update) => {
+      const handleAwarenessChange = () => {
         const users = getUsers(this.provider, this.colors);
-        this.log('Awareness update:', update);
         this.emit('copresence-update', users)
       }
       
@@ -109,12 +108,21 @@ class Superdoc extends EventEmitter {
         const app = initializeApp(config.firebaseConfig);
         this.log('Initializing collaboration with firestore', app);
 
+        const { path } = config;
+
+        const documentPath = path.split('/');
+        if (documentPath.length % 2 !== 0) {
+          throw new Error(`[superdoc] Invalid firestore document path. Must be an even number of segments: ${documentPath}`);
+        }
+
         this.ydoc = new Y.Doc();
-        const basePath = 'superdoc/tests/documents/test'.split('/');
-        this.provider = new FirestoreProvider(app, this.ydoc, basePath);
+        const providerConfig = {
+          maxUpdatesPerBlob: 1,
+          maxUpdatePause: 250,
+        };
+        this.provider = new FirestoreProvider(app, this.ydoc, documentPath, providerConfig);
 
         // console.debug('[superdoc] Provider:', provider);
-
         // const db = getFirestore(config.firebaseApp);
         // const docRef = doc(db, 'superdoc/test');
 
@@ -126,9 +134,14 @@ class Superdoc extends EventEmitter {
         //   await setDoc(docRef, { message: 'hello world' });
         // }
       } else if (module.providerType === 'socket') {
+        // Test locally with HOST=localhost PORT=8080 npx y-websocket
+        this.log('Initializing collaboration with websockets', app);
+        const { documentId, socketUrl } = config;
+        if (!documentId || !socketUrl) {
+          throw new Error('[superdoc] Websocket config: Missing documentId or socketUrl in config');
+        }
         this.ydoc = new Y.Doc();
-        console.debug('[superdoc] YDoc:', this.ydoc, config.socketUrl, config.documentId);
-        this.provider = new WebsocketProvider(config.socketUrl, config.documentID, this.ydoc);
+        this.provider = new WebsocketProvider(socketUrl, documentId, this.ydoc);
       }
 
       if (this.provider) {

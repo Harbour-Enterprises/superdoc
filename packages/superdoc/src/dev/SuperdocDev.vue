@@ -65,18 +65,25 @@ const initializeApp = async () => {
       //   providerType: 'firestore',
       //   config: {
       //     firebaseConfig: getFirebaseConfig(),
-      //     collection: 'superdoc-dev',
+      //     path: `superdoc/tests/documents/${currentFile.value.name}`,
       //   }
       // },
+      collaboration: {
+        providerType: 'socket',
+        config: {
+          socketUrl: `ws://localhost:8080/${currentFile.value.name}`,
+          documentId: currentFile.value.name,
+        }
+      },
       'comments': {
         // readOnly: true,
         // allowResolve: false,
       },
       'hrbr-fields': {},
     },
-  }
-  superdoc = new Superdoc(config);
+  };
 
+  superdoc = new Superdoc(config);
   superdoc.on('copresence-update', handleCollaborationAnnounce);
 };
 
