@@ -182,7 +182,7 @@ export class Editor extends EventEmitter {
    * Check if editor is destroyed.
    */
   get isDestroyed() {
-    return this.view.isDestroyed;
+    return this.view.isDestroyed; // !this.view?.docView
   }
 
   /**

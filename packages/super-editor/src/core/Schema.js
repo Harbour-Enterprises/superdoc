@@ -74,6 +74,11 @@ export class Schema {
         });
       }
 
+      const renderText = getExtensionConfigField(extension, 'renderText', context);
+      if (renderText) {
+        schema.toText = renderText;
+      }
+
       return [extension.name, schema];
     });
 

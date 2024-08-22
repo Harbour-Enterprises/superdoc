@@ -1,5 +1,10 @@
 import { Mark, Attribute } from '@core/index.js';
 
+import { 
+  annotationClass, 
+  annotationContentClass 
+} from '../field-annotation/index.js';
+
 export const TextStyle = Mark.create({
   name: 'textStyle',
 
@@ -14,7 +19,9 @@ export const TextStyle = Mark.create({
       tag: 'span',
       getAttrs: (el) => {
         const hasStyles = el.hasAttribute('style');
-          if (!hasStyles) return false;
+        const isAnnotation = el.classList.contains(annotationClass)
+          || el.classList.contains(annotationContentClass);
+          if (!hasStyles || isAnnotation) return false;
           return {};
         },
     }];

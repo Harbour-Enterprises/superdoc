@@ -41,6 +41,7 @@ export default {
         left: 0
       },
       isDropdownOpen: false,
+      draggedInputId: null,
     };
   },
 
@@ -112,6 +113,7 @@ export default {
 
   methods: {
     updateDraggedInputId(inputId) {
+      this.draggedInputId = inputId;
       this.$emit('dragged-input-id-change', inputId);
     },
 
@@ -146,12 +148,30 @@ export default {
       this.updateIsDraggingInput(false);
     },
 
-    modifyDragItem(dataTransfer) {
+    setData(dataTransfer, dragEl) {
+      dataTransfer.clearData('fieldAnnotation');
+
+      let { id: inputId } = dragEl.dataset;
+      let sourceField = this.inputs.find((input) => input.id === inputId);
+
+      let data = {
+        // Provide attrs if handle field drop inside editor.
+        // attributes: {
+        //   displayLabel: 'Enter your info',
+        //   fieldId: `agreementinput-${Date.now()}-${Math.floor(Math.random() * 1000000000000)}`,
+        //   fieldType: 'TEXTINPUT',
+        //   fieldColor: '#6943d0',
+        // },
+        sourceField,
+      };
+
+      dataTransfer.setData('fieldAnnotation', JSON.stringify(data));
+      
       // If this is CK then we must override 'effectAllowed' property to 'all',
       // otherwise drag&drop for annotations will not work
-      if (this.isCkeditorAgreement) {
-        dataTransfer.effectAllowed = 'all';
-      }
+      // if (this.isCkeditorAgreement) {
+      //   dataTransfer.effectAllowed = 'all';
+      // }
     },
 
     setDragInputId(e) {
@@ -349,7 +369,7 @@ export default {
             :list="filteredInputs"
             :sort="false"
             :group="{ name: 'tileInputs', pull: 'clone', put: false }"
-            :setData="modifyDragItem">
+            :setData="setData">
             <div
               class="hrbr-agreement-editor-inputs__input"
               v-for="input in filteredInputs"
