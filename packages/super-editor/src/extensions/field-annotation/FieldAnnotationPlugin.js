@@ -5,7 +5,7 @@ export const FieldAnnotationPlugin = (options = {}) => {
 
   return new Plugin({
     key: new PluginKey('fieldAnnotation'),
-
+    
     props: {
       handleDrop(view, event, slice, moved) {
         if (moved) return false;
@@ -42,24 +42,6 @@ export const FieldAnnotationPlugin = (options = {}) => {
             }
           }
           
-          return true;
-        }
-
-        return false;
-      },
-
-      handleClickOn(view, pos, node, nodePos, event) {
-        let isFieldAnnotation = node.type.name === 'fieldAnnotation';
-
-        if (isFieldAnnotation) {
-          editor.emit('fieldAnnotationClicked', {
-            editor,
-            node,
-            nodePos,
-            event,
-            target: event.target,
-          });
-
           return true;
         }
 
