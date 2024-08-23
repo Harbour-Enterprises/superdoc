@@ -92,7 +92,7 @@ export const FieldAnnotation = Node.create({
 
       fieldColor: {
         default: '#980043',
-        parseDOM: (elem) => elem.getAttribute('data-color') || elem.style.backgroundColor || null,
+        parseDOM: (elem) => elem.getAttribute('data-field-color') || elem.style.backgroundColor || null,
         renderDOM: (attrs) => {
           if (!attrs.fieldColor) return {};
           let hexColor = toHex(attrs.fieldColor);
@@ -103,7 +103,7 @@ export const FieldAnnotation = Node.create({
           }
 
           return { 
-            'data-color': hexColor,
+            'data-field-color': hexColor,
             style: `background-color: ${hexColor}`,
           };
         },

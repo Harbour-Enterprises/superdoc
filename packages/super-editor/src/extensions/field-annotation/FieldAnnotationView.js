@@ -168,17 +168,18 @@ export class FieldAnnotationView {
     return false;
   }
 
-  /*
-  // https://github.com/ueberdosis/tiptap/blob/main/packages/extension-table/src/TableView.ts
-  // https://github.com/ueberdosis/tiptap/blob/main/packages/core/src/NodeView.ts
+  // Can be used to manually update the NodeView.
+  // Otherwise the NodeView is recreated.
+  update(updatedNode) {
+    return false;
+  }
+  
   ignoreMutation(mutation) {
-    console.log({
-      type: mutation.type,
-      target: mutation.target,
-    });
-  } */
-
-  // update(node) {}
+    // https://github.com/ueberdosis/tiptap/blob/main/packages/core/src/NodeView.ts
+    // a leaf/atom node is like a black box for ProseMirror
+    // and should be fully handled by the node view
+    return true;
+  }
 
   destroy() {
     this.removeEventListeners();
