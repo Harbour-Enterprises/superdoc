@@ -30,6 +30,7 @@ export const useToolbarItem = (options) => {
   const initiallyDisabled = options.disabled || false;
   const disabled = ref(options.disabled);
   const active = ref(false);
+  const expand = ref(false);
 
   // top-level style
   const style = ref(options.style);
@@ -116,6 +117,7 @@ export const useToolbarItem = (options) => {
     attributes,
     disabled,
     active,
+    expand,
     nestedOptions,
 
     style,

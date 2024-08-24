@@ -99,7 +99,7 @@ export function testLists() {
       const pathName = `../../../tests/fixtures/list1/list1.docx`;
       const fileContent = await readFileAsBuffer(pathName);
       const fileObject = Buffer.from(fileContent);
-      const docx = await zip.getXmlData(fileObject);
+      const docx = await zip.getDocxData(fileObject);
 
       const c = new SuperConverter({ docx, debug: true });
       const initialJSON = c.initialJSON;

@@ -1,6 +1,5 @@
 import { Mark, Attribute } from '@core/index.js';
  
-// TODO
 export const Link = Mark.create({
   name: 'link',
 
@@ -8,8 +7,11 @@ export const Link = Mark.create({
 
   keepOnSplit: false,
 
+  exitable: true,
+
   addOptions() {
     return {
+      protocols: ['http', 'https'],
       htmlAttributes: {
         target: '_blank',
         rel: 'noopener noreferrer nofollow',
@@ -19,19 +21,26 @@ export const Link = Mark.create({
   },
 
   parseDOM() {
-    return [
-      { tag: 'a' },
-    ];
+    return [{ tag: 'a' }];
   },
 
   renderDOM({ htmlAttributes }) {
+    if (!isAllowedUri(htmlAttributes.href, this.options.protocols)) {
+      return ['a', mergeAttributes(this.options.htmlAttributes, { ...htmlAttributes, href: '' }), 0]
+    }
+
     return ['a', Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes), 0];
   },
 
   addAttributes() {
     return {
       href: { 
-        default: null
+        default: null,
+        renderDOM: ({ href, name }) => {
+          if (href && isAllowedUri(href, this.options.protocols)) return { href };
+          else if (name) return { href: `#${name}` };
+          return {};
+        },
       },
       target: {
         default: this.options.htmlAttributes.target,
@@ -42,27 +51,46 @@ export const Link = Mark.create({
       text: { 
         default: null 
       },
-      attributes: {
-        href: { default: null },
-        rendered: false,
-      },
+      name: {
+        default: null,
+      }
     };
   },
 
   addCommands() {
     return {
-      toggleLink: (options) => ({ commands }) => {
-        if (!options) return commands.unsetMark(this.name);
-        const { href, text } = options;
-        const attrs = {
-          attributes: {
-            href
-          },
-          href,
-          text,
-        };
-        return commands.setMark(this.name, attrs);
+      setLink: ({ href }) => ({ chain }) => {
+        return chain().setMark(this.name, { href }).run();
+      },
+      unsetLink: () => ({ chain }) => {
+        return chain()
+              .unsetMark('underline')
+              .unsetColor()
+              .unsetMark(this.name, { extendEmptyMarkRange: true })
+              .run();
+      },
+      toggleLink: ({ href }) => ({ commands }) => {
+        if (!href) return commands.unsetLink();
+        return commands.setLink({ href });
       },
     };
   },
 });
+
+const ATTR_WHITESPACE = /[\u0000-\u0020\u00A0\u1680\u180E\u2000-\u2029\u205F\u3000]/g
+function isAllowedUri(uri, protocols) {
+  const allowedProtocols = ['http', 'https', 'mailto']
+
+  if (protocols) {
+    protocols.forEach(protocol => {
+      const nextProtocol = (typeof protocol === 'string' ? protocol : protocol.scheme)
+
+      if (nextProtocol) {
+        allowedProtocols.push(nextProtocol)
+      }
+    })
+  }
+
+  // eslint-disable-next-line no-useless-escape
+  return !uri || uri.replace(ATTR_WHITESPACE, '').match(new RegExp(`^(?:(?:${allowedProtocols.join('|')}):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))`, 'i'))
+}

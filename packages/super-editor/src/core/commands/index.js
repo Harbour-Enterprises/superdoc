@@ -28,6 +28,8 @@ export * from './selectNodeBackward.js';
 export * from './selectNodeForward.js';
 export * from './selectTextblockStart.js';
 export * from './selectTextblockEnd.js';
+export * from './insertContent.js';
+export * from './insertContentAt.js';
 
 // Lists
 export * from './wrapInList.js';

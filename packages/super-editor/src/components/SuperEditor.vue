@@ -35,7 +35,7 @@ const editorElem = ref(null);
 const initEditor = async () => {
   console.debug('[super-editor] Loading file...', props.fileSource);
 
-  const content = await Editor.loadXmlData(props.fileSource);
+  const [content, media] = await Editor.loadXmlData(props.fileSource);
   editor.value = new Editor({
     mode: 'docx',
     element: editorElem.value,
@@ -43,6 +43,7 @@ const initEditor = async () => {
     extensions: getStarterExtensions(),
     documentId: props.documentId,
     content,
+    media,
     ...props.options,
   });
 };

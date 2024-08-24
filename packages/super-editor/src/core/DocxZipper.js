@@ -9,10 +9,11 @@ class DocxZipper {
     this.debug = params.debug || false;
     this.zip = new JSZip();
     this.files = [];
+    this.media = {};
   }
 
   /** 
-   * Get XML data from the zipped docx 
+   * Get all docx data from the zipped docx 
    * 
    * [Content_Types].xml
    * _rels/.rels
@@ -29,10 +30,11 @@ class DocxZipper {
    * docProps/core.xml
    * docProps/app.xml
    * */
-  async getXmlData(file) {
+  async getDocxData(file) {
     const extractedFiles = await this.unzip(file);
     const files = Object.entries(extractedFiles.files);
 
+    const mediaObjects = {};
     const validTypes = ['xml', 'rels'];
     for (const file of files) {
       const [_, zipEntry] = file;
@@ -43,8 +45,18 @@ class DocxZipper {
           content,
         });
       }
+
+      else if (zipEntry.name.startsWith('word/media')) {
+        const mediaContent = await zipEntry.async("base64");
+        this.media[zipEntry.name] = `data:image/${this.getFileExtension(zipEntry.name)};base64,${mediaContent}`;
+      }
     }
+
     return this.files;
+  }
+  
+  getFileExtension(fileName) {
+    return fileName.split('.').pop();
   }
 
   async unzip(file) {

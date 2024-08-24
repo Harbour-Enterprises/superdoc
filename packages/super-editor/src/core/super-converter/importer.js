@@ -1,5 +1,5 @@
 import { SuperConverter } from './SuperConverter';
-import { twipsToPixels, twipsToInches, halfPointToPixels } from './helpers.js';
+import { twipsToPixels, twipsToInches, halfPointToPixels, emuToPixels } from './helpers.js';
 import { toKebabCase } from '@common/key-transform.js';
 
 
@@ -85,6 +85,15 @@ export class DocxImporter {
         case 'w:tc':
           schemaNode = this.#handleTableCellNode(node);
           break;
+        case 'w:drawing':
+          schemaNode = this.#handleDrawingNode(node);
+          break;
+        case 'w:bookmarkStart':
+          schemaNode = this.#handleBookmarkNode(node);
+          break;
+        case 'w:br':
+          schemaNode = this.#handleLineBreakNode(node);
+          break;
         default:
           schemaNode = this.#handleStandardNode(node);
       }
@@ -92,12 +101,84 @@ export class DocxImporter {
       if (schemaNode?.type) {
         const ignore = ['runProperties'];
         if (!ignore.includes(schemaNode.type)) processedElements.push(schemaNode);
-        // else console.debug('No schema node:', node);
       }
     }
     return processedElements;
   }
   
+  #handleLineBreakNode(node) {
+    return {
+      type: 'lineBreak',
+      content: [],
+    }
+  }
+
+  #handleBookmarkNode(node) {
+    const newNode = this.#handleStandardNode(node);
+    newNode.attrs.name = node.attributes['w:name'];
+    return newNode;
+  }
+
+  #handleDrawingNode(node) {
+    let result;
+    const { elements } = node;
+  
+    // Inline images
+    const inlineImage = elements.find((el) => el.name === 'wp:inline');
+    if (inlineImage) result = this.#handleInlineImageNode(inlineImage);
+    return result;
+  }
+
+  #handleInlineImageNode(node) {
+    const { attributes } = node;
+    const padding = {
+      top: emuToPixels(attributes['distT']),
+      bottom: emuToPixels(attributes['distB']),
+      left: emuToPixels(attributes['distL']),
+      right: emuToPixels(attributes['distR']),
+    };
+
+    const extent = node.elements.find((el) => el.name === 'wp:extent');
+    const size = {
+      width: emuToPixels(extent.attributes['cx']),
+      height: emuToPixels(extent.attributes['cy'])
+    }
+
+    // TODO: Do we need this?
+    const effectExtent = node.elements.find((el) => el.name === 'wp:effectExtent');
+
+    const graphic = node.elements.find((el) => el.name === 'a:graphic');
+    const graphicData = graphic.elements.find((el) => el.name === 'a:graphicData');
+  
+    const picture = graphicData.elements.find((el) => el.name === 'pic:pic');
+    const blipFill = picture.elements.find((el) => el.name === 'pic:blipFill');
+    const blip = blipFill.elements.find((el) => el.name === 'a:blip');
+    const { attributes: blipAttributes } = blip;
+    const rEmbed = blipAttributes['r:embed'];
+    const print = blipAttributes['r:print'];
+
+    const rels = this.converter.convertedXml['word/_rels/document.xml.rels'];
+    const relationships = rels.elements.find((el) => el.name === 'Relationships');
+    const { elements } = relationships;
+
+    const rel = elements.find((el) => el.attributes['Id'] === rEmbed);
+    const { attributes: relAttributes } = rel;
+    const { media } = this.converter;
+    const path = `word/${relAttributes['Target']}`;
+
+    return {
+      type: 'image', 
+      attrs: {
+        src: media[path],
+        alt: 'Image',
+        title: 'Image',
+        inline: true,
+        padding,
+        size,
+      }
+    }
+  }
+
   #handleTableCellNode(node) {
     const tcPr = node.elements.find((el) => el.name === 'w:tcPr');
     const borders = tcPr?.elements?.find((el) => el.name === 'w:tcBorders');
@@ -259,14 +340,17 @@ export class DocxImporter {
 
     const { attributes } = node;
     const rId = attributes['r:id'];
+    const anchor = attributes['w:anchor'];
 
     // TODO: Check if we need this atr
     const history = attributes['w:history'];
 
-    const rel = elements.find((el) => el.attributes['Id'] === rId);
-    const { attributes: relAttributes } = rel;
-    const href = relAttributes['Target'];
+    const rel = elements.find((el) => el.attributes['Id'] === rId) || {};
+    const { attributes: relAttributes = {} } = rel;
+    let href = relAttributes['Target'];
     
+    if (anchor && !href) href = `#${anchor}`;
+
     // Add marks to the run node and process it
     const runNode = node.elements.find((el) => el.name === 'w:r');
     const linkMark = { type: 'link', attrs: { href } };
