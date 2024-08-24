@@ -324,8 +324,9 @@ export const makeDefaultItems = (superToolbar) => {
         onSubmit: handleSubmit,
         href: link.attributes.value.href,
         goToAnchor: () => {
-          if (!superToolbar.activeEditor || !link.attributes.value?.name) return;
-          const anchorName = link.attributes.value?.name;
+          console.debug('\n\n\n HERE', link.attributes.value?.href, '\n\n');
+          if (!superToolbar.activeEditor || !link.attributes.value?.href) return;
+          const anchorName = link.attributes.value?.href?.slice(1);
           const container = superToolbar.activeEditor.element;
           const anchor = container.querySelector(`a[name='${anchorName}']`);
           if (anchor) {
