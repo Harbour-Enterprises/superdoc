@@ -102,7 +102,7 @@ export class SuperToolbar extends EventEmitter {
   /**
    * React to editor transactions. Might want to debounce this.
    */
-  onEditorTransaction() {
+  onEditorTransaction({ editor, transaction }) {
     this.#updateToolbarState();
    }
 

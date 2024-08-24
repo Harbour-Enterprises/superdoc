@@ -14,10 +14,12 @@ class SuperConverter {
     'w:p': 'paragraph',
     'w:r': 'run',
     'w:t': 'text',
-    'w:br': 'pageBreak',
+    'w:br': 'lineBreak',
     'w:tbl': 'table',
     'w:tr': 'tableRow',
     'w:tc': 'tableCell',
+    'w:drawing': 'drawing',
+    'w:bookmarkStart': 'bookmarkStart',
     // 'w:tab': 'tab',
 
     // Formatting only
@@ -70,7 +72,8 @@ class SuperConverter {
     // The docx as a list of files
     this.convertedXml = {};
     this.docx = params?.docx || [];
-
+    this.media = params?.media || {};
+  
     // XML inputs
     this.xml = params?.xml;
     this.declaration = null;

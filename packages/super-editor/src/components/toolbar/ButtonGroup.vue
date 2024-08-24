@@ -48,6 +48,7 @@ const isDropdown = (item) => item.type === 'dropdown';
 const isSeparator = (item) => item.type === 'separator';
 const handleToolbarButtonClick = (item, argument = null) => {
   currentItem.value = item;
+  currentItem.value.expand = true;
   if (item.disabled.value) return;
   emit('command', { item, argument });
 }
@@ -58,14 +59,21 @@ const handleToolbarButtonTextSubmit = (item, argument) => {
   emit('command', { item, argument });
 }
 
-const handleSelect = (item, argument) => {
+const closeDropdowns = () => {
+  if (!currentItem.value) return;
+  currentItem.value.expand = false;
   currentItem.value = null;
+}
+
+const handleSelect = (item, argument) => {
+  closeDropdowns();
   emit('command', { item, argument });
 }
 
 const handleClickOutside = (e) => {
-  currentItem.value = null;
+  closeDropdowns();
 }
+
 </script>
 
 <template>
@@ -91,6 +99,7 @@ const handleClickOutside = (e) => {
           v-if="isDropdown(item) && item.nestedOptions?.value?.length"
           :options="item.nestedOptions.value"
           :trigger="item.disabled.value ? null : 'click'"
+          :show="item.expand.value"
           size="medium"
           placement="bottom-start"
           class="toolbar-button"

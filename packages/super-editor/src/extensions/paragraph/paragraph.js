@@ -30,7 +30,8 @@ export const Paragraph = Node.create({
             ${lineSpaceAfter ? `margin-bottom: ${lineSpaceAfter}px;` : ''}
           `.trim();
           
-          return { style };
+          if (style) return { style }
+          return { };
         },
       },
 

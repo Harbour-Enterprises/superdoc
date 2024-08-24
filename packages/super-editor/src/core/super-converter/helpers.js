@@ -17,4 +17,16 @@ function halfPointToPixels(halfPoints) {
   return (96 / 72).toFixed(2)
 }
 
-export { inchesToTwips, twipsToInches, twipsToPixels, halfPointToPixels };
+function emuToPixels(emu) {
+  if (emu instanceof String || typeof emu === 'string') emu = parseFloat(emu)
+  const pixels = (emu / 914400) * 96
+  return pixels.toFixed(2);
+}
+
+export {
+  inchesToTwips,
+  twipsToInches,
+  twipsToPixels,
+  halfPointToPixels,
+  emuToPixels
+}

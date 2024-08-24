@@ -1,5 +1,5 @@
 import { undoDepth, redoDepth } from "prosemirror-history";
-import { h } from "vue";
+import { h, onDeactivated } from "vue";
 
 import { sanitizeNumber } from "./helpers";
 import { useToolbarItem } from "./use-toolbar-item";
@@ -300,21 +300,47 @@ export const makeDefaultItems = (superToolbar) => {
         render: () => renderLinkDropdown(link),
       }
     ],
+    onActivate: ({ href }) => {
+      if (href) link.attributes.value = { href };
+      else link.attributes.value = {};
+      link.expand.value = true;
+    },
+    onDeactivate: () => {
+      link.attributes.value = {};
+      link.expand.value = false;
+    }
   });
 
   function renderLinkDropdown(link) {
-    const handleSubmit = ({ href, text }) => {
+    const handleSubmit = ({ href }) => {
       link.attributes.value.link = { href };
       const itemWithCommand = { ...link, command: "toggleLink", };
       superToolbar.emitCommand({ item: itemWithCommand, argument: { href, text: "test" } });
-
       if (!href) link.active.value = false
     };
 
     return h('div', {}, [
       h(LinkInput, {
         onSubmit: handleSubmit,
-        initialUrl: link.attributes.value?.link?.href
+        href: link.attributes.value.href,
+        goToAnchor: () => {
+          if (!superToolbar.activeEditor || !link.attributes.value?.href) return;
+          const anchorName = link.attributes.value?.href?.slice(1);
+          const container = superToolbar.activeEditor.element;
+          const anchor = container.querySelector(`a[name='${anchorName}']`);
+          if (anchor) {
+            switch (anchorName) {
+              case '_top':
+                container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                break;
+              case '_bottom':
+                container.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                break;
+              default:
+                anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }
+        }
       })
     ]);
   }
@@ -332,11 +358,10 @@ export const makeDefaultItems = (superToolbar) => {
   const image = useToolbarItem({
     type: "button",
     name: "image",
-    command: "toggleImage",
+    command: "setImage",
     icon: "fas fa-image",
     active: false,
     tooltip: "Image",
-    disabled: true,
   });
 
   // alignment

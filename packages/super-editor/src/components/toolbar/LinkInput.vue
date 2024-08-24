@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 
 const emit = defineEmits(["submit", "cancel"]);
 const props = defineProps({
@@ -7,7 +7,7 @@ const props = defineProps({
     type: String,
     default: "",
   },
-  initialUrl: {
+  href: {
     type: String,
     default: "",
   },
@@ -18,6 +18,10 @@ const props = defineProps({
   showLink: {
     type: Boolean,
     default: true,
+  },
+  goToAnchor: {
+    type: Function,
+    default: () => {},
   },
 });
 
@@ -33,10 +37,13 @@ const handleSubmit = () => {
   urlError.value = true;
 };
 
+const handleRemove = () => {
+  emit("submit", { text: text.value, href: null });
+};
 
 const urlError = ref(false);
 const text = ref(props.initialText);
-const rawUrl = ref(props.initialUrl);
+const rawUrl = ref(props.href);
 const url = computed(() => {
   if (!rawUrl.value?.startsWith("http")) return "http://" + rawUrl.value;
   return rawUrl.value;
@@ -47,47 +54,99 @@ const validUrl = computed(() => {
   return url.value.includes(".") && urlSplit.length > 1;
 });
 
-const getApplyText = computed(() => {
-  return showApply.value ? "Apply" : "Remove";
-});
-const isDisabled = computed(() => {
-  return !validUrl.value;
-});
-const showApply = computed(() => {
-  return !showRemove.value;
-});
-const showRemove = computed(() => {
-  return props.initialUrl && !rawUrl.value
+const getApplyText = computed(() => showApply.value ? "Apply" : "Remove");
+const isDisabled = computed(() => !validUrl.value);
+const showApply = computed(() => !showRemove.value);
+const showRemove = computed(() => props.href && !rawUrl.value);
+const isAnchor = computed(() => props.href.startsWith("#"));
+
+const openLink = () => {
+  window.open(url.value, "_blank");
+};
+watch(() => props.href, (newVal) => {
+  rawUrl.value = newVal;
 });
 </script>
 
 <template>
   <div class="link-input-ctn">
-    <div class="link-title">
-      Add link
-    </div>
-    <div class="input-row" v-if="showInput">
-      <i class="fas fa-link input-icon"></i>
-      <input
-        type="text"
-        placeholder="Type or paste a link"
-        :class="{ error: urlError }"
-        v-model="rawUrl"
-        @keydown.enter.stop.prevent="handleSubmit"
-        @keydown="urlError = false"
-      />
+    <div class="link-title" v-if="!href">Add link</div>
+    <div class="link-title" v-else-if="isAnchor">Page anchor</div>
+    <div class="link-title" v-else>Edit link</div>
 
-      <button class="submit-btn" v-if="showApply" @click="handleSubmit" :class="{ 'disable-btn': isDisabled }">{{ getApplyText }}</button>
-      <button class="remove-btn" v-if="showRemove" @click="handleSubmit">Remove</button>
+    <div v-if="showInput && !isAnchor">
+      <div class="input-row">
+        <i class="fas fa-link input-icon"></i>
+        <input
+          type="text"
+          placeholder="Type or paste a link"
+          :class="{ error: urlError }"
+          v-model="rawUrl"
+          @keydown.enter.stop.prevent="handleSubmit"
+          @keydown="urlError = false"
+        />
+        <i :class="{disabled: !validUrl}" class="fal fa-external-link-alt open-link-icon" @click="openLink"></i>
+      </div>
+      <div class="input-row link-buttons">
+        <button class="remove-btn" @click="handleRemove" v-if="href">
+          <i class="fal fa-times"></i>
+          Remove
+        </button>
+        <button class="submit-btn" v-if="showApply" @click="handleSubmit" :class="{ 'disable-btn': isDisabled }">{{ getApplyText }}</button>
+      </div>
+    </div>
+
+    <div v-else-if="isAnchor" class="input-row go-to-anchor clickable">
+      <a @click.stop.prevent="goToAnchor">Go to {{ href.startsWith('#_') ? href.substring(2) : href }}</a>
     </div>
   </div>
 </template>
 
 <style scoped>
+.open-link-icon {
+  margin-left: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.open-link-icon:hover {
+  color: #1355FF;
+  background-color: white;
+  border: 1px solid #DBDBDB;
+}
+.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.link-buttons {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+.remove-btn i {
+  margin-right: 5px;
+}
+.link-buttons button {
+  margin-left: 5px;
+}
 .disable-btn {
   opacity: 0.6;
   cursor: not-allowed;
   pointer-events: none;
+}
+.go-to-anchor a {
+  font-size: 14px;
+  text-decoration: underline;
+}
+.clickable {
+  cursor: pointer;
 }
 .link-title {
   font-size: 14px;
@@ -154,7 +213,6 @@ const showRemove = computed(() => {
   font-size: 13px;
   flex-grow: 1;
   padding: 5px;
-  margin-right: 1em;
   padding: 10px;
   border-radius: 8px;
   padding-left: 32px;

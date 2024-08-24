@@ -20,12 +20,14 @@ import { Paragraph } from './paragraph/index.js';
 import { Heading } from './heading/index.js';
 import { CommentRangeStart, CommentRangeEnd, CommentReference } from './comment/index.js';
 import { TabNode } from './tab/index.js';
-import { PageBreak } from './page-break/index.js';
+import { LineBreak } from './line-break/index.js';
 import { Table } from './table/index.js';
 import { TableHeader } from './table-header/index.js';
 import { TableRow } from './table-row/index.js';
 import { TableCell } from './table-cell/index.js';
 import { FieldAnnotation, fieldAnnotationHelpers } from './field-annotation/index.js';
+import { Image } from './image/index.js';
+import { BookmarkStart } from './bookmarks/index.js';
 
 // Marks extensions
 import { TextStyle } from './text-style/text-style.js';
@@ -74,7 +76,7 @@ const getStarterExtensions = () => [
   Link,
   OrderedList,
   Paragraph,
-  PageBreak,
+  LineBreak,
   RunItem,
   Strike,
   TabNode,
@@ -92,6 +94,8 @@ const getStarterExtensions = () => [
   TableHeader,
   FieldAnnotation,
   DropCursor,
+  Image,
+  BookmarkStart,
 ];
 
 export {
@@ -108,7 +112,7 @@ export {
   CommentRangeEnd, 
   CommentReference,
   TabNode,
-  PageBreak,
+  LineBreak,
   Bold,
   Italic,
   Underline,
@@ -131,6 +135,8 @@ export {
   DropCursor,
   FieldAnnotation,
   fieldAnnotationHelpers,
+  Image,
+  BookmarkStart,
   getStarterExtensions,
   getRichTextExtensions,
 };

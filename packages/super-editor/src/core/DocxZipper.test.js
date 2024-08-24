@@ -35,7 +35,7 @@ describe('DocxZipper - file extraction', () => {
   it('It can extract xml files', async () => {
     const fileContent = await readFileAsBuffer('../tests/fixtures/sample/sample.docx');
     const fileObject = Buffer.from(fileContent);
-    const unzippedXml = await zipper.getXmlData(fileObject);
+    const unzippedXml = await zipper.getDocxData(fileObject);
     expect(unzippedXml).toBeInstanceOf(Array);
     
     unzippedXml.forEach((file) => {

@@ -38,6 +38,7 @@ export class Editor extends EventEmitter {
   options = {
     element: document.createElement('div'),
     content: '', // XML content
+    media: {},
     mode: 'docx',
     converter: null,
     fileSource: null,
@@ -75,7 +76,6 @@ export class Editor extends EventEmitter {
     };
   
     let initMode = modes[this.options.mode] ?? modes.default;
-
     initMode();
   }
 
@@ -322,6 +322,7 @@ export class Editor extends EventEmitter {
     } else {
       this.converter = new SuperConverter({ 
         docx: this.options.content, 
+        media: this.options.media,
         debug: true,
       });
     }
@@ -340,7 +341,9 @@ export class Editor extends EventEmitter {
     };
 
     const zipper = new DocxZipper();
-    return await zipper.getXmlData(fileSource);
+    const xmlFiles = await zipper.getDocxData(fileSource);
+    const mediaFiles = zipper.media;
+    return [xmlFiles, mediaFiles];
   }
 
   /**
