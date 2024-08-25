@@ -10,6 +10,13 @@ export const useSuperdocStore = defineStore('superdoc', () => {
   const pages = reactive({});
   const documentUsers = ref([]);
 
+  const users = ref([
+    { name: 'Nick Bernal', email: 'nick@harbourshare.com' },
+    { name: 'Artem Nistuley', email: 'nick@harbourshare.com' },
+    { name: 'Matthew Connelly', email: 'matthew@harbourshare.com' },
+    { name: 'Eric Doversberger', email: 'eric@harbourshare.com'} 
+  ])
+
   const isReady = ref(false);
 
   const user = reactive({ name: null, email: null });
@@ -77,6 +84,7 @@ export const useSuperdocStore = defineStore('superdoc', () => {
     documentBounds,
     pages,
     documentUsers,
+    users,
 
     selectionPosition,
     activeSelection,

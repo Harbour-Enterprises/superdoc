@@ -1,4 +1,5 @@
 import './style.css';
+import 'super-editor/style.css';
 import '@common/icons/icons.css';
 import EventEmitter from 'eventemitter3'
 import { createApp } from 'vue'

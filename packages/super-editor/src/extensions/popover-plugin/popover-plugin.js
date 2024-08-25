@@ -63,9 +63,28 @@ class Popover {
       appendTo: document.body,
       onShow: (instance) => {
         instance.setProps({ getReferenceClientRect: () => this.popoverRect });
+        this.bindKeyDownEvents();
+      },
+      onHide: () => {
+        this.unbindKeyDownEvents();
       },
       theme: 'popover',
     });
+  }
+  
+  bindKeyDownEvents() {
+    this.view.dom.addEventListener('keydown', this.handleKeyDown);
+  }
+
+  unbindKeyDownEvents() {
+    this.view.dom.removeEventListener('keydown', this.handleKeyDown);
+  }
+
+  handleKeyDown = (event) => {
+    if (this.tippyInstance.state.isVisible) {
+      event.preventDefault();
+      this.popover.firstChild.focus();
+    }
   }
 
   mountVueComponent(component, props = {}) {
@@ -95,6 +114,7 @@ class Popover {
             const mentionNode = this.editor.schema.nodes.mention.create(attributes);
             const tr = this.state.tr.replaceWith($from.pos - length, $from.pos, mentionNode);
             this.editor.view.dispatch(tr);
+            this.editor.view.focus();
           }
         }
       };

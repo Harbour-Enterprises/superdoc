@@ -53,12 +53,9 @@ const handleKeydown = (event) => {
   }
 }
 
-onMounted(() => {
+const handleFocus = () => {
   activeUserIndex.value = 0;
-  setTimeout(() => {
-    container.value.focus();
-  }, 110)
-});
+}
 
 </script>
 
@@ -67,6 +64,7 @@ onMounted(() => {
     class="mentions-container"
     ref="container"
     @keydown.prevent="handleKeydown"
+    @focus.stop.prevent="handleFocus"
     tabindex="0"> 
     <div
         v-for="user, index in getFilteredUsers"

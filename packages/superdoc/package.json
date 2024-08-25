@@ -26,6 +26,7 @@
     "pdfjs-dist": "^4.3.136",
     "pinia": "^2.1.7",
     "super-editor": "file:../super-editor",
+    "tippy": "^0.0.0",
     "vue": "^3.4.21",
     "yjs": "^13.6.18"
   },

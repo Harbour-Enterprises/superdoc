@@ -11,21 +11,3 @@ body, html {
   padding: 0;
 }
 
-.super-editor-placeholder::before {
-  content: attr(data-placeholder);
-  color: #aaa;
-  pointer-events: none;
-  display: block;
-  height: 0;
-  font-family: 'Arial, sans-serif';
-  font-size: 12px;
-}
-
-.superdoc-at-mention {
-  background-color: #1355FF15;
-  color: #222;
-  font-weight: 400;
-  border-radius: 3px;
-  padding: 0 5px;
-  cursor: default;
-}

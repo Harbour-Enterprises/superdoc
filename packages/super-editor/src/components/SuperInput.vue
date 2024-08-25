@@ -22,6 +22,11 @@ const props = defineProps({
     default: () => ({}),
   },
 
+  users: {
+    type: Array,
+    required: false,
+    default: () => [],
+  },
 });
 
 const editor = shallowRef();
@@ -51,6 +56,7 @@ const initEditor = async () => {
     content: document.getElementById('currentContent'),
     element: editorElem.value,
     extensions: getRichTextExtensions(),
+    users: props.users,
     ...props.options,
   });
 };

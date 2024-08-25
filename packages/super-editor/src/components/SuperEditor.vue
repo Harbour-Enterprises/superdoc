@@ -111,6 +111,22 @@ onBeforeUnmount(() => {
   border: none !important;
   padding: none !important;
 }
+.super-editor-placeholder::before {
+  content: attr(data-placeholder);
+  color: #aaa;
+  pointer-events: none;
+  display: block;
+  height: 0;
+}
+
+.superdoc-at-mention {
+  background-color: #1355FF15;
+  color: #222;
+  font-weight: 400;
+  border-radius: 3px;
+  padding: 0 5px;
+  cursor: default;
+}
 </style>
 
 <style scoped>
