@@ -193,6 +193,13 @@ export class Editor extends EventEmitter {
   }
 
   /**
+   * Get possible users of the editor.
+   */
+  get users() {
+    return this.options.users;
+  }
+
+  /**
    * Create a chain of commands to call multiple commands at once.
    */
   chain() {

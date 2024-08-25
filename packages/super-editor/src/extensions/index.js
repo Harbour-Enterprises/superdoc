@@ -28,6 +28,7 @@ import { TableCell } from './table-cell/index.js';
 import { FieldAnnotation, fieldAnnotationHelpers } from './field-annotation/index.js';
 import { Image } from './image/index.js';
 import { BookmarkStart } from './bookmarks/index.js';
+import { Mention } from './mention/index.js';
 
 // Marks extensions
 import { TextStyle } from './text-style/text-style.js';
@@ -41,6 +42,7 @@ import { Link } from './link/index.js';
 import { DecorationClick } from './decoration-click/index.js';
 import { CommentsPlugin } from './comment/index.js';
 import { Placeholder } from './placeholder/index.js';
+import { PopoverPlugin } from './popover-plugin/index.js';
 
 const getRichTextExtensions = () => [
   Bold,
@@ -56,6 +58,8 @@ const getRichTextExtensions = () => [
   Underline,
   DecorationClick,
   Placeholder,
+  PopoverPlugin,
+  Mention,
 ];
 
 const getStarterExtensions = () => [
@@ -137,6 +141,8 @@ export {
   fieldAnnotationHelpers,
   Image,
   BookmarkStart,
+  PopoverPlugin,
+  Mention,
   getStarterExtensions,
   getRichTextExtensions,
 };

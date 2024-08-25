@@ -36,6 +36,7 @@
     "prosemirror-tables": "^1.4.0",
     "prosemirror-transform": "^1.9.0",
     "prosemirror-view": "^1.33.8",
+    "tippy.js": "^6.3.7",
     "uuidv4": "^6.2.13",
     "vue": "^3.4.21",
     "xml-js": "^1.6.11"
