@@ -314,6 +314,7 @@ onMounted(() => {
               class="superdoc-field" 
               placeholder="Add a comment"
               v-model="currentComment"
+              :users="superdocStore.users"
               @focus="isFocused = true;" 
               @blur="isFocused = false;" />
           </div>
@@ -345,6 +346,7 @@ onMounted(() => {
             class="superdoc-field"
             placeholder="Add a comment"
             v-model="currentComment"
+            :users="superdocStore.users"
             @focus="isFocused = true;" 
             @blur="isFocused = false;" />
       </div>
