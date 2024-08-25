@@ -1,4 +1,5 @@
 <script setup>
+import 'tippy.js/dist/tippy.css';
 import { ref, shallowRef, onMounted, onBeforeUnmount } from 'vue';
 import { Editor } from '@vue-3/index.js';
 import { getStarterExtensions } from '@extensions/index.js';
@@ -44,6 +45,12 @@ const initEditor = async () => {
     documentId: props.documentId,
     content,
     media,
+    users: [
+      { name: 'Nick Bernal', email: 'nick@harbourshare.com' },
+      { name: 'Artem Nistuley', email: 'nick@harbourshare.com' },
+      { name: 'Matthew Connelly', email: 'matthew@harbourshare.com' },
+      { name: 'Eric Doversberger', email: 'eric@harbourshare.com'} 
+    ],
     ...props.options,
   });
 };
@@ -64,8 +71,51 @@ onBeforeUnmount(() => {
   </div>
 </template>
 
+<style>
+.popover {
+  background-color: #fff;
+  border-radius: 8px;
+  -webkit-box-shadow: 0px 4px 12px 0px rgba(50, 50, 50, 0.15);
+  -moz-box-shadow: 0px 4px 12px 0px rgba(50, 50, 50, 0.15);
+  box-shadow: 0px 4px 12px 0px rgba(50, 50, 50, 0.15);
+  padding: 0;
+  width: auto;
+  height: auto;
+  font-size: 14px;
+  color: #333;
+  z-index: 1000;
+}
+
+.popover-header {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.tippy-content {
+  padding: 0;
+}
+
+.tippy-box[data-theme~='popover'] {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  border: none;
+}
+
+.tippy-box[data-theme~='popover'] .tippy-arrow {
+  color: #fff;
+  border: 1px solid #DBDBDB;
+}
+
+.tippy-box[data-theme~='popover'] {
+  border: none !important;
+  padding: none !important;
+}
+</style>
+
 <style scoped>
 .super-editor {
   border: 1px solid #999;
+  position: relative;
 }
 </style>

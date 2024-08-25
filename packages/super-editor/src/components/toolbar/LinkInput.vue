@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, getCurrentInstance } from "vue";
 
 const emit = defineEmits(["submit", "cancel"]);
 const props = defineProps({
@@ -25,7 +25,10 @@ const props = defineProps({
   },
 });
 
+const { proxy } = getCurrentInstance();
 const handleSubmit = () => {
+
+  if (proxy?.$submit instanceof Function) proxy.$submit();
   if (rawUrl.value && validUrl.value) {
     emit("submit", { text: text.value, href: url.value });
     return;
