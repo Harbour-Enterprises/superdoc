@@ -1,9 +1,11 @@
 import { defineStore } from 'pinia';
 import { ref, reactive, computed } from 'vue';
+import { useCommentsStore } from './comments-store';
 import useDocument from '@/composables/use-document';
 
 export const useSuperdocStore = defineStore('superdoc', () => {
 
+  const commentsStore = useCommentsStore();
   const documents = ref([]);
   const documentContainers = ref([]);
   const documentBounds = ref([]);
@@ -25,7 +27,22 @@ export const useSuperdocStore = defineStore('superdoc', () => {
   const activeSelection = ref(null);
   const selectionPosition = ref(null);
 
+  const reset = () => {
+    documents.value = [];
+    documentContainers.value = [];
+    documentBounds.value = [];
+    Object.assign(pages, {});
+    documentUsers.value = [];
+    isReady.value = false;
+    user.name = null;
+    user.email = null;
+    Object.assign(modules, {});
+    activeSelection.value = null;
+    selectionPosition.value = null;
+  }
+
   const init = (config) => {
+    reset();
     const { documents: docs, modules: configModules, user: configUser, users: configUsers } = config;
 
     documentUsers.value = configUsers || [];
@@ -38,9 +55,10 @@ export const useSuperdocStore = defineStore('superdoc', () => {
 
     // Initialize document composables
     docs.forEach((doc) => {
-      const smartDoc = useDocument(doc);
+      const smartDoc = useDocument(doc, config);
       documents.value.push(smartDoc);
     });
+    isReady.value = true;
   };
 
   const areDocumentsReady = computed(() => {
@@ -79,6 +97,7 @@ export const useSuperdocStore = defineStore('superdoc', () => {
   };
 
   return {
+    commentsStore,
     documents,
     documentContainers,
     documentBounds,
@@ -101,6 +120,6 @@ export const useSuperdocStore = defineStore('superdoc', () => {
     init,
     handlePageReady,
     getDocument,
-    getPageBounds
+    getPageBounds,
   }
 });

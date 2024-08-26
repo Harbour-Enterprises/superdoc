@@ -14,7 +14,11 @@ const handleClick = (item) => {
 <template>
   <div class="document-mode">
 
-    <div class="option-item" v-for="option in options" @click="handleClick(option)">
+    <div
+        class="option-item"
+        v-for="option in options"
+        @click="handleClick(option)"
+        :class="{ disabled: option.disabled }">
 
       <div class="document-mode-column icon-column">
         <div>

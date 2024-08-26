@@ -11,7 +11,6 @@ export class SuperToolbar extends EventEmitter {
 
   config = {
     element: null,
-    onToolbarCommand: () => null,
   }
 
   #nonEditorCommands = {
@@ -23,6 +22,9 @@ export class SuperToolbar extends EventEmitter {
       const layers = document.querySelector('.layers');
       if (!layers) return;
       layers.style.zoom = argument;
+    },
+    setDocumentMode: ({ item, argument }) => {
+      this.emit('superdoc-command', { item, argument });
     }
   }
 

@@ -4,10 +4,11 @@ import { Extension } from '@core/Extension.js';
 
 
 export const CommentsPlugin = Extension.create({
-  name: 'commentsPlugin',
+  name: 'comments',
 
   addPmPlugins() {
     const commentsPlugin = new Plugin({
+      key: new PluginKey('comments'),
       state: {
         init(_, { doc }) {
           return highlightComments(doc);
@@ -18,7 +19,7 @@ export const CommentsPlugin = Extension.create({
           const doc = tr.doc;
           if (tr.docChanged || tr.selectionSet) decorationSet = highlightComments(doc, selection);
           return decorationSet;
-        }
+        },
       },
       props: {
         decorations(state) {

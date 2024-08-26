@@ -5,6 +5,7 @@ import EventEmitter from 'eventemitter3'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
+import { getStarterExtensions } from 'super-editor';
 import { useSuperdocStore } from './stores/superdoc-store';
 import { DOCX, PDF, HTML } from '@harbour-enterprises/common';
 import { SuperToolbar } from '@harbour-enterprises/super-editor';
@@ -32,8 +33,20 @@ class Superdoc extends EventEmitter {
 
   static allowedTypes = [DOCX, PDF, HTML];
 
+  config;
+
+  documentMode;
+
   constructor(config) {
     super();
+    this.config = config;
+    this.#init(config);
+  }
+
+  #init(config) {
+    this.destroy();
+
+    this.documentMode = config.documentMode || 'viewing';
 
     config.documents = this.#preprocessDocuments(config.documents);
     this.log('Initializing:', config);
@@ -42,6 +55,7 @@ class Superdoc extends EventEmitter {
     this.app = app;
     this.pinia = pinia;
     this.app.config.globalProperties.$config = config;
+    this.app.config.globalProperties.$documentMode = this.documentMode;
 
     this.app.config.globalProperties.$superdoc = this;
     this.superdocStore = superdocStore;
@@ -74,7 +88,6 @@ class Superdoc extends EventEmitter {
       if (!(data instanceof File)) throw new Error('[superdoc] Documents in config must be File objects');
   
       const { type: documentType } = data;
-      console.debug('[superdoc] Preprocessing document:', documentType);
       if (!Superdoc.allowedTypes.includes(documentType)) {
         const msg = `[superdoc] Invalid document type: ${documentType}. Allowed types: ${Superdoc.allowedTypes.join(', ')}`;
         throw new Error(msg);
@@ -108,10 +121,60 @@ class Superdoc extends EventEmitter {
       onToolbarCommand: this.onToolbarCommand.bind(this),
     }
     this.toolbar = new SuperToolbar(config);
+    this.toolbar.on('superdoc-command', this.onToolbarCommand.bind(this));
   }
 
   onToolbarCommand({ item, argument }) {
-    this.log('Toolbar command:', item, argument);
+    this.log('[superdoc] Toolbar command:', item, argument);
+    if (item.command === 'setDocumentMode') {
+      this.setDocumentMode(argument);
+    }
+  }
+
+  setDocumentMode(type) {
+    if (!type) return;
+
+    type = type.toLowerCase();
+    this.config.documentMode = type;
+
+    const types = {
+      viewing: () => this.#setModeViewing(),
+      editing: () => this.#setModeEditing(),
+      suggesting: () => this.#setModeSuggesting(),
+    }
+
+    if (types[type]) types[type]();
+  }
+
+  #setModeEditing() {
+    const documentMode = 'editing';
+    this.superdocStore.documents.forEach((doc) => {
+      doc.restoreComments();
+      const editor = doc.getEditor();
+      if (editor) {
+        const newOptions = { ...editor.options, documentMode };
+        newOptions.extensions = getStarterExtensions();
+        editor.updateEditor(newOptions);
+      }
+    });
+  }
+
+  #setModeSuggesting() {
+    // TODO
+  }
+
+  #setModeViewing() {
+    const documentMode = 'viewing';
+    this.superdocStore.documents.forEach((doc) => {
+      doc.removeComments();
+      const editor = doc.getEditor();
+
+      if (editor) {
+        const extensions = editor.options.extensions.filter((ext) => ext.name !== 'comments');
+        const newOptions = { ...editor.options, extensions, documentMode };
+        editor.updateEditor(newOptions);
+      }
+    });
   }
 
   // saveAll() {
@@ -127,10 +190,9 @@ class Superdoc extends EventEmitter {
     if (this.app) {
       this.log('[superdoc] Unmounting app');
       this.app.unmount();
+      delete this.app.config.globalProperties.$config;
+      delete this.app.config.globalProperties.$superdoc;
     }
-
-    delete this.app.config.globalProperties.$config;
-    delete this.app.config.globalProperties.$superdoc;
   }
 }
 

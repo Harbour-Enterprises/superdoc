@@ -29,13 +29,20 @@ export class Editor extends EventEmitter {
 
   view;
 
-  isFocused = false;
+  id;
 
+  documentMode;
+
+  isFocused = false;
+  
   #css;
 
   #comments;
 
+  updateEditor;
+
   options = {
+    id: null,
     element: document.createElement('div'),
     content: '', // XML content
     media: {},
@@ -64,8 +71,10 @@ export class Editor extends EventEmitter {
 
   constructor(options) {
     super();
-    
+
+    this.id = options.id;
     this.setOptions(options);
+    this.#setDocumentMode(options);
 
     let modes = {
       docx: () => this.#init(this.options),
@@ -74,7 +83,7 @@ export class Editor extends EventEmitter {
         console.log('Not implemented.');
       },
     };
-  
+
     let initMode = modes[this.options.mode] ?? modes.default;
     initMode();
   }
@@ -104,6 +113,8 @@ export class Editor extends EventEmitter {
     this.on('commentClick', this.options.onCommentClicked);
 
     this.#loadComments();
+
+    this.updateEditor = this.#updateEditor.bind(this);
 
     window.setTimeout(() => {
       if (this.isDestroyed) return;
@@ -144,6 +155,38 @@ export class Editor extends EventEmitter {
   #onFocus({ editor, event }) {
     this.toolbar?.setActiveEditor(editor);
     this.options.onFocus({ editor, event });
+  }
+
+  /**
+   * Update the editor config with new plugins/extensions
+   * 
+   * @param {Object} options 
+   */
+  #updateEditor(options) {
+    const removedExtensions = this.options.extensions.filter((extension) => {
+      return !options.extensions.some((e) => e.name === extension.name);
+    });
+
+    const addedExtensions = options.extensions.filter((extension) => {
+      return !this.options.extensions.some((e) => e.name === extension.name);
+    });
+  
+    removedExtensions.forEach((e) => this.unregisterPlugin(e.name));
+
+    this.setOptions(options);
+    this.#setDocumentMode(options);
+    this.#createExtensionService();
+    this.#createCommandService();
+
+    addedExtensions.forEach((e) => {
+      const plugin = this.extensionService.plugins.find((p) => p.key.startsWith(e.name));
+      this.registerPlugin(plugin)
+    });
+
+    const hasComments = options.extensions.some((e) => e.name === 'comments');
+    if (hasComments) this.#loadComments();
+
+    this.view.updateState(this.state);
   }
 
   setToolbar(toolbar) {
@@ -213,6 +256,20 @@ export class Editor extends EventEmitter {
     return this.#commandService.can();
   }
 
+  #setDocumentMode(options) {
+    const { documentMode } = options;
+
+    this.documentMode = documentMode?.toLowerCase() || 'viewing';
+    if (documentMode === 'viewing') {
+      this.setEditable(false, false);
+    } else if (documentMode === 'suggesting') {
+      // TODO
+      this.setEditable(true, false);
+    } else if (documentMode === 'editing') {
+      this.setEditable(true, false);
+    }
+  }
+
   /**
    * Set editor options and update state.
    * @param options List of options.
@@ -274,11 +331,10 @@ export class Editor extends EventEmitter {
     const name = typeof nameOrPluginKey === 'string'
       ? `${nameOrPluginKey}$`
       : nameOrPluginKey.key;
-
+    
     const state = this.state.reconfigure({
       plugins: this.state.plugins.filter((plugin) => !plugin.key.startsWith(name)),
     });
-
     this.view.updateState(state);
   }
 
