@@ -9,7 +9,6 @@ import useSelection from '@/helpers/use-selection';
 import useComment from '@/components/CommentsLayer/use-comment';
 import Avatar from '@/components/general/Avatar.vue';
 import InternalDropdown from './InternalDropdown.vue'
-import DocumentUsers from '@/components/general/DocumentUsers.vue';
 
 const superdocStore = useSuperdocStore();
 const commentsStore = useCommentsStore();
@@ -22,6 +21,10 @@ const { proxy } = getCurrentInstance();
 const props = defineProps({
   user: {
     type: Object,
+    required: false,
+  },
+  users: {
+    type: Array,
     required: false,
   },
   data: {

@@ -517,11 +517,13 @@ export class DocxImporter {
       } else if (!isCombiningNodes && nodesToCombine.length) {
 
         // Need to extract all nodes between 'separate' and 'end' fldChar nodes
-        const textStart = nodesToCombine.findIndex((n) => n.elements.some((el) => el.name === 'w:fldChar' && el.attributes['w:fldCharType'] === 'separate'));
-        const textEnd = nodesToCombine.findIndex((n) => n.elements.some((el) => el.name === 'w:fldChar' && el.attributes['w:fldCharType'] === 'end'));
+        const textStart = nodesToCombine.findIndex((n) => n.elements?.some((el) => el.name === 'w:fldChar' && el.attributes['w:fldCharType'] === 'separate'));
+        const textEnd = nodesToCombine.findIndex((n) => n.elements?.some((el) => el.name === 'w:fldChar' && el.attributes['w:fldCharType'] === 'end'));
         const textNodes = nodesToCombine.slice(textStart + 1, textEnd);
-        const instrText = nodesToCombine.find((n) => n.elements.some((el) => el.name === 'w:instrText'))?.elements[0]?.elements[0].text;
+        const instrText = nodesToCombine.find((n) => n.elements?.some((el) => el.name === 'w:instrText'))?.elements[0]?.elements[0].text;
         const urlMatch = instrText.match(/HYPERLINK\s+"([^"]+)"/);
+
+        if (!urlMatch || urlMatch?.length < 2) return [];
         const url = urlMatch[1];
 
         const textMarks = [];

@@ -29,6 +29,7 @@ export class SuperToolbar extends EventEmitter {
   constructor(config) {
     super();
     this.config = { ...this.config, ...config };
+    this.toolbarItems = [];
 
     this.#makeToolbarItems(this);
 
@@ -45,6 +46,12 @@ export class SuperToolbar extends EventEmitter {
 
   log(...args) {
     console.debug('[🎨 super-toolbar]', ...args);
+  }
+
+  setZoom(percent_int) {
+    const percent = percent_int / 100;
+    const item = this.toolbarItems.find(item => item.name.value === 'zoom');
+    this.#nonEditorCommands.setZoom({ item, argument: percent });
   }
 
   /**

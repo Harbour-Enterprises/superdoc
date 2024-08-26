@@ -62,7 +62,6 @@ onMounted(async () => {
 
 <template>
   <div class="dev-app">
-
     <div class="header">
       <div class="left-side">
         <div class="title"><h2>🦋 SuperDoc Dev</h2></div>
