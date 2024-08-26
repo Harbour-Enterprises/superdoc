@@ -11,31 +11,36 @@ export const Mention = Node.create({
 
   atom: true,
 
-
   addOptions() {
     return {
       htmlAttributes: {
         class: 'superdoc-at-mention',
-        style: 'display: inline-block;',
       },
-      name: null,
     };
   },
 
   parseDOM() {
-    return [{ tag: 'span["mention"]' }];
+    return [{
+      tag: `span[data-type="${this.name}"]`,
+      getAttrs: (node) => ({
+        name: node.getAttribute('name') || null,
+      }),
+    }];
   },
 
   renderDOM({ node, htmlAttributes }) {
     const { name, email } = node.attrs;
-    return ['span', Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes), `@${name}`];
+
+    return ['span', Attribute.mergeAttributes(
+      { 'data-type': this.name, },
+      this.options.htmlAttributes,
+      htmlAttributes,
+    ), `@${name}`];
   },
   
   addAttributes() {
     return {
-      name: { default: null },
-      email: { default: null },
-      permissions: { default: [] },
+      name: { default: null, },
     }
-  },
+  }
 });
