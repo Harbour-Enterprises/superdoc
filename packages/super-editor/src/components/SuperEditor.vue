@@ -126,6 +126,7 @@ onBeforeUnmount(() => {
   border-radius: 3px;
   padding: 0 5px;
   cursor: default;
+  display: inline-block;
 }
 </style>
 

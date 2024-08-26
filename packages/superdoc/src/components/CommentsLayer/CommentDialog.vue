@@ -268,7 +268,7 @@ onMounted(() => {
       :style="getSidebarCommentStyle"
       v-click-outside="handleClickOutside"
       ref="currentElement">
-    
+
     <!-- internal/external dropdown when conversation has comments -->
     <div v-if="!pendingComment" >
       <InternalDropdown

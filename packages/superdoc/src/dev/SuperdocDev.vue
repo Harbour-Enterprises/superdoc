@@ -50,10 +50,6 @@ const initializeApp = async () => {
       },
       'hrbr-fields': {},
     },
-    users: [
-      { name: 'Nick Bernal', email: 'nick@harbourshare.com' },
-      { name: 'Eric Doversberger', email: 'eric@harbourshare.com' },
-    ]
   }
   superdoc = new Superdoc(config);
 };

@@ -55,6 +55,13 @@ class Superdoc extends EventEmitter {
     // Directives
     this.app.mount(config.selector);
 
+    this.users = [
+      { name: 'Nick Bernal', email: 'nick@harbourshare.com' },
+      { name: 'Artem Nistuley', email: 'nick@harbourshare.com' },
+      { name: 'Matthew Connelly', email: 'matthew@harbourshare.com' },
+      { name: 'Eric Doversberger', email: 'eric@harbourshare.com' }
+    ]
+
     // If a toolbar element is provided, render a toolbar
     if (this.toolbarElement) this.addToolbar(this);
   }

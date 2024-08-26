@@ -100,6 +100,7 @@ const getStarterExtensions = () => [
   DropCursor,
   Image,
   BookmarkStart,
+  Mention,
 ];
 
 export {
