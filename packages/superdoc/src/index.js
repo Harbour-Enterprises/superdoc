@@ -8,6 +8,7 @@ import { createPinia } from 'pinia'
 import { useSuperdocStore } from './stores/superdoc-store';
 import { DOCX, PDF, HTML } from '@common/document-types';
 import { SuperToolbar } from '../../super-toolbar/super-toolbar';
+import { SuperInput } from 'super-editor';
 import clickOutside from '@common/helpers/v-click-outside';
 import App from './Superdoc.vue'
 
@@ -142,4 +143,7 @@ export {
   DOCX,
   PDF,
   HTML,
+
+  // Components
+  SuperInput
 }

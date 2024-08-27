@@ -239,7 +239,7 @@ onMounted(async () => {
   padding: 0;
 }
 .comment-highlight {
-  background-color: red;
+  /* background-color: red; */
 }
 </style>
 
@@ -312,5 +312,8 @@ onMounted(async () => {
   display: grid;
   overflow-y: auto;
   scrollbar-width: none;
+}
+.super-editor {
+  border: 1px solid #dbdbdb;
 }
 </style>

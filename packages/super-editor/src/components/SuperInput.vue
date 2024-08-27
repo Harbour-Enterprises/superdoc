@@ -7,7 +7,6 @@ const emit = defineEmits(['update:modelValue', 'focus', 'blur']);
 const props = defineProps({
   modelValue: {
     type: String,
-    required: true
   },
 
   placeholder: {
