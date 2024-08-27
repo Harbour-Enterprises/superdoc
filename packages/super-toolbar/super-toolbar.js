@@ -33,13 +33,16 @@ export class SuperToolbar extends EventEmitter {
 
     this.#makeToolbarItems(this);
 
-    const el = document.getElementById(this.config.element);
-    if (!el) throw new Error(`[super-toolbar 🎨] Element not found: ${this.config.element}`);
+    let el = null;
+    if (this.config.element) {
+      el = document.getElementById(this.config.element);
+      if (!el) throw new Error(`[super-toolbar 🎨] Element not found: ${this.config.element}`);
+    }
 
     this.app = createApp(Toolbar);
     this.app.directive('click-outside', clickOutside);
     this.app.config.globalProperties.$toolbar = this;
-    this.toolbar = this.app.mount(el);
+    if (el) this.toolbar = this.app.mount(el);
     this.activeEditor = config.editor || null;
     this.#updateToolbarState();
   }
