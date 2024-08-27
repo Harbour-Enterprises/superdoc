@@ -63,7 +63,7 @@ class Superdoc extends EventEmitter {
     ]
 
     // If a toolbar element is provided, render a toolbar
-    if (this.toolbarElement) this.addToolbar(this);
+    this.addToolbar(this);
   }
 
   #preprocessDocuments(documents) {
@@ -102,9 +102,8 @@ class Superdoc extends EventEmitter {
   }
 
   addToolbar() {
-    if (!this.toolbarElement) return;
     const config = {
-      element: this.toolbarElement,
+      element: this.toolbarElement || null,
       onToolbarCommand: this.onToolbarCommand.bind(this),
     }
     this.toolbar = new SuperToolbar(config);
