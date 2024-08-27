@@ -478,7 +478,4 @@ onMounted(() => {
   width: 100%;
   transition: all 250ms ease;
 }
-.input-active {
-  border: 1px solid #1355FF !important;
-}
 </style>
