@@ -150,19 +150,24 @@ class Superdoc extends EventEmitter {
     this.superdocStore.documents.forEach((doc) => {
       doc.restoreComments();
       const editor = doc.getEditor();
-      if (editor) editor.registerPlugin('comments');
+      if (editor) editor.setDocumentMode('editing');
     });
   }
 
   #setModeSuggesting() {
-    // TODO
+    // TODO - Need to wait for tracked changes to finish this
+    this.superdocStore.documents.forEach((doc) => {
+      doc.restoreComments();
+      const editor = doc.getEditor();
+      if (editor) editor.setDocumentMode('suggesting');
+    });
   }''
 
   #setModeViewing() {
     this.superdocStore.documents.forEach((doc) => {
       doc.removeComments();
       const editor = doc.getEditor();
-      if (editor) editor.unregisterPlugin('comments');
+      if (editor) editor.setDocumentMode('viewing');
     });
   }
 
