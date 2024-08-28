@@ -29,7 +29,7 @@ export class Editor extends EventEmitter {
 
   view;
 
-  id;
+  doumentId;
 
   documentMode;
 
@@ -39,10 +39,7 @@ export class Editor extends EventEmitter {
 
   #comments;
 
-  updateEditor;
-
   options = {
-    id: null,
     element: document.createElement('div'),
     content: '', // XML content
     media: {},
@@ -72,7 +69,7 @@ export class Editor extends EventEmitter {
   constructor(options) {
     super();
 
-    this.id = options.id;
+    this.documentId = options.id;
     this.setOptions(options);
     this.#setDocumentMode(options);
 
@@ -114,8 +111,6 @@ export class Editor extends EventEmitter {
 
     this.#loadComments();
 
-    this.updateEditor = this.#updateEditor.bind(this);
-
     window.setTimeout(() => {
       if (this.isDestroyed) return;
       this.emit('create', { editor: this });
@@ -155,38 +150,6 @@ export class Editor extends EventEmitter {
   #onFocus({ editor, event }) {
     this.toolbar?.setActiveEditor(editor);
     this.options.onFocus({ editor, event });
-  }
-
-  /**
-   * Update the editor config with new plugins/extensions
-   * 
-   * @param {Object} options 
-   */
-  #updateEditor(options) {
-    const removedExtensions = this.options.extensions.filter((extension) => {
-      return !options.extensions.some((e) => e.name === extension.name);
-    });
-
-    const addedExtensions = options.extensions.filter((extension) => {
-      return !this.options.extensions.some((e) => e.name === extension.name);
-    });
-  
-    removedExtensions.forEach((e) => this.unregisterPlugin(e.name));
-
-    this.setOptions(options);
-    this.#setDocumentMode(options);
-    this.#createExtensionService();
-    this.#createCommandService();
-
-    addedExtensions.forEach((e) => {
-      const plugin = this.extensionService.plugins.find((p) => p.key.startsWith(e.name));
-      this.registerPlugin(plugin)
-    });
-
-    const hasComments = options.extensions.some((e) => e.name === 'comments');
-    if (hasComments) this.#loadComments();
-
-    this.view.updateState(this.state);
   }
 
   setToolbar(toolbar) {

@@ -1,4 +1,4 @@
-import { ref, reactive, toRaw } from 'vue';
+import { ref, shallowRef, toRaw } from 'vue';
 import { useField } from './use-field';
 import useConversation from '@/components/CommentsLayer/use-conversation';
 
@@ -14,9 +14,9 @@ export default function useDocument(params, superdocConfig) {
   const isReady = ref(false);
 
   // For docx
-  const editorRef = {};
-  const setEditor = (ref) => Object.assign(editorRef, ref);
-  const getEditor = () => Object.keys(editorRef).length ? editorRef : null;
+  const editorRef = shallowRef(null);
+  const setEditor = (ref) => editorRef.value = ref;
+  const getEditor = () => editorRef.value;
 
   // Comments
   const removeComments = () => {

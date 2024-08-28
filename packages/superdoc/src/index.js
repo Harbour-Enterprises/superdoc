@@ -113,8 +113,6 @@ class Superdoc extends EventEmitter {
   setActiveEditor(editor) {
     this.activeEditor = editor;
     if (this.toolbar) this.toolbar.setActiveEditor(editor);
-
-    console.debug('\n\n\n ACTIVE EDITOR', this.activeEditor, '\n\n')
   }
 
   addToolbar() {
@@ -149,34 +147,22 @@ class Superdoc extends EventEmitter {
   }
 
   #setModeEditing() {
-    const documentMode = 'editing';
     this.superdocStore.documents.forEach((doc) => {
       doc.restoreComments();
       const editor = doc.getEditor();
-      if (editor) {
-        const newOptions = { ...editor.options, documentMode };
-        newOptions.extensions = getStarterExtensions();
-        editor.updateEditor(newOptions);
-      }
+      if (editor) editor.registerPlugin('comments');
     });
   }
 
   #setModeSuggesting() {
     // TODO
-  }
+  }''
 
   #setModeViewing() {
-    console.debug('\n\n VIEWING', this.superdocStore.documents)
-    const documentMode = 'viewing';
     this.superdocStore.documents.forEach((doc) => {
       doc.removeComments();
       const editor = doc.getEditor();
-
-      if (editor) {
-        const extensions = editor.options.extensions.filter((ext) => ext.name !== 'comments');
-        const newOptions = { ...editor.options, extensions, documentMode };
-        editor.updateEditor(newOptions);
-      }
+      if (editor) editor.unregisterPlugin('comments');
     });
   }
 
