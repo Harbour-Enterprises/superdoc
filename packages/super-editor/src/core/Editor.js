@@ -225,7 +225,11 @@ export class Editor extends EventEmitter {
       // TODO
       this.setEditable(true, false);
     } else if (documentMode === 'editing') {
-      if (this.extensionService) this.registerPlugin('comments');
+      const plugin = this.extensionService?.plugins.find((p) => p.key.startsWith('comments'));
+      if (this.extensionService && plugin) {
+        this.registerPlugin(plugin);
+      }
+
       this.setEditable(true, false);
     }
   }
