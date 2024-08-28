@@ -1,3 +1,4 @@
+import './style.css';
 import { SuperConverter } from "@core/super-converter/SuperConverter";
 import { makeDefaultItems } from '@/components/toolbar/defaultItems.js';
 import { getMarksFromSelection, getActiveFormatting } from '@/core/helpers/getMarksFromSelection.js';

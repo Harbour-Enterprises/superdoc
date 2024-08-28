@@ -113,6 +113,8 @@ class Superdoc extends EventEmitter {
   setActiveEditor(editor) {
     this.activeEditor = editor;
     if (this.toolbar) this.toolbar.setActiveEditor(editor);
+
+    console.debug('\n\n\n ACTIVE EDITOR', this.activeEditor, '\n\n')
   }
 
   addToolbar() {
@@ -164,6 +166,7 @@ class Superdoc extends EventEmitter {
   }
 
   #setModeViewing() {
+    console.debug('\n\n VIEWING', this.superdocStore.documents)
     const documentMode = 'viewing';
     this.superdocStore.documents.forEach((doc) => {
       doc.removeComments();

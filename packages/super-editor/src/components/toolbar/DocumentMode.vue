@@ -19,7 +19,6 @@ const handleClick = (item) => {
         v-for="option in options"
         @click="handleClick(option)"
         :class="{ disabled: option.disabled }">
-
       <div class="document-mode-column icon-column">
         <div>
           <i :class="option.icon"></i>
@@ -41,6 +40,11 @@ const handleClick = (item) => {
 </template>
 
 <style scoped>
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
 .document-mode {
   display: flex;
   flex-direction: column;

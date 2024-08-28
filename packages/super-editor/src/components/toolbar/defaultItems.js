@@ -128,6 +128,13 @@ export const makeDefaultItems = (superToolbar) => {
     icon: "fa-grip-lines-vertical",
     isNarrow: true,
   });
+  const separatorRight = useToolbarItem({
+    type: "separator",
+    name: "separator",
+    icon: "fa-grip-lines-vertical",
+    isNarrow: true,
+    group: "right"
+  });
 
   // italic
   const italic = useToolbarItem({
@@ -701,6 +708,7 @@ export const makeDefaultItems = (superToolbar) => {
     clearFormatting,
     overflow,
     documentMode,
+    separatorRight,
     search,
   ];
 

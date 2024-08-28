@@ -185,6 +185,7 @@ const onCreate = ({ editor }) => {
 }
 
 const onFocus = ({ editor }) => {
+  console.debug('[Superdoc] Editor focused', editor);
   proxy.$superdoc.setActiveEditor(editor);
 }
 

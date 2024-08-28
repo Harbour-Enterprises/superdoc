@@ -102,7 +102,7 @@ const handleClickOutside = (e) => {
           :show="item.expand.value"
           size="medium"
           placement="bottom-start"
-          class="toolbar-button"
+          class="toolbar-button toolbar-dropdown"
           @select="handleSelect(item, $event)"
           @clickoutside="handleClickOutside">
             <n-tooltip trigger="hover">
@@ -149,7 +149,9 @@ const handleClickOutside = (e) => {
 .n-dropdown-option-body:hover::after {
   background-color: #d8dee5 !important;
 }
-
+.toolbar-dropdown {
+  cursor: pointer;
+}
 </style>
 
 <style scoped>
