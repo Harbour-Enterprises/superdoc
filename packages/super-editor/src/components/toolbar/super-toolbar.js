@@ -2,10 +2,10 @@ import EventEmitter from 'eventemitter3'
 import { createApp } from 'vue'
 import { undoDepth, redoDepth } from "prosemirror-history";
 
-import { makeDefaultItems } from '../super-editor/src/components/toolbar/defaultItems';
-import { getActiveFormatting } from '../super-editor/src/core/helpers/getMarksFromSelection';
-import Toolbar from '../super-editor/src/components/toolbar/Toolbar.vue'
+import { makeDefaultItems } from './defaultItems';
+import { getActiveFormatting } from '@core/helpers/getMarksFromSelection';
 import { vClickOutside } from '@harbour-enterprises/common';
+import Toolbar from './Toolbar.vue'
 
 export class SuperToolbar extends EventEmitter {
 
