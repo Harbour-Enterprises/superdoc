@@ -29,8 +29,6 @@ export class Editor extends EventEmitter {
 
   view;
 
-  doumentId;
-
   documentMode;
 
   isFocused = false;
@@ -69,7 +67,6 @@ export class Editor extends EventEmitter {
   constructor(options) {
     super();
 
-    this.documentId = options.id;
     this.setOptions(options);
     this.#setDocumentMode(options);
 

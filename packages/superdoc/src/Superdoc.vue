@@ -173,8 +173,8 @@ const onCommentsLoaded = ({ comments }) => {
 };
 
 const onCreate = ({ editor }) => {
-  const { id } = editor;
-  const doc = getDocument(id);
+  const { documentId } = editor.options;
+  const doc = getDocument(documentId);
   doc.setEditor(editor);
 
   proxy.$superdoc.activeEditor = editor;
