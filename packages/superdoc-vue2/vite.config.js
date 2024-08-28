@@ -45,8 +45,6 @@ export default defineConfig(({ mode, command }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, 'src'), // Fixed alias path
-        '@superdoc': path.resolve(__dirname, 'packages/superdoc'),
-        '@common': path.resolve(__dirname, '../../common'),
       },
       extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json'],
     },

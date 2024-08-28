@@ -1,5 +1,5 @@
 <script setup>
-import '@common/styles/common-styles.css';
+import '@harbour-enterprises/common/styles/common-styles.css';
 import { getCurrentInstance, ref, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
 import { storeToRefs } from 'pinia';
 
@@ -12,8 +12,8 @@ import HrbrFieldsLayer from '@/components/HrbrFieldsLayer/HrbrFieldsLayer.vue';
 import { useSuperdocStore } from '@/stores/superdoc-store';
 import { useCommentsStore } from '@/stores/comments-store';
 
-import { DOCX, PDF, HTML } from '@common/document-types';
-import { SuperEditor } from 'super-editor';
+import { DOCX, PDF, HTML } from '@harbour-enterprises/common';
+import { SuperEditor } from '@harbour-enterprises/super-editor';
 import HtmlViewer from './components/HtmlViewer/HtmlViewer.vue';
 import useConversation from './components/CommentsLayer/use-conversation';
 

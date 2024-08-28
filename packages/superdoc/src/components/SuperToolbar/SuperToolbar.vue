@@ -1,7 +1,7 @@
 <script setup>
-import 'super-editor/style.css';
+import '@harbour-enterprises/super-editor/style.css';
 import { getCurrentInstance, ref, onMounted } from 'vue';
-import { Toolbar } from 'super-editor';
+import { Toolbar } from '@harbour-enterprises/super-editor';
 
 const { proxy } = getCurrentInstance();
 const toolbar = ref(null);

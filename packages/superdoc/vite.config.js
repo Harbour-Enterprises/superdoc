@@ -33,8 +33,6 @@ export default defineConfig((data) => {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
         '@stores': fileURLToPath(new URL('./src/stores', import.meta.url)),
-        '@core': fileURLToPath(new URL('./src/core', import.meta.url)),
-        '@common': fileURLToPath(new URL('../../common', import.meta.url)),
       },
       extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json'],
     },

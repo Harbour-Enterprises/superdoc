@@ -1,5 +1,5 @@
 import { Node, Attribute } from '@core/index.js';
-import { toKebabCase } from '@common/key-transform.js';
+import { toKebabCase } from '@harbour-enterprises/common';
 import { generateDocxListAttributes } from '@helpers/index.js';
 
 export const OrderedList = Node.create({

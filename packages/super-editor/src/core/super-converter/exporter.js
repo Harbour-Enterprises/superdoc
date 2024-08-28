@@ -1,5 +1,5 @@
 import { SuperConverter } from './SuperConverter.js';
-import { toKebabCase } from '@common/key-transform.js';
+import { toKebabCase } from '@harbour-enterprises/common';
 import { inchesToTwips } from './helpers.js';
 import { generateRandomId } from '@helpers/docxIdGenerator.js';
 

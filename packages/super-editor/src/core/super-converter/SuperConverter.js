@@ -1,6 +1,6 @@
 import xmljs from 'xml-js';
 import { getNodeNumberingDefinition } from './numbering';
-import { toKebabCase } from '@common/key-transform.js';
+import { toKebabCase } from '@harbour-enterprises/common';
 
 import { DocxExporter } from './exporter';
 import { DocxImporter } from './importer';

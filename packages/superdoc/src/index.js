@@ -1,24 +1,24 @@
 import './style.css';
-import 'super-editor/style.css';
-import '@common/icons/icons.css';
+import '@harbour-enterprises/super-editor/style.css';
+import '@harbour-enterprises/common/icons/icons.css';
 import EventEmitter from 'eventemitter3'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
 import { useSuperdocStore } from './stores/superdoc-store';
-import { DOCX, PDF, HTML } from '@common/document-types';
+import { DOCX, PDF, HTML } from '@harbour-enterprises/common';
 import { SuperToolbar } from '../../super-toolbar/super-toolbar';
-import { SuperInput } from 'super-editor';
-import clickOutside from '@common/helpers/v-click-outside';
+import { SuperInput } from '@harbour-enterprises/super-editor';
+import { vClickOutside } from '@harbour-enterprises/common';
 import App from './Superdoc.vue'
+import BlankDOCX from '@harbour-enterprises/common/data/blank.docx?url';
 
-import BlankDOCX from '@common/data/blank.docx?url';
 
 const createMyApp = () => {
   const app = createApp(App);
   const pinia = createPinia()
   app.use(pinia)
-  app.directive('click-outside', clickOutside);
+  app.directive('click-outside', vClickOutside);
 
   const superdocStore = useSuperdocStore();
   return { app, pinia, superdocStore };
