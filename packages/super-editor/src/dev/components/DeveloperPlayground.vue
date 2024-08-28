@@ -7,7 +7,7 @@ import BlankDOCX from '@harbour-enterprises/common/data/blank.docx?url';
 import EditorInputs from './EditorInputs/EditorInputs.vue';
 import { DOCX } from '@harbour-enterprises/common';
 import { INPUTS } from '../config/agreement-editor.js';
-import { SuperToolbar } from '@packages/super-toolbar/super-toolbar';
+import { SuperToolbar } from '@components/toolbar/super-toolbar';
 import { fieldAnnotationHelpers } from '@extensions/index.js';
 
 // Import the component the same you would in your app

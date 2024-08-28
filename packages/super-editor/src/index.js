@@ -1,6 +1,7 @@
 import { SuperConverter } from "@core/super-converter/SuperConverter";
 import { makeDefaultItems } from '@/components/toolbar/defaultItems.js';
 import { getMarksFromSelection, getActiveFormatting } from '@/core/helpers/getMarksFromSelection.js';
+import { SuperToolbar } from '@components/toolbar/super-toolbar.js';
 import DocxZipper from '@core/DocxZipper';
 import SuperEditor from '@components/SuperEditor.vue';
 import BasicUpload from './dev/components/BasicUpload.vue';
@@ -20,6 +21,7 @@ export {
   // Classes
   SuperConverter,
   DocxZipper,
+  SuperToolbar,
 
   // Components
   SuperEditor,

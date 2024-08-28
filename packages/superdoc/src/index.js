@@ -7,7 +7,7 @@ import { createPinia } from 'pinia'
 
 import { useSuperdocStore } from './stores/superdoc-store';
 import { DOCX, PDF, HTML } from '@harbour-enterprises/common';
-import { SuperToolbar } from '../../super-toolbar/super-toolbar';
+import { SuperToolbar } from '@harbour-enterprises/super-editor';
 import { SuperInput } from '@harbour-enterprises/super-editor';
 import { vClickOutside } from '@harbour-enterprises/common';
 import App from './Superdoc.vue'
