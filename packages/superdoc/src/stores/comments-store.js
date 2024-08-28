@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, reactive, computed, unref } from 'vue';
-import { comments_module_events } from '@common/event-types.js';
+import { comments_module_events } from '@harbour-enterprises/common';
 import { useSuperdocStore } from '@/stores/superdoc-store';
 import useConversation from '../components/CommentsLayer/use-conversation';
 

@@ -1,16 +1,13 @@
 {
-  "name": "superdoc-monorepo",
-  "version": "1.0.0",
+  "name": "harbour-enterprises",
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "shared/*"
   ],
   "scripts": {
     "reinstall": "rm -rf node_modules package-lock.json; npm install;",
     "dev:superdoc": "cd packages/superdoc && npm run dev",
     "dev:super-editor": "cd packages/super-editor && npm run dev"
-  },
-  "dependencies": {
-    "eventemitter3": "^5.0.1"
   }
 }

@@ -5,7 +5,7 @@ import { undoDepth, redoDepth } from "prosemirror-history";
 import { makeDefaultItems } from '../super-editor/src/components/toolbar/defaultItems';
 import { getActiveFormatting } from '../super-editor/src/core/helpers/getMarksFromSelection';
 import Toolbar from '../super-editor/src/components/toolbar/Toolbar.vue'
-import clickOutside from '@common/helpers/v-click-outside';
+import { vClickOutside } from '@harbour-enterprises/common';
 
 export class SuperToolbar extends EventEmitter {
 
@@ -40,7 +40,7 @@ export class SuperToolbar extends EventEmitter {
     }
 
     this.app = createApp(Toolbar);
-    this.app.directive('click-outside', clickOutside);
+    this.app.directive('click-outside', vClickOutside);
     this.app.config.globalProperties.$toolbar = this;
     if (el) this.toolbar = this.app.mount(el);
     this.activeEditor = config.editor || null;

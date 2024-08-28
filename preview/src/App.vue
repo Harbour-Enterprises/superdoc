@@ -1,6 +1,6 @@
 <script setup>
 import { nextTick, ref } from 'vue';
-import { BasicUpload } from 'super-editor';
+import { BasicUpload } from '@harbour-enterprises/super-editor';
 import Superdoc from '@harbour-enterprises/superdoc';
 import '@harbour-enterprises/superdoc/style.css';
 

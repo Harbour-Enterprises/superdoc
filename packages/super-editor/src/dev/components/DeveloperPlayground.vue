@@ -1,15 +1,14 @@
 <script setup>
-import '@common/styles/common-styles.css';
+import '@harbour-enterprises/common/styles/common-styles.css';
+import '@harbour-enterprises/common/icons/icons.css';
 import { ref, reactive, onMounted } from 'vue';
 import BasicUpload from './BasicUpload.vue';
-import BlankDOCX from '@common/data/blank.docx?url';
+import BlankDOCX from '@harbour-enterprises/common/data/blank.docx?url';
 import EditorInputs from './EditorInputs/EditorInputs.vue';
-import { DOCX } from '@common/document-types';
+import { DOCX } from '@harbour-enterprises/common';
 import { INPUTS } from '../config/agreement-editor.js';
 import { SuperToolbar } from '@packages/super-toolbar/super-toolbar';
 import { fieldAnnotationHelpers } from '@extensions/index.js';
-
-import '@common/icons/icons.css';
 
 // Import the component the same you would in your app
 import { SuperEditor } from '@/index';

@@ -4,7 +4,7 @@ import { NDropdown, NTooltip, NSelect } from 'naive-ui';
 import { storeToRefs } from 'pinia';
 import { useCommentsStore } from '@/stores/comments-store';
 import { useSuperdocStore } from '@/stores/superdoc-store';
-import { SuperInput } from 'super-editor';
+import { SuperInput } from '@harbour-enterprises/super-editor';
 import useSelection from '@/helpers/use-selection';
 import useComment from '@/components/CommentsLayer/use-comment';
 import Avatar from '@/components/general/Avatar.vue';

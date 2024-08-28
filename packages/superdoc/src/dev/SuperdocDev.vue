@@ -1,11 +1,11 @@
 <script setup>
-import '@common/styles/common-styles.css';
+import '@harbour-enterprises/common/styles/common-styles.css';
 import { nextTick, onMounted, ref } from 'vue';
 import { Superdoc } from '@/index';
-import { SuperEditor } from 'super-editor';
-import { DOCX, PDF, HTML } from '@common/document-types';
-import BasicUpload from '@common/components/BasicUpload.vue';
-import BlankDOCX from '@common/data/blank.docx?url';
+import { SuperEditor } from '@harbour-enterprises/super-editor';
+import { DOCX, PDF, HTML } from '@harbour-enterprises/common';
+import { BasicUpload } from '@harbour-enterprises/common';
+import BlankDOCX from '@harbour-enterprises/common/data/blank.docx?url';
 
 /* For local dev */
 let activeEditor = null;

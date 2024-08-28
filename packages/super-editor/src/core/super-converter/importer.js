@@ -1,6 +1,6 @@
 import { SuperConverter } from './SuperConverter';
 import { twipsToPixels, twipsToInches, halfPointToPixels, emuToPixels } from './helpers.js';
-import { toKebabCase } from '@common/key-transform.js';
+import { toKebabCase } from '@harbour-enterprises/common';
 
 
 /**
