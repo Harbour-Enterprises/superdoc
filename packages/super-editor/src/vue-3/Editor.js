@@ -58,11 +58,10 @@ export class Editor extends CoreEditor {
   }
 
   /**
-   * Register a PM plugin by name.
+   * Register a PM plugin.
    */
-  registerPlugin(pluginName) {
-    const plugin = this.extensionService.plugins.find((p) => p.key.startsWith(pluginName));
-    super.registerPlugin(plugin);
+  registerPlugin(plugin, handlePlugins) {
+    super.registerPlugin(plugin, handlePlugins);
     this.reactiveState.value = this.view.state;
   }
 
@@ -72,5 +71,9 @@ export class Editor extends CoreEditor {
   unregisterPlugin(nameOrPluginKey) {
     super.unregisterPlugin(nameOrPluginKey);
     this.reactiveState.value = this.view.state;
+  }
+
+  setDocumentMode(mode) {
+    super.setDocumentMode(mode);
   }
 }

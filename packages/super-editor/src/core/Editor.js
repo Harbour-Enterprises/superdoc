@@ -68,7 +68,7 @@ export class Editor extends EventEmitter {
     super();
 
     this.setOptions(options);
-    this.#setDocumentMode(options);
+    this.setDocumentMode(options.documentMode);
 
     let modes = {
       docx: () => this.#init(this.options),
@@ -216,16 +216,16 @@ export class Editor extends EventEmitter {
     return this.#commandService.can();
   }
 
-  #setDocumentMode(options) {
-    const { documentMode } = options;
-
+  setDocumentMode(documentMode) {
     this.documentMode = documentMode?.toLowerCase() || 'viewing';
     if (documentMode === 'viewing') {
+      this.unregisterPlugin('comments');
       this.setEditable(false, false);
     } else if (documentMode === 'suggesting') {
       // TODO
       this.setEditable(true, false);
     } else if (documentMode === 'editing') {
+      if (this.extensionService) this.registerPlugin('comments');
       this.setEditable(true, false);
     }
   }
