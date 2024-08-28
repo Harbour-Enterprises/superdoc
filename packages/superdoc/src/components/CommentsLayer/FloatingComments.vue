@@ -3,7 +3,7 @@ import { storeToRefs } from 'pinia';
 import { onMounted, ref, reactive, computed, watch, nextTick } from 'vue';
 import { useCommentsStore } from '@/stores/comments-store';
 import { useSuperdocStore } from '@/stores/superdoc-store';
-import useFloatingConverasation from './use-floating-conversation';
+import useFloatingConversation from './use-floating-conversation';
 import CommentDialog from '@/components/CommentsLayer/CommentDialog.vue';
 
 const superdocStore = useSuperdocStore();
@@ -104,7 +104,7 @@ const checkCollisions = (proposedPosition, dialogIndex) => {
 
 const renderDialog = (data) => {
   if (!data) return;
-  const nextConvo = useFloatingConverasation(data);
+  const nextConvo = useFloatingConversation(data);
   visibleConversations.value.push(nextConvo);
 }
 
@@ -122,6 +122,7 @@ const sortByLocation = (a, b) => {
 
 const initialize = () => {
   visibleConversations.value = [];
+  sortedConversations.value = [];
   nextTick(() => initializeConvos());
 }
 
@@ -129,7 +130,7 @@ const initializeConvos = () => {
   const firstDoc = documentsWithConverations.value[0];
   const conversations = [...firstDoc.conversations];
   sortedConversations.value = conversations.sort(sortByLocation);
-  visibleConversations.value.push(useFloatingConverasation(sortedConversations.value[0]));
+  visibleConversations.value.push(useFloatingConversation(sortedConversations.value[0]));
 }
 
 const getCommentPosition = (convo) => {

@@ -173,6 +173,10 @@ const onCommentsLoaded = ({ comments }) => {
 };
 
 const onCreate = ({ editor }) => {
+  const { documentId } = editor.options;
+  const doc = getDocument(documentId);
+  doc.setEditor(editor);
+
   proxy.$superdoc.activeEditor = editor;
   proxy.$superdoc.broadcastLoaded();
 
@@ -189,17 +193,30 @@ const onCommentClicked = ({ conversation }) => {
   activeComment.value = conversationId;
 }
 
-const editorOptions = {
-  onCreate,
-  onFocus,
-  onCommentsLoaded,
-  onCommentClicked,
-}
+const editorOptions = computed(() => {
+  return {
+    onCreate,
+    onFocus,
+    onCommentsLoaded,
+    onCommentClicked,
+    documentMode: proxy.$documentMode,
+  }
+});
+
+const isCommentsEnabled = computed(() => 'comments' in modules);
+const showCommentsSidebar = computed(() => {
+  return pendingComment.value || (
+         documentsWithConverations.value.length > 0
+          && layers.value
+          && isReady.value
+          && isCommentsEnabled.value
+        )
+});
 
 const showToolsFloatingMenu = computed(() => toolsMenuPosition.value && !getConfig.value?.readOnly)
 const showActiveSelection = computed(() => !getConfig?.readOnly && selectionPosition)
 onMounted(() => {
-  if ('comments' in modules && !modules.comments.readOnly) {
+  if (isCommentsEnabled.value && !modules.comments.readOnly) {
     document.addEventListener('mousedown', handleDocumentMouseDown);
   }
 });
@@ -207,6 +224,7 @@ onMounted(() => {
 
 <template>
 <div class="superdoc">
+
   <div class="layers" ref="layers">
 
     <!-- Floating tools menu (shows up when user has text selection)-->
@@ -218,7 +236,7 @@ onMounted(() => {
     </div>
 
     <!-- Active selection on top of document-->
-    <div v-if="showActiveSelection" :style="selectionPosition" class="sd-highlight sd-initial-highlight"></div>
+    <div v-if="showActiveSelection && isCommentsEnabled" :style="selectionPosition" class="sd-highlight sd-initial-highlight"></div>
 
     <div class="document">
       <!-- Fields layer -->
@@ -232,7 +250,7 @@ onMounted(() => {
       <!-- On-document comments layer -->
       <CommentsLayer
           class="comments-layer"
-          v-if="isReady && 'comments' in modules && layers && isReady"
+          v-if="showCommentsSidebar"
           style="z-index: 3;"
           ref="commentsLayer"
           :parent="layers"
@@ -255,7 +273,7 @@ onMounted(() => {
             v-if="doc.type === DOCX"
             :file-source="doc.data"
             :document-id="doc.id"
-            :options="editorOptions" />
+            :options="{ ...editorOptions, id: doc.id }" />
 
           <!-- omitting field props -->
           <HtmlViewer
@@ -265,9 +283,8 @@ onMounted(() => {
       </div>
     </div>
   </div>
-  
 
-    <div class="right-sidebar" v-if="(pendingComment || documentsWithConverations.length) && layers && isReady">
+    <div class="right-sidebar" v-if="showCommentsSidebar">
     <CommentDialog
         v-if="pendingComment"
         :data="pendingComment"
@@ -280,6 +297,7 @@ onMounted(() => {
         v-for="doc in documentsWithConverations"
         :parent="layers"
         :current-document="doc" />
+
   </div>
 </div>
 </template>
@@ -292,7 +310,6 @@ onMounted(() => {
   padding: 0 10px;
   min-height: 100%;
   position: relative;
-  border-left: 1px solid #DBDBDB;
   z-index: 100;
 }
 .fa-tool-icon {
@@ -366,7 +383,7 @@ onMounted(() => {
   height: 50px;
   background-color: rgba(219, 219, 219, 0.6);
   border-radius: 12px;
-  z-index: 11;
+  z-index: 9999999;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -128,6 +128,13 @@ export const makeDefaultItems = (superToolbar) => {
     icon: "fa-grip-lines-vertical",
     isNarrow: true,
   });
+  const separatorRight = useToolbarItem({
+    type: "separator",
+    name: "separator",
+    icon: "fa-grip-lines-vertical",
+    isNarrow: true,
+    group: "right"
+  });
 
   // italic
   const italic = useToolbarItem({
@@ -625,6 +632,7 @@ export const makeDefaultItems = (superToolbar) => {
   const documentMode = useToolbarItem({
     type: "dropdown",
     name: "documentMode",
+    command: "setDocumentMode",
     allowWithoutEditor: true,
     tooltip: "Document editing mode",
     icon: "fal fa-user-edit",
@@ -649,8 +657,7 @@ export const makeDefaultItems = (superToolbar) => {
 
   const documentOptions = [
     { label: "Editing", value: "editing", icon: 'fal fa-user-edit', description: "Edit document directly", },
-    { label: "Suggesting", value: "suggesting", icon: 'fal fa-comment-edit', description: "Edits become suggestions" },
-    { label: "Commenting", value: "commenting", icon: 'fal fa-comments', description: "Add comments to document" },
+    { label: "Suggesting", disabled: true, value: "suggesting", icon: 'fal fa-comment-edit', description: "Edits become suggestions" },
     { label: "Viewing", value: "viewing", icon: 'fal fa-eye', description: "View clean version of document only" },
   ];
 
@@ -661,6 +668,7 @@ export const makeDefaultItems = (superToolbar) => {
         onSelect: ({ label, icon }) => {
           documentMode.label.value = label;
           documentMode.icon.value = icon;
+          superToolbar.emitCommand({ item: documentMode, argument: label });
         }
       }
     );
@@ -700,6 +708,7 @@ export const makeDefaultItems = (superToolbar) => {
     clearFormatting,
     overflow,
     documentMode,
+    separatorRight,
     search,
   ];
 

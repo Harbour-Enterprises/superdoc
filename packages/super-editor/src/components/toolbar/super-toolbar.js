@@ -11,7 +11,6 @@ export class SuperToolbar extends EventEmitter {
 
   config = {
     element: null,
-    onToolbarCommand: () => null,
   }
 
   #nonEditorCommands = {
@@ -23,6 +22,12 @@ export class SuperToolbar extends EventEmitter {
       const layers = document.querySelector('.layers');
       if (!layers) return;
       layers.style.zoom = argument;
+    },
+    setDocumentMode: ({ item, argument }) => {
+      this.emit('superdoc-command', { item, argument });
+
+      if (argument) this.documentMode = argument.toLowerCase();
+      if (this.documentMode === 'viewing') this.#deactivateAll();
     }
   }
 
@@ -30,6 +35,7 @@ export class SuperToolbar extends EventEmitter {
     super();
     this.config = { ...this.config, ...config };
     this.toolbarItems = [];
+    this.documentMode = 'editing';
 
     this.#makeToolbarItems(this);
 
@@ -80,14 +86,9 @@ export class SuperToolbar extends EventEmitter {
   #updateToolbarState() {
     this.#updateToolbarHistory();
   
-    if (!this.activeEditor) {
-      this.toolbarItems.forEach((item) => {
-        const { allowWithoutEditor } = item;
-        if (allowWithoutEditor.value) return;
-        item.setDisabled(true);
-      });
-      return;
-    }
+    // Decativate toolbar items if no active editor
+    // This will skip buttons that are marked as allowWithoutEditor
+    if (!this.activeEditor || this.documentMode === 'viewing') return this.#deactivateAll();
 
     const marks = getActiveFormatting(this.activeEditor);
     this.toolbarItems.forEach((item) => {
@@ -100,6 +101,15 @@ export class SuperToolbar extends EventEmitter {
         item.deactivate();
       }
 
+    });
+  }
+
+  #deactivateAll() {
+    this.activeEditor = null;
+    this.toolbarItems.forEach((item) => {
+      const { allowWithoutEditor } = item;
+      if (allowWithoutEditor.value) return;
+      item.setDisabled(true);
     });
   }
 

@@ -29,8 +29,10 @@ export class Editor extends EventEmitter {
 
   view;
 
-  isFocused = false;
+  documentMode;
 
+  isFocused = false;
+  
   #css;
 
   #comments;
@@ -64,8 +66,9 @@ export class Editor extends EventEmitter {
 
   constructor(options) {
     super();
-    
+
     this.setOptions(options);
+    this.setDocumentMode(options.documentMode);
 
     let modes = {
       docx: () => this.#init(this.options),
@@ -74,7 +77,7 @@ export class Editor extends EventEmitter {
         console.log('Not implemented.');
       },
     };
-  
+
     let initMode = modes[this.options.mode] ?? modes.default;
     initMode();
   }
@@ -213,6 +216,24 @@ export class Editor extends EventEmitter {
     return this.#commandService.can();
   }
 
+  setDocumentMode(documentMode) {
+    this.documentMode = documentMode?.toLowerCase() || 'viewing';
+    if (documentMode === 'viewing') {
+      this.unregisterPlugin('comments');
+      this.setEditable(false, false);
+    } else if (documentMode === 'suggesting') {
+      // TODO
+      this.setEditable(true, false);
+    } else if (documentMode === 'editing') {
+      const plugin = this.extensionService?.plugins.find((p) => p.key.startsWith('comments'));
+      if (this.extensionService && plugin) {
+        this.registerPlugin(plugin);
+      }
+
+      this.setEditable(true, false);
+    }
+  }
+
   /**
    * Set editor options and update state.
    * @param options List of options.
@@ -274,11 +295,10 @@ export class Editor extends EventEmitter {
     const name = typeof nameOrPluginKey === 'string'
       ? `${nameOrPluginKey}$`
       : nameOrPluginKey.key;
-
+    
     const state = this.state.reconfigure({
       plugins: this.state.plugins.filter((plugin) => !plugin.key.startsWith(name)),
     });
-
     this.view.updateState(state);
   }
 

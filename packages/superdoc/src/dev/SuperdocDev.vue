@@ -33,6 +33,7 @@ const initializeApp = async () => {
   const config = {
     selector: '#superdoc',
     toolbar: 'toolbar',
+    documentMode: 'editing',
     user: {
       name: 'Super Document Jr.',
       email: 'user@harbourshare.com',
@@ -57,7 +58,6 @@ const initializeApp = async () => {
 onMounted(async () => {
   handleNewFile(await getFileObject(BlankDOCX, 'blank_document.docx', DOCX));
 });
-
 </script>
 
 <template>
@@ -70,7 +70,6 @@ onMounted(async () => {
           <BasicUpload @file-change="handleNewFile" />
         </div>
       </div>
-
     </div>
 
     <div id="toolbar" class="sd-toolbar"></div>
@@ -95,10 +94,11 @@ onMounted(async () => {
   cursor: text;
   background-color: white;
   border-radius: 16px;
-  border: 1px solid #d3d3d3;
+  border: 1px solid #d3d3d3 !important;
   text-align: left;
   box-shadow:0 0 5px hsla( 0,0%,0%,.05);
   transition: all 0.18s ease-out;
+  margin: 50px;
 }
 .superdoc .layers:hover {
   border: 1px solid #0160cc86;

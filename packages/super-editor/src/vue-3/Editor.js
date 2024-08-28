@@ -72,4 +72,8 @@ export class Editor extends CoreEditor {
     super.unregisterPlugin(nameOrPluginKey);
     this.reactiveState.value = this.view.state;
   }
+
+  setDocumentMode(mode) {
+    super.setDocumentMode(mode);
+  }
 }
