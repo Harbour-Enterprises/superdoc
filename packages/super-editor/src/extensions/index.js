@@ -37,6 +37,8 @@ import { Italic } from './italic/index.js';
 import { Underline } from './underline/index.js';
 import { Strike } from './strike/index.js';
 import { Link } from './link/index.js';
+import {TrackDelete} from "./track-changes/track-delete.js";
+import {TrackInsert} from "./track-changes/track-insert.js";
 
 // Plugins
 import { DecorationClick } from './decoration-click/index.js';
@@ -50,7 +52,7 @@ const getRichTextExtensions = () => [
   Document,
   History,
   Italic,
-  Link,,
+  Link,
   Paragraph,
   Strike,
   Text,
@@ -62,46 +64,50 @@ const getRichTextExtensions = () => [
   Mention,
 ];
 
-const getStarterExtensions = () => [
-  Bold,
-  BulletList,
-  Color,
-  CommentRangeStart,
-  CommentRangeEnd,
-  CommentReference,
-  Document,
-  FontFamily,
-  FontSize,
-  History,
-  Heading,
-  Italic,
-  ListItem,
-  LineHeight,
-  Link,
-  OrderedList,
-  Paragraph,
-  LineBreak,
-  RunItem,
-  Strike,
-  TabNode,
-  Text,
-  TextAlign,
-  TextIndent,
-  TextStyle,
-  Underline,
-  FormatCommands,
-  DecorationClick,
-  CommentsPlugin,
-  Table,
-  TableRow,
-  TableCell,
-  TableHeader,
-  FieldAnnotation,
-  DropCursor,
-  Image,
-  BookmarkStart,
-  Mention,
-];
+const getStarterExtensions = () => {
+  return [
+    Bold,
+    BulletList,
+    Color,
+    CommentRangeStart,
+    CommentRangeEnd,
+    CommentReference,
+    Document,
+    FontFamily,
+    FontSize,
+    History,
+    Heading,
+    Italic,
+    ListItem,
+    LineHeight,
+    Link,
+    OrderedList,
+    Paragraph,
+    LineBreak,
+    RunItem,
+    Strike,
+    TabNode,
+    Text,
+    TextAlign,
+    TextIndent,
+    TextStyle,
+    Underline,
+    FormatCommands,
+    DecorationClick,
+    CommentsPlugin,
+    Table,
+    TableRow,
+    TableCell,
+    TableHeader,
+    FieldAnnotation,
+    DropCursor,
+    Image,
+    BookmarkStart,
+    Mention,
+    TrackDelete,
+    TrackInsert,
+  ];
+};
 
 export {
   History,

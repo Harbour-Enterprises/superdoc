@@ -14,6 +14,7 @@ import { createStyleTag } from './utilities/createStyleTag.js';
 import { initComments } from '@features/index.js';
 import { style } from './config/style.js';
 import DocxZipper from '@core/DocxZipper.js';
+import {amendTransaction} from "../extensions/track-changes/track-changes-tr-modifier.js";
 
 /**
  * Editor main class.
@@ -461,8 +462,20 @@ export class Editor extends EventEmitter {
     if (this.view.isDestroyed) {
       return;
     }
-    
-    const state = this.state.apply(transaction);
+
+    let state;
+    if(true) {
+      try {
+        const trackedTr = amendTransaction(transaction, this.view, "userId")
+        const {state: newState, transactions} = this.view.state.applyTransaction(trackedTr)
+        this.view.updateState(newState)
+        state = newState
+      } catch (e) {
+        console.log(e)
+      }
+    } else {
+      state = this.state.apply(transaction);
+    }
     const selectionHasChanged = !this.state.selection.eq(state.selection);
 
     this.view.updateState(state);
