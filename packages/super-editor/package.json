@@ -37,7 +37,9 @@
     "tippy.js": "^6.3.7",
     "uuidv4": "^6.2.13",
     "vue": "^3.4.21",
-    "xml-js": "^1.6.11"
+    "xml-js": "^1.6.11",
+    "y-prosemirror": "^1.2.12",
+    "yjs": "^13.6.18"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.4",

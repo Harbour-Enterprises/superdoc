@@ -45,12 +45,6 @@ const initEditor = async () => {
     documentId: props.documentId,
     content,
     media,
-    users: [
-      { name: 'Nick Bernal', email: 'nick@harbourshare.com' },
-      { name: 'Artem Nistuley', email: 'nick@harbourshare.com' },
-      { name: 'Matthew Connelly', email: 'matthew@harbourshare.com' },
-      { name: 'Eric Doversberger', email: 'eric@harbourshare.com'} 
-    ],
     ...props.options,
   });
 };

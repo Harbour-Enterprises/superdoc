@@ -1,7 +1,11 @@
 <script setup>
 import '@harbour-enterprises/common/styles/common-styles.css';
 import '@harbour-enterprises/common/icons/icons.css';
+import * as Y from 'yjs';
+import { FirestoreProvider } from '@gmcfall/yjs-firestore-provider'
+import { WebsocketProvider } from 'y-websocket'
 import { ref, reactive, onMounted } from 'vue';
+import { initializeApp } from 'firebase/app';
 import BasicUpload from './BasicUpload.vue';
 import BlankDOCX from '@harbour-enterprises/common/data/blank.docx?url';
 import EditorInputs from './EditorInputs/EditorInputs.vue';
@@ -51,9 +55,38 @@ const onCommentClicked = ({ conversation }) => {
   console.debug('💬 [Dev] Comment active', conversation);
 };
 
+// TODO: Replace with your firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyCp2UcE6rd6fEARbFq24hySs5Thoa0LVfw",
+  authDomain: "firestore-db-test-8db0d.firebaseapp.com",
+  projectId: "firestore-db-test-8db0d",
+  storageBucket: "firestore-db-test-8db0d.appspot.com",
+  messagingSenderId: "439692670335",
+  appId: "1:439692670335:web:53f3d91de63939eac3564a"
+}
+
+const ydoc = new Y.Doc();
+const getFirestoreProvider = () => {
+  const app = initializeApp(firebaseConfig);
+  const providerConfig = {
+    maxUpdatesPerBlob: 10,
+    maxUpdatePause: 250,
+  };
+  const documentPath = ['superdoc', 'test'];
+  return new FirestoreProvider(app, ydoc, documentPath, providerConfig);
+};
+
 const editorOptions = {
-    onCreate,
-    onCommentClicked,
+  ydoc: ydoc,
+  // collaborationProvider: getFirestoreProvider(),
+  onCreate,
+  onCommentClicked,
+  users: [
+    { name: 'Nick Bernal', email: 'nick@harbourshare.com' },
+    { name: 'Artem Nistuley', email: 'nick@harbourshare.com' },
+    { name: 'Matthew Connelly', email: 'matthew@harbourshare.com' },
+    { name: 'Eric Doversberger', email: 'eric@harbourshare.com'} 
+  ],
 }
 
 const exportDocx = async () => {

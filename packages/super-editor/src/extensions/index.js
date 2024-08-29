@@ -8,6 +8,7 @@ import { TextIndent } from './text-indent/index.js';
 import { LineHeight } from './line-height/index.js';
 import { FormatCommands } from './format-commands/index.js';
 import { DropCursor } from './dropcursor/index.js';
+import { Collaboration } from './collaboration/index.js';
 
 // Nodes extensions
 import { Document } from './document/index.js';
@@ -101,6 +102,7 @@ const getStarterExtensions = () => [
   Image,
   BookmarkStart,
   Mention,
+  Collaboration
 ];
 
 export {
@@ -144,6 +146,7 @@ export {
   BookmarkStart,
   PopoverPlugin,
   Mention,
+  Collaboration,
   getStarterExtensions,
   getRichTextExtensions,
 };
