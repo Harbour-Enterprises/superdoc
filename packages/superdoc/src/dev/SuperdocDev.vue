@@ -61,20 +61,20 @@ const initializeApp = async () => {
       },
     ],
     modules: {
-      // collaboration: {
-      //   providerType: 'firestore',
-      //   config: {
-      //     firebaseConfig: getFirebaseConfig(),
-      //     path: `superdoc/tests/documents/${currentFile.value.name}`,
-      //   }
-      // },
       collaboration: {
-        providerType: 'socket',
+        providerType: 'firestore',
         config: {
-          socketUrl: `ws://localhost:8080/${currentFile.value.name}`,
-          documentId: currentFile.value.name,
+          firebaseConfig: getFirebaseConfig(),
+          path: `superdoc/tests/documents/${currentFile.value.name}`,
         }
       },
+      // collaboration: {
+      //   providerType: 'socket',
+      //   config: {
+      //     socketUrl: `ws://localhost:8080/${currentFile.value.name}`,
+      //     documentId: currentFile.value.name,
+      //   }
+      // },
       'comments': {
         // readOnly: true,
         // allowResolve: false,

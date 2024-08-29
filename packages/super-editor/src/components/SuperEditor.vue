@@ -3,6 +3,9 @@ import 'tippy.js/dist/tippy.css';
 import { ref, shallowRef, onMounted, onBeforeUnmount } from 'vue';
 import { Editor } from '@vue-3/index.js';
 import { getStarterExtensions } from '@extensions/index.js';
+import { initializeApp } from 'firebase/app';
+import { FirestoreProvider } from '@gmcfall/yjs-firestore-provider'
+import * as Y from 'yjs';
 
 const emit = defineEmits([
   'editor-ready',
@@ -33,46 +36,100 @@ const props = defineProps({
 const editor = shallowRef();
 const editorElem = ref(null);
 
-const initEditor = async () => {
-  console.debug('[super-editor] Loading file...', props.fileSource);
-  const extensions = getStarterExtensions();
+const getFirebaseConfig = () => {
+  return {
+    apiKey: "AIzaSyCp2UcE6rd6fEARbFq24hySs5Thoa0LVfw",
+    authDomain: "firestore-db-test-8db0d.firebaseapp.com",
+    projectId: "firestore-db-test-8db0d",
+    storageBucket: "firestore-db-test-8db0d.appspot.com",
+    messagingSenderId: "439692670335",
+    appId: "1:439692670335:web:53f3d91de63939eac3564a"
+  };
+}
 
-  // If collaboration is configured, add the extensions
-  if (props.options.collaboration?.document && props.options.collaboration.provider) {
-    initCollaboration();
-    extensions.push(Collaboration);
-    extensions.push(CollaborationCursor);
-  }
+// const initEditor = async () => {
+//   console.debug('[super-editor] Loading file...', props.fileSource);
+
+//   const app = initializeApp(getFirebaseConfig());
+//   const documentId = props.documentId;
+//   const documentPath = ['superdoc', 'tests', 'documents', documentId];
+//   const ydoc = new Y.Doc();
+//   const providerConfig = {
+//     maxUpdatesPerBlob: 1,
+//     maxUpdatePause: 250,
+//   };
+//   console.debug('[super-editor] Firestore provider', provider);
+
+//   const [content, media] = await Editor.loadXmlData(props.fileSource);
+//   editor.value = new Editor({
+//     mode: 'docx',
+//     element: editorElem.value,
+//     fileSource: props.fileSource,
+//     extensions: getStarterExtensions(),
+//     documentId: props.documentId,
+//     content, 
+//     media,
+//     collaboration: {
+//       ydoc: ydoc,
+//     },
+//     users: [
+//       { name: 'Nick Bernal', email: 'nick@harbourshare.com' },
+//       { name: 'Artem Nistuley', email: 'nick@harbourshare.com' },
+//       { name: 'Matthew Connelly', email: 'matthew@harbourshare.com' },
+//       { name: 'Eric Doversberger', email: 'eric@harbourshare.com'} 
+//     ],
+//     ...props.options,
+//   });
+// };
+
+// const documentId = 'doc1'; //props.documentId;
+// const documentPath = ['superdoc', 'tests', 'documents', documentId];
+// const providerConfig = {
+//   maxUpdatesPerBlob: 1,
+//   maxUpdatePause: 250,
+// };
+// const app = initializeApp(getFirebaseConfig());
+// const ydoc = new Y.Doc();
+// const provider = new FirestoreProvider(app, ydoc, documentPath, providerConfig);
+
+const initRemoteEditor = async () => {
+  
+  console.debug('\n\n\n[super-editor] Firestore provider', props.options.collaboration, '\n\n\n');
 
   const [content, media] = await Editor.loadXmlData(props.fileSource);
   editor.value = new Editor({
     mode: 'docx',
+    isNewFile: props.options.isNewFile,
     element: editorElem.value,
-    fileSource: props.fileSource,
     extensions: getStarterExtensions(),
     documentId: props.documentId,
+    fileSource: props.fileSource,
     content, 
     media,
+    collaboration: {
+      provider: props.options.collaboration.provider,
+      ydoc: props.options.collaboration.ydoc,
+    },
     users: [
       { name: 'Nick Bernal', email: 'nick@harbourshare.com' },
       { name: 'Artem Nistuley', email: 'nick@harbourshare.com' },
       { name: 'Matthew Connelly', email: 'matthew@harbourshare.com' },
       { name: 'Eric Doversberger', email: 'eric@harbourshare.com'} 
     ],
-    collaboration: {
-      document: props.options.collaboration?.document,
-      provider: props.options.collaboration?.provider,
-    },
     ...props.options,
   });
-};
+}
 
 onMounted(() => {
   console.debug('[super-editor] Mounted');
-  initEditor();
+  const urlParams = new URLSearchParams(window.location.search);
+  const remote = urlParams.get('remote');
+  initRemoteEditor();
+  // else initEditor();
 });
 
 onBeforeUnmount(() => {
+  console.debug('[super-editor] Unmounted');
   editor.value?.destroy();
   editor.value = null;
 });

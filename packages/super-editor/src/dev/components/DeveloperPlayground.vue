@@ -19,14 +19,14 @@ const currentFile = ref(null);
 const handleNewFile = async (file) => {
   currentFile.value = null;
   const fileUrl = URL.createObjectURL(file);
-  currentFile.value = await getFileObject(fileUrl, file.name);
+  currentFile.value = await getFileObject(fileUrl);
 }
 
-const getFileObject = async (fileUrl, fileName) => {
+const getFileObject = async (fileUrl) => {
   // Generate a file url
   const response = await fetch(fileUrl);
   const blob = await response.blob();
-  return new File([blob], fileName, { type: DOCX});
+  return new File([blob], 'docx-file.docx', { type: DOCX});
 }
 
 const onCreate = ({ editor }) => {
@@ -51,12 +51,7 @@ const onCommentClicked = ({ conversation }) => {
   console.debug('💬 [Dev] Comment active', conversation);
 };
 
-const user = {
-  name: 'Super doc user',
-  color: '#339933',
-}
 const editorOptions = {
-    user,
     onCreate,
     onCommentClicked,
 }
@@ -183,14 +178,21 @@ const initToolbar = () => {
 
 onMounted(async () => {
   // set document to blank
-  currentFile.value = await getFileObject(BlankDOCX, 'blank-doc.docx');
+  currentFile.value = await getFileObject(BlankDOCX);
 });
+
+const startCollab = () => {
+  console.debug('Starting collaboration', activeEditor);
+  activeEditor.syncCollaboration("collaboration");
+}
+const insertData = () => {
+  console.debug('Inserting data');
+}
 </script>
 
 <template>
   <div class="dev-app">
     <div class="dev-app__layout">
-
       <div class="dev-app__header">
         <div class="dev-app__header-side dev-app__header-side--left">
           <div class="dev-app__header-title">
@@ -202,6 +204,8 @@ onMounted(async () => {
           </div>
         </div>
         <div class="dev-app__header-side dev-app__header-side--right">
+          <button @click="startCollab">init collabo</button>
+          <button @click="insertData">insert data</button>
           <button class="dev-app__header-export-btn" @click="exportDocx">Export</button>
         </div>
       </div>

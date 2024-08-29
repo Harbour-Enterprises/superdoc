@@ -24,13 +24,14 @@ export default defineConfig(({ mode, command}) => {
       esbuild: {
         drop: [],
       },
+      rollupOptions: {
+        external: ['yjs'],
+      },
     },
     optimizeDeps: {
       esbuildOptions: {
         target: 'es2020',
       },
-    },
-    rollupOptions: {
     },
     resolve: {
       alias: {

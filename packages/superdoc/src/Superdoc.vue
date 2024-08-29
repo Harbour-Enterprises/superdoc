@@ -197,18 +197,22 @@ const onCommentClicked = ({ conversation }) => {
 }
 
 const editorOptions = computed(() => {
-  return {
-  user: activeUser.value,
-  collaboration: {
-    provider: proxy.$superdoc.provider,
-    document: proxy.$superdoc.ydoc,
-  },
+  const options = {
+    user: activeUser.value,
+    collaboration: {
+      provider: proxy.$superdoc.provider,
+      ydoc: proxy.$superdoc.ydoc,
+    },
+    isNewFile: proxy.$config.isNewFile,
     onCreate,
     onFocus,
     onCommentsLoaded,
     onCommentClicked,
     documentMode: proxy.$documentMode,
   }
+
+  console.debug('[Superdoc] Editor options', options.collaboration);  
+  return options
 });
 
 const isCommentsEnabled = computed(() => 'comments' in modules);
@@ -221,7 +225,6 @@ const showCommentsSidebar = computed(() => {
         )
 });
 
-console.debug('[Superdoc] Editor options', editorOptions);  
 const showToolsFloatingMenu = computed(() => toolsMenuPosition.value && !getConfig.value?.readOnly)
 const showActiveSelection = computed(() => !getConfig?.readOnly && selectionPosition)
 onMounted(() => {

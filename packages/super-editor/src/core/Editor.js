@@ -1,6 +1,7 @@
 import { EditorState, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
+import { prosemirrorJSONToYDoc } from 'y-prosemirror';
 import { DOMParser, DOMSerializer } from "prosemirror-model"
 import { EventEmitter } from './EventEmitter.js';
 import { ExtensionService } from './ExtensionService.js';
@@ -14,7 +15,12 @@ import { createStyleTag } from './utilities/createStyleTag.js';
 import { initComments } from '@features/index.js';
 import { style } from './config/style.js';
 import { validateCollaboration } from './helpers/validateCollaboration.js';
+import { Collaboration } from '@extensions/collaboration/Collaboration.js';
+import { getStarterExtensions } from '@extensions/index.js';
+
 import DocxZipper from '@core/DocxZipper.js';
+import * as Y from 'yjs';
+
 /**
  * Editor main class.
  */
@@ -38,6 +44,7 @@ export class Editor extends EventEmitter {
   #comments;
 
   options = {
+    isNewFile: false,
     element: document.createElement('div'),
     content: '', // XML content
     media: {},
@@ -52,10 +59,7 @@ export class Editor extends EventEmitter {
     parseOptions: {},
     coreExtensionOptions: {},
     user: null,
-    collaboration: {
-      provider: null,
-      ydoc: null,
-    },
+    collaboration: { provider: null, ydoc: null },
     onBeforeCreate: () => null,
     onCreate: () => null,
     onUpdate: () => null,
@@ -88,6 +92,9 @@ export class Editor extends EventEmitter {
   }
 
   #init() {
+    if (this.options.collaboration.provider) {
+      this.#initCollaboration();
+    }
     this.#createExtensionService();
     this.#createCommandService();
     this.#createSchema();
@@ -98,6 +105,14 @@ export class Editor extends EventEmitter {
     this.on('contentError', this.options.onContentError);
 
     this.#createView();
+
+    if (this.options.isNewFile) {
+      console.debug('\n\n\n WE HAVE A FILE', this.options.collaboration, '\n\n\n')
+      // Do we have a provider? If so, we need to sync the document
+      // Otherwise, we are just editing a file
+      this.#initData();
+    }
+    
     this.#initDefaultStyles();
     this.#injectCSS()
 
@@ -112,7 +127,6 @@ export class Editor extends EventEmitter {
     this.on('commentClick', this.options.onCommentClicked);
 
     this.#loadComments();
-    this.#syncCollaboration();
 
     window.setTimeout(() => {
       if (this.isDestroyed) return;
@@ -155,17 +169,80 @@ export class Editor extends EventEmitter {
     this.options.onFocus({ editor, event });
   }
 
-  // TODO: Rethink this 
-  #syncCollaboration() {
-    const hasCollaboration = this.extensionService.extensions.some((e) => e.name === 'collaboration');
-    if (!hasCollaboration) return;
+  #initData() {
+    let doc;
+    try {
+      if (this.options.mode === 'docx') {
+        doc = createDocument(
+          this.converter,
+          this.schema,
+        );
+      } else if (this.options.mode === 'text') {
+        if (this.options.content) {
+          doc = DOMParser.fromSchema(this.schema).parse(this.options.content);
+        } else {
+          doc = this.schema.topNodeType.createAndFill();
+        }
+      }
+    } catch (err) {
+      console.error(err);
 
-    const documentData = this.converter.getSchema();
-    const data = this.schema.nodeFromJSON(documentData);
+      this.emit('contentError', {
+        editor: this,
+        error: err,
+      });
+    }
 
-    const tr = this.view.state.tr;
-    tr.replaceWith(0, this.view.state.doc.content.size, data);
-    this.view.dispatch(tr);
+    const ydoc = this.options.collaboration.ydoc;
+
+    // const onUpdate = (update) => {
+    //   console.debug('UPDATE', update);
+    //   // const data = prosemirrorJSONToYDoc(this.schema, doc.toJSON());
+    //   // console.debug('DATA', data);
+    //   // const ydocUpdate = Y.encodeStateAsUpdate(localYdoc);
+
+    //   // const remoteDoc = this.options.collaboration.ydoc;
+    //   // Y.applyUpdate(remoteDoc, ydocUpdate);
+
+    //   ydoc.off('update', onUpdate);
+    // }
+    // ydoc.on('update', onUpdate);
+
+    setTimeout(() => {
+      const tr = this.view.state.tr;
+      tr.replaceWith(0, this.view.state.doc.content.size, doc);
+      this.view.dispatch(tr);
+    }, 500);
+
+    // Y.applyUpdate(remoteDoc, fragment);
+
+    // this.options.collaboration.provider.doc.whenSynced(() => { 
+    //   console.debug('SYNCED', this.options.collaboration.provider);
+    // });
+
+    const collaboration = this.extensionService.extensions.find((e) => e.name === 'collaboration');
+    const localYdoc = collaboration.options.ydoc;
+    // const fragment = ydoc.getXmlFragment(this.options.documentId);
+    // const dataFromYdoc = yXmlFragmentToProseMirrorRootNode(fragment, this.schema);
+    // console.debug('DATA FROM YDOC', dataFromYdoc);
+
+    // const update = Y.encodeStateAsUpdate(localYdoc);
+    // console.debug('COLLABORATION', this.options.collaboration);
+    // const remoteDoc = this.options.collaboration.ydoc;
+    // console.debug('INIT DATA', remoteDoc, localYdoc);
+    // Y.applyUpdate(remoteDoc, update);
+    // localYdoc.on('update', (update) => {
+    //   Y.applyUpdate(remoteDoc, update);
+    // });
+  }
+  #initCollaboration() {
+    const extensions = getStarterExtensions().filter((e) => e.name !== 'collaboration');
+    Collaboration.options = {
+      ydoc: this.options.collaboration.ydoc,
+      field: this.options.documentId,
+      provider: this.options.collaboration.provider,
+    }
+    extensions.push(Collaboration);
   }
 
   setToolbar(toolbar) {
@@ -424,7 +501,7 @@ export class Editor extends EventEmitter {
    * Creates PM View.
    */
   async #createView() {
-    let doc;
+    let doc = this.schema.topNodeType.createAndFill();
 
     try {
       if (this.options.mode === 'docx') {
@@ -487,6 +564,7 @@ export class Editor extends EventEmitter {
     if (!proseMirror) return;
 
     const { pageSize, pageMargins } = this.converter.pageStyles ?? {};
+    console.debug('\n\nPAGE STYLES', this.converter);
     if (!pageSize || !pageMargins) return;
 
     this.element.style.boxSizing = 'border-box';

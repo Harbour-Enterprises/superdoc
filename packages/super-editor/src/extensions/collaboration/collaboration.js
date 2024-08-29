@@ -2,6 +2,7 @@ import { Extension } from '@core/index.js';
 import {
   ySyncPlugin,
 } from 'y-prosemirror'
+import * as Y from 'yjs'
 
 export const Collaboration = Extension.create({
   name: 'collaboration',
@@ -10,23 +11,28 @@ export const Collaboration = Extension.create({
 
   addOptions() {
     return {
-      document: null,
+      ydoc: null,
       field: 'default',
       fragment: null,
+      provider: null,
     }
   },
 
   addPmPlugins() {
-    const fragment = this.options.fragment
-      ? this.options.fragment
-      : this.options.document.getXmlFragment(this.options.field);
-
-    // Can set custom config here
     const ySyncPluginOptions = {
       ...this.options.ySyncOptions,
       onFirstRender: this.options.onFirstRender,
     }
 
+    console.debug('\n\n DO WE HAVE YDOC?', this.options.ydoc)
+    if (!this.options.provider) {
+      this.options.ydoc = new Y.Doc()
+    } else {
+      console.debug('[collaboration] Using existing Y.Doc instance', this.options.ydoc)
+    }
+
+    const documentId = this.editor.options.documentId;
+    const fragment = this.options.ydoc.getXmlFragment(documentId);
     const ySyncPluginInstance = ySyncPlugin(fragment, ySyncPluginOptions)
     return [ySyncPluginInstance]
   },

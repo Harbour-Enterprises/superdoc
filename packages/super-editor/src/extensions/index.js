@@ -103,6 +103,7 @@ const getStarterExtensions = () => [
   Image,
   BookmarkStart,
   Mention,
+  Collaboration,
 ];
 
 export {

@@ -100,17 +100,17 @@ class Superdoc extends EventEmitter {
       const { config = {} } = module;
 
       const handleAwarenessChange = () => {
-        const users = getUsers(this.provider, this.colors);
-        this.emit('copresence-update', users)
+        // const users = getUsers(this.provider, this.colors);
+        // this.emit('copresence-update', users)
       }
       
       if (module.providerType === 'firestore') {
         const app = initializeApp(config.firebaseConfig);
         this.log('Initializing collaboration with firestore', app);
 
-        const { path } = config;
+        const { superdocId, collection } = config;
 
-        const documentPath = path.split('/');
+        const documentPath = [collection, superdocId];
         if (documentPath.length % 2 !== 0) {
           throw new Error(`[superdoc] Invalid firestore document path. Must be an even number of segments: ${documentPath}`);
         }
@@ -259,6 +259,10 @@ class Superdoc extends EventEmitter {
       delete this.app.config.globalProperties.$superdoc;
     }
   }
+}
+
+function getRandomColor(colors) {
+  return colors[Math.floor(Math.random() * colors.length)];
 }
 
 
