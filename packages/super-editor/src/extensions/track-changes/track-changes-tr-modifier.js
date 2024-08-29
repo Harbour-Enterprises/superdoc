@@ -1,26 +1,117 @@
 import {TextSelection, Selection} from "prosemirror-state";
 import {Mapping, ReplaceStep} from "prosemirror-transform";
-import {Slice} from "prosemirror-model";
+import {Slice, Fragment} from "prosemirror-model";
 import {TrackInsertMarkName, TrackDeleteMarkName} from "./constants.js";
+import {TrackChangesBasePluginKey} from "./track-changes-base.js";
 
 export const amendTransaction = (tr, view, user) => {
+
+    //we keep history changes as-is above everything else, also reserve simple meta changes without steps
     if (
         !tr.steps.length ||
-        // don't replace history TRs
         ["historyUndo", "historyRedo"].includes(tr.getMeta("inputType"))
     ) {
         return tr
+    }
+
+    const trackChangeState = TrackChangesBasePluginKey.getState(view.state);
+    const isTrackChangesActive = trackChangeState?.isTrackChangesActive ?? false;
+
+    if (!isTrackChangesActive) {
+        //we don't want to track changes if the plugin is not active
+        return removeTrackChangesFromTransaction(tr, view.state);
     } else {
         return trackTransaction(
             tr,
             view.state,
             user,
-        )
+        );
     }
 }
 
-const markInsertion = (tr, from, to, user) => {
-    const insertionMark = tr.doc.type.schema.marks[TrackInsertMarkName].create({user: user, createdAt: Date.now()})
+const whitelistedMetaKeys = ["inputType", "uiEvent"]
+
+const keepTransactionNavigationParts = (tr, newTr, map, state) => {
+    // we copy all the meta keys that are whitelisted
+    whitelistedMetaKeys.forEach(key => {
+        if (tr.getMeta(key)) {
+            newTr.setMeta(key, tr.getMeta(key))
+        }
+    })
+
+    if (tr.selectionSet && map) {
+        if (tr.selection instanceof TextSelection && (
+            tr.selection.from < state.selection.from || tr.getMeta("inputType") === "deleteContentBackward"
+        )) {
+            const caretPos = map.map(tr.selection.from, -1)
+            newTr.setSelection(
+                new TextSelection(
+                    newTr.doc.resolve(
+                        caretPos
+                    )
+                )
+            )
+        } else {
+            newTr.setSelection(tr.selection.map(newTr.doc, map))
+        }
+    }
+    if (tr.storedMarksSet) {
+        newTr.setStoredMarks(tr.storedMarks)
+    }
+    if (tr.scrolledIntoView) {
+        newTr.scrollIntoView()
+    }
+}
+
+const removeMarksFromSlice = (slice, schema, markName) => {
+    const targetMark = schema.marks[markName];
+    const newContent = [];
+
+    slice.content.forEach(node => {
+        const newMarks = node.marks.filter(mark => mark.type !== targetMark);
+        let newNode;
+        if (node.isText) {
+            newNode = schema.text(node.text, newMarks);
+        } else {
+            newNode = node.type.create(node.attrs, node.content, newMarks);
+        }
+        newContent.push(newNode);
+    });
+
+    return new Slice(Fragment.fromArray(newContent), slice.openStart, slice.openEnd);
+};
+
+const removeTrackChangesFromTransaction = (tr, state) => {
+    const newTr = state.tr;
+
+    tr.steps.forEach((step) => {
+        if (!step) {
+            return
+        }
+        if (step instanceof ReplaceStep && step.slice.size) {
+            const sliceWithoutDeleteMarks = removeMarksFromSlice(step.slice, state.schema, TrackDeleteMarkName);
+            const sliceWithoutInsertMarks = removeMarksFromSlice(sliceWithoutDeleteMarks, state.schema, TrackInsertMarkName);
+            const newStep = new ReplaceStep(
+                step.from,
+                step.to,
+                sliceWithoutInsertMarks,
+                step.structure
+            )
+            newTr.step(newStep)
+        } else {
+            newTr.step(step)
+        }
+    });
+    keepTransactionNavigationParts(tr, newTr, null, state); //we don't want to map the selection here
+    //we copy all meta just in case
+    Object.keys(tr.meta).forEach(key => {
+        newTr.setMeta(key, tr.getMeta(key))
+    })
+    return newTr;
+}
+
+const markInsertion = (tr, from, to, user, date) => {
+    const insertionMark = tr.doc.type.schema.marks[TrackInsertMarkName].create({author: user, date})
     tr.doc.nodesBetween(
         from,
         to,
@@ -39,8 +130,8 @@ const markInsertion = (tr, from, to, user) => {
     )
 }
 
-const markDeletion = (tr, from, to, user) => {
-    const deletionMark = tr.doc.type.schema.marks[TrackDeleteMarkName].create({user: user, createdAt: Date.now()})
+const markDeletion = (tr, from, to, user, date) => {
+    const deletionMark = tr.doc.type.schema.marks[TrackDeleteMarkName].create({author: user, date})
     let firstTableCellChild = false
     let listItem = false
     const deletionMap = new Mapping()
@@ -80,17 +171,18 @@ const markDeletion = (tr, from, to, user) => {
 }
 
 const trackTransaction = (tr, state, user) => {
+    const now = Date.now()
+    const fixedTimeTo10Minutes = Math.floor(now / 600000) * 600000
+    const fixedTimeTo10MinutesString = new Date(fixedTimeTo10Minutes).toISOString()
     const newTr = state.tr;
     const map = new Mapping();
 
     tr.steps.forEach((originalStep, originalStepIndex) => {
         const step = originalStep.map(map);
-        const doc = newTr.doc;
         if (!step) {
             return
         }
         if (step instanceof ReplaceStep) {
-            console.log("1")
             const newStep =
                 step.slice.size ?
                     new ReplaceStep(
@@ -106,9 +198,7 @@ const trackTransaction = (tr, state, user) => {
                 map.appendMap(invertStep.getMap())
             }
             if (newStep) {
-                console.log("2")
                 const trTemp = state.apply(newTr).tr
-                console.log("2", trTemp.maybeStep(newStep).failed)
                 if (!trTemp.maybeStep(newStep).failed) {
                     const mappedNewStepTo = newStep.getMap().map(newStep.to)
                     markInsertion(
@@ -116,10 +206,10 @@ const trackTransaction = (tr, state, user) => {
                         newStep.from,
                         mappedNewStepTo,
                         user,
+                        fixedTimeTo10MinutesString,
                     )
                     // We condense it down to a single replace step.
                     const condensedStep = new ReplaceStep(newStep.from, newStep.to, trTemp.doc.slice(newStep.from, mappedNewStepTo))
-                    console.log(condensedStep);
                     newTr.step(condensedStep)
                     const mirrorIndex = map.maps.length - 1
                     map.appendMap(condensedStep.getMap(), mirrorIndex)
@@ -131,9 +221,8 @@ const trackTransaction = (tr, state, user) => {
 
             }
             if (step.from !== step.to) {
-                console.log("3")
                 map.appendMapping(
-                    markDeletion(newTr, step.from, step.to, user)
+                    markDeletion(newTr, step.from, step.to, user, fixedTimeTo10MinutesString)
                 )
             }
         } else {
@@ -141,36 +230,6 @@ const trackTransaction = (tr, state, user) => {
         }
     })
 
-    // We copy the input type meta data from the original transaction.
-    if (tr.getMeta("inputType")) {
-        newTr.setMeta("inputType", tr.getMeta("inputType"))
-    }
-    if (tr.getMeta("uiEvent")) {
-        newTr.setMeta("uiEvent", tr.getMeta("uiEvent"))
-    }
-
-    if (tr.selectionSet) {
-        if (tr.selection instanceof TextSelection && (
-            tr.selection.from < state.selection.from || tr.getMeta("inputType") === "deleteContentBackward"
-        )) {
-            const caretPos = map.map(tr.selection.from, -1)
-            newTr.setSelection(
-                new TextSelection(
-                    newTr.doc.resolve(
-                        caretPos
-                    )
-                )
-            )
-        } else {
-            newTr.setSelection(tr.selection.map(newTr.doc, map))
-        }
-    }
-    if (tr.storedMarksSet) {
-        newTr.setStoredMarks(tr.storedMarks)
-    }
-    if (tr.scrolledIntoView) {
-        newTr.scrollIntoView()
-    }
-
+    keepTransactionNavigationParts(tr, newTr, map, state);
     return newTr
 }
