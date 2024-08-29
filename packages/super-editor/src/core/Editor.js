@@ -83,6 +83,7 @@ export class Editor extends EventEmitter {
   }
 
   #init(options) {
+    if (this.options.collaborationProvider) this.#initCollaboration();
     this.#createExtensionService();
     this.#createCommandService();
     this.#createSchema();
@@ -147,6 +148,16 @@ export class Editor extends EventEmitter {
   #onFocus({ editor, event }) {
     this.toolbar?.setActiveEditor(editor);
     this.options.onFocus({ editor, event });
+  }
+
+  #initCollaboration() {
+    // const extensions = getStarterExtensions().filter((e) => e.name !== 'collaboration');
+    // Collaboration.options = {
+    //   ydoc: this.options.collaboration.ydoc,
+    //   field: this.options.documentId,
+    //   provider: this.options.collaboration.provider,
+    // }
+    // extensions.push(Collaboration);
   }
 
   setToolbar(toolbar) {
