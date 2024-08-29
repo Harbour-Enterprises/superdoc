@@ -244,7 +244,8 @@ onMounted(async () => {
 
 <style scoped>
 .dev-app {
-  --header-height: 148px;
+  --header-height: 154px;
+  --toolbar-height: 39px;
 
   width: 100%;
   height: 100vh;
@@ -252,7 +253,6 @@ onMounted(async () => {
 
 .dev-app__layout {
   display: grid;
-  grid-template-rows: var(--header-height) 1fr; /* 1fr */
   width: 100%;
   height: 100vh;
 }
@@ -276,7 +276,7 @@ onMounted(async () => {
 
 .dev-app__main {
   display: grid;
-  grid-template-columns: 340px minmax(0, 1fr) 340px;
+  grid-template-columns: 300px minmax(0, 1fr) 300px;
   overflow-y: auto;
 }
 
@@ -302,7 +302,7 @@ onMounted(async () => {
 
 .dev-app__inputs-panel {
   display: grid;
-  height: calc(100vh - var(--header-height));
+  height: calc(100vh - var(--header-height) - var(--toolbar-height));
   background: #fff;
   border-right: 1px solid #dbdbdb;
 }
