@@ -218,20 +218,37 @@ export class Editor extends EventEmitter {
 
   setDocumentMode(documentMode) {
     this.documentMode = documentMode?.toLowerCase() || 'viewing';
-    if (documentMode === 'viewing') {
-      this.unregisterPlugin('comments');
-      this.setEditable(false, false);
-    } else if (documentMode === 'suggesting') {
-      // TODO
-      this.setEditable(true, false);
-    } else if (documentMode === 'editing') {
-      const plugin = this.extensionService?.plugins.find((p) => p.key.startsWith('comments'));
-      if (this.extensionService && plugin) {
-        this.registerPlugin(plugin);
-      }
+    if (!this.extensionService) return;
 
+    // Viewing mode: Not editable, no tracked changes, no comments
+    if (this.documentMode === 'viewing') {
+      this.unregisterPlugin('comments');
+      // this.unregisterPlugin('TrackChangesBase');
+      this.setEditable(false, false);
+    }
+
+    // Suggesting: Editable, tracked changes plugin enabled, comments
+    else if (this.documentMode === 'suggesting') {
+      this.#registerPluginByNameIfNotExists('comments')
+      // this.#registerPluginByNameIfNotExists('TrackChangesBase');
+      // this.commands.enableTrackChanges();
       this.setEditable(true, false);
     }
+
+    // Editing: Editable, tracked changes plguin disabled, comments
+    else if (this.documentMode === 'editing') {
+      // this.#registerPluginByNameIfNotExists('TrackChangesBase');
+      this.#registerPluginByNameIfNotExists('comments');
+      // this.commands.disableTrackChanges();
+      this.setEditable(true, false);
+    }
+  }
+
+  #registerPluginByNameIfNotExists(name) {
+    const plugin = this.extensionService?.plugins.find((p) => p.key.startsWith(name));
+    const hasPlugin = this.state.plugins.find((p) => p.key.startsWith(name));
+    if (plugin && !hasPlugin) this.registerPlugin(plugin);
+    return plugin?.key;
   }
 
   /**

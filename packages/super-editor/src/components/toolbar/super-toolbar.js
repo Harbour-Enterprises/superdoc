@@ -24,6 +24,7 @@ export class SuperToolbar extends EventEmitter {
       layers.style.zoom = argument;
     },
     setDocumentMode: ({ item, argument }) => {
+      if (!argument) return;
       this.emit('superdoc-command', { item, argument });
 
       if (argument) this.documentMode = argument.toLowerCase();

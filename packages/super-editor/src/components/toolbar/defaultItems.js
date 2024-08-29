@@ -657,7 +657,7 @@ export const makeDefaultItems = (superToolbar) => {
 
   const documentOptions = [
     { label: "Editing", value: "editing", icon: 'fal fa-user-edit', description: "Edit document directly", },
-    { label: "Suggesting", disabled: true, value: "suggesting", icon: 'fal fa-comment-edit', description: "Edits become suggestions" },
+    { label: "Suggesting", value: "suggesting", icon: 'fal fa-comment-edit', description: "Edits become suggestions" },
     { label: "Viewing", value: "viewing", icon: 'fal fa-eye', description: "View clean version of document only" },
   ];
 

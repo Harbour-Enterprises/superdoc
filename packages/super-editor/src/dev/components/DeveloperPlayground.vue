@@ -38,7 +38,12 @@ const onCreate = ({ editor }) => {
   window.editor = editor;
 
   editor.setToolbar(initToolbar());
-
+  editor.toolbar.on('superdoc-command', ({ item, argument }) => {
+    const { command } = item;
+    if (command === 'setDocumentMode') {
+      editor.setDocumentMode(argument);
+    }
+  });
   attachAnnotationEventHandlers();
 }
 
