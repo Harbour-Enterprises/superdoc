@@ -525,7 +525,6 @@ export const makeDefaultItems = (superToolbar) => {
     type: "button",
     disabled: true,
     name: "redo",
-    disabled: true,
     tooltip: "Redo",
     command: "redo",
     icon: "fa fa-rotate-right",
@@ -534,6 +533,46 @@ export const makeDefaultItems = (superToolbar) => {
       if (!superToolbar.redoDepth) redo.disabled.value = true;
       else redo.disabled.value = false;
     }
+  });
+
+  const test = useToolbarItem({
+    type: "button",
+    disabled: false,
+    name: "test",
+    tooltip: "Test",
+    command: "insertTestNodes",
+    icon: "fas fa-vial",
+    group: "left",
+  });
+
+  const trackChanges = useToolbarItem({
+    type: "button",
+    disabled: false,
+    name: "trackChanges",
+    tooltip: "Track Changes",
+    command: "toggleTrackChanges",
+    icon: "fa-solid fa-list-check",
+    group: "left",
+  });
+
+  const acceptChangesOnCursorPositions = useToolbarItem({
+    type: "button",
+    disabled: false,
+    name: "acceptChangesOnCursorPositions",
+    tooltip: "Accept Changes under selection",
+    command: "acceptChangesOnCursorPositions",
+    icon: "fa fa-calendar-check",
+    group: "left",
+  });
+
+  const revertChangesOnCursorPositions = useToolbarItem({
+    type: "button",
+    disabled: false,
+    name: "revertChangesOnCursorPositions",
+    tooltip: "Revert Changes under selection",
+    command: "revertChangesOnCursorPositions",
+    icon: "fa fa-calendar-xmark",
+    group: "left",
   });
 
   // search
@@ -684,6 +723,10 @@ export const makeDefaultItems = (superToolbar) => {
   const toolbarItems = [
     undo,
     redo,
+    test,
+    trackChanges,
+    acceptChangesOnCursorPositions,
+    revertChangesOnCursorPositions,
     zoom,
     separator,
     fontButton,

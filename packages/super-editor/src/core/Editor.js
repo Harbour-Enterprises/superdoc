@@ -501,16 +501,13 @@ export class Editor extends EventEmitter {
     }
 
     let state;
-    if(true) {
-      try {
-        const trackedTr = amendTransaction(transaction, this.view, "userId")
-        const {state: newState, transactions} = this.view.state.applyTransaction(trackedTr)
-        this.view.updateState(newState)
-        state = newState
-      } catch (e) {
-        console.log(e)
-      }
-    } else {
+    try {
+      const trackedTr = amendTransaction(transaction, this.view, "AuthorUser")
+      const {state: newState} = this.view.state.applyTransaction(trackedTr)
+      state = newState
+    } catch (e) {
+      console.log(e)
+      //just in case
       state = this.state.apply(transaction);
     }
     const selectionHasChanged = !this.state.selection.eq(state.selection);

@@ -78,6 +78,12 @@ li.ProseMirror-selectednode:after {
     border: 1px dashed #f00;
     background-color: #f0f0f0;
     pointer-events: none;
+    &.inline {
+        display: none;
+    }
+    &.widget {
+        
+    }
 }
 
 /* Protect against generic img rules */

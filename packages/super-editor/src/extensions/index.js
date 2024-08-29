@@ -45,6 +45,7 @@ import { DecorationClick } from './decoration-click/index.js';
 import { CommentsPlugin } from './comment/index.js';
 import { Placeholder } from './placeholder/index.js';
 import { PopoverPlugin } from './popover-plugin/index.js';
+import {TrackChangesBase} from "./track-changes/track-changes-base.js";
 
 const getRichTextExtensions = () => [
   Bold,
@@ -104,6 +105,7 @@ const getStarterExtensions = () => {
     Image,
     BookmarkStart,
     Mention,
+    TrackChangesBase,
     TrackDelete,
     TrackInsert,
   ];

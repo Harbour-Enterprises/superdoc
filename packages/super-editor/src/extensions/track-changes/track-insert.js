@@ -14,7 +14,7 @@ export const TrackInsert = Mark.create({
         return {
             // word id like `<w:ins w:id="1"`
             wid: {
-                default: null,
+                default: "",
                 parseHTML: element => element.getAttribute('wid'),
                 renderHTML: attributes => {
                     return {
@@ -23,7 +23,7 @@ export const TrackInsert = Mark.create({
                 },
             },
             author: {
-                default: null,
+                default: "imported",
                 parseHTML: element => element.getAttribute('author'),
                 renderHTML: attributes => {
                     return {
@@ -32,7 +32,7 @@ export const TrackInsert = Mark.create({
                 },
             },
             date: {
-                default: null,
+                default: (new Date()).toISOString(),
                 parseHTML: element => element.getAttribute('date'),
                 renderHTML: attributes => {
                     return {
@@ -48,6 +48,6 @@ export const TrackInsert = Mark.create({
     },
 
     renderDOM({ htmlAttributes }) {
-        return ['span', Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes, {class: `insertionMark`}), 0];
+        return ['span', Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes, {inserted: true}), 0];
     },
 });
