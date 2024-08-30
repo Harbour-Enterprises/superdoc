@@ -6,10 +6,13 @@ import '@harbour-enterprises/common/icons/icons.css';
 import EventEmitter from 'eventemitter3'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { Doc } from 'yjs';
+
 import { useSuperdocStore } from '../stores/superdoc-store';
 import { DOCX, PDF, HTML } from '@harbour-enterprises/common';
 import { SuperToolbar } from '@harbour-enterprises/super-editor';
 import { vClickOutside } from '@harbour-enterprises/common';
+import { createAwarenessHandler, createProvider } from './collaboration/collaboration';
 import App from '../Superdoc.vue';
 
 const createVueApp = () => {
@@ -45,8 +48,9 @@ export class Superdoc extends EventEmitter {
 
     this.documentMode = config.documentMode || 'viewing';
 
-    config.documents = this.#preprocessDocuments(config.documents);
-    this.log('Initializing:', config);
+    this.#preprocessDocuments(config.documents);
+    this.#initCollaboration(config.modules.collaboration);
+    config.documents = this.documents;
 
     const { app, pinia, superdocStore } = createVueApp(this);
     this.app = app;
@@ -79,7 +83,7 @@ export class Superdoc extends EventEmitter {
   }
 
   #preprocessDocuments(documents) {
-    return documents.map((doc) => {
+    this.documents = documents.map((doc) => {
       const { data } = doc;
   
       if (!(data instanceof File)) throw new Error('[superdoc] Documents in config must be File objects');
@@ -91,6 +95,20 @@ export class Superdoc extends EventEmitter {
       }
   
       return { ...doc, type: documentType };
+    });
+  }
+
+  /* **
+    * Initialize collaboration if configured
+    * @param {Object} config
+  */
+  async #initCollaboration(collaborationModuleConfig) {
+    if (!collaborationModuleConfig) return;
+    const handleAwarenessChange = createAwarenessHandler(this);
+    this.documents.forEach((doc) => {
+      doc.ydoc = new Doc();
+      doc.provider = createProvider(collaborationModuleConfig, doc.ydoc, this.user);
+      doc.provider.awareness.on('update', handleAwarenessChange);
     });
   }
 

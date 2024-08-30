@@ -1,8 +1,10 @@
 <script setup>
 import '@harbour-enterprises/common/styles/common-styles.css';
 import '@harbour-enterprises/common/icons/icons.css';
-// import * as Y from 'yjs';
+import * as Y from 'yjs';
 // import { FirestoreProvider } from '@gmcfall/yjs-firestore-provider'
+
+import { FirestoreProvider } from '@harbour-enterprises/common/collaboration/firestore-provider';
 
 import { ref, computed, onMounted } from 'vue';
 import { initializeApp } from 'firebase/app';
@@ -67,15 +69,16 @@ const firebaseConfig = {
 
 const getFirestoreProvider = () => {
   const ydoc = new Y.Doc();
-  const app = initializeApp(firebaseConfig);
+  const firebaseApp = initializeApp(firebaseConfig);
   const providerConfig = {
     maxUpdatesPerBlob: 10,
     maxUpdatePause: 250,
   };
-  const documentPath = ['superdoc', 'developerPlayground', 'document', currentFile.value.name];
+  const documentPath = `superdoc/tests/documents/${currentFile.value.name}`;
   return [
     ydoc,
-    new FirestoreProvider(app, ydoc, documentPath, providerConfig)
+    // new FireProvider({firebaseApp, ydoc, path: documentPath, maxWaitFirestoreTime: 100, maxUpdatesThreshold: 2})
+    new FirestoreProvider(firebaseApp, ydoc, documentPath.split('/'), providerConfig)
   ];
 };
 
@@ -83,8 +86,9 @@ const editorOptions = computed(() => {
   const [ydoc, collaborationProvider] = getFirestoreProvider();
   return {
     ydoc: ydoc || new Y.Doc(),
-    isNewFile: true,
-    collaborationProvider,
+    // Enable these lines for collaboration testing in the dev environment
+    // isNewFile: true,
+    // collaborationProvider,
     onCreate,
     onCommentClicked,
     users: [

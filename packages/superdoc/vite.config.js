@@ -29,6 +29,11 @@ export default defineConfig(({ mode, command}) => {
       },
       rollupOptions: {
         external: ['yjs'],
+        output: {
+          globals: {
+            yjs: 'yjs'
+          }
+        }
       },
     },
     optimizeDeps: {

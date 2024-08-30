@@ -51,6 +51,7 @@ export class Editor extends EventEmitter {
     editorProps: {},
     parseOptions: {},
     coreExtensionOptions: {},
+    isNewFile: false,
     onBeforeCreate: () => null,
     onCreate: () => null,
     onUpdate: () => null,
@@ -86,7 +87,6 @@ export class Editor extends EventEmitter {
   }
 
   #init(options) {
-    if (this.options.collaborationProvider) this.#initCollaboration();
     this.#createExtensionService();
     this.#createCommandService();
     this.#createSchema();
@@ -110,13 +110,10 @@ export class Editor extends EventEmitter {
     this.on('commentClick', this.options.onCommentClicked);
 
     this.#loadComments();
+    this.#initCollaboration();
 
     window.setTimeout(() => {
       if (this.isDestroyed) return;
-
-      // If this is not a collaboration session, populate initial data
-      // Otherwise, the data is automatically synced by the collaboration extension
-      if (this.options.collaborationProvider && this.options.isNewFile) this.#populateInitialData();
       this.#initDefaultStyles();
       this.emit('create', { editor: this });
     }, 0);
@@ -155,16 +152,6 @@ export class Editor extends EventEmitter {
   #onFocus({ editor, event }) {
     this.toolbar?.setActiveEditor(editor);
     this.options.onFocus({ editor, event });
-  }
-
-  #initCollaboration() {
-    // const extensions = getStarterExtensions().filter((e) => e.name !== 'collaboration');
-    // Collaboration.options = {
-    //   ydoc: this.options.collaboration.ydoc,
-    //   field: this.options.documentId,
-    //   provider: this.options.collaboration.provider,
-    // }
-    // extensions.push(Collaboration);
   }
 
   setToolbar(toolbar) {
@@ -262,6 +249,32 @@ export class Editor extends EventEmitter {
     }
   }
 
+  /**
+   * If we are replacing data and have a valid provider, listen for synced event
+   * so that we can initialize the data
+   */
+  #initCollaboration() {
+    if (!this.options.isNewFile || !this.options.collaborationProvider) return;
+
+    const { collaborationProvider: provider } = this.options;
+    if (provider.synced) this.#insertNewFileData();
+    else {
+      provider.once('synced', (isSynced) => {
+        if (isSynced) this.#insertNewFileData();
+      });
+    }
+  }
+
+  /**
+   * Replace the current document with new data.
+   */
+  #insertNewFileData() {
+    const doc = this.#generatePmData();
+    console.debug('Inserting new file data:', doc);
+    const tr = this.state.tr.replaceWith(0, this.state.doc.content.size, doc);
+    this.view.dispatch(tr);
+  }
+
   #registerPluginByNameIfNotExists(name) {
     const plugin = this.extensionService?.plugins.find((p) => p.key.startsWith(name));
     const hasPlugin = this.state.plugins.find((p) => p.key.startsWith(name));
@@ -314,7 +327,6 @@ export class Editor extends EventEmitter {
       : [...this.state.plugins, plugin];
 
     const state = this.state.reconfigure({ plugins });
-
     this.view.updateState(state);
   }
 
@@ -416,11 +428,9 @@ export class Editor extends EventEmitter {
   }
 
   /**
-   * Initializes new file data
+   * Generate data from file
    */
-  #populateInitialData() {
-
-    console.debug('\n\n\n\nPopulating initial data', this.options.collaborationProvider, this.options.isNewFile, '\n\n\n');
+  #generatePmData() {
     let doc;
     try {
       if (this.options.mode === 'docx') {
@@ -443,42 +453,14 @@ export class Editor extends EventEmitter {
         error: err,
       });
     }
-
-    setTimeout(() => {
-      const tr = this.view.state.tr;
-      tr.replaceWith(0, this.view.state.doc.content.size, doc);
-      this.view.dispatch(tr);
-    }, 500)
+    return doc;
   }
-  
 
   /**
    * Creates PM View.
    */
   #createView() {  
-    let doc;
-    try {
-      if (this.options.mode === 'docx') {
-        doc = createDocument(
-          this.converter,
-          this.schema,
-        );
-      } else if (this.options.mode === 'text') {
-        if (this.options.content) {
-          doc = DOMParser.fromSchema(this.schema).parse(this.options.content);
-        } else {
-          doc = this.schema.topNodeType.createAndFill();
-        }
-      }
-    } catch (err) {
-      console.error(err);
-
-      this.emit('contentError', {
-        editor: this,
-        error: err,
-      });
-    }
-
+    const doc = this.#generatePmData();
     this.view = new EditorView(this.options.element, {
       ...this.options.editorProps,
       dispatchTransaction: this.#dispatchTransaction.bind(this),

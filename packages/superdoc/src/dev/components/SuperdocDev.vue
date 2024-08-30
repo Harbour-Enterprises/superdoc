@@ -53,6 +53,7 @@ const init = async () => {
       {
         data: currentFile.value,
         id: '123',
+        isNewFile: true,
       },
     ],
     modules: {
@@ -61,11 +62,16 @@ const init = async () => {
         // allowResolve: false,
       },
       'hrbr-fields': {},
-      collaboration: {
-        providerType: 'firestore',
-        firebaseConfig: getFirebaseConfig(),
-        path: `superdoc/tests/documents/${currentFile.value.name}`,
-      },
+      // collaboration: {
+      //   providerType: 'firestore',
+      //   firebaseConfig: getFirebaseConfig(),
+      //   path: `superdoc/tests/documents/${currentFile.value.name}`,
+      // },
+      // collaboration: {
+      //   providerType: 'socket',
+      //   url: `ws://localhost:8080/${currentFile.value.name}`,
+      //   path: `superdoc/tests/documents/${currentFile.value.name}`
+      // },
     },
   }
   superdoc.value = new Superdoc(config);

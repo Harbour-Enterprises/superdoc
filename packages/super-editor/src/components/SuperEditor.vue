@@ -34,8 +34,6 @@ const editor = shallowRef();
 const editorElem = ref(null);
 
 const initEditor = async () => {
-  console.debug('[super-editor] Loading file...', props.fileSource);
-
   const [content, media] = await Editor.loadXmlData(props.fileSource);
   editor.value = new Editor({
     mode: 'docx',

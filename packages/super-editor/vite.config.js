@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
         fileName: (format) => `super-editor.${format}.js`
       },
       rollupOptions: {
-        external: ['vue', 'yjs', 'tippy.js', 'y-protocols', '@gmcfall/yjs-firestore-provider' ],
+        external: ['vue', 'yjs', 'tippy.js', 'y-protocols'],
         output: {
           globals: {
             vue: 'Vue'

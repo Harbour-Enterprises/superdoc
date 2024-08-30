@@ -9,6 +9,7 @@ import { LineHeight } from './line-height/index.js';
 import { FormatCommands } from './format-commands/index.js';
 import { DropCursor } from './dropcursor/index.js';
 import { Collaboration } from './collaboration/index.js';
+import { CollaborationCursor } from './collaboration-cursor/index.js';
 
 // Nodes extensions
 import { Document } from './document/index.js';
@@ -102,7 +103,8 @@ const getStarterExtensions = () => [
   Image,
   BookmarkStart,
   Mention,
-  Collaboration
+  Collaboration,
+  CollaborationCursor
 ];
 
 export {
@@ -147,6 +149,7 @@ export {
   PopoverPlugin,
   Mention,
   Collaboration,
+  CollaborationCursor,
   getStarterExtensions,
   getRichTextExtensions,
 };

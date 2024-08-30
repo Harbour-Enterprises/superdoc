@@ -42,10 +42,6 @@ const fieldFormat = {
     type: (field) => field.getAttribute('data-itemfieldtype') || null
 }
 
-documents.value.forEach(doc => {
-  console.log('Document', doc.data);
-});
-
 const {
   getConfig,
   documentsWithConverations,
@@ -192,17 +188,17 @@ const onCommentClicked = ({ conversation }) => {
 }
 
 const getEditorOptions = (doc) => {
-
-  const provider = proxy.$superdoc.provider;
-  return {
+  const options = {
     onCreate: onEditorCreate,
     onDestroy: onEditorDestroy,
     onFocus: onEditorFocus,
     onCommentsLoaded,
     onCommentClicked,
     ydoc: doc.ydoc || null,
-    collaborationProvider: provider || null,
+    collaborationProvider: doc.provider || null,
+    isNewFile: doc.isNewFile || false,
   }
+  return options;
 };
 
 const isCommentsEnabled = computed(() => 'comments' in modules);
