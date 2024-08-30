@@ -25,11 +25,22 @@ const handleNewFile = async (file) => {
   currentFile.value = await getFileObject(url, file.name, file.type);
 
   nextTick(() => {
-    initializeApp();
+    init();
   });
-}
+};
 
-const initializeApp = async () => {
+const getFirebaseConfig = () => {
+  return {
+    apiKey: "AIzaSyCp2UcE6rd6fEARbFq24hySs5Thoa0LVfw",
+    authDomain: "firestore-db-test-8db0d.firebaseapp.com",
+    projectId: "firestore-db-test-8db0d",
+    storageBucket: "firestore-db-test-8db0d.appspot.com",
+    messagingSenderId: "439692670335",
+    appId: "1:439692670335:web:53f3d91de63939eac3564a"
+  };
+};
+
+const init = async () => {
   const config = {
     selector: '#superdoc',
     toolbar: 'toolbar',
@@ -50,6 +61,11 @@ const initializeApp = async () => {
         // allowResolve: false,
       },
       'hrbr-fields': {},
+      collaboration: {
+        providerType: 'firestore',
+        firebaseConfig: getFirebaseConfig(),
+        path: `superdoc/tests/documents/${currentFile.value.name}`,
+      },
     },
   }
   superdoc.value = new Superdoc(config);

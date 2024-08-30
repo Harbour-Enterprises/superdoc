@@ -1,15 +1,18 @@
 import { defineConfig } from 'vite'
 import { fileURLToPath, URL } from 'node:url';
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import vue from '@vitejs/plugin-vue'
 
 // https://vitejs.dev/config/
-export default defineConfig((data) => {
+export default defineConfig(({ mode }) => {
+
+  const plugins = [vue()];
+  if (mode !== 'test') plugins.push(nodePolyfills());
+
   return {
-    plugins: [
-      vue(),
-    ],
+    plugins,
     build: {
-      target: 'es2020',
+      target: 'esnext',
       lib: {
         entry: "src/index.js",
         formats: ['es'],
@@ -21,19 +24,29 @@ export default defineConfig((data) => {
       },
       minify: false,
       sourcemap: true,
+      esbuild: {
+        drop: [],
+      },
+      rollupOptions: {
+        external: ['vue', 'yjs', 'tippy.js', 'y-prosemirror', 'y-protocols'],
+        output: {
+          globals: {
+            vue: 'Vue'
+          }
+        }
+      },
     },
     optimizeDeps: {
       esbuildOptions: {
-        target: 'es2020',
+        target: 'esnext',
       },
-    },
-    rollupOptions: {
     },
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
         '@core': fileURLToPath(new URL('./src/core', import.meta.url)),
         '@stores': fileURLToPath(new URL('./src/stores', import.meta.url)),
+        'yjs': fileURLToPath(new URL('../../node_modules/yjs', import.meta.url))
       },
       extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json'],
     },

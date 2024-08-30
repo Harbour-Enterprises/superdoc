@@ -5,9 +5,11 @@
     "packages/*",
     "shared/*"
   ],
-  "scripts": {
-    "reinstall": "rm -rf node_modules package-lock.json; npm install;",
-    "dev:superdoc": "cd packages/superdoc && npm run dev",
-    "dev:super-editor": "cd packages/super-editor && npm run dev"
+  "dependencies": {
+    "firebase": "^9.17.1",
+    "tippy.js": "^6.3.7",
+    "vue": "^3.4.21",
+    "y-prosemirror": "^1.2.12",
+    "yjs": "^13.6.18"
   }
 }

@@ -2,6 +2,7 @@ import { Extension } from '@core/index.js';
 import {
   ySyncPlugin,
 } from 'y-prosemirror'
+import * as Y from 'yjs';
 
 export const Collaboration = Extension.create({
   name: 'collaboration',
@@ -17,12 +18,11 @@ export const Collaboration = Extension.create({
   },
 
   addPmPlugins() {
-    if (!this.editor.options.ydoc) return;
+    if (!this.editor.options.ydoc) return [];
     this.options.ydoc = this.editor.options.ydoc;
 
     const ySyncPluginOptions = {
       ...this.options.ySyncOptions,
-      onFirstRender: this.options.onFirstRender,
     }
 
     const documentId = this.editor.options.documentId;

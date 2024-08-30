@@ -191,16 +191,19 @@ const onCommentClicked = ({ conversation }) => {
   activeComment.value = conversationId;
 }
 
-const editorOptions = computed(() => {
+const getEditorOptions = (doc) => {
+
+  const provider = proxy.$superdoc.provider;
   return {
     onCreate: onEditorCreate,
     onDestroy: onEditorDestroy,
     onFocus: onEditorFocus,
     onCommentsLoaded,
     onCommentClicked,
-    documentMode: proxy.$documentMode,
+    ydoc: doc.ydoc || null,
+    collaborationProvider: provider || null,
   }
-});
+};
 
 const isCommentsEnabled = computed(() => 'comments' in modules);
 const showCommentsSidebar = computed(() => {
@@ -277,7 +280,7 @@ onBeforeUnmount(() => {
             v-if="doc.type === DOCX"
             :file-source="doc.data"
             :document-id="doc.id"
-            :options="{ ...editorOptions, id: doc.id }" />
+            :options="getEditorOptions(doc)" />
 
           <!-- omitting field props -->
           <HtmlViewer

@@ -19,11 +19,10 @@
   },
   "dependencies": {
     "@harbour-enterprises/super-editor": "0.0.1-alpha.0",
+    "@vue/devtools-api": "^6.6.3",
     "eventemitter3": "^5.0.1",
     "pdfjs-dist": "^4.3.136",
     "pinia": "^2.1.7",
-    "tippy": "^0.0.0",
-    "vue": "^3.4.21",
     "yjs": "^13.6.18"
   },
   "devDependencies": {

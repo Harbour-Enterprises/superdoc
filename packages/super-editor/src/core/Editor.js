@@ -61,7 +61,10 @@ export class Editor extends EventEmitter {
     onDestroy: () => null,
     onContentError: ({ error }) => { throw error },
     onCommentsLoaded: () => null,
-    onCommentClicked: () => null
+    onCommentClicked: () => null,
+    onFirstRender: () => {
+      console.log('\n\n\n\nFirst render\n\n\n');
+    }
   }
 
   constructor(options) {
@@ -94,7 +97,6 @@ export class Editor extends EventEmitter {
     this.on('contentError', this.options.onContentError);
 
     this.#createView();
-    this.#initDefaultStyles();
     this.#injectCSS()
 
     this.on('create', this.options.onCreate);
@@ -111,6 +113,11 @@ export class Editor extends EventEmitter {
 
     window.setTimeout(() => {
       if (this.isDestroyed) return;
+
+      // If this is not a collaboration session, populate initial data
+      // Otherwise, the data is automatically synced by the collaboration extension
+      if (this.options.collaborationProvider && this.options.isNewFile) this.#populateInitialData();
+      this.#initDefaultStyles();
       this.emit('create', { editor: this });
     }, 0);
   }
@@ -409,11 +416,47 @@ export class Editor extends EventEmitter {
   }
 
   /**
+   * Initializes new file data
+   */
+  #populateInitialData() {
+
+    console.debug('\n\n\n\nPopulating initial data', this.options.collaborationProvider, this.options.isNewFile, '\n\n\n');
+    let doc;
+    try {
+      if (this.options.mode === 'docx') {
+        doc = createDocument(
+          this.converter,
+          this.schema,
+        );
+      } else if (this.options.mode === 'text') {
+        if (this.options.content) {
+          doc = DOMParser.fromSchema(this.schema).parse(this.options.content);
+        } else {
+          doc = this.schema.topNodeType.createAndFill();
+        }
+      }
+    } catch (err) {
+      console.error(err);
+
+      this.emit('contentError', {
+        editor: this,
+        error: err,
+      });
+    }
+
+    setTimeout(() => {
+      const tr = this.view.state.tr;
+      tr.replaceWith(0, this.view.state.doc.content.size, doc);
+      this.view.dispatch(tr);
+    }, 500)
+  }
+  
+
+  /**
    * Creates PM View.
    */
-  #createView() {
+  #createView() {  
     let doc;
-
     try {
       if (this.options.mode === 'docx') {
         doc = createDocument(
@@ -449,7 +492,6 @@ export class Editor extends EventEmitter {
     });
 
     this.view.updateState(newState);
-
     this.createNodeViews();
 
     const dom = this.view.dom;

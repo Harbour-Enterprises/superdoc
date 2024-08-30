@@ -1,10 +1,10 @@
 <script setup>
 import '@harbour-enterprises/common/styles/common-styles.css';
 import '@harbour-enterprises/common/icons/icons.css';
-import * as Y from 'yjs';
-import { FirestoreProvider } from '@gmcfall/yjs-firestore-provider'
-import { WebsocketProvider } from 'y-websocket'
-import { ref, reactive, onMounted } from 'vue';
+// import * as Y from 'yjs';
+// import { FirestoreProvider } from '@gmcfall/yjs-firestore-provider'
+
+import { ref, computed, onMounted } from 'vue';
 import { initializeApp } from 'firebase/app';
 import BasicUpload from './BasicUpload.vue';
 import BlankDOCX from '@harbour-enterprises/common/data/blank.docx?url';
@@ -23,14 +23,14 @@ const currentFile = ref(null);
 const handleNewFile = async (file) => {
   currentFile.value = null;
   const fileUrl = URL.createObjectURL(file);
-  currentFile.value = await getFileObject(fileUrl);
+  currentFile.value = await getFileObject(fileUrl, file.name, file.type);
 }
 
-const getFileObject = async (fileUrl) => {
+const getFileObject = async (fileUrl, name, type) => {
   // Generate a file url
   const response = await fetch(fileUrl);
   const blob = await response.blob();
-  return new File([blob], 'docx-file.docx', { type: DOCX});
+  return new File([blob], name, { type: type });
 }
 
 const onCreate = ({ editor }) => {
@@ -65,29 +65,36 @@ const firebaseConfig = {
   appId: "1:439692670335:web:53f3d91de63939eac3564a"
 }
 
-const ydoc = new Y.Doc();
 const getFirestoreProvider = () => {
+  const ydoc = new Y.Doc();
   const app = initializeApp(firebaseConfig);
   const providerConfig = {
     maxUpdatesPerBlob: 10,
     maxUpdatePause: 250,
   };
-  const documentPath = ['superdoc', 'test'];
-  return new FirestoreProvider(app, ydoc, documentPath, providerConfig);
+  const documentPath = ['superdoc', 'developerPlayground', 'document', currentFile.value.name];
+  return [
+    ydoc,
+    new FirestoreProvider(app, ydoc, documentPath, providerConfig)
+  ];
 };
 
-const editorOptions = {
-  ydoc: ydoc,
-  // collaborationProvider: getFirestoreProvider(),
-  onCreate,
-  onCommentClicked,
-  users: [
-    { name: 'Nick Bernal', email: 'nick@harbourshare.com' },
-    { name: 'Artem Nistuley', email: 'nick@harbourshare.com' },
-    { name: 'Matthew Connelly', email: 'matthew@harbourshare.com' },
-    { name: 'Eric Doversberger', email: 'eric@harbourshare.com'} 
-  ],
-}
+const editorOptions = computed(() => {
+  const [ydoc, collaborationProvider] = getFirestoreProvider();
+  return {
+    ydoc: ydoc || new Y.Doc(),
+    isNewFile: true,
+    collaborationProvider,
+    onCreate,
+    onCommentClicked,
+    users: [
+      { name: 'Nick Bernal', email: 'nick@harbourshare.com' },
+      { name: 'Artem Nistuley', email: 'nick@harbourshare.com' },
+      { name: 'Matthew Connelly', email: 'matthew@harbourshare.com' },
+      { name: 'Eric Doversberger', email: 'eric@harbourshare.com'} 
+    ],
+  }
+});
 
 const exportDocx = async () => {
   const result = await activeEditor?.exportDocx();
@@ -211,7 +218,7 @@ const initToolbar = () => {
 
 onMounted(async () => {
   // set document to blank
-  currentFile.value = await getFileObject(BlankDOCX);
+  currentFile.value = await getFileObject(BlankDOCX, 'blank_document.docx', DOCX);
 });
 </script>
 
