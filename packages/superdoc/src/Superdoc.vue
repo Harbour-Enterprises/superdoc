@@ -158,10 +158,6 @@ const cancelPendingComment = (e) => {
   selectionPosition.value = null;
 }
 
-onBeforeUnmount(() => {
-  document.removeEventListener('mousedown', handleDocumentMouseDown);
-});
-
 const onCommentsLoaded = ({ comments }) => {
   proxy.$superdoc.log('[superdoc] onCommentsLoaded', comments);
   comments.forEach((c) => {
@@ -172,19 +168,21 @@ const onCommentsLoaded = ({ comments }) => {
   isReady.value = true
 };
 
-const onCreate = ({ editor }) => {
+const onEditorCreate = ({ editor }) => {
   const { documentId } = editor.options;
   const doc = getDocument(documentId);
   doc.setEditor(editor);
-
   proxy.$superdoc.activeEditor = editor;
-  proxy.$superdoc.broadcastLoaded();
-
+  proxy.$superdoc.broadcastEditorCreate(editor);
   proxy.$superdoc.log('[Superdoc] Editor created', proxy.$superdoc.activeEditor);
   proxy.$superdoc.log('[Superdoc] Page styles (pixels)', editor.getPageStyles());
 }
 
-const onFocus = ({ editor }) => {
+const onEditorDestroy = () => {
+  proxy.$superdoc.broadcastEditorDestroy();
+};
+
+const onEditorFocus = ({ editor }) => {
   proxy.$superdoc.setActiveEditor(editor);
 }
 
@@ -195,8 +193,9 @@ const onCommentClicked = ({ conversation }) => {
 
 const editorOptions = computed(() => {
   return {
-    onCreate,
-    onFocus,
+    onCreate: onEditorCreate,
+    onDestroy: onEditorDestroy,
+    onFocus: onEditorFocus,
     onCommentsLoaded,
     onCommentClicked,
     documentMode: proxy.$documentMode,
@@ -215,10 +214,15 @@ const showCommentsSidebar = computed(() => {
 
 const showToolsFloatingMenu = computed(() => toolsMenuPosition.value && !getConfig.value?.readOnly)
 const showActiveSelection = computed(() => !getConfig?.readOnly && selectionPosition)
+
 onMounted(() => {
   if (isCommentsEnabled.value && !modules.comments.readOnly) {
     document.addEventListener('mousedown', handleDocumentMouseDown);
   }
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('mousedown', handleDocumentMouseDown);
 });
 </script>
 

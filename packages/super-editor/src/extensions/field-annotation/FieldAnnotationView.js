@@ -1,4 +1,5 @@
 import { Attribute } from '@core/index.js';
+import { NodeSelection } from 'prosemirror-state';
 
 export class FieldAnnotationView {
   editor;
@@ -31,6 +32,7 @@ export class FieldAnnotationView {
     this.borderColor = options.borderColor;
 
     this.handleAnnotationClick = this.handleAnnotationClick.bind(this);
+    this.handleSelectionUpdate = this.handleSelectionUpdate.bind(this);
     
     this.buildView();
     this.attachEventListeners();
@@ -148,10 +150,29 @@ export class FieldAnnotationView {
 
   attachEventListeners() {
     this.dom.addEventListener('click', this.handleAnnotationClick);
+    this.editor.on('selectionUpdate', this.handleSelectionUpdate);
   }
 
   removeEventListeners() {
     this.dom.removeEventListener('click', this.handleAnnotationClick);
+    this.editor.off('selectionUpdate', this.handleSelectionUpdate);
+  }
+
+  handleSelectionUpdate({ editor, transaction }) {
+    let { selection } = editor.state;
+    
+    if (selection instanceof NodeSelection) {
+      let currentNode = selection.node;
+
+      if (this.node.eq(currentNode)) {
+        this.editor.emit('fieldAnnotationSelected', {
+          editor: this.editor,
+          node: this.node,
+          nodePos: this.getPos(),
+          target: this.dom,
+        });
+      }
+    }
   }
 
   handleAnnotationClick(event) {
