@@ -1,16 +1,15 @@
 <script setup>
 import '@harbour-enterprises/common/styles/common-styles.css';
-import { nextTick, onMounted, ref } from 'vue';
-import { Superdoc } from '@/index';
-import { SuperEditor } from '@harbour-enterprises/super-editor';
+import { nextTick, onMounted, ref, shallowRef } from 'vue';
+import { Superdoc } from '@core/index.js';
 import { DOCX, PDF, HTML } from '@harbour-enterprises/common';
 import { BasicUpload } from '@harbour-enterprises/common';
 import BlankDOCX from '@harbour-enterprises/common/data/blank.docx?url';
 import EditorInputs from './EditorInputs.vue';
+import { fieldAnnotationHelpers } from '@harbour-enterprises/super-editor';
 
 /* For local dev */
-let activeEditor = null;
-let superdoc = null;
+let superdoc = shallowRef(null);
 
 const currentFile = ref(null);
 const getFileObject = async (fileUrl, name, type) => {
@@ -53,7 +52,9 @@ const initializeApp = async () => {
       'hrbr-fields': {},
     },
   }
-  superdoc = new Superdoc(config);
+  superdoc.value = new Superdoc(config);
+  
+  attachEditorEventsHandlers();
 };
 
 /* Inputs pane and field annotations */
@@ -91,6 +92,60 @@ const updateDraggedInputId = (inputId) => {
 };
 const updateActiveSigner = (signerIdx) => {
   activeSigner.value = signerIdx;
+};
+
+const attachEditorEventsHandlers = () => {
+  const onEditorCreate = ({ editor }) => {
+    
+    editor.on('fieldAnnotationDropped', ({ 
+      sourceField,
+      editor,
+      pos 
+    }) => {
+      console.log('fieldAnnotationDropped', { sourceField });
+
+      let signer = signersListInfo.value.find((signer) => signer.signerindex === activeSigner.value);
+      editor.commands.addFieldAnnotation(pos, {
+        displayLabel: 'Enter your info',
+        fieldId: `agreementinput-${Date.now()}-${Math.floor(Math.random() * 1000000000000)}`,
+        fieldType: 'TEXTINPUT',
+        fieldColor: signer?.signercolor,
+      });
+    });
+
+    editor.on('fieldAnnotationClicked', (params) => {
+      console.log('fieldAnnotationClicked', { params });
+    });
+
+    editor.on('fieldAnnotationSelected', (params) => {
+      console.log('fieldAnnotationSelected', { params });
+    });
+
+    // Update annotations by fieldId.
+    // setTimeout(() => {
+    //   editor.commands.updateFieldAnnotations('111', {
+    //     displayLabel: 'Updated!',
+    //     fieldColor: '#6943d0',
+    //   });
+    // }, 3000);
+
+    // Delete annotation by fieldId.
+    // setTimeout(() => {
+    //   editor.commands.deleteFieldAnnotations('111');
+    // }, 3000);
+
+    // Get all field annotations with dom rect (to get coordinates).
+    // setTimeout(() => {
+    //   let fieldAnnotationsWithRect = fieldAnnotationHelpers.getAllFieldAnnotationsWithRect(
+    //     'fieldAnnotation', 
+    //     editor.view,
+    //     editor.state
+    //   );
+    //   console.log({ fieldAnnotationsWithRect });
+    // }, 3000);
+  };
+
+  superdoc.value?.on('editorCreate', onEditorCreate);
 };
 /* Inputs pane and field annotations */
 
