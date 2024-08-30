@@ -262,6 +262,7 @@ class Superdoc extends EventEmitter {
 }
 
 function getRandomColor(colors) {
+  if (!colors) colors = [];
   return colors[Math.floor(Math.random() * colors.length)];
 }
 
