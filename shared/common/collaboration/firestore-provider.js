@@ -31,7 +31,7 @@ class FirestoreProvider extends BaseFirestoreProvider {
   }
 
   handleConnected(docSnapshot) {
-    this.#log('[🔥 provider] handleConnected', docSnapshot.metadata, this.pendingUpdates);
+    this.#log('handleConnected', docSnapshot.metadata, this.pendingUpdates);
     const isFromCache = docSnapshot.metadata.fromCache;
     const hasPendingWrites = docSnapshot.metadata.hasPendingWrites;
     this.isConnected = !isFromCache && !hasPendingWrites;
@@ -39,13 +39,13 @@ class FirestoreProvider extends BaseFirestoreProvider {
   }
   
   handleUpdate(update) {
-    this.#log('[🔥 provider] handleUpdate');
+    this.#log('handleUpdate');
     this.pendingUpdates -= 1;
     this.checkIfAllUpdatesFinished();
   }
 
   checkIfAllUpdatesFinished() {
-    this.#log('[🔥 provider] checkIfAllUpdatesFinished', this.pendingUpdates);
+    this.#log('checkIfAllUpdatesFinished', this.pendingUpdates);
     if (this.pendingUpdates === 0) {
       this.isSynced = true;
       this.emit('synced', [true]);
