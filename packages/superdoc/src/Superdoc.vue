@@ -198,6 +198,8 @@ const getEditorOptions = (doc) => {
     collaborationProvider: doc.provider || null,
     isNewFile: doc.isNewFile || false,
   }
+
+  console.debug('[Superdoc] Editor options', options);
   return options;
 };
 

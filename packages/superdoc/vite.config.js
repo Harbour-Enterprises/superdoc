@@ -15,7 +15,7 @@ export default defineConfig(({ mode, command}) => {
       target: 'es2020',
       lib: {
         entry: "src/index.js",
-        formats: ['es', 'cjs', 'umd'],
+        formats: ['es'],
         name: "SuperDoc",
         fileName: (format) => `superdoc.${format}.js`
       },

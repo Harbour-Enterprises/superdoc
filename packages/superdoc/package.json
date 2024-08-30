@@ -7,19 +7,14 @@
   ],
   "exports": {
     ".": {
-      "import": "./dist/superdoc.es.js",
-      "require": "./dist/superdoc.cjs.js",
-      "umd": "./dist/superdoc.umd.js"
+      "import": "./dist/superdoc.es.js"
     },
     "./style.css": "./dist/style.css"
   },
-  "main": "./dist/superdoc.cjs.js",
-  "module": "./dist/superdoc.es.js",
-  "umd": "./dist/superdoc.umd.js",
+  "module": "./dist/superdoc.cjs.js",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && cp -r ./dist/ ../../examples/helloworld/dist/",
-    "deploy": "npm version prerelease && npm run build && npm publish"
+    "build": "vite build"
   },
   "dependencies": {
     "@harbour-enterprises/super-editor": "0.0.1-alpha.0",

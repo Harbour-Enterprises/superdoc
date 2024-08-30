@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => {
       target: 'es2020',
       lib: {
         entry: "src/index.js",
-        formats: ['es', 'cjs'],
+        formats: ['es'],
         name: "super-editor",
         fileName: (format) => `super-editor.${format}.js`
       },

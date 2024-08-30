@@ -1,6 +1,5 @@
 import { initializeApp } from 'firebase/app';
-
-import { FirestoreProvider } from '@gmcfall/yjs-firestore-provider'
+import { FirestoreProvider } from '@harbour-enterprises/common/collaboration/firestore-provider';
 import { WebsocketProvider } from 'y-websocket';
 
 function createAwarenessHandler(context) {
@@ -9,27 +8,29 @@ function createAwarenessHandler(context) {
   }
 }
 
-function createProvider(config, ydoc, user) {
+function createProvider({ config, ydoc, user, userDocument }) {
+  const path = `${config.path}/${user.email}/${userDocument.id}`;
+  console.debug('[superdoc] Creating provider:', config.providerType, path);
   if (config.providerType === 'firestore') {
-    return createFirestoreProvider(config, ydoc, user);
+    return createFirestoreProvider(config, ydoc, path);
   } else if (config.providerType === 'socket') {
-    return createWebsocketProvider(config, ydoc, user);
+    return createWebsocketProvider(config, ydoc, path);
   } else {
     throw new Error(`[superdoc] Unsupported provider type: ${config.providerType}`);
   }
 }
 
-function createFirestoreProvider(config, ydoc) {
+function createFirestoreProvider(config, ydoc, path) {
   const firebaseApp = initializeApp(config.firebaseConfig);
-  const documentPath = config.path.split('/');
+  const documentPath = path.split('/');
   const provider = new FirestoreProvider(firebaseApp, ydoc, documentPath);
   provider.awareness.setLocalStateField('user', config.user);
   return provider;
 }
 
-function createWebsocketProvider(config, ydoc) {
+function createWebsocketProvider(config, ydoc, path) {
   // Test locally with HOST=localhost PORT=8080 npx y-websocket
-  const provider = new WebsocketProvider(config.url, config.path, ydoc);
+  const provider = new WebsocketProvider(config.url, path, ydoc);
   provider.awareness.setLocalStateField('user', config.user);
   return provider;
 }

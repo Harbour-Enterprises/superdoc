@@ -259,6 +259,7 @@ export class Editor extends EventEmitter {
     const { collaborationProvider: provider } = this.options;
     if (provider.synced) this.#insertNewFileData();
     else {
+      // If we are not sync'd yet, wait for the event then insert the data
       provider.once('synced', (isSynced) => {
         if (isSynced) this.#insertNewFileData();
       });
@@ -270,7 +271,7 @@ export class Editor extends EventEmitter {
    */
   #insertNewFileData() {
     const doc = this.#generatePmData();
-    console.debug('Inserting new file data:', doc);
+    console.debug('[super-editor] Inserting new file data:', doc);
     const tr = this.state.tr.replaceWith(0, this.state.doc.content.size, doc);
     this.view.dispatch(tr);
   }

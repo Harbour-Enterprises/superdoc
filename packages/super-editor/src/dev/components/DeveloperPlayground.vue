@@ -2,8 +2,6 @@
 import '@harbour-enterprises/common/styles/common-styles.css';
 import '@harbour-enterprises/common/icons/icons.css';
 import * as Y from 'yjs';
-// import { FirestoreProvider } from '@gmcfall/yjs-firestore-provider'
-
 import { FirestoreProvider } from '@harbour-enterprises/common/collaboration/firestore-provider';
 
 import { ref, computed, onMounted } from 'vue';

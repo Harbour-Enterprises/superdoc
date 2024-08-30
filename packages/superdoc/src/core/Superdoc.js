@@ -107,7 +107,13 @@ export class Superdoc extends EventEmitter {
     const handleAwarenessChange = createAwarenessHandler(this);
     this.documents.forEach((doc) => {
       doc.ydoc = new Doc();
-      doc.provider = createProvider(collaborationModuleConfig, doc.ydoc, this.user);
+      const options = {
+        config: collaborationModuleConfig,
+        ydoc: doc.ydoc,
+        user: this.config.user,
+        userDocument: doc
+      };
+      doc.provider = createProvider(options);
       doc.provider.awareness.on('update', handleAwarenessChange);
     });
   }
