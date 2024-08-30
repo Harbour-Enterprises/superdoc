@@ -7,12 +7,10 @@
   ],
   "exports": {
     ".": {
-      "import": "./dist/super-editor.es.js",
-      "require": "./dist/super-editor.cjs.js"
+      "import": "./dist/super-editor.es.js"
     },
     "./style.css": "./dist/style.css"
   },
-  "main": "./dist/super-editor.cjs.js",
   "module": "./dist/super-editor.es.js",
   "scripts": {
     "dev": "vite",

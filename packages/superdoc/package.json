@@ -1,25 +1,21 @@
 {
   "name": "@harbour-enterprises/superdoc",
   "type": "module",
-  "version": "1.0.0-alpha.49",
+  "version": "1.0.0-alpha.50",
   "files": [
     "dist"
   ],
   "exports": {
     ".": {
-      "import": "./dist/superdoc.es.js",
-      "require": "./dist/superdoc.cjs.js",
-      "umd": "./dist/superdoc.umd.js"
+      "import": "./dist/superdoc.es.js"
     },
     "./style.css": "./dist/style.css"
   },
-  "main": "./dist/superdoc.cjs.js",
+  "main": "./dist/superdoc.es.js",
   "module": "./dist/superdoc.es.js",
-  "umd": "./dist/superdoc.umd.js",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && cp -r ./dist/ ../../examples/helloworld/dist/",
-    "deploy": "npm version prerelease && npm run build && npm publish"
+    "build": "vite build"
   },
   "dependencies": {
     "@harbour-enterprises/super-editor": "0.0.1-alpha.0",
@@ -36,6 +32,7 @@
     "postcss-nested": "^6.0.1",
     "postcss-nested-import": "^1.3.0",
     "vite": "^5.2.12",
-    "vue-draggable-next": "^2.2.1"
+    "vue-draggable-next": "^2.2.1",
+    "vite-plugin-node-polyfills": "^0.22.0"
   }
 }

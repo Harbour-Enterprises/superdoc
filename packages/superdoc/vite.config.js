@@ -12,15 +12,15 @@ export default defineConfig((data) => {
       target: 'es2020',
       lib: {
         entry: "src/index.js",
-        formats: ['es', 'cjs', 'umd'],
+        formats: ['es'],
         name: "SuperDoc",
         fileName: (format) => `superdoc.${format}.js`
       },
+      rollupOptions: {
+        external: ['vite-plugin-node-polyfills/shims/global']
+      },
       minify: false,
       sourcemap: true,
-      esbuild: {
-        drop: [],
-      },
     },
     optimizeDeps: {
       esbuildOptions: {
