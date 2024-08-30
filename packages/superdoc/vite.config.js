@@ -1,21 +1,21 @@
 import { defineConfig } from 'vite'
 import { fileURLToPath, URL } from 'node:url';
-import { nodePolyfills } from 'vite-plugin-node-polyfills'
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import vue from '@vitejs/plugin-vue'
 
-// https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
 
+// https://vitejs.dev/config/
+export default defineConfig(({ mode, command}) => {
   const plugins = [vue()];
-  if (mode !== 'test') plugins.push(nodePolyfills());
+  if (mode === 'development') plugins.push(nodePolyfills());
 
   return {
     plugins,
     build: {
-      target: 'esnext',
+      target: 'es2020',
       lib: {
         entry: "src/index.js",
-        formats: ['es'],
+        formats: ['es', 'cjs', 'umd'],
         name: "SuperDoc",
         fileName: (format) => `superdoc.${format}.js`
       },
@@ -28,17 +28,12 @@ export default defineConfig(({ mode }) => {
         drop: [],
       },
       rollupOptions: {
-        external: ['vue', 'yjs', 'tippy.js', 'y-prosemirror', 'y-protocols'],
-        output: {
-          globals: {
-            vue: 'Vue'
-          }
-        }
+        external: ['yjs'],
       },
     },
     optimizeDeps: {
       esbuildOptions: {
-        target: 'esnext',
+        target: 'es2020',
       },
     },
     resolve: {
@@ -46,7 +41,6 @@ export default defineConfig(({ mode }) => {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
         '@core': fileURLToPath(new URL('./src/core', import.meta.url)),
         '@stores': fileURLToPath(new URL('./src/stores', import.meta.url)),
-        'yjs': fileURLToPath(new URL('../../node_modules/yjs', import.meta.url))
       },
       extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json'],
     },

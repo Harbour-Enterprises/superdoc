@@ -18,12 +18,12 @@ export default defineConfig(({ mode }) => {
       target: 'es2020',
       lib: {
         entry: "src/index.js",
-        formats: ['es'],
+        formats: ['es', 'cjs'],
         name: "super-editor",
         fileName: (format) => `super-editor.${format}.js`
       },
       rollupOptions: {
-        external: ['vue', 'tippy.js', 'y-prosemirror', 'y-protocols'],
+        external: ['vue', 'yjs', 'tippy.js', 'y-protocols', '@gmcfall/yjs-firestore-provider' ],
         output: {
           globals: {
             vue: 'Vue'
@@ -32,6 +32,9 @@ export default defineConfig(({ mode }) => {
       },
       minify: false,
       sourcemap: true,
+      esbuild: {
+        drop: [],
+      },
     },
     server: {
       port: 9096,
@@ -46,7 +49,6 @@ export default defineConfig(({ mode }) => {
         '@helpers': fileURLToPath(new URL('./src/core/helpers', import.meta.url)),
         '@packages': fileURLToPath(new URL('../', import.meta.url)),
         '@vue-3': fileURLToPath(new URL('./src/vue-3', import.meta.url)),
-        'yjs': fileURLToPath(new URL('../../node_modules/yjs', import.meta.url))
       },
       extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json'],
     },

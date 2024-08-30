@@ -7,22 +7,29 @@
   ],
   "exports": {
     ".": {
-      "import": "./dist/superdoc.es.js"
+      "import": "./dist/superdoc.es.js",
+      "require": "./dist/superdoc.cjs.js",
+      "umd": "./dist/superdoc.umd.js"
     },
     "./style.css": "./dist/style.css"
   },
-  "main": "./dist/superdoc.es.js",
+  "main": "./dist/superdoc.cjs.js",
   "module": "./dist/superdoc.es.js",
+  "umd": "./dist/superdoc.umd.js",
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build && cp -r ./dist/ ../../examples/helloworld/dist/",
+    "deploy": "npm version prerelease && npm run build && npm publish"
   },
   "dependencies": {
     "@harbour-enterprises/super-editor": "0.0.1-alpha.0",
-    "@vue/devtools-api": "^6.6.3",
+    "@gmcfall/yjs-firestore-provider": "^1.0.0-rc.5",
     "eventemitter3": "^5.0.1",
+    "firebase": "^9.23.0",
     "pdfjs-dist": "^4.3.136",
     "pinia": "^2.1.7",
+    "tippy": "^0.0.0",
+    "vue": "^3.4.21",
     "yjs": "^13.6.18"
   },
   "devDependencies": {
