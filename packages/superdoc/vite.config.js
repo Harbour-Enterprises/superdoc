@@ -7,7 +7,7 @@ import vue from '@vitejs/plugin-vue'
 // https://vitejs.dev/config/
 export default defineConfig(({ mode, command}) => {
   const plugins = [vue()];
-  if (mode === 'development') plugins.push(nodePolyfills());
+  if (mode !== 'test') plugins.push(nodePolyfills());
 
   return {
     plugins,
@@ -18,9 +18,6 @@ export default defineConfig(({ mode, command}) => {
         formats: ['es'],
         name: "SuperDoc",
         fileName: (format) => `superdoc.${format}.js`
-      },
-      rollupOptions: {
-        external: ['vite-plugin-node-polyfills/shims/global']
       },
       minify: false,
       sourcemap: true,

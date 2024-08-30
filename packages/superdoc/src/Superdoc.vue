@@ -225,6 +225,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', handleDocumentMouseDown);
 });
+
+console.debug('\n\n\n\n[Superdoc] Superdoc component mounted\n\n\n');
 </script>
 
 <template>
