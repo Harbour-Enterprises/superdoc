@@ -568,6 +568,26 @@ export const makeDefaultItems = (superToolbar) => {
     group: "left",
   });
 
+  const toggleTrackChangesOriginal = useToolbarItem({
+    type: "button",
+    disabled: false,
+    name: "toggleTrackChangesShowOriginal",
+    tooltip: "Toggle Show Original",
+    command: "toggleTrackChangesShowOriginal",
+    icon: "fa fa-eye",
+    group: "left",
+  });
+
+  const toggleTrackChangesFinal = useToolbarItem({
+    type: "button",
+    disabled: false,
+    name: "toggleTrackChangesShowFinal",
+    tooltip: "Toggle Show Final",
+    command: "toggleTrackChangesShowFinal",
+    icon: "fa-solid fa-file",
+    group: "left",
+  });
+
   // search
   const search = useToolbarItem({
     type: "button",
@@ -719,6 +739,8 @@ export const makeDefaultItems = (superToolbar) => {
     trackChanges,
     acceptChangesOnCursorPositions,
     revertChangesOnCursorPositions,
+    toggleTrackChangesOriginal,
+    toggleTrackChangesFinal,
     zoom,
     separator,
     fontButton,
