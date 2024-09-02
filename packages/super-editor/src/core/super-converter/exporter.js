@@ -2,6 +2,7 @@ import { SuperConverter } from './SuperConverter.js';
 import { toKebabCase } from '@harbour-enterprises/common';
 import { inchesToTwips } from './helpers.js';
 import { generateRandomId } from '@helpers/docxIdGenerator.js';
+import {TrackDeleteMarkName, TrackInsertMarkName} from "../../extensions/track-changes/constants.js";
 
 export class DocxExporter {
 
@@ -47,7 +48,10 @@ export class DocxExporter {
           resultingNode = this.#outputHandleDocumentNode(node);
           break;
         case 'text':
-          if (node.marks?.some((m) => m.type === 'link')) {
+          if(node.marks?.some((m) => m.type === TrackInsertMarkName || m.type === TrackDeleteMarkName)) {
+            resultingNode = this.#outputHandleTrackedNode(node);
+            skip = true;
+          } else if (node.marks?.some((m) => m.type === 'link')) {
             index++;
             // const linkNodes = this.#outputHandleLinkNode(node);
             // resultingElements.push(...linkNodes);
@@ -98,7 +102,7 @@ export class DocxExporter {
             marks.forEach((mark) => {
               const markElement = this.#mapOutputMarkToElement(mark);
 
-              if (mark.type === 'textIndent') {
+              if (mark.type === 'textIndent' && markElement) {
                 markElements.unshift(markElement);
               } else markElements.push(markElement);
             });
@@ -127,6 +131,7 @@ export class DocxExporter {
 
   #mapOutputMarkToElement(mark) {
     const xmlMark = SuperConverter.markTypes.find((m) => m.type === mark.type);
+    if(!xmlMark) return undefined;
     const markElement = { name: xmlMark.name, attributes: {} };
 
     let value;
@@ -352,6 +357,39 @@ export class DocxExporter {
     return newId;
   }
 
+
+  #outputHandleTrackedNode(node) {
+    const text = node.text;
+    const marks = node.marks;
+    const trackedMark = marks.find((m) => m.type === TrackInsertMarkName || m.type === TrackDeleteMarkName);
+    const isInsert = trackedMark.type === TrackInsertMarkName;
+
+    const trackedNode = {
+      name: isInsert ? 'w:ins' : 'w:del',
+      type: 'element',
+      attributes: {
+        'w:id': trackedMark.attrs.wid,
+        'w:author': trackedMark.attrs.author,
+        'w:date': trackedMark.attrs.date,
+      },
+      elements: [
+        {
+          name: 'w:r',
+          type: 'element',
+          elements: [
+            {
+              name: isInsert ? 'w:t' : 'w:delText',
+              type: 'element',
+              attributes: { 'xml:space': 'preserve' },
+              elements: [{ text, type: 'text' }]
+            }
+          ]
+        }
+      ]
+    }
+    return trackedNode;
+  }
+
   #outputHandleLinkNode(node) {
     const linkMark = node.marks.find((m) => m.type === 'link');
     const link = linkMark.attrs.href;
@@ -384,14 +422,18 @@ export class DocxExporter {
             attrs: mark.attrs,
           }
           const markElement = this.#mapOutputMarkToElement(unwrappedMark);
-          elements.push(markElement);
+          if(markElement){
+            elements.push(markElement);
+          }
         });
       } 
 
       // All other marks
       else {
         const markElement = this.#mapOutputMarkToElement(mark);
-        elements.push(markElement);
+        if(markElement) {
+          elements.push(markElement);
+        }
       }
     });
     return elements;
@@ -489,7 +531,7 @@ export class DocxExporter {
 
     if (name === 'w:instrText') {
       tags.push(elements[0].text);
-    } else if (name === 'w:t') {
+    } else if (name === 'w:t' || name === 'w:delText') {
       const text = this.#replaceSpecialCharacters(elements[0].text);
       tags.push(text);
     } else {
