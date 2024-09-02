@@ -1,4 +1,4 @@
-import {Extension} from "../../core/index.js";
+import {Extension} from '@core/Extension.js';
 import {Plugin, PluginKey, EditorState} from "prosemirror-state";
 import {Decoration, DecorationSet} from "prosemirror-view";
 import {TrackDeleteMarkName, TrackInsertMarkName} from "./constants.js";

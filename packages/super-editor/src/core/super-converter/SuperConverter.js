@@ -14,6 +14,7 @@ class SuperConverter {
     'w:p': 'paragraph',
     'w:r': 'run',
     'w:t': 'text',
+    'w:delText': 'deletedText',
     'w:br': 'lineBreak',
     'w:tbl': 'table',
     'w:tr': 'tableRow',
@@ -63,6 +64,7 @@ class SuperConverter {
     'w:p',
     'w:r',
     'w:t',
+    'w:delText',
   ])
 
   constructor(params = null) {
