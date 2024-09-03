@@ -27,7 +27,7 @@ export const TableHeader = Node.create({
       rowspan: { default: 1, },
       colwidth: {
         default: null,
-        parseHTML: element => {
+        parseDOM: element => {
           const colwidth = element.getAttribute('colwidth')
           const value = colwidth ? [parseInt(colwidth, 10)] : null
           return value
