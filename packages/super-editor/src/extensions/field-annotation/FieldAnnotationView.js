@@ -130,7 +130,8 @@ export class FieldAnnotationView {
     annotation.append(content);
 
     let annotationStyle = [
-      `border: 1px solid ${this.borderColor}`,
+      `border: 2px solid ${this.borderColor}`,
+      `border-radius: 2px`,
       `padding: 1px 2px`,
     ].join('; ');
 
