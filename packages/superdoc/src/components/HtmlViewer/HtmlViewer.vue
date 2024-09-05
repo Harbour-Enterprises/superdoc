@@ -1,66 +1,97 @@
 <script setup>
-import { defineProps, onMounted, ref } from 'vue';
+import { defineProps, defineEmits, onMounted, ref } from 'vue';
 const props = defineProps({
-    fileSource: {
-        type: File,
-        required: true,
-    },
-    documentId: {
-        type: String,
-        required: true,
-    },
-    fieldClasses: {
-        type: Array,
-        required: false,
-    },
-    fieldFormat: {
-        type: Object,
-        required: false
-    }
+  fileSource: {
+    type: File,
+    required: true,
+  },
+  documentId: {
+    type: String,
+    required: true,
+  },
+  // fields only, annotations are inlined
+  fields: {
+    type: Array,
+    required: false,
+    default: () => [],
+  },
+  fieldClasses: {
+    type: Array,
+    required: false,
+  },
+  fieldFormat: {
+    type: Object,
+    required: false
+  }
 });
 
 const documentContent = ref('');
 
-const fields = ref([])
+const emit = defineEmits([
+  'ready',
+  'selection-change'
+]);
 
-const loadFields = (htmlString) => {        
-  if (!props.fieldClasses && !props.fieldFormat) return;
-  const formatKeys = Object.keys(props.fieldFormat);
-    const parser = new DOMParser().parseFromString(htmlString, 'text/html');
-    props.fieldClasses.forEach(fieldClass => {
-        const fieldElements = parser.querySelectorAll(`.${fieldClass}`);
-        fieldElements.forEach((field) => {
-            const result = {};
-            formatKeys.forEach(key => result[key] = props.fieldFormat[key](field))
-            fields.value.push(result);
-        });
-    });
-    console.log("found fields", fields.value)
+const handleSelectionChange = () => {
+  const selection = window.getSelection();
+  console.log('selection from html viewer', selection);
+  emit('selection-change', selection);
 }
 
-const loadDocument = (file) => {
-    // open file
-    console.log('loading file', file);
-    // read file
+const getDocumentHtmlWithFilledFields = (htmlString) => {
+  const parser = new DOMParser().parseFromString(htmlString, 'text/html');
+
+  const fieldElements = parser.querySelectorAll('.annotation');
+  if (!fieldElements.length) return;
+
+  fieldElements.forEach((field) => {
+    // find matching field
+    const itemId = field.dataset.itemid;
+    const matchingField = props.fields.find(f => f.id === itemId);
+    if (!matchingField) return null;
+
+    // replace inline annotation text
+    let newFieldElementText = matchingField.label;
+    if (matchingField.value && typeof matchingField.value !== 'object') {
+      newFieldElementText = matchingField.value;
+    }
+    const fieldElementTextCtn = field.querySelector('.annotation-text');
+    fieldElementTextCtn.innerHTML = newFieldElementText;
+  });
+
+  return parser.documentElement.outerHTML;
+}
+
+const getDocumentHtml = (fileSource) => {
+  // read file
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const htmlString = e.target.result;
-      documentContent.value = htmlString;
-      loadFields(htmlString);
-    }
-    reader.readAsText(file);
+      resolve(htmlString);
+    };
+    reader.onerror = (e) => reject(e);
+    reader.readAsText(fileSource);
+  });
 }
 
-onMounted(() => {
-    loadDocument(props.fileSource);
+onMounted(async () => {
+  try {
+    const documentHtml = await getDocumentHtml(props.fileSource);
+    const documentHtmlWithFilledFields = getDocumentHtmlWithFilledFields(documentHtml);
+    documentContent.value = documentHtmlWithFilledFields || documentHtml;
+    emit('ready', props.documentId);
+  } catch (error) {
+    console.error('Error loading document', error);
+  }
 });
 
 </script>
 
 <template>
-    <div class="super-editor">
-        <div class="super-editor__content" v-html="documentContent"></div>
-    </div>
+  <div class="super-editor">
+    <div class="super-editor__content" v-html="documentContent" @mouseup="handleSelectionChange"></div>
+  </div>
 </template>
 
 

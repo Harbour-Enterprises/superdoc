@@ -66,7 +66,7 @@ const toolsMenuPosition = ref(null);
 // Hrbr Fields
 const hrbrFieldsLayer = ref(null);
 
-const handlePdfReady = (documentId, container) => {
+const handleDocumentReady = (documentId, container) => {
   const doc = getDocument(documentId);
   doc.isReady = true;
   doc.container = container;
@@ -271,7 +271,7 @@ onBeforeUnmount(() => {
             @selection-change="handleSelectionChange"
             @selection-drag="handleSelectionDrag"
             @selection-drag-end="handleSelectionDragEnd"
-            @ready="handlePdfReady" 
+            @ready="handleDocumentReady" 
             @page-loaded="handlePageReady" />
 
         <SuperEditor
@@ -283,7 +283,10 @@ onBeforeUnmount(() => {
           <!-- omitting field props -->
           <HtmlViewer
               v-if="doc.type === HTML"
+              @ready="(id) => handleDocumentReady(id, null)" 
+              @selection-change="handleSelectionChange"
               :file-source="doc.data"
+              :fields="doc.fields"
               :document-id="doc.id" />
       </div>
     </div>
