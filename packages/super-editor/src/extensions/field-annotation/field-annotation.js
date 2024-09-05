@@ -182,8 +182,14 @@ export const FieldAnnotation = Node.create({
       }) => {
         if (dispatch) {
           let { schema } = editor;
-          let node = schema.nodes[this.name].create({ ...attrs });
+
           let newPos = tr.mapping.map(pos);
+          let $pos = state.doc.resolve(newPos);
+          let currentMarks = $pos.marks();
+          currentMarks = currentMarks.length ? [...currentMarks] : null;
+
+          let node = schema.nodes[this.name].create({ ...attrs }, null, currentMarks);
+
           state.tr.insert(newPos, node);
         }
         
