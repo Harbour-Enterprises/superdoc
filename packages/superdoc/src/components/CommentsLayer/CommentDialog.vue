@@ -255,7 +255,9 @@ const showButtons = computed(() => {
 const showInputSection = computed(() => {
   return !getConfig.readOnly && isActiveComment.value && !props.data.markedDone && !isEditing.value;
 });
-const showSeparator = computed(() => (index) => props.data.comments.length > 1 && index !== props.data.comments.length - 1);
+const showSeparator = computed(() => (index) => {
+  return props.data.comments.length > 1 && index !== props.data.comments.length - 1;
+});
 
 onMounted(() => {
   emit('ready', props.data.conversationId, currentElement);
