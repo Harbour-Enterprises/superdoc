@@ -8,6 +8,73 @@ import {
   TrackMarksMarkName
 } from "../../extensions/track-changes/constants.js";
 
+
+export function exportSchemaToJson(params) {
+  console.debug('\nExporting schema to JSON:', params.node, '\n');
+  switch (params.node.type) {
+    case 'doc':
+      return translateDocumentNode(params);
+    case 'body':
+      return translateBodyNode(params);
+    case 'paragraph':
+      return translateParagraphNode(params);
+  }
+}
+
+function translateBodyNode(params) {
+  return {};
+  const sectPr = storedBody?.elements.find((n) => n.name === 'w:sectPr') || {};
+  console.debug('BODY NODE', params, sectPr,);
+  const elements = translateChildNodes(node.content);
+  return {
+    name: 'w:body',
+    elements,
+  }
+};
+
+function translateParagraphNode(node) {
+  return {
+    name: 'w:p',
+    elements: [],
+    attributes: processAttributes(node.attrs),
+  }
+};
+
+function translateDocumentNode(params) {
+  const bodyNode = {
+    type: 'body',
+    content: params.node.content,
+  }
+
+  const translatedBodyNode = exportSchemaToJson({ ...params, node: bodyNode });
+  return {
+    name: 'w:document',
+    elements: [translatedBodyNode],
+    attributes: node.attrs,
+  }
+};
+
+function processAttributes(attrs) {
+  let processedAttrs = {};
+  Object.keys(attrs).forEach((key) => {
+    const value = attrs[key];
+    if (!value) return;
+
+    let newAttr = {};
+    if (value instanceof Object) newAttr = processAttributes(value);
+    else newAttr[toKebabCase(key)] = value;
+    processedAttrs = { ...processedAttrs, ...newAttr };
+  });
+  return processedAttrs;
+}
+
+function translateChildNodes(nodes) {
+  return nodes.map((node) => {
+    return exportSchemaToJson({ node });
+  }).filter((n) => n);
+}
+
+
 export class DocxExporter {
 
   constructor(converter) {
@@ -549,7 +616,7 @@ export class DocxExporter {
   }
 
   schemaToXml(data) {
-    // console.debug('[SuperConverter] schemaToXml:', data);
+    console.debug('[SuperConverter] schemaToXml:', data);
     const result = this.#generate_xml_as_list(data);
     // console.debug('[SuperConverter] schemaToXml result:', result.join(''));
     return result.join('');

@@ -2,7 +2,7 @@ import xmljs from 'xml-js';
 import { getNodeNumberingDefinition } from './numbering';
 import { toKebabCase } from '@harbour-enterprises/common';
 
-import { DocxExporter } from './exporter';
+import { DocxExporter, exportSchemaToJson } from './exporter';
 import { DocxImporter } from './importer';
 
 
@@ -99,6 +99,7 @@ class SuperConverter {
 
   parseFromXml() {
     this.docx?.forEach(file => {
+      if (file.name === 'word/document.xml') console.debug('DOCX', file.content)
       this.convertedXml[file.name] = this.parseXmlToJson(file.content);
     });
     this.initialJSON = this.convertedXml['word/document.xml'];
@@ -162,14 +163,21 @@ class SuperConverter {
   }
 
   schemaToXml(data) {
-    const exporter = new DocxExporter(this);
-    return exporter.schemaToXml(data);
+    // const exporter = new DocxExporter(this);
+    // return exporter.schemaToXml(data);
   }
 
   exportToDocx(jsonData) {
+    console.debug('ORIGINAL', this.xml)
+    const bodyNode = this.savedTagsToRestore.find((el) => el.name === 'w:body');
+    console.debug('\n\n EXPORT TO DOCX bodyNode', bodyNode,'\n\n')
+    const result = exportSchemaToJson({ node: jsonData, bodyNode });
+    console.debug('\n\n EXPORT RESULT', result,'\n\n')
     const exporter = new DocxExporter(this);
-    const jsonOutput = exporter.outputToJson(jsonData);
-    return exporter.schemaToXml(jsonOutput);
+    // const jsonOutput = exporter.outputToJson(jsonData);
+    const xml = exporter.schemaToXml(result);
+    console.debug('\n\n EXPORT TO DOCX XML', xml,'\n\n')
+    return xml;
   }
 }
 
