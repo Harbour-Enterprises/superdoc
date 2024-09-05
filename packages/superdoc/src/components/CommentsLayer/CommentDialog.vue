@@ -255,6 +255,9 @@ const showButtons = computed(() => {
 const showInputSection = computed(() => {
   return !getConfig.readOnly && isActiveComment.value && !props.data.markedDone && !isEditing.value;
 });
+const showSeparator = computed(() => (index) => {
+  return props.data.comments.length > 1 && index !== props.data.comments.length - 1;
+});
 
 onMounted(() => {
   emit('ready', props.data.conversationId, currentElement);
@@ -273,7 +276,7 @@ onMounted(() => {
       ref="currentElement">
 
     <!-- internal/external dropdown when conversation has comments -->
-    <div v-if="!pendingComment" >
+    <div v-if="!pendingComment" class="existing-internal-input">
       <InternalDropdown
           class="internal-dropdown"
           :state="props.data.isInternal ? 'internal' : 'external'"
@@ -328,12 +331,12 @@ onMounted(() => {
         </div>
 
       </div>
-      <div class="comment-separator" v-if="data.length > 1"></div>
+      <div class="comment-separator" v-if="showSeparator(index)"></div>
     </div>
 
     <!-- New comment entry -->
-    <div class="card-section input-section" v-if="showInputSection">
-      <div class="card-section comment-header">
+    <div class="input-section" v-if="showInputSection">
+      <div class="comment-header">
         <div class="comment-header-left">
           <div class="avatar">
             <Avatar :user="props.user" />
@@ -354,13 +357,13 @@ onMounted(() => {
             @blur="isFocused = false;" />
       </div>
       <InternalDropdown
-          class="internal-dropdown"
+          class="internal-dropdown initial-internal-dropdown"
           v-if="pendingComment"
           @select="setConversationInternal($event)" />
     </div>
 
     <!-- footer buttons -->
-    <div class="card-section comment-footer" v-if="showButtons">
+    <div class="comment-footer" v-if="showButtons">
       <button class="sd-button" @click.stop.prevent="cancelComment">Cancel</button>
       <button class="sd-button primary" @click.stop.prevent="addComment">Comment</button>
     </div>
@@ -375,6 +378,12 @@ onMounted(() => {
   height: 1px;
   width: 100%;
   margin: 15px 0;
+}
+.existing-internal-input {
+  margin-bottom: 10px;
+}
+.initial-internal-dropdown {
+  margin-top: 10px;
 }
 .comments-dialog {
   position: absolute;
@@ -456,13 +465,12 @@ onMounted(() => {
   padding-bottom: 10px;
 }
 .comment-footer {
-  margin: 10px 0 5px;
+  margin: 5px 0 5px;
   display: flex;
   justify-content: flex-end;
   width: 100%;
 }
 .internal-dropdown {
-  margin: 10px 0;
   display: inline-block;
 }
 
