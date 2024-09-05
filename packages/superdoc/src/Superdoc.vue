@@ -224,6 +224,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', handleDocumentMouseDown);
 });
+
 </script>
 
 <template>

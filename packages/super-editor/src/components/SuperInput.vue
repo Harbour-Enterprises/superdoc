@@ -30,6 +30,7 @@ const props = defineProps({
 
 const editor = shallowRef();
 const editorElem = ref(null);
+const isFocused = ref(false);
 
 const onTransaction = ({ editor, transaction}) => {
   const contents = editor.getHTML();
@@ -37,10 +38,12 @@ const onTransaction = ({ editor, transaction}) => {
 };
 
 const onFocus = ({ editor, transaction }) => {
+  isFocused.value = true;
   emit('focus', { editor, transaction });
 };
 
 const onBlur = ({ editor, transaction }) => {
+  isFocused.value = false;
   emit('blur', { editor, transaction });
 };
 
@@ -71,7 +74,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="super-editor">
+  <div class="super-editor" :class="{ 'super-input-active': isFocused }">
     <div id="currentContent" style="display: none;" v-html="modelValue"></div>
     <div ref="editorElem" class="editor-element"></div>
   </div>
@@ -80,11 +83,19 @@ onBeforeUnmount(() => {
 <style scoped>
 .super-editor {
   border: 1px solid #999;
+  outline: none;
   height: 100%;
   width: 100%;
+  transition: border 0.2s ease;
 }
 .editor-element {
   height: 100%;
   width: 100%;
+  border: none;
+  outline: none;
+}
+.super-input-active {
+  border: 1px solid #007bff;
+  outline: none;
 }
 </style>

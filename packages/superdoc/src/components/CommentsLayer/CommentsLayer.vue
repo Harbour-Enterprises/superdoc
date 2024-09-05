@@ -62,16 +62,26 @@ const addCommentEntry = (selection) => {
 }
 
 const getStyle = (conversation) => {
-  const { selection } = conversation
+  const { selection, conversationId } = conversation
   const containerBounds = selection.getContainerLocation(props.parent)
   const placement = conversation.selection.selectionBounds;
   const top = parseFloat(placement.top) + containerBounds.top;
+
+  const internalHighlightColor = '#078383';
+  const externalHighlightColor = '#B1124B';
+
+  let opacity = '33';
+  activeComment.value === conversationId ? opacity = '66' : '33';
+  let fillColor = conversation.isInternal ? internalHighlightColor : externalHighlightColor;
+  fillColor += opacity;
+
   return {
     position: 'absolute',
     top: top + 'px',
     left: placement.left + 'px',
     width: placement.right - placement.left + 'px',
     height: placement.bottom - placement.top + 'px',
+    backgroundColor: fillColor,
   }
 }
 
@@ -92,14 +102,6 @@ const getAllConversations = computed(() => {
   }, []);
 });
 
-const getHighlightClasses = computed(() => (conversation) => {
-  const classes = [];
-  const { conversationId } = conversation;
-  if (activeComment.value === conversationId) classes.push('sd-highlight-active');
-  if (conversation.suppressHighlight) classes.push('bypass');
-  return classes
-})
-
 defineExpose({
   addCommentEntry,
   activateComment
@@ -111,7 +113,6 @@ defineExpose({
   <div class="comments-container" id="commentsContainer">
     <div class="comments-layer">
       <div
-          :class="getHighlightClasses(conversation)"
           v-for="conversation in getAllConversations"
           class="comment-anchor sd-highlight"
           @click="(e) => activateComment(conversation, e)"
