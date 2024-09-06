@@ -5,6 +5,7 @@ import { toHex } from 'color2k';
 
 const { findChildren } = helpers;
 
+export const fieldAnnotationName = 'fieldAnnotation';
 export const annotationClass = 'annotation';
 export const annotationContentClass = 'annotation-content';
 
@@ -198,22 +199,29 @@ export const FieldAnnotation = Node.create({
 
       /**
        * Update annotations associated with a field.
-       * @param fieldId The field ID.
+       * @param fieldIdOrArray The field ID or array of field IDs.
        * @param attrs The attributes.
        * @example
        * editor.commands.updateFieldAnnotations('123', {
        *  displayLabel: 'Updated!',
        * });
+       * editor.commands.updateFieldAnnotations(['123', '456'], {
+       *  displayLabel: 'Updated!',
+       * });
        */
-      updateFieldAnnotations: (fieldId, attrs = {}) => ({
+      updateFieldAnnotations: (fieldIdOrArray, attrs = {}) => ({
         dispatch,
         state,
         tr,
       }) => {
-        let annotations = findChildren(state.doc, (node) => (
-          node.type.name === this.name
-          && node.attrs.fieldId === fieldId
-        ));
+        let annotations = findChildren(state.doc, (node) => {
+          let isFieldAnnotation = node.type.name === this.name;
+          if (Array.isArray(fieldIdOrArray)) {
+            return isFieldAnnotation && fieldIdOrArray.includes(node.attrs.fieldId);
+          } else {
+            return isFieldAnnotation && node.attrs.fieldId === fieldIdOrArray;
+          }
+        });
 
         if (!annotations.length) return false;
 
@@ -238,18 +246,24 @@ export const FieldAnnotation = Node.create({
 
       /**
        * Delete annotations associated with a field.
-       * @param fieldId The field ID.
-       * @example editor.commands.deleteFieldAnnotations('123');
+       * @param fieldIdOrArray The field ID or array of field IDs.
+       * @example 
+       * editor.commands.deleteFieldAnnotations('123');
+       * editor.commands.deleteFieldAnnotations(['123', '456']);
        */
-      deleteFieldAnnotations: (fieldId) => ({
+      deleteFieldAnnotations: (fieldIdOrArray) => ({
         dispatch,
         state,
         tr,
       }) => {
-        let annotations = findChildren(state.doc, (node) => (
-          node.type.name === this.name
-          && node.attrs.fieldId === fieldId
-        ));
+        let annotations = findChildren(state.doc, (node) => {
+          let isFieldAnnotation = node.type.name === this.name;
+          if (Array.isArray(fieldIdOrArray)) {
+            return isFieldAnnotation && fieldIdOrArray.includes(node.attrs.fieldId);
+          } else {
+            return isFieldAnnotation && node.attrs.fieldId === fieldIdOrArray;
+          }
+        });
 
         if (!annotations.length) return false;
 

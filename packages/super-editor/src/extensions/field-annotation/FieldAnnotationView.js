@@ -45,6 +45,7 @@ export class FieldAnnotationView {
       text: (...args) => this.buildTextView(...args),
       image: (...args) => this.buildImageView(...args),
       signature: (...args) => this.buildSignatureView(...args),
+      checkbox: (...args) => this.buildCheckboxView(...args),
       default: (...args) => this.buildTextView(...args),
     };
 
@@ -109,6 +110,16 @@ export class FieldAnnotationView {
       content.innerHTML = displayLabel;
     }
 
+    this.dom = annotation;
+  }
+
+  buildCheckboxView() {
+    let { displayLabel } = this.node.attrs;
+    
+    let { annotation } = this.#createAnnotation({
+      displayLabel
+    });
+    
     this.dom = annotation;
   }
 

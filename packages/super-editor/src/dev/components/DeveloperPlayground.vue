@@ -148,7 +148,7 @@ const attachAnnotationEventHandlers = () => {
 
   // Update annotations by fieldId.
   // setTimeout(() => {
-  //   activeEditor?.commands.updateFieldAnnotations('agreementinput-1723720330834-228771403177', {
+  //   activeEditor?.commands.updateFieldAnnotations('111', {
   //     displayLabel: 'Updated!',
   //     fieldColor: '#6943d0',
   //   });
@@ -156,19 +156,38 @@ const attachAnnotationEventHandlers = () => {
 
   // Delete annotation by fieldId.
   // setTimeout(() => {
-  //   activeEditor?.commands.deleteFieldAnnotations('agreementinput-1723720330834-228771403177');
+  //   activeEditor?.commands.deleteFieldAnnotations('111');
   // }, 3000);
 
   // Get all field annotations with dom rect (to get coordinates).
   // setTimeout(() => {
   //   let fieldAnnotationsWithRect = fieldAnnotationHelpers.getAllFieldAnnotationsWithRect(
-  //     'fieldAnnotation', 
   //     activeEditor.view,
   //     activeEditor.state
   //   );
 
   //   console.log({ fieldAnnotationsWithRect });
   // }, 3000);
+
+  // Find field annotations by field id.
+  // setTimeout(() => {
+  //   let fieldAnnotationsByFieldId = fieldAnnotationHelpers.findFieldAnnotationsByFieldId(
+  //     'test-id',
+  //     activeEditor.state,
+  //   );
+
+  //   console.log({ fieldAnnotationsByFieldId });
+  // }, 4000);
+
+  // Find first field annotation by field id.
+  // setTimeout(() => {
+  //   let firstFieldAnnotation = fieldAnnotationHelpers.findFirstFieldAnnotationByFieldId(
+  //     'test-id',
+  //     activeEditor.state,
+  //   );
+
+  //   console.log({ firstFieldAnnotation });
+  // }, 4000);
 };
 /* Inputs pane and field annotations */
 

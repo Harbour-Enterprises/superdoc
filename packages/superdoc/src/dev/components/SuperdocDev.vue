@@ -137,7 +137,6 @@ const attachEditorEventsHandlers = () => {
     // Get all field annotations with dom rect (to get coordinates).
     // setTimeout(() => {
     //   let fieldAnnotationsWithRect = fieldAnnotationHelpers.getAllFieldAnnotationsWithRect(
-    //     'fieldAnnotation', 
     //     editor.view,
     //     editor.state
     //   );
