@@ -1,6 +1,5 @@
 import './style.css';
 import { SuperConverter } from "@core/super-converter/SuperConverter";
-import { makeDefaultItems } from '@/components/toolbar/defaultItems.js';
 import { getMarksFromSelection, getActiveFormatting } from '@/core/helpers/getMarksFromSelection.js';
 import { getStarterExtensions } from '@extensions/index.js';
 import { SuperToolbar } from '@components/toolbar/super-toolbar.js';
@@ -34,7 +33,6 @@ export {
   // Helpers
   helpers,
   fieldAnnotationHelpers,
-  makeDefaultItems,
   getMarksFromSelection,
   getActiveFormatting,
   getStarterExtensions,
