@@ -2,7 +2,11 @@ import { SuperConverter } from './SuperConverter.js';
 import { toKebabCase } from '@harbour-enterprises/common';
 import { inchesToTwips, pixelsToHalfPoints, pixelsToTwips } from './helpers.js';
 import { generateRandomId } from '@helpers/docxIdGenerator.js';
-
+import {
+  TrackDeleteMarkName,
+  TrackInsertMarkName,
+  TrackMarksMarkName
+} from "@extensions/track-changes/constants.js";
 
 /**
  * @typedef {Object} ExportParams
@@ -210,6 +214,7 @@ function translateChildNodes(params) {
 /**
  * Translate a text node or link node.
  * Link nodes look the same as text nodes but with a link attr.
+ * Also, tracked changes are text marks so those need to be separated here.
  * We need to check here and re-route as necessary
  * 
  * @param {ExportParams} params The text node to translate
@@ -218,6 +223,13 @@ function translateChildNodes(params) {
  */
 function translateTextNode(params) {
   const { node } = params;
+
+  // Separate tracked changes from regular text
+  const trackedMarks = [TrackInsertMarkName, TrackDeleteMarkName];
+  const isTrackedNode = node.marks?.some((m) => trackedMarks.includes(m.type));
+  if (isTrackedNode) return translateTrackedNode(params);
+
+  // Separate links from regular text
   const isLinkNode = node.marks?.some((m) => m.type === 'link');
   if (isLinkNode) return translateLinkNode(params);
 
@@ -229,12 +241,68 @@ function translateTextNode(params) {
   const outputMarks = processOutputMarks(marks);
   const textNode =  {
     name: 'w:t',
-    text: node.text,
     elements: [{ text: node.text, type: 'text' }],
     attributes: attrs,
   }
 
   return wrapTextInRun(textNode, outputMarks);
+}
+
+function createTrackStyleMark(marks) {
+  const trackStyleMark = marks.find(mark => mark.type === TrackMarksMarkName);
+  if (trackStyleMark) {
+    const markElement = {
+      type: 'element',
+      name: 'w:rPrChange', attributes: {
+        'w:id': trackStyleMark.attrs.wid,
+        'w:author': trackStyleMark.attrs.author,
+        'w:date': trackStyleMark.attrs.date,
+      },
+      elements: trackStyleMark.attrs.before
+          .map(mark => processOutputMarks(mark))
+          .filter(r => r !== undefined)
+    };
+    return markElement;
+  }
+  return undefined;
+};
+
+function translateTrackedNode(params) {
+  const { node } = params;
+  const marks = node.marks;
+  const trackingMarks = [TrackInsertMarkName, TrackDeleteMarkName, TrackMarksMarkName];
+  const trackedMark = marks.find((m) => trackingMarks.includes(m.type));
+  const isInsert = trackedMark.type === TrackInsertMarkName;
+
+  // Remove marks that we aren't exporting and add style mark if present
+  const trackStyleMark = createTrackStyleMark(marks)
+  node.marks = marks.filter((m) => !trackingMarks.includes(m.type));
+  if (trackStyleMark) {
+    node.marks.push(trackStyleMark);
+  }
+
+  const translatedTextNode = exportSchemaToJson({ ...params, node });
+
+  // If this is not an insert, we need to change the text node name
+  if (!isInsert) {
+    const textNode = translatedTextNode.elements.find((n) => n.name === 'w:t'); 
+    textNode.name = 'w:delText';
+  }
+
+  const trackedNode = {
+    name: isInsert ? 'w:ins' : 'w:del',
+    type: 'element',
+    attributes: {
+      'w:id': trackedMark.attrs.wid,
+      'w:author': trackedMark.attrs.author,
+      'w:date': trackedMark.attrs.date,
+    },
+    elements: [
+      translatedTextNode
+    ]
+  };
+
+  return trackedNode;
 }
 
 /**
@@ -700,6 +768,7 @@ function translateBookmarkStart(params) {
  * @returns 
  */
 function translateMark(mark) {
+  console.debug('\n\n MARK', mark, '\n\n');
   const xmlMark = SuperConverter.markTypes.find((m) => m.type === mark.type);
   const markElement = { name: xmlMark.name, attributes: {} };
 
@@ -797,6 +866,7 @@ export class DocxExporter {
   }
 
   #replaceSpecialCharacters(text) {
+    if (!text) return;
     return text
               .replace(/&/g, '&amp;')
               .replace(/</g, '&lt;')
