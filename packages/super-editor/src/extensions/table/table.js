@@ -22,11 +22,27 @@ export const Table = Node.create({
 
   addAttributes() {
     return {
-      tableWidth: { default: '100%', },
-      tableWidthType: { default: 'auto', },  
-      gridColumnWidths: { default: [], },
+      tableWidth: {
+        default: '100%',
+        renderDOM: ({ tableWidth }) => {
+          if (!tableWidth) return {};
+
+          const { width, type = 'auto' } = tableWidth;
+          return { style: `width: ${width};` }
+        }
+      },
+      gridColumnWidths: { rendered: false, default: [], },
       tableStyleId: { rendered: false, },
-      tableIndent: { rendered: false, },
+      tableIndent: {
+        renderDOM: ({ tableIndent }) => {
+          if (!tableIndent) return {};
+
+          const { width, type = 'dxa' } = tableIndent;
+          let style = '';
+          if (width) style += `margin-left: ${width}px;`;
+          return { style }
+        }
+      },
       tableLayout: { rendered: false, },
       borders: {
         default: {},

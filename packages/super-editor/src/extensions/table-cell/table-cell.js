@@ -46,7 +46,18 @@ export const TableCell = Node.create({
         renderDOM({ verticalAlign }) {
           if (!verticalAlign) return {};
           const style = `vertical-align: ${verticalAlign};`;
-          console.debug('VERTICAL ALIGN', style)
+          return { style };
+        }
+      },
+      cellMargins: {
+        renderDOM({ cellMargins }) {
+          if (!cellMargins) return {};
+          let style = '';
+          const { top, right, bottom, left } = cellMargins || {};
+          if (top) style += `padding-top: ${top}px;`;
+          if (right) style += `padding-right: ${right}px;`;
+          if (bottom) style += `padding-bottom: ${bottom}px;`;
+          if (left) style += `padding-left: ${left}px;`;
           return { style };
         }
       }
