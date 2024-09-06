@@ -14,7 +14,7 @@ class SuperConverter {
     'w:p': 'paragraph',
     'w:r': 'run',
     'w:t': 'text',
-    'w:delText': 'deletedText',
+    'w:delText': 'text',
     'w:br': 'lineBreak',
     'w:tbl': 'table',
     'w:tr': 'tableRow',
