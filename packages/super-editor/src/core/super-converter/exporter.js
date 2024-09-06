@@ -2,7 +2,11 @@ import { SuperConverter } from './SuperConverter.js';
 import { toKebabCase } from '@common/key-transform.js';
 import { inchesToTwips } from './helpers.js';
 import { generateRandomId } from '@helpers/docxIdGenerator.js';
-import {TrackDeleteMarkName, TrackInsertMarkName} from "../../extensions/track-changes/constants.js";
+import {
+  TrackDeleteMarkName,
+  TrackInsertMarkName,
+  TrackMarksMarkName
+} from "../../extensions/track-changes/constants.js";
 
 export class DocxExporter {
 
@@ -31,6 +35,30 @@ export class DocxExporter {
         .map((key) => {
           return { type: key, attrs: { [key]: attrs[key] } };
         });
+  }
+
+  /**
+   *
+   * @param marks
+   * @returns {undefined|{elements: *[], name: string, attributes: {}, type: string}}
+   */
+  #createTrackStyleMark(marks) {
+    const trackStyleMark = marks.find(mark => mark.type === TrackMarksMarkName);
+    if (trackStyleMark) {
+      const markElement = {
+        type: 'element',
+        name: 'w:rPrChange', attributes: {
+          'w:id': trackStyleMark.attrs.wid,
+          'w:author': trackStyleMark.attrs.author,
+          'w:date': trackStyleMark.attrs.date,
+        },
+        elements: trackStyleMark.attrs.before
+            .map(mark => this.#mapOutputMarkToElement(mark))
+            .filter(r => r !== undefined)
+      };
+      return markElement;
+    }
+    return undefined;
   }
 
   #outputProcessNodes(nodes, parent = null) {
@@ -129,6 +157,11 @@ export class DocxExporter {
     return resultingElements;
   }
 
+  /**
+   *
+   * @param mark
+   * @returns {{type: string | *, name: string | *, attributes?: {}} | undefined}
+   */
   #mapOutputMarkToElement(mark) {
     const xmlMark = SuperConverter.markTypes.find((m) => m.type === mark.type);
     if(!xmlMark) return undefined;
@@ -364,6 +397,26 @@ export class DocxExporter {
     const trackedMark = marks.find((m) => m.type === TrackInsertMarkName || m.type === TrackDeleteMarkName);
     const isInsert = trackedMark.type === TrackInsertMarkName;
 
+    //TODO this should use #outputHandleTextNode in the long run
+    let runProperties = null;
+    if (marks) {
+      const elements = [];
+
+      // Some marks have special handling - we process them here
+      elements.push(...this.#outputHandleMarks(marks));
+
+      const trackStyleMark = this.#createTrackStyleMark(marks)
+      if (trackStyleMark) {
+        elements.push(trackStyleMark);
+      }
+
+      runProperties = {
+        name: 'w:rPr',
+        type: 'element',
+        elements
+      }
+    }
+
     const trackedNode = {
       name: isInsert ? 'w:ins' : 'w:del',
       type: 'element',
@@ -377,6 +430,7 @@ export class DocxExporter {
           name: 'w:r',
           type: 'element',
           elements: [
+            runProperties,
             {
               name: isInsert ? 'w:t' : 'w:delText',
               type: 'element',
@@ -452,6 +506,11 @@ export class DocxExporter {
 
       // Some marks have special handling - we process them here
       elements.push(...this.#outputHandleMarks(marks));
+
+      const trackStyleMark = this.#createTrackStyleMark(marks)
+      if (trackStyleMark) {
+        elements.push(trackStyleMark);
+      }
 
       runProperties = {
         name: 'w:rPr',
