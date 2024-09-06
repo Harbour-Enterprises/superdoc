@@ -58,7 +58,7 @@ const editorOptions = {
 
 const exportDocx = async () => {
   const result = await activeEditor?.exportDocx();
-  const blob = new Blob([result], { type: DOC_TYPE });
+  const blob = new Blob([result], { type: DOCX });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -192,7 +192,7 @@ const attachAnnotationEventHandlers = () => {
 /* Inputs pane and field annotations */
 
 const initToolbar = () => {
-  return new SuperToolbar({ element: 'toolbar', editor: activeEditor });
+  return new SuperToolbar({ element: 'toolbar', editor: activeEditor, isDev: true });
 }
 
 onMounted(async () => {

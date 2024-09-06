@@ -14,6 +14,7 @@ import { createStyleTag } from './utilities/createStyleTag.js';
 import { initComments } from '@features/index.js';
 import { style } from './config/style.js';
 import DocxZipper from '@core/DocxZipper.js';
+import {amendTransaction} from "../extensions/track-changes/track-changes-tr-modifier.js";
 
 /**
  * Editor main class.
@@ -95,7 +96,7 @@ export class Editor extends EventEmitter {
     this.#createView();
     this.#initDefaultStyles();
     this.#injectCSS()
-
+    
     this.on('create', this.options.onCreate);
     this.on('update', this.options.onUpdate);
     this.on('selectionUpdate', this.options.onSelectionUpdate);
@@ -223,23 +224,24 @@ export class Editor extends EventEmitter {
     // Viewing mode: Not editable, no tracked changes, no comments
     if (this.documentMode === 'viewing') {
       this.unregisterPlugin('comments');
-      // this.unregisterPlugin('TrackChangesBase');
+      this.commands.toggleTrackChangesShowOriginal();
       this.setEditable(false, false);
     }
 
     // Suggesting: Editable, tracked changes plugin enabled, comments
     else if (this.documentMode === 'suggesting') {
       this.#registerPluginByNameIfNotExists('comments')
-      // this.#registerPluginByNameIfNotExists('TrackChangesBase');
-      // this.commands.enableTrackChanges();
+      this.#registerPluginByNameIfNotExists('TrackChangesBase');
+      this.commands.disableTrackChangesShowOriginal();
+      this.commands.enableTrackChanges();
       this.setEditable(true, false);
     }
 
     // Editing: Editable, tracked changes plguin disabled, comments
     else if (this.documentMode === 'editing') {
-      // this.#registerPluginByNameIfNotExists('TrackChangesBase');
+      this.#registerPluginByNameIfNotExists('TrackChangesBase');
       this.#registerPluginByNameIfNotExists('comments');
-      // this.commands.disableTrackChanges();
+      this.commands.disableTrackChanges();
       this.setEditable(true, false);
     }
   }
@@ -498,8 +500,17 @@ export class Editor extends EventEmitter {
     if (this.view.isDestroyed) {
       return;
     }
-    
-    const state = this.state.apply(transaction);
+
+    let state;
+    try {
+      const trackedTr = amendTransaction(transaction, this.view, "AuthorUser")
+      const {state: newState} = this.view.state.applyTransaction(trackedTr)
+      state = newState
+    } catch (e) {
+      console.log(e)
+      //just in case
+      state = this.state.apply(transaction);
+    }
     const selectionHasChanged = !this.state.selection.eq(state.selection);
 
     this.view.updateState(state);

@@ -34,6 +34,8 @@ export class Superdoc extends EventEmitter {
 
   documentMode;
 
+  version;
+
   constructor(config) {
     super();
     this.config = config;
@@ -56,6 +58,7 @@ export class Superdoc extends EventEmitter {
 
     this.app.config.globalProperties.$superdoc = this;
     this.superdocStore = superdocStore;
+    this.version = config.version;
 
     // Toolbar
     this.toolbarElement = config.toolbar;
@@ -67,6 +70,9 @@ export class Superdoc extends EventEmitter {
     // Directives
     this.app.mount(config.selector);
 
+    // Required editors
+    this.readyEditors = 0;
+
     this.users = [
       { name: 'Nick Bernal', email: 'nick@harbourshare.com' },
       { name: 'Artem Nistuley', email: 'nick@harbourshare.com' },
@@ -76,6 +82,16 @@ export class Superdoc extends EventEmitter {
 
     // If a toolbar element is provided, render a toolbar
     this.addToolbar(this);
+  }
+  get requiredNumberOfEditors() {
+    return this.superdocStore.documents.filter((d) => d.type === DOCX).length;
+  }
+
+  get state() {
+    return {
+      documents: this.superdocStore.documents,
+      users: this.users,
+    }
   }
 
   #preprocessDocuments(documents) {
@@ -94,7 +110,15 @@ export class Superdoc extends EventEmitter {
     });
   }
 
+  broadcastReady() {
+    if (this.readyEditors === this.requiredNumberOfEditors) {
+      this.emit('ready', { superdoc: this });
+    }
+  }
+
   broadcastEditorCreate(editor) {
+    this.readyEditors++;
+    this.broadcastReady();
     this.emit('editorCreate', { editor });
   }
 
@@ -120,6 +144,7 @@ export class Superdoc extends EventEmitter {
     const config = {
       element: this.toolbarElement || null,
       onToolbarCommand: this.onToolbarCommand.bind(this),
+      isDev: false,
     }
     this.toolbar = new SuperToolbar(config);
     this.toolbar.on('superdoc-command', this.onToolbarCommand.bind(this));

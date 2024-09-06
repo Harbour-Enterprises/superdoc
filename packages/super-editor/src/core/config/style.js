@@ -68,6 +68,36 @@ li.ProseMirror-selectednode:after {
   pointer-events: none;
 }
 
+.insertionMark {
+    &.inline {
+      &.hidden {
+        display: none;
+      }
+      &.normal {
+      }
+      &.highlighted {
+        border: 1px dashed #00853D;
+        background-color: #399C7222;
+        pointer-events: none;
+      }
+    }
+}
+
+.deletionMark {
+    &.inline {
+      &.hidden {
+        display: none;
+      }
+      &.normal {
+      }
+    }
+    &.widget {
+        border: 1px dashed #CB0E47;
+        background-color: #CB0E4722;
+        pointer-events: none;
+    }
+}
+
 /* Protect against generic img rules */
 img.ProseMirror-separator {
   display: inline !important;
