@@ -397,26 +397,6 @@ export class DocxExporter {
     const trackedMark = marks.find((m) => m.type === TrackInsertMarkName || m.type === TrackDeleteMarkName);
     const isInsert = trackedMark.type === TrackInsertMarkName;
 
-    //TODO this should use #outputHandleTextNode in the long run
-    let runProperties = null;
-    if (marks) {
-      const elements = [];
-
-      // Some marks have special handling - we process them here
-      elements.push(...this.#outputHandleMarks(marks));
-
-      const trackStyleMark = this.#createTrackStyleMark(marks)
-      if (trackStyleMark) {
-        elements.push(trackStyleMark);
-      }
-
-      runProperties = {
-        name: 'w:rPr',
-        type: 'element',
-        elements
-      }
-    }
-
     const trackedNode = {
       name: isInsert ? 'w:ins' : 'w:del',
       type: 'element',
@@ -430,7 +410,6 @@ export class DocxExporter {
           name: 'w:r',
           type: 'element',
           elements: [
-            runProperties,
             {
               name: isInsert ? 'w:t' : 'w:delText',
               type: 'element',

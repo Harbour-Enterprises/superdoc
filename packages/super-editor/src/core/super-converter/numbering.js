@@ -110,7 +110,7 @@ function _processListParagraphProperties(data) {
 
 function _processListRunProperties(data) {
   const { elements } = data;
-  const expectedTypes = ['w:rFonts', 'w:b', 'w:bCs', 'w:i', 'w:iCs', 'w:strike', 'w:dstrike', 'w:color', 'w:sz', 'w:szCs', 'w:u', 'w:bdr', 'w:shd', 'w:vertAlign', 'w:jc', 'w:spacing', 'w:w', ];
+  const expectedTypes = ['w:rFonts', 'w:b', 'w:bCs', 'w:i', 'w:iCs', 'w:strike', 'w:dstrike', 'w:color', 'w:sz', 'w:szCs', 'w:u', 'w:bdr', 'w:shd', 'w:vertAlign', 'w:jc', 'w:spacing', 'w:w', 'w:smallCaps'];
   const runProperties = {};
   if (!elements) return runProperties;
 

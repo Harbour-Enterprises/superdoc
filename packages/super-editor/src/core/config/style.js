@@ -76,8 +76,8 @@ li.ProseMirror-selectednode:after {
       &.normal {
       }
       &.highlighted {
-        border: 1px dashed #0f0;
-        background-color: #f0f0f0;
+        border: 1px dashed #00853D;
+        background-color: #399C7222;
         pointer-events: none;
       }
     }
@@ -92,8 +92,8 @@ li.ProseMirror-selectednode:after {
       }
     }
     &.widget {
-        border: 1px dashed #f00;
-        background-color: #f0f0f0;
+        border: 1px dashed #CB0E47;
+        background-color: #CB0E4722;
         pointer-events: none;
     }
 }

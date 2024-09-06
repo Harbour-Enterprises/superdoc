@@ -96,7 +96,7 @@ export class Editor extends EventEmitter {
     this.#createView();
     this.#initDefaultStyles();
     this.#injectCSS()
-
+    
     this.on('create', this.options.onCreate);
     this.on('update', this.options.onUpdate);
     this.on('selectionUpdate', this.options.onSelectionUpdate);
@@ -224,23 +224,24 @@ export class Editor extends EventEmitter {
     // Viewing mode: Not editable, no tracked changes, no comments
     if (this.documentMode === 'viewing') {
       this.unregisterPlugin('comments');
-      // this.unregisterPlugin('TrackChangesBase');
+      this.commands.toggleTrackChangesShowOriginal();
       this.setEditable(false, false);
     }
 
     // Suggesting: Editable, tracked changes plugin enabled, comments
     else if (this.documentMode === 'suggesting') {
       this.#registerPluginByNameIfNotExists('comments')
-      // this.#registerPluginByNameIfNotExists('TrackChangesBase');
-      // this.commands.enableTrackChanges();
+      this.#registerPluginByNameIfNotExists('TrackChangesBase');
+      this.commands.disableTrackChangesShowOriginal();
+      this.commands.enableTrackChanges();
       this.setEditable(true, false);
     }
 
     // Editing: Editable, tracked changes plguin disabled, comments
     else if (this.documentMode === 'editing') {
-      // this.#registerPluginByNameIfNotExists('TrackChangesBase');
+      this.#registerPluginByNameIfNotExists('TrackChangesBase');
       this.#registerPluginByNameIfNotExists('comments');
-      // this.commands.disableTrackChanges();
+      this.commands.disableTrackChanges();
       this.setEditable(true, false);
     }
   }
