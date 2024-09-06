@@ -125,8 +125,14 @@ export class DocxImporter {
   }
 
   #handleLineBreakNode(node) {
+    const attrs = {};
+    
+    const lineBreakType = node.attributes['w:type'];
+    if (lineBreakType) attrs['lineBreakType'] = lineBreakType;
+
     return {
       type: 'lineBreak',
+      attrs,
       content: [],
     }
   }
@@ -298,6 +304,7 @@ export class DocxImporter {
     const tPr = node.elements.find((el) => el.name === 'w:trPr');
     const rowHeightTag = tPr?.elements.find((el) => el.name === 'w:trHeight');
     const rowHeight = rowHeightTag?.attributes['w:val'];
+    console.debug('Row height:', rowHeightTag, rowHeight, tPr);
     const rowHeightRule = rowHeightTag?.attributes['w:hRule'];
 
     const borders = {};
@@ -305,7 +312,7 @@ export class DocxImporter {
     if (rowBorders?.insideV) borders['right'] = rowBorders.insideV;
     newNode.attrs['borders'] = borders;
 
-    if (rowHeight && newNode.attrs['rowHeight']) {
+    if (rowHeight) {
       newNode.attrs['rowHeight'] = twipsToPixels(rowHeight);
       console.debug('Row node:', newNode);
     }
@@ -322,6 +329,12 @@ export class DocxImporter {
     const tableBorders = tableBordersElement?.elements || [];
     const { borders, rowBorders } = this.#processTableBorders(tableBorders);
     const tblStyleTag = tblPr.elements.find((el) => el.name === 'w:tblStyle');
+    const tableStyleId = tblStyleTag?.attributes['w:val'];
+
+    // Other table properties
+    const tableIndent = tblPr?.elements.find((el) => el.name === 'w:tblInd');
+    const tableLayout = tblPr?.elements.find((el) => el.name === 'w:tblLayout');
+
     const referencedStyles = this.#getReferencedTableStyles(tblStyleTag);
 
     const tblW = tblPr.elements.find((el) => el.name === 'w:tblW');
@@ -346,6 +359,9 @@ export class DocxImporter {
         tableWidth,
         tableWidthType,
         gridColumnWidths,
+        tableStyleId,
+        tableIndent,
+        tableLayout,
         borders: borderData
       }
     }
@@ -504,6 +520,12 @@ export class DocxImporter {
     if ('attributes' in node) {
       const defaultStyleId = node.attributes['w:rsidRDefault'];
       const { lineSpaceAfter, lineSpaceBefore } = this.#getDefaultStyleDefinition(defaultStyleId);
+
+      const pPr = node.elements.find((el) => el.name === 'w:pPr');
+      const styleTag = pPr?.elements.find((el) => el.name === 'w:pStyle');
+      if (styleTag) {
+        schemaNode.attrs['styleId'] = styleTag.attributes['w:val'];
+      }
 
       if (!('attributes' in schemaNode)) schemaNode.attributes = {};
       schemaNode.attrs['paragraphSpacing'] = { lineSpaceAfter, lineSpaceBefore };

@@ -25,6 +25,9 @@ export const Table = Node.create({
       tableWidth: { default: '100%', },
       tableWidthType: { default: 'auto', },  
       gridColumnWidths: { default: [], },
+      tableStyleId: { rendered: false, },
+      tableIndent: { rendered: false, },
+      tableLayout: { rendered: false, },
       borders: {
         default: {},
         renderDOM({ borders = {} }) {

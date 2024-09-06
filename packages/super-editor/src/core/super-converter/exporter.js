@@ -1,45 +1,153 @@
 import { SuperConverter } from './SuperConverter.js';
 import { toKebabCase } from '@harbour-enterprises/common';
-import { inchesToTwips } from './helpers.js';
+import { inchesToTwips, pixelsToHalfPoints, pixelsToTwips } from './helpers.js';
 import { generateRandomId } from '@helpers/docxIdGenerator.js';
-import {
-  TrackDeleteMarkName,
-  TrackInsertMarkName,
-  TrackMarksMarkName
-} from "../../extensions/track-changes/constants.js";
 
 
+/**
+ * @typedef {Object} ExportParams
+ * @property {Object} node JSON node to translate (from PM schema)
+ * @property {Object} bodyNode The stored body node to restore, if available
+ * @property {Object[]} relationships The relationships to add to the document
+ */
+
+/**
+ * @typedef {Object} SchemaNode
+ * @property {string} type The name of this node from the prose mirror schema
+ * @property {Array<SchemaNode>} content The child nodes
+ * @property {Object} attrs The node attributes
+ * /
+
+/**
+ * @typedef {Object} XmlReadyNode
+ * @property {string} name The XML tag name
+ * @property {Array<XmlReadyNode>} elements The child nodes
+ * @property {Object} attributes The node attributes
+ */
+
+/**
+ * @typedef {Object.<string, *>} SchemaAttributes
+ * Key value pairs representing the node attributes from prose mirror
+ */
+
+/**
+ * @typedef {Object.<string, *>} XmlAttributes
+ * Key value pairs representing the node attributes to export to XML format
+ */
+
+/**
+ * @typedef {Object} MarkType
+ * @property {string} type The mark type
+ * @property {Object} attrs Any attributes for this mark
+ */
+
+
+
+/**
+ * Main export function. It expects the prose mirror data as JSON (ie: a doc node)
+ * 
+ * @param {ExportParams} params - The parameters object, containing a node and possibly a body node
+ * @returns {XmlReadyNode} The complete document node in XML-ready format
+ */
 export function exportSchemaToJson(params) {
-  console.debug('\nExporting schema to JSON:', params.node, '\n');
-  switch (params.node.type) {
-    case 'doc':
-      return translateDocumentNode(params);
-    case 'body':
-      return translateBodyNode(params);
-    case 'paragraph':
-      return translateParagraphNode(params);
+  // console.debug('\nExporting schema to JSON:', params.node, '\n');
+  const { type } = params.node;
+
+  // Node handlers for each node type that we can export
+  const router = {
+    doc: translateDocumentNode,
+    body: translateBodyNode,
+    paragraph: translateParagraphNode,
+    text: translateTextNode,
+    bulletList: translateList,
+    orderedList: translateList,
+    lineBreak: translateLineBreak,
+    table: translateTable,
+    tableRow: translateTableRow,
+    tableCell: translateTableCell,
+    bookmarkStart: translateBookmarkStart,
   }
+
+  if (!router[type]) {
+    console.error('No translation function found for node type:', type);
+    return null;
+  }
+
+  // Call the handler for this node type
+  return router[type](params);
 }
 
+/**
+ * There is no body node in the prose mirror schema, so it is stored separately
+ * and needs to be restored here.
+ * 
+ * @param {ExportParams} params 
+ * @returns {XmlReadyNode} JSON of the XML-ready body node
+ */
 function translateBodyNode(params) {
-  return {};
-  const sectPr = storedBody?.elements.find((n) => n.name === 'w:sectPr') || {};
-  console.debug('BODY NODE', params, sectPr,);
-  const elements = translateChildNodes(node.content);
+  const sectPr = params.bodyNode?.elements.find((n) => n.name === 'w:sectPr') || {};
+  const elements = translateChildNodes(params);
   return {
     name: 'w:body',
-    elements,
+    elements: [...elements, sectPr]
   }
 };
 
-function translateParagraphNode(node) {
+/**
+ * Translate a paragraph node
+ * 
+ * @param {ExportParams} node A prose mirror paragraph node
+ * @returns {XmlReadyNode} JSON of the XML-ready paragraph node
+ */
+function translateParagraphNode(params) { 
+  const elements = translateChildNodes(params);
+
+  // Insert paragraph properties at the beginning of the elements array
+  const pPr = generateParagraphProperties(params.node);
+  elements.unshift(pPr);
+  
   return {
     name: 'w:p',
-    elements: [],
-    attributes: processAttributes(node.attrs),
+    elements,
+    attributes: processAttributes(params.node.attrs),
   }
 };
 
+/**
+ * Generate the w:pPr props for a paragraph node
+ * 
+ * @param {SchemaNode} node 
+ * @returns {XmlReadyNode} The paragraph properties node
+ */
+function generateParagraphProperties(node) {
+  const { attrs } = node;
+
+  const pPrElements = [];
+
+  const { styleId } = attrs;
+  if (styleId) pPrElements.push({ name: 'w:pStyle', attributes: { 'w:val': styleId } });
+
+  const { lineHeight } = attrs;
+  if (lineHeight) {
+    const spacingElement = {
+      name: 'w:spacing',
+      attributes: { 'w:line': inchesToTwips(lineHeight) }
+    }
+    pPrElements.push(spacingElement);
+  }
+
+  return {
+    name: 'w:pPr',
+    elements: pPrElements,
+  };
+}
+
+/**
+ * Translate a document node
+ * 
+ * @param {ExportParams} params The parameters object
+ * @returns {XmlReadyNode} JSON of the XML-ready document node
+ */
 function translateDocumentNode(params) {
   const bodyNode = {
     type: 'body',
@@ -47,15 +155,24 @@ function translateDocumentNode(params) {
   }
 
   const translatedBodyNode = exportSchemaToJson({ ...params, node: bodyNode });
-  return {
+  const node = {
     name: 'w:document',
     elements: [translatedBodyNode],
-    attributes: node.attrs,
+    attributes: params.node.attrs.attributes,
   }
+  return [node, params];
 };
 
+/**
+ * The attributes to flatten and prepare for XML
+ * 
+ * @param {SchemaAttributes} attrs 
+ * @returns {XmlAttributes} The processed attributes
+ */
 function processAttributes(attrs) {
   let processedAttrs = {};
+  if (!attrs) return processedAttrs;
+
   Object.keys(attrs).forEach((key) => {
     const value = attrs[key];
     if (!value) return;
@@ -68,10 +185,574 @@ function processAttributes(attrs) {
   return processedAttrs;
 }
 
-function translateChildNodes(nodes) {
-  return nodes.map((node) => {
-    return exportSchemaToJson({ node });
-  }).filter((n) => n);
+/**
+ * Process child nodes, ignoring any that are not valid
+ * 
+ * @param {SchemaNode[]} nodes The input nodes
+ * @returns {XmlReadyNode[]} The processed child nodes
+ */
+function translateChildNodes(params) {
+  const { content: nodes } = params.node;
+  if (!nodes) return [];
+
+  const translatedNodes = [];
+  nodes.forEach((node) => {
+    const translatedNode = exportSchemaToJson({ ...params, node });
+    if (translatedNode instanceof Array) translatedNodes.push(...translatedNode);
+    else translatedNodes.push(translatedNode);
+  });
+
+  // Filter out any null nodes
+  return translatedNodes.filter((n) => n);
+}
+
+
+/**
+ * Translate a text node or link node.
+ * Link nodes look the same as text nodes but with a link attr.
+ * We need to check here and re-route as necessary
+ * 
+ * @param {ExportParams} params The text node to translate
+ * @param {SchemaNode} params.node The text node from prose mirror
+ * @returns {XmlReadyNode[]} The translated text node
+ */
+function translateTextNode(params) {
+  const { node } = params;
+  const isLinkNode = node.marks?.some((m) => m.type === 'link');
+  if (isLinkNode) return translateLinkNode(params);
+
+  const { text, marks = [] } = node;
+  const hasLeadingOrTrailingSpace = /^\s|\s$/.test(text);
+  const space = hasLeadingOrTrailingSpace ? 'preserve' : null;
+  const attrs = space ? { 'xml:space': space } : null;
+
+  const outputMarks = processOutputMarks(marks);
+  const textNode =  {
+    name: 'w:t',
+    text: node.text,
+    elements: [{ text: node.text, type: 'text' }],
+    attributes: attrs,
+  }
+
+  return wrapTextInRun(textNode, outputMarks);
+}
+
+/**
+ * Wrap a text node in a run
+ * 
+ * @param {XmlReadyNode} node 
+ * @returns {XmlReadyNode} The wrapped run node
+ */
+function wrapTextInRun(node, marks) {
+  const elements = [node];
+  if (marks && marks.length) elements.unshift(generateRunProps(marks));
+  return {
+    name: 'w:r',
+    elements,
+  }
+}
+
+/**
+ * Generate a w:rPr node (run properties) from marks
+ * 
+ * @param {Object[]} marks The marks to add to the run properties
+ * @returns 
+ */
+function generateRunProps(marks = []) {
+  return {
+    name: 'w:rPr',
+    elements: marks,
+  }
+}
+
+/**
+ * Get all marks as a list of MarkType objects
+ * 
+ * @param {MarkType[]} marks
+ * @returns 
+ */
+function processOutputMarks(marks = []) {
+  return marks.flatMap((mark) => {
+    if (mark.type === 'textStyle') {
+      return Object.entries(mark.attrs)
+        .filter(([key, value]) => value)
+        .map(([key, value]) => {
+          const unwrappedMark = { type: key, attrs: mark.attrs };
+          return translateMark(unwrappedMark);
+        });
+    } else {
+      return translateMark(mark);
+    }
+  });
+}
+
+/**
+ * Translate link node. This is a special case because it requires adding a new relationship.
+ * 
+ * @param {ExportParams} params 
+ * @returns {XmlReadyNode} The translated link node
+ */
+function translateLinkNode(params) {
+  const { node } = params;
+  const linkMark = node.marks.find((m) => m.type === 'link');
+  const link = linkMark.attrs.href;
+  const newId = addNewLinkRelationship(params, link);
+
+  node.marks = node.marks.filter((m) => m.type !== 'link');
+  const outputNode = exportSchemaToJson({ ...params, node });
+  const newNode = {
+    name: 'w:hyperlink',
+    type: 'element',
+    attributes: {
+      'r:id': newId,
+    },
+    elements: [outputNode]
+  }
+
+  return newNode;
+}
+
+/**
+ * Create a new link relationship and add it to the relationships array
+ * 
+ * @param {ExportParams} params 
+ * @param {string} link The URL of this link
+ * @returns {string} The new relationship ID
+ */
+function addNewLinkRelationship(params, link) {
+  const newId = 'rId' + generateRandomId();
+  params.relationships.push({
+    "type": "element",
+    "name": "Relationship",
+    "attributes": {
+        "Id": newId,
+        "Type": "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink",
+        "Target": link,
+        "TargetMode": "External"
+    }
+  });
+  return newId;
+}
+
+/**
+ * Translate a list node
+ * TODO: Need to reference numbering.xml for additinoal detail on list numbering
+ * 
+ * @param {ExportParams} params
+ * @returns {XmlReadyNode} The translated list node
+ */
+function translateList(params) {
+  const { content, type } = params.node;
+  const flatContent = flattenContent(content);
+
+  const listNodes = [];
+  flatContent.forEach((listNode) => {
+    const { content, level } = listNode;
+    content.forEach((contentNode) => {
+      const outputNode = exportSchemaToJson({ ...params, node: contentNode });
+      const pPr = getListParagraphProperties(listNode, level);
+      outputNode.elements.unshift(pPr);
+      listNodes.push(outputNode);
+    })
+  })
+  
+  return listNodes;
+}
+
+/**
+ * Get the paragraph properties for a list
+ * 
+ * @param {SchemaNode} node The list node
+ * @param {number} level The list level
+ * @returns {XmlReadyNode} The list paragraph properties node
+ */
+function getListParagraphProperties(node, level) {
+  const { type } = node;
+  const listType = type === 'bulletList' ? 1 : 2;
+  return {
+    name: 'w:pPr',
+    type: 'element',
+    elements: [
+      {
+        name: 'w:numPr',
+        type: 'element',
+        elements: [
+          {
+            name: 'w:ilvl',
+            type: 'element',
+            attributes: { 'w:val': level },
+          },
+          {
+            name: 'w:numId',
+            type: 'element',
+            attributes: { 'w:val': listType },
+          }
+        ]
+      }
+    ]
+  }
+};
+
+/**
+ * Flatten list nodes for processing.
+ * 
+ * @param {SchemaNode[]} content List of list nodes
+ * @returns {SchemaNode[]} The flattened list nodes
+ */
+function flattenContent(content) {
+  const flatContent = [];
+
+  function recursiveFlatten(items, level = 0) {
+    if (!items || !items.length) return;
+    items.forEach((item) => {
+      const subList = item.content.filter((c) => c.type === 'bulletList' || c.type === 'orderedList');
+      const notLists = item.content.filter((c) => c.type !== 'bulletList' && c.type !== 'orderedList');
+
+      const newItem = { ...item, content: notLists };
+      newItem.level = level;
+      flatContent.push(newItem);
+
+      if (subList.length) {
+        recursiveFlatten(subList[0].content, level + 1);
+      }
+    })
+  }
+
+  recursiveFlatten(content);
+  return flatContent;
+}
+
+/**
+ * Translate a line break node
+ * 
+ * @param {ExportParams} params
+ * @returns {XmlReadyNode}
+ */
+function translateLineBreak(params) {
+  const attributes = {}
+
+  const { lineBreakType } = params.node.attrs;
+  if (lineBreakType) {
+    attributes['w:type'] = lineBreakType;
+  }
+
+  return {
+    name: 'w:br',
+    attributes,
+  }
+}
+
+/**
+ * Translate a table node
+ * 
+ * @param {ExportParams} params The table node to translate
+ * @returns {XmlReadyNode} The translated table node
+ */
+function translateTable(params) {
+  const elements = translateChildNodes(params);
+  const tableProperties = generateTableProperties(params.node);
+  const gridProperties = generateTableGrid(params.node);
+
+  elements.unshift(tableProperties);
+  elements.unshift(gridProperties);
+  return {
+    name: 'w:tbl',
+    elements,
+  }
+}
+
+/**
+ * Generate w:tblPr properties node for a table
+ * 
+ * @param {SchemaNode} node 
+ * @returns {XmlReadyNode} The table properties node
+ */
+function generateTableProperties(node) {
+  const elements = [];
+  
+  const { attrs } = node;  
+  const {
+    tableWidth,
+    tableWidthType,
+    tableStyleId,
+    borders,
+    tableIndent,
+    tableLayout,
+  } = attrs;
+
+  if (tableStyleId) {
+    const tableStyleElement = {
+      name: 'w:tblStyle',
+      attributes: { 'w:val': tableStyleId }
+    }
+    elements.push(tableStyleElement);
+  }
+  
+  if (borders) {
+    const borderElement = generateTableBorders(node);
+    elements.push(borderElement);
+  }
+
+  if (tableIndent) {
+    const tableIndentElement = {
+      name: 'w:tblInd',
+      attributes: { 'w:w': tableIndent }
+    }
+    elements.push(tableIndentElement);
+  }
+
+  if (tableLayout) {
+    const tableLayoutElement = {
+      name: 'w:tblLayout',
+      attributes: { 'w:type': tableLayout }
+    }
+    elements.push(tableLayoutElement);
+  }
+
+  const tableWidthElement = {
+    name: 'w:tblW',
+    attributes: { 'w:w': inchesToTwips(tableWidth), 'w:type': tableWidthType }
+  }
+  elements.push(tableWidthElement);
+
+  return {
+    name: 'w:tblPr',
+    elements,
+  }
+}
+
+/**
+ * Generate w:tblBorders properties node for a table
+ * 
+ * @param {SchemaNode} node 
+ * @returns {XmlReadyNode} The table borders properties node
+ */
+function generateTableBorders(node) {
+  const { borders } = node.attrs;
+  const elements = [];
+
+  if (!borders) return;
+
+  const borderTypes = ['top', 'bottom', 'left', 'right', 'insideH', 'insideV'];
+  borderTypes.forEach((type) => {
+    const border = borders[type];
+    if (!border) return;
+    const borderElement = {
+      name: `w:${type}`,
+      attributes: {
+        'w:val': 'single',
+        'w:sz': pixelsToHalfPoints(border.size),
+        'w:space': border.space || 0,
+        'w:color': border.color,
+      }
+    }
+    elements.push(borderElement);
+  });
+
+  return {
+    name: 'w:tblBorders',
+    elements,
+  }
+}
+
+/**
+ * Generate w:tblGrid properties node for a table
+ * 
+ * @param {SchemaNode} node 
+ * @returns {XmlReadyNode} The table grid properties node
+ */
+function generateTableGrid(node) {
+  const { gridColumnWidths } = node.attrs;
+
+  const elements = [];
+  gridColumnWidths.forEach((width) => {
+    elements.push({
+      name: 'w:gridCol',
+      attributes: { 'w:w': inchesToTwips(width) }
+    })
+  });
+
+  return {
+    name: 'w:tblGrid',
+    elements,
+  }
+}
+
+/**
+ * Main translation function for a table row
+ * 
+ * @param {ExportParams} params 
+ * @returns {XmlReadyNode} The translated table row node
+ */
+function translateTableRow(params) {  
+  const elements = translateChildNodes(params);
+  const tableRowProperties = generateTableRowProperties(params.node);
+  if (tableRowProperties.elements.length) elements.unshift(tableRowProperties);
+
+  return {
+    name: 'w:tr',
+    elements,
+  }
+}
+
+function generateTableRowProperties(node) {
+  const { attrs } = node;
+  const elements = [];
+
+  const { rowHeight, rowHeightType } = attrs;
+  if (rowHeight) {
+    const attributes = { 'w:val': pixelsToTwips(rowHeight) };
+    if (rowHeightType) attributes['w:hRule'] = rowHeightType;
+
+    const rowHeightElement = {
+      name: 'w:trHeight',
+      attributes,
+    }
+    elements.push(rowHeightElement);
+  };
+
+  console.debug('\n\n\nTable row properties:', elements, '\n\n\n');
+  return {
+    name: 'w:trPr',
+    elements,
+  }
+}
+
+/**
+ * Main translation function for a table cell
+ * 
+ * @param {ExportParams} params
+ * @returns {XmlReadyNode} The translated table cell node
+ */
+function translateTableCell(params) {
+  const elements = translateChildNodes(params);
+  const cellProps = generateTableCellProperties(params.node);
+  elements.unshift(cellProps);
+  return {
+    name: 'w:tc',
+    elements,
+  }
+}
+
+/**
+ * Generate w:tcPr properties node for a table cell
+ * 
+ * @param {SchemaNode} node
+ * @returns {XmlReadyNode} The table cell properties node
+ */
+function generateTableCellProperties(node) {
+  const elements = [];
+  const { attrs } = node;
+  const { width, cellWidthType = 'dxa', background = {}, colspan } = attrs;
+
+  const cellWidthElement = {
+    name: 'w:tcW',
+    attributes: { 'w:w': inchesToTwips(width), 'w:type': cellWidthType }
+  }
+  elements.push(cellWidthElement);
+
+  if (colspan) {
+    const gridSpanElement = {
+      name: 'w:gridSpan',
+      attributes: { 'w:val': colspan }
+    }
+    elements.push(gridSpanElement);
+  }
+
+  const { color } = background;
+  if (color) {
+    const cellBgElement = {
+      name: 'w:shd',
+      attributes: { 'w:fill': color }
+    }
+    elements.push(cellBgElement);
+  }
+
+  const { verticalAlign } = attrs;
+  if (verticalAlign) {
+    const vertAlignElement = {
+      name: 'w:vAlign',
+      attributes: { 'w:val': verticalAlign }
+    }
+    elements.push(vertAlignElement);
+  }
+
+  return {
+    name: 'w:tcPr',
+    elements,
+  }
+}
+
+/**
+ * Translate bookmark start node
+ * 
+ * @param {ExportParams} params
+ * @returns {XmlReadyNode} The translated bookmark node
+ */
+function translateBookmarkStart(params) {
+  console.debug('\n BOOK MARK START', params.node, '\n')
+}
+
+/**
+ * Translate a mark to an XML ready attribute
+ * 
+ * @param {MarkType} mark 
+ * @returns 
+ */
+function translateMark(mark) {
+  const xmlMark = SuperConverter.markTypes.find((m) => m.type === mark.type);
+  const markElement = { name: xmlMark.name, attributes: {} };
+
+  const { attrs } = mark;
+  let value;
+
+  switch (mark.type) {
+    case 'bold':
+    case 'italic':
+      delete markElement.attributes; 
+      markElement.type = 'element';
+      break;
+    
+    case 'underline':
+      markElement.type = 'element';
+      markElement.attributes['w:val'] = attrs.underlineType;
+      break;
+
+    // Text style cases
+    case 'fontSize':
+      value = attrs.fontSize;
+      markElement.attributes['w:val'] = value.slice(0, -2) * 2; // Convert to half-points
+      break;
+    
+    case 'fontFamily':
+      value = attrs.fontFamily;
+      ['w:ascii', 'w:eastAsia', 'w:hAnsi', 'w:cs'].forEach((attr) => {
+        markElement.attributes[attr] = value;
+      });
+      break;
+
+    case 'color':
+      let processedColor = attrs.color.replace(/^#/, '').replace(/;$/, ''); // Remove `#` and `;` if present
+      markElement.attributes['w:val'] = processedColor;
+      break;
+
+    case 'textAlign':
+      markElement.attributes['w:val'] = attrs.textAlign;
+      break;
+
+    case 'textIndent':
+      markElement.attributes['w:firstline'] = inchesToTwips(attrs.textIndent);
+      break;
+
+    case 'lineHeight':
+      markElement.attributes['w:line'] = inchesToTwips(attrs.lineHeight);
+      break;
+
+    case 'link':
+      break;
+  }
+
+  return markElement;
 }
 
 
@@ -79,317 +760,6 @@ export class DocxExporter {
 
   constructor(converter) {
     this.converter = converter;
-  }
-
-  getTagName(name) {
-    const keys = Object.keys(SuperConverter.allowedElements)
-    return keys.find(key => SuperConverter.allowedElements[key] === name);
-  }
-    
-  outputToJson(data) {
-    const firstElement = data;
-    const result = {
-      declaration: this.converter.declaration,
-      elements: this.#outputProcessNodes([firstElement]),
-    }
-    return result;
-  }
-
-  #getValidMarks(node) {
-    const { attrs } = node;
-    return Object.keys(attrs)
-        .filter((key) => SuperConverter.markTypes.find((m) => m.type === key && attrs[key]))
-        .map((key) => {
-          return { type: key, attrs: { [key]: attrs[key] } };
-        });
-  }
-
-  /**
-   *
-   * @param marks
-   * @returns {undefined|{elements: *[], name: string, attributes: {}, type: string}}
-   */
-  #createTrackStyleMark(marks) {
-    const trackStyleMark = marks.find(mark => mark.type === TrackMarksMarkName);
-    if (trackStyleMark) {
-      const markElement = {
-        type: 'element',
-        name: 'w:rPrChange', attributes: {
-          'w:id': trackStyleMark.attrs.wid,
-          'w:author': trackStyleMark.attrs.author,
-          'w:date': trackStyleMark.attrs.date,
-        },
-        elements: trackStyleMark.attrs.before
-            .map(mark => this.#mapOutputMarkToElement(mark))
-            .filter(r => r !== undefined)
-      };
-      return markElement;
-    }
-    return undefined;
-  }
-
-  #outputProcessNodes(nodes, parent = null) {
-    const resultingElements = [];
-    let index = 0;
-
-    for (let node of nodes) {
-      if (node.seen) continue;
-      let skip = false;
-
-      // Special output handling
-      let resultingNode;
-      switch (node.type) {
-        case 'doc':
-          resultingNode = this.#outputHandleDocumentNode(node);
-          break;
-        case 'text':
-          if(node.marks?.some((m) => m.type === TrackInsertMarkName || m.type === TrackDeleteMarkName)) {
-            resultingNode = this.#outputHandleTrackedNode(node);
-            skip = true;
-          } else if (node.marks?.some((m) => m.type === 'link')) {
-            index++;
-            // const linkNodes = this.#outputHandleLinkNode(node);
-            // resultingElements.push(...linkNodes);
-
-            const newNode = this.#outputHandleLinkNode(node);
-            resultingElements.push(newNode);
-            continue;
-          } else if (!node.seen) {
-            resultingNode = this.#outputHandleTextNode(nodes.slice(index));
-          }
-          skip = true;
-          break;
-        case 'orderedList':
-          this.#outputProcessList(node, resultingElements);
-          skip = true;
-          break;
-        case 'bulletList':
-          this.#outputProcessList(node, resultingElements)
-          skip = true;
-          break;
-        case 'body':
-          break
-        default:
-          // console.debug("\n\n OTHER NODE", node.type, node, '\n\n')
-          break;
-      }
-
-      let name = this.getTagName(node.type);
-      if (!skip) {
-        const { content, attrs } = node;
-        let attributes = attrs?.attributes || {};
-
-        let nodeContents = [];
-        if (content && content.length) nodeContents.push(...this.#outputProcessNodes(content, node));
-
-        resultingNode = this.#getOutputNode(name, nodeContents, attributes);
-        const sectionProperties = attributes?.sectionProperties;
-        if (sectionProperties) {
-          delete resultingNode.attributes;
-          resultingNode.elements.push(sectionProperties)
-        }
-
-        if (node.type === 'paragraph') {
-          const marks = this.#getValidMarks(node);
-          const markElements = [];
-
-          if (marks) {
-            marks.forEach((mark) => {
-              const markElement = this.#mapOutputMarkToElement(mark);
-
-              if (mark.type === 'textIndent' && markElement) {
-                markElements.unshift(markElement);
-              } else markElements.push(markElement);
-            });
-
-            const pPr = {
-              name: 'w:pPr',
-              type: 'element',
-              elements: markElements,
-            }
-
-            const hasIndent = markElements.find((m) => m.name === 'w:ind');
-            resultingNode.elements.unshift(pPr);
-          }
-        }
-      }
-      
-      index++;
-
-      const skipNodes = ['bulletList', 'orderedList'];
-      if (!skipNodes.includes(node.type)) resultingElements.push(resultingNode);
-      if (SuperConverter.elements.has(name)) resultingNode.type = 'element';
-    }
-
-    return resultingElements;
-  }
-
-  /**
-   *
-   * @param mark
-   * @returns {{type: string | *, name: string | *, attributes?: {}} | undefined}
-   */
-  #mapOutputMarkToElement(mark) {
-    const xmlMark = SuperConverter.markTypes.find((m) => m.type === mark.type);
-    if(!xmlMark) return undefined;
-    const markElement = { name: xmlMark.name, attributes: {} };
-
-    let value;
-    switch (mark.type) {
-      case 'bold':
-        delete markElement.attributes
-        markElement.type = 'element';
-        break;
-      case 'italic':
-        delete markElement.attributes
-        markElement.type = 'element';
-        break;
-      case 'underline':
-        markElement.type = 'element';
-        markElement.attributes['w:val'] = mark.attrs.underlineType;
-        break;
-      
-      // Cases for text styles
-      case 'fontSize':
-        value = mark.attrs.fontSize;
-        markElement.attributes['w:val'] = value.slice(0, -2) * 2;
-        break;
-      case 'fontFamily':
-        value = mark.attrs.fontFamily;
-        markElement.attributes['w:ascii'] = value;
-        markElement.attributes['w:eastAsia'] = value;
-        markElement.attributes['w:hAnsi'] = value;
-        markElement.attributes['w:cs'] = value;
-        break;
-      case 'color':
-        let processedColor = mark.attrs.color;
-        if (processedColor.startsWith('#')) processedColor = processedColor.slice(1);
-        if (processedColor.endsWith(';')) processedColor = processedColor.slice(0, -1);
-        markElement.attributes['w:val'] = processedColor;
-        break;
-      case 'textAlign':
-        markElement.attributes['w:val'] = mark.attrs.textAlign;
-        break;
-      case 'textIndent':
-        markElement.attributes['w:firstline'] = inchesToTwips(mark.attrs.textIndent);
-        break;
-      case 'lineHeight':
-        markElement.attributes['w:line'] = inchesToTwips(mark.attrs.lineHeight);
-        break;
-      case 'link':
-        break;
-    }
-
-    return markElement;
-  }
-
-  #updateListLevel(element, level) {
-    const styleElement = element.elements.find((e) => e.name === 'w:numPr');
-    const iLvl = styleElement.elements.find((e) => e.name === 'w:ilvl');
-    iLvl.attributes['w:val'] = level;
-  }
-  
-  #outputProcessList(node, resultingElements) {
-    const { content, attrs } = node;
-    const listType = attrs['list-style-type'];
-  
-    // Each item in the content becomes its own paragraph item in the output
-    const flatContent = this.#flattenContent(content);
-    const paragraphProperties = node.attrs.attributes?.parentAttributes?.paragraphProperties;
-    
-    console.debug('\n\n\n ❗️ Flat content:', flatContent, '\n\n')
-    flatContent.forEach((n, index) => {
-      const pPr = JSON.parse(JSON.stringify(paragraphProperties));
-      n.attrs = { ...n.attrs, ...attrs };
-
-      this.#updateListLevel(pPr, n.level);
-      const parentAttributes = {
-        ...attrs.attributes.parentAttributes,
-        paragraphProperties: pPr,
-      }
-      n.attrs.attributes = { parentAttributes };
-
-      const output = this.#convertListItemForOutput(n);
-      resultingElements.push(output);
-    })
-
-  }
-
-  #convertListItemForOutput(n) {
-
-    const textElements = [];
-    n.content.forEach((c) => {
-      if (!c.content) return;
-      textElements.push(...c.content);
-    });
-
-    const elements = [];
-    let parentAttributes = null;
-    parentAttributes = n.attrs.attributes?.parentAttributes || {};
-    const { paragraphProperties } = parentAttributes;
-
-    if (paragraphProperties) {
-      elements.push(paragraphProperties);
-      delete parentAttributes.paragraphProperties;
-    }
-
-    const processedElements = this.#outputProcessNodes(textElements);
-    elements.push(...processedElements);
-    return {
-      name: 'w:p',
-      type: 'element',
-      attributes: parentAttributes,
-      elements,
-    };
-  }
-
-  #flattenContent(content, level = 0) {
-    const flatContent = [];
-
-    function recursiveFlatten(items, level = 0) {
-      if (!items || !items.length) return;
-      items.forEach((item) => {
-        const subList = item.content.filter((c) => c.type === 'bulletList' || c.type === 'orderedList');
-        const notLists = item.content.filter((c) => c.type !== 'bulletList' && c.type !== 'orderedList');
-
-        const newItem = { ...item, content: notLists };
-        newItem.level = level;
-        flatContent.push(newItem);
-
-        if (subList.length) {
-          recursiveFlatten(subList[0].content, level + 1);
-        }
-      })
-    }
-
-    recursiveFlatten(content);
-    return flatContent;
-  }
-
-  #getOutputNode(name, elements, attributes = {}) {
-    return {
-      name,
-      elements,
-      attributes: Object.keys(attributes).length ? attributes : undefined,
-      type: 'element',
-    }
-  }
-
-  #outputHandleDocumentNode(node) {
-    // Restore section props
-    const storedBody = this.converter.savedTagsToRestore.find((n) => n.name === 'w:body');
-    const sectPr = storedBody.elements.find((n) => n.name === 'w:sectPr');
-    const bodyNode = {
-      type: 'body',
-      content: node.content,
-      attrs: {
-        attributes: {
-          sectionProperties: sectPr
-        },
-      }
-    }
-    node.content = [bodyNode];
-    return node;
   }
 
   // Currently for hyperlinks but there will be other uses
@@ -410,211 +780,6 @@ export class DocxExporter {
     }
   }
 
-  // #outputHandleLinkNode(node) {
-
-  //   let marks = [...node.marks];
-  //   const linkMarkIndex = marks.findIndex((m) => m.type === 'link');
-  //   const linkMark = marks[linkMarkIndex];
-  //   marks.splice(linkMarkIndex, 1);
-
-  //   const processedMarks = this.#outputHandleMarks(marks);
-  //   node.marks = node.marks.filter((m) => m.type !== 'link');
-
-  //   const name = this.getTagName('run');
-  //   const begin = this.#generateFldCharNode('begin');
-  //   const instrText = this.#generateInstrText(`HYPERLINK "${linkMark.attrs.href}" \\h`);
-  //   const separate = this.#generateFldCharNode('separate');
-
-  //   // Generate the text node and append marks as run properties
-  //   const text = this.#getOutputNode(name, [this.#getOutputNode('w:t', [node], {})], {})
-    
-  //   const rPr = this.#getOutputNode('w:rPr', processedMarks, {});
-  //   if (rPr.elements.length) text.elements.unshift(rPr);
-
-  //   const end = this.#generateFldCharNode('end');
-  //   const nodes = [begin, instrText, separate, text, end];
-
-  //   return nodes.map((n) => ({ ...n, seen: true }));
-  // }
-
-  #addNewLinkRelationship(link) {
-    console.debug('Adding new link relationship:', link);
-    const newId = 'rId' + generateRandomId();
-    const relationship = {
-      "type": "element",
-      "name": "Relationship",
-      "attributes": {
-          "Id": newId,
-          "Type": "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink",
-          "Target": link,
-          "TargetMode": "External"
-      }
-    }
-    const relsData = this.converter.convertedXml['word/_rels/document.xml.rels'];
-    const relationships = relsData.elements.find(x => x.name === 'Relationships');
-    relationships.elements.push(relationship);
-    this.converter.convertedXml['word/_rels/document.xml.rels'] = relsData;
-    return newId;
-  }
-
-
-  #outputHandleTrackedNode(node) {
-    const text = node.text;
-    const marks = node.marks;
-    const trackedMark = marks.find((m) => m.type === TrackInsertMarkName || m.type === TrackDeleteMarkName);
-    const isInsert = trackedMark.type === TrackInsertMarkName;
-
-    //TODO this should use #outputHandleTextNode in the long run
-    let runProperties = null;
-    if (marks) {
-      const elements = [];
-
-      // Some marks have special handling - we process them here
-      elements.push(...this.#outputHandleMarks(marks));
-
-      const trackStyleMark = this.#createTrackStyleMark(marks)
-      if (trackStyleMark) {
-        elements.push(trackStyleMark);
-      }
-
-      runProperties = {
-        name: 'w:rPr',
-        type: 'element',
-        elements
-      }
-    }
-
-    const trackedNode = {
-      name: isInsert ? 'w:ins' : 'w:del',
-      type: 'element',
-      attributes: {
-        'w:id': trackedMark.attrs.wid,
-        'w:author': trackedMark.attrs.author,
-        'w:date': trackedMark.attrs.date,
-      },
-      elements: [
-        {
-          name: 'w:r',
-          type: 'element',
-          elements: [
-            runProperties,
-            {
-              name: isInsert ? 'w:t' : 'w:delText',
-              type: 'element',
-              attributes: { 'xml:space': 'preserve' },
-              elements: [{ text, type: 'text' }]
-            }
-          ]
-        }
-      ]
-    }
-    return trackedNode;
-  }
-
-  #outputHandleLinkNode(node) {
-    const linkMark = node.marks.find((m) => m.type === 'link');
-    const link = linkMark.attrs.href;
-    const newId = this.#addNewLinkRelationship(link);
-
-    node.marks = node.marks.filter((m) => m.type !== 'link');
-    const outputNode = this.#outputProcessNodes([node]);
-    const newNode = {
-      name: 'w:hyperlink',
-      type: 'element',
-      attributes: {
-        'r:id': newId,
-      },
-      elements: outputNode
-    }
-    return newNode;
-  }
-
-  #outputHandleMarks(marks) {
-    const elements = [];
-    marks.forEach((mark) => {
-      console.debug('-- OUTPUT MARK', mark)
-
-      if (mark.type === 'textStyle') {
-        Object.keys(mark.attrs).forEach((key) => {
-          const value = mark.attrs[key];
-          if (!value) return;
-          const unwrappedMark = {
-            type: key,
-            attrs: mark.attrs,
-          }
-          const markElement = this.#mapOutputMarkToElement(unwrappedMark);
-          if(markElement){
-            elements.push(markElement);
-          }
-        });
-      } 
-
-      // All other marks
-      else {
-        const markElement = this.#mapOutputMarkToElement(mark);
-        if(markElement) {
-          elements.push(markElement);
-        }
-      }
-    });
-    return elements;
-  }
-
-  #outputHandleTextNode(nodes) {
-    const groupedTextNodes = [];
-    let index = 0;
-    let groupedNode = nodes[index];
-    const attrs = groupedNode?.attrs;
-    const marks = groupedNode?.marks;
-
-    let runProperties = null;
-    if (marks) {
-      const elements = [];
-
-      // Some marks have special handling - we process them here
-      elements.push(...this.#outputHandleMarks(marks));
-
-      const trackStyleMark = this.#createTrackStyleMark(marks)
-      if (trackStyleMark) {
-        elements.push(trackStyleMark);
-      }
-
-      runProperties = {
-        name: 'w:rPr',
-        type: 'element',
-        elements
-      }
-    }
-
-    while (groupedNode?.type === 'text' && groupedNode.attrs === attrs && groupedNode.marks === marks) {
-      groupedNode.seen = true;
-      groupedTextNodes.push(groupedNode);
-      groupedNode = nodes[++index];
-    }
-    
-    const nodeContents = groupedTextNodes.map((n) => { 
-      const { text } = n;
-      const hasLeadingOrTrailingSpace = /^\s|\s$/.test(text);
-      const space = hasLeadingOrTrailingSpace ? 'preserve' : null;
-      const attrs = space ? { 'xml:space': space } : null;
-
-      const newNode = {
-        type: 'element',
-        name: 'w:t',
-        elements: [{ text: n.text, type: 'text' }]
-      }
-      if (attrs && Object.keys(attrs).length) newNode.attributes = attrs;
-      return newNode;
-    });
-
-    if (runProperties && runProperties.elements.length) {
-      nodeContents.unshift(runProperties);
-    }
-    const name = this.getTagName('run');
-    const output = this.#getOutputNode(name, nodeContents, attrs);
-    return output;
-  }
-
   schemaToXml(data) {
     console.debug('[SuperConverter] schemaToXml:', data);
     const result = this.#generate_xml_as_list(data);
@@ -624,10 +789,9 @@ export class DocxExporter {
 
   #generate_xml_as_list(data) {
     const json = JSON.parse(JSON.stringify(data));
-    const firstElement = json.elements[0];
     const declaration = this.converter.declaration.attributes;    
     const xmlTag = `<?xml${Object.entries(declaration).map(([key, value]) => ` ${key}="${value}"`).join('')}?>`;
-    const result = this.#generateXml(firstElement);
+    const result = this.#generateXml(json);
     const final = [xmlTag, ...result];
     return final;
   }

@@ -163,21 +163,29 @@ class SuperConverter {
   }
 
   schemaToXml(data) {
-    // const exporter = new DocxExporter(this);
-    // return exporter.schemaToXml(data);
+    const exporter = new DocxExporter(this);
+    return exporter.schemaToXml(data);
   }
 
   exportToDocx(jsonData) {
-    console.debug('ORIGINAL', this.xml)
     const bodyNode = this.savedTagsToRestore.find((el) => el.name === 'w:body');
-    console.debug('\n\n EXPORT TO DOCX bodyNode', bodyNode,'\n\n')
-    const result = exportSchemaToJson({ node: jsonData, bodyNode });
-    console.debug('\n\n EXPORT RESULT', result,'\n\n')
+    const [result, params] = exportSchemaToJson({ node: jsonData, bodyNode, relationships: [] });
+
     const exporter = new DocxExporter(this);
-    // const jsonOutput = exporter.outputToJson(jsonData);
     const xml = exporter.schemaToXml(result);
-    console.debug('\n\n EXPORT TO DOCX XML', xml,'\n\n')
+    console.debug('XML', xml);
+    
+    // Update the rels table
+    this.#exportProcessNewRelationships(params.relationships);
+
     return xml;
+  }
+
+  #exportProcessNewRelationships(rels = []) {
+    const relsData = this.convertedXml['word/_rels/document.xml.rels'];
+    const relationships = relsData.elements.find(x => x.name === 'Relationships');
+    relationships.elements.push(...rels);
+    this.convertedXml['word/_rels/document.xml.rels'] = relsData;
   }
 }
 

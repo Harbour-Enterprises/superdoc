@@ -13,6 +13,11 @@ function twipsToPixels(twips) {
   return (twips * 96).toFixed(2);
 }
 
+function pixelsToTwips(pixels) {
+  pixels = pixels / 96;
+  return inchesToTwips(pixels);
+}
+
 function halfPointToPixels(halfPoints) {
   return (96 / 72).toFixed(2)
 }
@@ -23,10 +28,16 @@ function emuToPixels(emu) {
   return pixels.toFixed(2);
 }
 
+function pixelsToHalfPoints(pixels) {
+  return (pixels * 72 / 96).toFixed(2);
+}
+
 export {
   inchesToTwips,
   twipsToInches,
   twipsToPixels,
+  pixelsToTwips,
   halfPointToPixels,
-  emuToPixels
+  emuToPixels,
+  pixelsToHalfPoints
 }

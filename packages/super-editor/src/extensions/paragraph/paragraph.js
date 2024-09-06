@@ -1,4 +1,5 @@
 import { Node, Attribute } from '@core/index.js';
+import { style } from '../../core/config/style';
 
 export const Paragraph = Node.create({
   name: 'paragraph',
@@ -22,6 +23,7 @@ export const Paragraph = Node.create({
       paragraphSpacing: {
         renderDOM: (attrs) => {
           const { paragraphSpacing } = attrs;
+          console.debug('\n\n\n SPACING NODE', attrs)
           if (!paragraphSpacing) return {};
 
           const { lineSpaceBefore, lineSpaceAfter } = paragraphSpacing;
@@ -35,6 +37,7 @@ export const Paragraph = Node.create({
         },
       },
 
+      styleId: { rendered: false, },
       attributes: {
         rendered: false,
       },

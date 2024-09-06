@@ -41,6 +41,14 @@ export const TableCell = Node.create({
           const style = `background-color: #${color || 'transparent'};`;
           return { style };
         }
+      },
+      verticalAlign: { 
+        renderDOM({ verticalAlign }) {
+          if (!verticalAlign) return {};
+          const style = `vertical-align: ${verticalAlign};`;
+          console.debug('VERTICAL ALIGN', style)
+          return { style };
+        }
       }
       // colwidth: {
       //   default: '300px',

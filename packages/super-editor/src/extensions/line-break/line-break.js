@@ -14,4 +14,10 @@ export const LineBreak = Node.create({
   renderDOM() {
     return ['br', {}, 0];
   },
+
+  addAttributes() {
+    return {
+      lineBreakType: { default: null },
+    }
+  }
 });

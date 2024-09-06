@@ -84,10 +84,6 @@ class DocxZipper {
     Object.keys(updatedDocs).forEach((key) => {
       unzippedOriginalDocx.file(key, updatedDocs[key]);
     });
-  
-    // Replace the document file in the new zip
-    // unzippedOriginalDocx.file("word/document.xml", newDocumentXmlContent);
-    // unzippedOriginalDocx.file("word/_rels/document.xml.rels", rels);
 
     // Zip it up again and return
     return await unzippedOriginalDocx.generateAsync({ type: "blob" })

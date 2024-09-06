@@ -625,7 +625,7 @@ export class Editor extends EventEmitter {
   async exportDocx() {
     const docx = this.converter.exportToDocx(this.getJSON());
     const relsData = this.converter.convertedXml['word/_rels/document.xml.rels'];
-    const rels = this.converter.schemaToXml(relsData);
+    const rels = this.converter.schemaToXml(relsData.elements[0]);
     const docs = {
       'word/document.xml': String(docx),
       'word/_rels/document.xml.rels': String(rels),
