@@ -64,9 +64,6 @@ export class DocxImporter {
           continue;
         case 'w:p':
           schemaNode = this.#handleParagraphNode(node, elements, index);
-          if (schemaNode.attrs?.indent) {
-            console.debug('Paragraph indent:', schemaNode);
-          }
           break;
         case 'w:t':
           schemaNode = this.#handleTextNode(node);
@@ -88,8 +85,10 @@ export class DocxImporter {
           schemaNode = this.#handleTableNode(node);
           break;
         case 'w:tr':
+          // Table rows are processed from inside the table node
           return [];
         case 'w:tc':
+          // Table cells are processed from inside the table row node
           return [];
         case 'w:drawing':
           schemaNode = this.#handleDrawingNode(node);
