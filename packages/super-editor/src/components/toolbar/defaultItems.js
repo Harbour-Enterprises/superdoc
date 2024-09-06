@@ -9,7 +9,7 @@ import LinkInput from "./LinkInput.vue";
 import DocumentMode from "./DocumentMode.vue";
 
 
-export const makeDefaultItems = (superToolbar) => {
+export const makeDefaultItems = (superToolbar, isDev = false) => {
   // bold
   const bold = useToolbarItem({
     type: "button",
@@ -740,7 +740,7 @@ export const makeDefaultItems = (superToolbar) => {
   }
 
 
-  const toolbarItems = [
+  let toolbarItems = [
     undo,
     redo,
     test,
@@ -776,6 +776,9 @@ export const makeDefaultItems = (superToolbar) => {
     separatorRight,
     search,
   ];
+
+  const devItems = [test, trackChanges, acceptChangesOnCursorPositions, revertChangesOnCursorPositions, toggleTrackChangesOriginal, toggleTrackChangesFinal];
+  if (!isDev) toolbarItems = toolbarItems.filter((item) => !devItems.includes(item));
 
   const desktopExclude = ["overflow"];
   const toolbarItemsDesktop = toolbarItems
