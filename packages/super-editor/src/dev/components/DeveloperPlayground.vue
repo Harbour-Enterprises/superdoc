@@ -58,7 +58,7 @@ const editorOptions = {
 
 const exportDocx = async () => {
   const result = await activeEditor?.exportDocx();
-  const blob = new Blob([result], { type: DOC_TYPE });
+  const blob = new Blob([result], { type: DOCX });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
