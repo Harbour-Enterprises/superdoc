@@ -2,7 +2,7 @@ import xmljs from 'xml-js';
 import { getNodeNumberingDefinition } from './numbering';
 import { toKebabCase } from '@harbour-enterprises/common';
 
-import { DocxExporter } from './exporter';
+import { DocxExporter, exportSchemaToJson } from './exporter';
 import { DocxImporter } from './importer';
 
 
@@ -99,6 +99,7 @@ class SuperConverter {
 
   parseFromXml() {
     this.docx?.forEach(file => {
+      if (file.name === 'word/document.xml') console.debug('DOCX', file.content)
       this.convertedXml[file.name] = this.parseXmlToJson(file.content);
     });
     this.initialJSON = this.convertedXml['word/document.xml'];
@@ -167,9 +168,24 @@ class SuperConverter {
   }
 
   exportToDocx(jsonData) {
+    const bodyNode = this.savedTagsToRestore.find((el) => el.name === 'w:body');
+    const [result, params] = exportSchemaToJson({ node: jsonData, bodyNode, relationships: [] });
+
     const exporter = new DocxExporter(this);
-    const jsonOutput = exporter.outputToJson(jsonData);
-    return exporter.schemaToXml(jsonOutput);
+    const xml = exporter.schemaToXml(result);
+    console.debug('XML', xml);
+    
+    // Update the rels table
+    this.#exportProcessNewRelationships(params.relationships);
+
+    return xml;
+  }
+
+  #exportProcessNewRelationships(rels = []) {
+    const relsData = this.convertedXml['word/_rels/document.xml.rels'];
+    const relationships = relsData.elements.find(x => x.name === 'Relationships');
+    relationships.elements.push(...rels);
+    this.convertedXml['word/_rels/document.xml.rels'] = relsData;
   }
 }
 

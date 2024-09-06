@@ -26,7 +26,7 @@ const getFileObject = async (fileUrl) => {
   // Generate a file url
   const response = await fetch(fileUrl);
   const blob = await response.blob();
-  return new File([blob], 'docx-file.docx', { type: DOCX});
+  return new File([blob], 'docx-file.docx', { type: DOCX });
 }
 
 const onCreate = ({ editor }) => {
