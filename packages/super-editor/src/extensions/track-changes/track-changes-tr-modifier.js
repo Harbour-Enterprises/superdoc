@@ -1,9 +1,16 @@
-import {TextSelection, Selection} from "prosemirror-state";
-import {Mapping, ReplaceStep} from "prosemirror-transform";
-import {Slice, Fragment} from "prosemirror-model";
-import {TrackInsertMarkName, TrackDeleteMarkName} from "./constants.js";
+import {TextSelection, Selection, Transaction, EditorState} from "prosemirror-state";
+import {Mapping, ReplaceStep, AddMarkStep, RemoveMarkStep} from "prosemirror-transform";
+import {EditorView} from "prosemirror-view";
+import {Slice, Fragment, Mark, Node} from "prosemirror-model";
+import {TrackInsertMarkName, TrackDeleteMarkName, TrackMarksMarkName} from "./constants.js";
 import {TrackChangesBasePluginKey} from "./track-changes-base.js";
-
+/**
+ * Amend transaction to track changes
+ * @param {Transaction} tr
+ * @param {EditorView} view
+ * @param {string} user
+ * @returns {Transaction} a modified transaction
+ */
 export const amendTransaction = (tr, view, user) => {
 
     //we keep history changes as-is above everything else, also reserve simple meta changes without steps
@@ -31,6 +38,14 @@ export const amendTransaction = (tr, view, user) => {
 
 const whitelistedMetaKeys = ["inputType", "uiEvent"]
 
+/**
+ * Amend transaction to track changes
+ * @param {Transaction} tr old transaction
+ * @param {Transaction} newTr the transaction we construct instead of the old one
+ * @param {Mapping | null | undefined} map
+ * @param {EditorState} state
+ * @returns {void} newTr is modified in place
+ */
 const keepTransactionNavigationParts = (tr, newTr, map, state) => {
     // we copy all the meta keys that are whitelisted
     whitelistedMetaKeys.forEach(key => {
@@ -63,6 +78,13 @@ const keepTransactionNavigationParts = (tr, newTr, map, state) => {
     }
 }
 
+/**
+ * Remove marks from slice
+ * @param {Slice} slice
+ * @param {Schema} schema
+ * @param {string} markName
+ * @returns {Slice} a slice without the named marks
+ */
 const removeMarksFromSlice = (slice, schema, markName) => {
     const targetMark = schema.marks[markName];
     const newContent = [];
@@ -81,6 +103,12 @@ const removeMarksFromSlice = (slice, schema, markName) => {
     return new Slice(Fragment.fromArray(newContent), slice.openStart, slice.openEnd);
 };
 
+/**
+ * Remove track changes from transaction
+ * @param {Transaction} tr
+ * @param {EditorState} state
+ * @returns {Transaction} a new transaction without track changes
+ */
 const removeTrackChangesFromTransaction = (tr, state) => {
     const newTr = state.tr;
 
@@ -110,6 +138,15 @@ const removeTrackChangesFromTransaction = (tr, state) => {
     return newTr;
 }
 
+/**
+ * Mark insertion
+ * @param {Transaction} tr
+ * @param {number} from
+ * @param {number} to
+ * @param {string} user
+ * @param {string} date
+ * @returns {void} tr is modified in place
+ */
 const markInsertion = (tr, from, to, user, date) => {
     const insertionMark = tr.doc.type.schema.marks[TrackInsertMarkName].create({author: user, date})
     tr.doc.nodesBetween(
@@ -130,6 +167,15 @@ const markInsertion = (tr, from, to, user, date) => {
     )
 }
 
+/**
+ * Mark deletion
+ * @param {Transaction} tr
+ * @param {number} from
+ * @param {number} to
+ * @param {string} user
+ * @param {string} date
+ * @returns {void} tr is modified in place
+ */
 const markDeletion = (tr, from, to, user, date) => {
     const deletionMark = tr.doc.type.schema.marks[TrackDeleteMarkName].create({author: user, date})
     let firstTableCellChild = false
@@ -170,7 +216,138 @@ const markDeletion = (tr, from, to, user, date) => {
     return deletionMap;
 }
 
-const trackTransaction = (tr, state, user) => {
+/**
+ * Handle replace step
+ * @param {EditorState} state the original editor state
+ * @param {Transaction} tr is the original transaction
+ * @param {ReplaceStep} step the original state we start from
+ * @param {number} stepIndex is the index of the original step in the original transaction
+ * @param {Transaction} newTr is the new transaction we construct
+ * @param {Mapping} map is the mapping of the newTr we construct
+ * @param {string} user
+ * @param {string} date
+ * @returns {void} newTr and map is modified in place
+ */
+const handleReplaceStep = (state, tr, step, stepIndex, newTr, map, user, date) => {
+    const newStep =
+        step.slice.size ?
+            new ReplaceStep(
+                step.to, // We insert all the same steps, but with "from"/"to" both set to "to" in order not to delete content. Mapped as needed.
+                step.to,
+                step.slice,
+                step.structure
+            ) :
+            false
+    // We didn't apply the original step in its original place. We adjust the map accordingly.
+    const invertStep = step.invert(tr.docs[stepIndex]).map(map)
+    if(invertStep) {
+        map.appendMap(invertStep.getMap())
+    }
+    if (newStep) {
+        const trTemp = state.apply(newTr).tr
+        if (!trTemp.maybeStep(newStep).failed) {
+            const mappedNewStepTo = newStep.getMap().map(newStep.to)
+            markInsertion(
+                trTemp,
+                newStep.from,
+                mappedNewStepTo,
+                user,
+                date,
+            )
+            // We condense it down to a single replace step.
+            const condensedStep = new ReplaceStep(newStep.from, newStep.to, trTemp.doc.slice(newStep.from, mappedNewStepTo))
+            newTr.step(condensedStep)
+            const mirrorIndex = map.maps.length - 1
+            map.appendMap(condensedStep.getMap(), mirrorIndex)
+            if (!newTr.selection.eq(trTemp.selection)) {
+                console.log(trTemp.selection.toJSON())
+                newTr.setSelection(Selection.fromJSON(newTr.doc, trTemp.selection.toJSON()))
+            }
+        }
+
+    }
+    if (step.from !== step.to) {
+        map.appendMapping(
+            markDeletion(newTr, step.from, step.to, user, date)
+        )
+    }
+}
+/**
+ * Handle add mark step
+ * @param {EditorState} state
+ * @param {AddMarkStep | RemoveMarkStep} step
+ * @param {Transaction} newTr
+ * @param {string} user
+ * @param {string} date
+ */
+const handleMarkStep = (state, step, newTr, user, date) => {
+    newTr.doc.nodesBetween(step.from, step.to, (node, pos) => {
+        if (!node.isInline) {
+            return true
+        }
+        if (node.marks.find(mark => mark.type.name === TrackDeleteMarkName)) {
+            return false
+        } else if (step instanceof AddMarkStep) {
+            newTr.addMark(
+                Math.max(step.from, pos),
+                Math.min(step.to, pos + node.nodeSize),
+                step.mark
+            )
+        } else if (step instanceof RemoveMarkStep) {
+            newTr.removeMark(
+                Math.max(step.from, pos),
+                Math.min(step.to, pos + node.nodeSize),
+                step.mark
+            )
+        }
+        const formatChangeMark = node.marks.find(mark => mark.type.name === TrackMarksMarkName)
+        let before = []
+        let after = []
+        if (formatChangeMark) {
+            before = [...formatChangeMark.attrs.before];
+            after = [...formatChangeMark.attrs.after];
+            newTr.removeMark(
+                Math.max(step.from, pos),
+                Math.min(step.to, pos + node.nodeSize),
+                formatChangeMark
+            )
+        } else {
+            before = node.marks.map(mark => ({
+                type: mark.type.name,
+                attrs: {...mark.attrs}
+            }))
+            after = [...before]
+        }
+        if(step instanceof AddMarkStep) {
+            const addedMark = {
+                type: step.mark.type.name,
+                attrs: {...step.mark.attrs}
+            }
+            after.push(addedMark)
+        } else if (step instanceof RemoveMarkStep) {
+            after = after.filter(mark => mark.type !== step.mark.type.name);
+        }
+        newTr.addMark(
+            Math.max(step.from, pos),
+            Math.min(step.to, pos + node.nodeSize),
+            state.schema.marks[TrackMarksMarkName].create({
+                author: user,
+                date,
+                before,
+                after,
+            })
+        )
+    });
+}
+
+/**
+ * Track transaction
+ * @param {Transaction} tr
+ * @param {EditorState} state
+ * @param {string} user
+ * @returns {Transaction} a new transaction with track changes
+ */
+export const trackTransaction = (tr, state, user) => {
     const now = Date.now()
     const fixedTimeTo10Minutes = Math.floor(now / 600000) * 600000
     const fixedTimeTo10MinutesString = new Date(fixedTimeTo10Minutes).toISOString()
@@ -183,48 +360,11 @@ const trackTransaction = (tr, state, user) => {
             return
         }
         if (step instanceof ReplaceStep) {
-            const newStep =
-                step.slice.size ?
-                    new ReplaceStep(
-                        step.to, // We insert all the same steps, but with "from"/"to" both set to "to" in order not to delete content. Mapped as needed.
-                        step.to,
-                        step.slice,
-                        step.structure
-                    ) :
-                    false
-            // We didn't apply the original step in its original place. We adjust the map accordingly.
-            const invertStep = originalStep.invert(tr.docs[originalStepIndex]).map(map)
-            if(invertStep) {
-                map.appendMap(invertStep.getMap())
-            }
-            if (newStep) {
-                const trTemp = state.apply(newTr).tr
-                if (!trTemp.maybeStep(newStep).failed) {
-                    const mappedNewStepTo = newStep.getMap().map(newStep.to)
-                    markInsertion(
-                        trTemp,
-                        newStep.from,
-                        mappedNewStepTo,
-                        user,
-                        fixedTimeTo10MinutesString,
-                    )
-                    // We condense it down to a single replace step.
-                    const condensedStep = new ReplaceStep(newStep.from, newStep.to, trTemp.doc.slice(newStep.from, mappedNewStepTo))
-                    newTr.step(condensedStep)
-                    const mirrorIndex = map.maps.length - 1
-                    map.appendMap(condensedStep.getMap(), mirrorIndex)
-                    if (!newTr.selection.eq(trTemp.selection)) {
-                        console.log(trTemp.selection.toJSON())
-                        newTr.setSelection(Selection.fromJSON(newTr.doc, trTemp.selection.toJSON()))
-                    }
-                }
-
-            }
-            if (step.from !== step.to) {
-                map.appendMapping(
-                    markDeletion(newTr, step.from, step.to, user, fixedTimeTo10MinutesString)
-                )
-            }
+            handleReplaceStep(state, tr, step, originalStepIndex, newTr, map, user, fixedTimeTo10MinutesString)
+        } else if (step instanceof AddMarkStep) {
+            handleMarkStep(state, step, newTr, user, fixedTimeTo10MinutesString)
+        } else if (step instanceof RemoveMarkStep) {
+            handleMarkStep(state, step, newTr, user, fixedTimeTo10MinutesString)
         } else {
             newTr.step(step)
         }

@@ -1,7 +1,11 @@
 import { SuperConverter } from './SuperConverter';
 import { twipsToPixels, twipsToInches, halfPointToPixels, emuToPixels } from './helpers.js';
 import { toKebabCase } from '@common/key-transform.js';
-import {TrackDeleteMarkName, TrackInsertMarkName} from "../../extensions/track-changes/constants.js";
+import {
+  TrackDeleteMarkName,
+  TrackInsertMarkName,
+  TrackMarksMarkName
+} from "../../extensions/track-changes/constants.js";
 
 
 /**
@@ -391,6 +395,11 @@ export class DocxImporter {
     return updatedNode
   }
 
+  /**
+   *
+   * @param {{type: string, attrs: {}}[]} marks
+   * @returns {{type: string, attrs: {}}[]}
+   */
   #createImportMarks(marks) {
     const textStyleMarksToCombine = marks.filter((mark) => mark.type === 'textStyle');
     const remainingMarks = marks.filter((mark) => mark.type !== 'textStyle');
@@ -763,6 +772,11 @@ export class DocxImporter {
   }
 
 
+  /**
+   *
+   * @param property
+   * @returns {{type: string, attrs: {}}[]}
+   */
   #parseMarks(property) {
     const marks = [];
     const seen = new Set();
@@ -814,6 +828,28 @@ export class DocxImporter {
       })
     });
     return this.#createImportMarks(marks);
+  }
+
+  /**
+   *
+   * @param rPr
+   * @param {{type: string, attrs: {}}[]} currentMarks
+   * @returns {{type: string, attrs: {}}[]} a trackMarksMark, or an empty array
+   */
+  #handleStyleChangeMarks(rPr, currentMarks) {
+    const styleChangeMark = rPr.elements?.find((el) => el.name === 'w:rPrChange')
+    if(!styleChangeMark) {
+      return []
+    }
+
+    const { attributes } = styleChangeMark;
+    const mappedAttributes = {
+      wid: attributes['w:id'],
+      date: attributes['w:date'],
+      author: attributes['w:author'],
+    }
+    const submarks = this.#parseMarks(styleChangeMark);
+    return [{type: TrackMarksMarkName, attrs: {...mappedAttributes, before: submarks, after: [...currentMarks]}}]
   }
 
   #getIndentValue(attributes) {
@@ -900,6 +936,8 @@ export class DocxImporter {
       if (paragraphProperties && paragraphProperties.elements?.length) {
         marks.push(...this.#parseMarks(paragraphProperties));
       }
+      //add style change marks
+      marks.push(...this.#handleStyleChangeMarks(runProperties, marks));
 
       // Maintain any extra properties
       if (paragraphProperties && paragraphProperties.elements?.length) {

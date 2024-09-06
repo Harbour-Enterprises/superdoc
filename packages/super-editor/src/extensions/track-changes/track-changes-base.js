@@ -1,7 +1,7 @@
 import {Extension} from '@core/Extension.js';
 import {Plugin, PluginKey, EditorState} from "prosemirror-state";
 import {Decoration, DecorationSet} from "prosemirror-view";
-import {TrackDeleteMarkName, TrackInsertMarkName} from "./constants.js";
+import {TrackDeleteMarkName, TrackInsertMarkName, TrackMarksMarkName} from "./constants.js";
 
 
 const trackChangesCallback = (action, original, modified, modifiers) => {
@@ -326,6 +326,27 @@ const recalcDecorations = (state, onlyOriginalShown,onlyModifiedShown ) => {
                     }, {ignoreSelection: true});
                     decorations.push(decorationInline);
                     decorations.push(decorationWidget);
+                }
+            }
+            if(mark.type.name === TrackMarksMarkName) {
+                if(onlyOriginalShown) {
+                    // for this we should render the before array as marks
+                    //TODO I don't have a solid idea for this yet
+                    const decoration = Decoration.inline(pos, pos + node.nodeSize, {
+                        class: "trackMarks inline before",
+                    });
+                    decorations.push(decoration);
+                } else if(onlyModifiedShown) {
+                    // for this we should render do nothing, we already have the applied marks on the text
+                    const decoration = Decoration.inline(pos, pos + node.nodeSize, {
+                        class: "trackMarks inline normal",
+                    });
+                    decorations.push(decoration);
+                } else {
+                    const decoration = Decoration.inline(pos, pos + node.nodeSize, {
+                        class: "trackMarks inline highlighted",
+                    });
+                    decorations.push(decoration);
                 }
             }
         });
