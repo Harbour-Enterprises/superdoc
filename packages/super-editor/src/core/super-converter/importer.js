@@ -5,7 +5,6 @@ import {
   TrackInsertMarkName,
   TrackMarksMarkName
 } from "../../extensions/track-changes/constants.js";
-import { style } from '../config/style.js';
 
 
 /**
@@ -89,11 +88,9 @@ export class DocxImporter {
           schemaNode = this.#handleTableNode(node);
           break;
         case 'w:tr':
-          schemaNode = this.#handleTableRowNode(node);
-          break;
+          return [];
         case 'w:tc':
-          schemaNode = this.#handleTableCellNode(node);
-          break;
+          return [];
         case 'w:drawing':
           schemaNode = this.#handleDrawingNode(node);
           break;
@@ -224,27 +221,13 @@ export class DocxImporter {
     const colspan = colspanTag?.attributes['w:val'];
 
     const marginTag = tcPr?.elements?.find((el) => el.name === 'w:tcMar');
-    const marginLeft = marginTag?.elements?.find((el) => el.name === 'w:left');
-    const marginRight = marginTag?.elements?.find((el) => el.name === 'w:right');
-    const marginTop = marginTag?.elements?.find((el) => el.name === 'w:top');
-    const marginBottom = marginTag?.elements?.find((el) => el.name === 'w:bottom');
-    const hasInlineMargins = marginLeft || marginRight || marginTop || marginBottom;
 
     const verticalAlignTag = tcPr?.elements?.find((el) => el.name === 'w:vAlign');
     const verticalAlign = verticalAlignTag?.attributes['w:val'];
 
     const attributes = {};
-    const referencedStyles = this.#getReferencedTableStyles(styleTag);
-    const { cellMargins } = referencedStyles;
-    if (cellMargins || hasInlineMargins) {
-      const { marginLeftStyle, marginRightStyle, marginTopStyle, marginBottomStyle } = cellMargins;
-      attributes.cellMargins = {
-        left: twipsToPixels(marginLeft) || marginLeftStyle,
-        right: twipsToPixels(marginRight) || marginRightStyle,
-        top: twipsToPixels(marginTop) || marginTopStyle,
-        bottom: twipsToPixels(marginBottom) || marginBottomStyle,
-      };
-    }
+    const referencedStyles = this.#getReferencedTableStyles(styleTag) || {};
+    attributes.cellMargins = this.#getTableCellMargins(marginTag, referencedStyles);
 
     if (width) attributes['width'] = width;
     if (widthType) attributes['widthType'] = widthType;
@@ -257,6 +240,34 @@ export class DocxImporter {
       content: this.#convertToSchema(node.elements),
       attrs: attributes,
     }
+  }
+
+  #getTableCellMargins(marginTag, referencedStyles) {
+    const inlineMarginLeftTag = marginTag?.elements?.find((el) => el.name === 'w:left');
+    const inlineMarginRightTag = marginTag?.elements?.find((el) => el.name === 'w:right');
+    const inlineMarginTopTag = marginTag?.elements?.find((el) => el.name === 'w:top');
+    const inlineMarginBottomTag = marginTag?.elements?.find((el) => el.name === 'w:bottom');
+
+    const inlineMarginLeftValue = twipsToPixels(inlineMarginLeftTag?.attributes['w:w']);
+    const inlineMarginRightValue = twipsToPixels(inlineMarginRightTag?.attributes['w:w']);
+    const inlineMarginTopValue = twipsToPixels(inlineMarginTopTag?.attributes['w:w']);
+    const inlineMarginBottomValue = twipsToPixels(inlineMarginBottomTag?.attributes['w:w']);
+
+    const { cellMargins = {} } = referencedStyles;
+    const {
+      marginLeft: marginLeftStyle,
+      marginRight: marginRightStyle,
+      marginTop: marginTopStyle,
+      marginBottom: marginBottomStyle
+    } = cellMargins;
+
+    const margins = {
+      left: twipsToPixels(inlineMarginLeftValue ?? marginLeftStyle),
+      right: twipsToPixels(inlineMarginRightValue ?? marginRightStyle),
+      top: twipsToPixels(inlineMarginTopValue ?? marginTopStyle),
+      bottom: twipsToPixels(inlineMarginBottomValue ?? marginBottomStyle),
+    };
+    return margins;
   }
 
   #getReferencedTableStyles(tblStyleTag) {
@@ -305,13 +316,11 @@ export class DocxImporter {
         const marginTop = tableCellMargin.elements.find((el) => el.name === 'w:top');
         const marginBottom = tableCellMargin.elements.find((el) => el.name === 'w:bottom');
         stylesToReturn.cellMargins = {
-          marginLeft: twipsToPixels(marginLeft?.attributes['w:w']),
-          marginRight: twipsToPixels(marginRight?.attributes['w:w']),
-          marginTop: twipsToPixels(marginTop?.attributes['w:w']),
-          marginBottom: twipsToPixels(marginBottom?.attributes['w:w']),
+          marginLeft: marginLeft?.attributes['w:w'],
+          marginRight: marginRight?.attributes['w:w'],
+          marginTop: marginTop?.attributes['w:w'],
+          marginBottom: marginBottom?.attributes['w:w'],
         }
-
-        // TODO: Do we need table level fonts?
       }
     }
 
@@ -360,7 +369,8 @@ export class DocxImporter {
       attrs['rowHeight'] = twipsToPixels(rowHeight);
     }
 
-    const content = node.elements?.map((n) => this.#handleTableCellNode(n, styleTag)) || [];
+    const cellNodes = node.elements.filter((el) => el.name === 'w:tc');
+    const content = cellNodes?.map((n) => this.#handleTableCellNode(n, styleTag)) || [];
     const newNode = {
       type: 'tableRow',
       content,
@@ -592,6 +602,11 @@ export class DocxImporter {
           right: twipsToPixels(right),
           firstLine: twipsToPixels(firstLine),
         };
+      }
+
+      const justify = pPr?.elements.find((el) => el.name === 'w:jc');
+      if (justify) {
+        schemaNode.attrs['textAlign'] = justify.attributes['w:val'];
       }
 
       const { lineSpaceAfter, lineSpaceBefore } = this.#getDefaultStyleDefinition(defaultStyleId);

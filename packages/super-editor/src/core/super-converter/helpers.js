@@ -1,19 +1,19 @@
 function inchesToTwips(inches) {
   if (!inches) return;
-  if (inches instanceof String || typeof inches === 'string') inches = parseFloat(inches)
-  return (inches * 1440).toFixed(2);
+  if (typeof inches === 'string') inches = parseFloat(inches);
+  return Math.round(inches * 1440);
 }
 
 function twipsToInches(twips) {
   if (!twips) return;
-  if (twips instanceof String || typeof inches === 'string') twips = int(twips)
-  return (twips / 1440).toFixed(2);
+  if (typeof twips === 'string') twips = parseInt(twips, 10);
+  return Math.round((twips / 1440) * 100) / 100;
 }
 
 function twipsToPixels(twips) {
   if (!twips) return;
   twips = twipsToInches(twips);
-  return (twips * 96).toFixed(2);
+  return Math.round(twips * 96);
 }
 
 function pixelsToTwips(pixels) {
@@ -24,20 +24,21 @@ function pixelsToTwips(pixels) {
 
 function halfPointToPixels(halfPoints) {
   if (!halfPoints) return;
-  return (96 / 72).toFixed(2)
+  return Math.round(96 / 72);
 }
 
 function emuToPixels(emu) {
   if (!emu) return;
-  if (emu instanceof String || typeof emu === 'string') emu = parseFloat(emu)
-  const pixels = (emu / 914400) * 96
-  return pixels.toFixed(2);
+  if (typeof emu === 'string') emu = parseFloat(emu);
+  const pixels = (emu / 914400) * 96;
+  return Math.round(pixels);
 }
 
 function pixelsToHalfPoints(pixels) {
   if (!pixels) return;
-  return (pixels * 72 / 96).toFixed(2);
+  return Math.round(pixels * 72 / 96);
 }
+
 
 export {
   inchesToTwips,

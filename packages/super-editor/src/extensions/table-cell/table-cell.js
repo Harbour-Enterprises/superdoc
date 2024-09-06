@@ -28,7 +28,7 @@ export const TableCell = Node.create({
       width: {
         renderDOM: ({ width }) => {
           if (!width) return {};
-          const style = `width: ${width}in;`;
+          const style = `width: ${width}in`;
           return { style };
         },
       },
@@ -38,14 +38,14 @@ export const TableCell = Node.create({
         renderDOM ({ background }) {
           if (!background) return {};
           const { color } = background || {};
-          const style = `background-color: #${color || 'transparent'};`;
+          const style = `background-color: #${color || 'transparent'}`;
           return { style };
         }
       },
       verticalAlign: { 
         renderDOM({ verticalAlign }) {
           if (!verticalAlign) return {};
-          const style = `vertical-align: ${verticalAlign};`;
+          const style = `vertical-align: ${verticalAlign}`;
           return { style };
         }
       },

@@ -6,7 +6,7 @@ export const Table = Node.create({
 
   group: 'block',
 
-  content: 'tableRow+',
+  content: 'tableRow*',
 
   tableRole: 'table',
 
