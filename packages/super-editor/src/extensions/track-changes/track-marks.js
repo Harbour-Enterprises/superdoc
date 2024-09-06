@@ -10,6 +10,11 @@ export const TrackMarks = Mark.create({
         }
     },
 
+    // before and after are arrays of objects with the following structure:
+    // {
+    //     type: string, //the name of the mark
+    //     attrs: object, //the attributes of the mark
+    // }
     addAttributes() {
         return {
             // word id like `<w:ins w:id="1"`

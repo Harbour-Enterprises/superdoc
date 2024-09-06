@@ -1,6 +1,7 @@
 import {Extension} from '@core/Extension.js';
-import {Plugin, PluginKey, EditorState} from "prosemirror-state";
+import {Plugin, PluginKey, EditorState, Transaction} from "prosemirror-state";
 import {Decoration, DecorationSet} from "prosemirror-view";
+import {Mark, Node} from "prosemirror-model";
 import {TrackDeleteMarkName, TrackInsertMarkName, TrackMarksMarkName} from "./constants.js";
 
 
@@ -137,7 +138,7 @@ export const TrackChangesBase = Extension.create({
 
                 if (prevTextNode) {
                     prevTextNode.node.marks.forEach(mark => {
-                        if (mark.type.name === TrackDeleteMarkName || mark.type.name === TrackInsertMarkName) {
+                        if (mark.type.name === TrackDeleteMarkName || mark.type.name === TrackInsertMarkName || mark.type.name === TrackMarksMarkName) {
                             correctedFrom = Math.max(prevTextNode.offset, 0);
                         }
                     });
@@ -145,13 +146,13 @@ export const TrackChangesBase = Extension.create({
 
                 if (nextTextNode) {
                     nextTextNode.node.marks.forEach(mark => {
-                        if (mark.type.name === TrackDeleteMarkName || mark.type.name === TrackInsertMarkName) {
+                        if (mark.type.name === TrackDeleteMarkName || mark.type.name === TrackInsertMarkName || mark.type.name === TrackMarksMarkName) {
                             correctedTo = Math.min(nextTextNode.offset + nextTextNode.node.nodeSize, state.doc.nodeSize);
                         }
                     });
                 } else if (currentTextNode) {
                     currentTextNode.node.marks.forEach(mark => {
-                        if (mark.type.name === TrackDeleteMarkName || mark.type.name === TrackInsertMarkName) {
+                        if (mark.type.name === TrackDeleteMarkName || mark.type.name === TrackInsertMarkName || mark.type.name === TrackMarksMarkName) {
                             correctedTo = Math.min(currentTextNode.offset + currentTextNode.node.nodeSize, state.doc.nodeSize);
                         }
                     });
@@ -238,6 +239,15 @@ export const TrackChangesBase = Extension.create({
 });
 
 
+/**
+ *
+ * @param {"accept" | "revert"} action
+ * @param {EditorState} state
+ * @param {Transaction} tr
+ * @param {number} from
+ * @param {number} to
+ * @returns {{offset: number, modifiers: *[]}}
+ */
 const applyTrackChanges = (action, state, tr, from, to) => {
     let offset = 0;
     const modifiers = [];
@@ -260,6 +270,22 @@ const applyTrackChanges = (action, state, tr, from, to) => {
                 } else if (action === "revert") {
                     tr.deleteRange(pos + offset, pos + node.nodeSize + offset);
                     offset -= node.nodeSize;
+                    modifiers.push({author: mark.attrs.author, date: mark.attrs.date});
+                }
+            }
+            if (mark.type.name === TrackMarksMarkName) {
+                if (action === "accept") {
+                    tr.removeMark(pos + offset, pos + node.nodeSize + offset, mark);
+                    modifiers.push({author: mark.attrs.author, date: mark.attrs.date});
+                } else if (action === "revert") {
+                    const styleChangeMark = mark
+                    tr.removeMark(pos + offset, pos + node.nodeSize + offset, styleChangeMark);
+                    for(const mark of styleChangeMark.attrs.after) {
+                        tr.removeMark(pos + offset, pos + node.nodeSize + offset, state.schema.marks[mark.type].create(mark.attrs));
+                    }
+                    for(const mark of styleChangeMark.attrs.before) {
+                        tr.addMark(pos + offset, pos + node.nodeSize + offset, state.schema.marks[mark.type].create(mark.attrs));
+                    }
                     modifiers.push({author: mark.attrs.author, date: mark.attrs.date});
                 }
             }
