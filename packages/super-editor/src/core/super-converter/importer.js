@@ -407,7 +407,7 @@ export class DocxImporter {
     const tableIndent = tblPr?.elements.find((el) => el.name === 'w:tblInd');
     if (tableIndent) {
       const { 'w:w': width, 'w:type': type } = tableIndent.attributes;
-      attrs['tableIndent'] = { width: twipsToPixels(width), type: twipsToPixels(type) };
+      attrs['tableIndent'] = { width: twipsToPixels(width), type };
     }
 
     const tableLayout = tblPr?.elements.find((el) => el.name === 'w:tblLayout');

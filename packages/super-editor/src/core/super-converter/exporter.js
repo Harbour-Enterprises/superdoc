@@ -577,9 +577,10 @@ function generateTableProperties(node) {
   }
 
   if (tableIndent) {
+    const { width, type } = tableIndent;
     const tableIndentElement = {
       name: 'w:tblInd',
-      attributes: { 'w:w': tableIndent }
+      attributes: { 'w:w': pixelsToTwips(width), 'w:type': type }
     }
     elements.push(tableIndentElement);
   }
