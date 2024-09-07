@@ -146,6 +146,15 @@ function generateParagraphProperties(node) {
     pPrElements.push(spacingElement);
   }
 
+  const { textAlign } = attrs;
+  if (textAlign) {
+    const textAlignElement = {
+      name: 'w:jc',
+      attributes: { 'w:val': textAlign }
+    }
+    pPrElements.push(textAlignElement);
+  }
+
   return {
     name: 'w:pPr',
     elements: pPrElements,
