@@ -127,7 +127,8 @@ export class DocxImporter {
   #handleLineBreakNode(node) {
     const attrs = {};
     
-    const lineBreakType = node.attributes['w:type'];
+    const { attrs: nodeAttrs = {} } = node;
+    const lineBreakType = nodeAttrs['w:type'];
     if (lineBreakType) attrs['lineBreakType'] = lineBreakType;
 
     return {
@@ -139,7 +140,8 @@ export class DocxImporter {
 
   #handleBookmarkNode(node) {
     const newNode = this.#handleStandardNode(node);
-    newNode.attrs.name = node.attributes['w:name'];
+    const { attrs = {} } = newNode;
+    newNode.attrs.name = attrs['w:name'];
     return newNode;
   }
 
@@ -228,8 +230,8 @@ export class DocxImporter {
     const referencedStyles = this.#getReferencedTableStyles(styleTag) || {};
     attributes.cellMargins = this.#getTableCellMargins(marginTag, referencedStyles);
 
-    const { fontSize, fonts } = referencedStyles;
-    const fontFamily = fonts['asciit'];
+    const { fontSize, fonts = {} } = referencedStyles;
+    const fontFamily = fonts['ascii'];
   
     if (width) attributes['width'] = width;
     if (widthType) attributes['widthType'] = widthType;
