@@ -13,7 +13,7 @@ export const FontSize = Extension.create({
 
   addOptions() {
     return {
-      types: ['textStyle'],
+      types: ['textStyle', 'tableCell'],
       defaults: {
         value: 12,
         unit: 'pt',

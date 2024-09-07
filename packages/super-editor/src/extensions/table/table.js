@@ -6,7 +6,7 @@ export const Table = Node.create({
 
   group: 'block',
 
-  content: 'tableRow+',
+  content: 'tableRow*',
 
   tableRole: 'table',
 
@@ -22,11 +22,25 @@ export const Table = Node.create({
 
   addAttributes() {
     return {
-      tableWidth: { default: '100%', },
-      tableWidthType: { default: 'auto', },  
-      gridColumnWidths: { default: [], },
+      tableWidth: {
+        renderDOM: ({ tableWidth }) => {
+          if (!tableWidth) return {};
+          const { width, type = 'auto' } = tableWidth;
+          return { style: `width: ${width}px;` }
+        }
+      },
+      gridColumnWidths: { rendered: false, default: [], },
       tableStyleId: { rendered: false, },
-      tableIndent: { rendered: false, },
+      tableIndent: {
+        renderDOM: ({ tableIndent }) => {
+          if (!tableIndent) return {};
+
+          const { width, type = 'dxa' } = tableIndent;
+          let style = '';
+          if (width) style += `margin-left: ${width}px;`;
+          return { style }
+        }
+      },
       tableLayout: { rendered: false, },
       borders: {
         default: {},
