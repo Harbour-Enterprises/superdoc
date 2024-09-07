@@ -23,12 +23,10 @@ export const Table = Node.create({
   addAttributes() {
     return {
       tableWidth: {
-        default: '100%',
         renderDOM: ({ tableWidth }) => {
           if (!tableWidth) return {};
-
           const { width, type = 'auto' } = tableWidth;
-          return { style: `width: ${width};` }
+          return { style: `width: ${width}px;` }
         }
       },
       gridColumnWidths: { rendered: false, default: [], },

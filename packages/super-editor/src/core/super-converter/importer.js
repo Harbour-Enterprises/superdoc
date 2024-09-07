@@ -1,5 +1,5 @@
 import { SuperConverter } from './SuperConverter';
-import { twipsToPixels, twipsToInches, halfPointToPixels, emuToPixels } from './helpers.js';
+import { twipsToPixels, twipsToInches, halfPointToPixels, emuToPixels, halfPointToPoints } from './helpers.js';
 import {
   TrackDeleteMarkName,
   TrackInsertMarkName,
@@ -228,11 +228,16 @@ export class DocxImporter {
     const referencedStyles = this.#getReferencedTableStyles(styleTag) || {};
     attributes.cellMargins = this.#getTableCellMargins(marginTag, referencedStyles);
 
+    const { fontSize, fonts } = referencedStyles;
+    const fontFamily = fonts['asciit'];
+  
     if (width) attributes['width'] = width;
     if (widthType) attributes['widthType'] = widthType;
     if (colspan) attributes['colspan'] = colspan;
     if (background) attributes['background'] = background;
     if (verticalAlign) attributes['verticalAlign'] = verticalAlign;
+    if (fontSize) attributes['fontSize'] = fontSize;
+    if (fontFamily) attributes['fontFamily'] = fontFamily['ascii'];
 
     return {
       type: 'tableCell',
@@ -295,9 +300,16 @@ export class DocxImporter {
       if (justification) stylesToReturn.justification = justification.attributes['w:val'];
     }
 
-    const rPr = pPr?.elements.find((el) => el.name === 'w:rPr');
+    const rPr = styleTag?.elements.find((el) => el.name === 'w:rPr');
     if (rPr) {
-      // TODO: Do we need run level fonts here?
+      const fonts = rPr.elements.find((el) => el.name === 'w:rFonts');
+      if (fonts) {
+        const { 'w:ascii': ascii, 'w:hAnsi': hAnsi, 'w:cs': cs } = fonts.attributes;
+        stylesToReturn.fonts = { ascii, hAnsi, cs };
+      }
+
+      const fontSize = rPr.elements.find((el) => el.name === 'w:sz');
+      if (fontSize) stylesToReturn.fontSize = halfPointToPoints(fontSize.attributes['w:val']) + 'pt';
     }
 
     const tblPr = styleTag.elements.find((el) => el.name === 'w:tblPr');
@@ -405,11 +417,10 @@ export class DocxImporter {
     }
 
     const referencedStyles = this.#getReferencedTableStyles(tblStyleTag);
-
     const tblW = tblPr.elements.find((el) => el.name === 'w:tblW');
     if (tblW) {
-      attrs['width'] = {
-        width: twipsToInches(tblW.attributes['w:w']),
+      attrs['tableWidth'] = {
+        width: twipsToPixels(tblW.attributes['w:w']),
         type: tblW.attributes['w:type'],
       }
     }

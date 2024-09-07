@@ -131,11 +131,17 @@ function generateParagraphProperties(node) {
   const { styleId } = attrs;
   if (styleId) pPrElements.push({ name: 'w:pStyle', attributes: { 'w:val': styleId } });
 
-  const { lineHeight } = attrs;
-  if (lineHeight) {
+  const { spacing } = attrs;
+  if (spacing) {
+    const { lineSpaceBefore, lineSpaceAfter, line } = spacing;
+    
+    const attributes = {};
+    if (lineSpaceBefore) attributes['w:before'] = pixelsToTwips(lineSpaceBefore);
+    if (lineSpaceAfter) attributes['w:after'] = pixelsToTwips(lineSpaceAfter);
+    if (line) attributes['w:line'] = pixelsToTwips(line);
     const spacingElement = {
       name: 'w:spacing',
-      attributes: { 'w:line': inchesToTwips(lineHeight) }
+      attributes,
     }
     pPrElements.push(spacingElement);
   }
@@ -679,7 +685,6 @@ function generateTableRowProperties(node) {
     elements.push(rowHeightElement);
   };
 
-  console.debug('\n\n\nTable row properties:', elements, '\n\n\n');
   return {
     name: 'w:trPr',
     elements,
@@ -736,6 +741,15 @@ function generateTableCellProperties(node) {
     elements.push(cellBgElement);
   }
 
+  const { cellMargins } = attrs;
+  if (cellMargins) {
+    const cellMarginsElement = {
+      name: 'w:tcMar',
+      elements: generateCellMargins(cellMargins)
+    }
+    elements.push(cellMarginsElement);
+  }
+
   const { verticalAlign } = attrs;
   if (verticalAlign) {
     const vertAlignElement = {
@@ -749,6 +763,16 @@ function generateTableCellProperties(node) {
     name: 'w:tcPr',
     elements,
   }
+}
+
+function generateCellMargins(cellMargins) {
+  const elements = [];
+  const { top, right, bottom, left } = cellMargins;
+  if (top != null) elements.push({ name: 'w:top', attributes: { 'w:w': pixelsToTwips(top) } });
+  if (right != null) elements.push({ name: 'w:right', attributes: { 'w:w': pixelsToTwips(right) } });
+  if (bottom != null) elements.push({ name: 'w:bottom', attributes: { 'w:w': pixelsToTwips(bottom) } });
+  if (left != null) elements.push({ name: 'w:left', attributes: { 'w:w': pixelsToTwips(left) } });
+  return elements;
 }
 
 /**
@@ -768,7 +792,6 @@ function translateBookmarkStart(params) {
  * @returns 
  */
 function translateMark(mark) {
-  console.debug('\n\n MARK', mark, '\n\n');
   const xmlMark = SuperConverter.markTypes.find((m) => m.type === mark.type);
   const markElement = { name: xmlMark.name, attributes: {} };
 
