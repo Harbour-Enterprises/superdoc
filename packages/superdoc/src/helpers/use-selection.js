@@ -4,6 +4,7 @@ export default function useSelection(params) {
   const documentId = ref(params.documentId);
   const page = ref(params.page);
   const selectionBounds = reactive(params.selectionBounds);
+  const source = ref(params.source);
 
   /* Get the ID of the container */
   const getContainerId = () => `${documentId.value}-page-${page.value}`
@@ -37,6 +38,7 @@ export default function useSelection(params) {
     documentId,
     page,
     selectionBounds,
+    source,
 
     // Actions
     getValues,

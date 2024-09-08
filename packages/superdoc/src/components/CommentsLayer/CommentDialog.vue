@@ -15,7 +15,7 @@ const commentsStore = useCommentsStore();
 const { COMMENT_EVENTS } = commentsStore;
 const { getConfig, activeComment, pendingComment, floatingCommentsOffset } = storeToRefs(commentsStore);
 const { areDocumentsReady } = superdocStore;
-const { selectionPosition } = storeToRefs(superdocStore);
+const { selectionPosition, activeZoom } = storeToRefs(superdocStore);
 const { proxy } = getCurrentInstance();
 
 const props = defineProps({
@@ -66,7 +66,12 @@ const addComment = () => {
   if (pendingComment.value && pendingComment.value.conversationId === props.data.conversationId) {
     const newConversation = { ...pendingComment.value }
 
+    const parentBounds = props.parent.getBoundingClientRect();
+    
     const selection = pendingComment.value.selection.getValues();
+    selection.selectionBounds.top = selection.selectionBounds.top// - parentBounds.top;
+    selection.selectionBounds.bottom = selection.selectionBounds.bottom// - parentBounds.top;
+
     const bounds = selection.selectionBounds;
     if (bounds.top > bounds.bottom) {
       const temp = bounds.top;
@@ -78,14 +83,15 @@ const addComment = () => {
       bounds.left = bounds.right;
       bounds.right = temp;
     }
-    newConversation.selection = useSelection(selection)
-
-     // Remove the pending comment
-     pendingComment.value = null;
-    
-    // Reset the original selection
-    selectionPosition.value = null;
+    newConversation.selection = useSelection(selection)    
     newConversation.comments.push(comment);
+
+    // Suppress click if the selection was made by the super-editor
+    newConversation.suppressClick = isSuppressClick(pendingComment.value.selection);
+
+    // Remove the pending comment
+    pendingComment.value = null;
+
     newConversation.isInternal = isInternal.value;
     props.currentDocument.conversations.push(newConversation);
     proxy.$superdoc.broadcastComments(COMMENT_EVENTS.ADD, props.data.getValues());
@@ -99,6 +105,9 @@ const addComment = () => {
   activeComment.value = null;
 }
 
+const isSuppressClick = (selection) => {
+  return selection.source === 'super-editor' ? true : false;
+}
 function formatDate(timestamp) {
   const date = new Date(timestamp);
   const hours = date.getHours();
@@ -125,7 +134,7 @@ const getSidebarCommentStyle = computed(() => {
     const bounds = props.data.selection.selectionBounds;
     const parentTop = props.parent.getBoundingClientRect().top;
     const currentBounds = currentElement.value.getBoundingClientRect();
-    style.top = bounds.top + selectionBounds.top + 'px';
+    style.top = (bounds.top) * activeZoom.value + 'px';
   }
 
   return style;
@@ -133,7 +142,7 @@ const getSidebarCommentStyle = computed(() => {
 
 const cleanConversations = () => {
   if (props.data.comments.length) return;
-  if (pendingComment.value) selectionPosition.value = null;
+  // if (!pendingComment.value) selectionPosition.value = null;
   const id = props.data.conversationId;
   pendingComment.value = null;
   props.currentDocument.removeConversation(id);

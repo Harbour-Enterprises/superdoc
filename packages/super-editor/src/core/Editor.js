@@ -116,8 +116,6 @@ export class Editor extends EventEmitter {
   }
 
   #initRichText(options) {
-    console.debug('Initializing rich text editor:', options);
-
     this.#createExtensionService();
     this.#createCommandService();
     this.#createSchema();

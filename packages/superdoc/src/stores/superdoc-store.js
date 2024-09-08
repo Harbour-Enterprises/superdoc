@@ -11,6 +11,7 @@ export const useSuperdocStore = defineStore('superdoc', () => {
   const documentBounds = ref([]);
   const pages = reactive({});
   const documentUsers = ref([]);
+  const activeZoom = ref(1);
 
   const users = ref([
     { name: 'Nick Bernal', email: 'nick@harbourshare.com' },
@@ -25,7 +26,12 @@ export const useSuperdocStore = defineStore('superdoc', () => {
   const modules = reactive({});
   
   const activeSelection = ref(null);
-  const selectionPosition = ref(null);
+  const selectionPosition = ref({
+    left: 0,
+    top: 0,
+    width: 0,
+    height: 0,
+  })
 
   const reset = () => {
     documents.value = [];
@@ -38,7 +44,6 @@ export const useSuperdocStore = defineStore('superdoc', () => {
     user.email = null;
     Object.assign(modules, {});
     activeSelection.value = null;
-    selectionPosition.value = null;
   }
 
   const init = (config) => {
@@ -104,6 +109,7 @@ export const useSuperdocStore = defineStore('superdoc', () => {
     pages,
     documentUsers,
     users,
+    activeZoom,
 
     selectionPosition,
     activeSelection,

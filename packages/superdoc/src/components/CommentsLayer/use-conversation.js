@@ -12,6 +12,8 @@ export default function useConversation(params) {
   const comments = ref(params.comments ? params.comments.map((c) => useComment(c)) : []);
   const selection = useSelection(params.selection);
   const suppressHighlight = ref(params.suppressHighlight);
+  const suppressClick = ref(params.suppressClick || params.selection?.source === 'super-editor');
+  const thread = ref(params.thread == null ? null : params.thread);
 
   /* Mark done (resolve) conversations */
   const markedDone = ref(params.markedDone || null);
@@ -56,6 +58,7 @@ export default function useConversation(params) {
 
   const exposedData = {
     conversationId,
+    thread,
     documentId,
     creatorEmail,
     creatorName,
@@ -68,6 +71,7 @@ export default function useConversation(params) {
     group,
     conversationElement,
     suppressHighlight,
+    suppressClick,
     isInternal,
   }
   return {

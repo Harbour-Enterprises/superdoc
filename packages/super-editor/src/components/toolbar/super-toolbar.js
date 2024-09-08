@@ -19,6 +19,7 @@ export class SuperToolbar extends EventEmitter {
       if (!argument) return;
       item.onActivate({ zoom: argument });
 
+      this.emit('superdoc-command', { item, argument });
       const layers = document.querySelector('.layers');
       if (!layers) return;
       layers.style.zoom = argument;

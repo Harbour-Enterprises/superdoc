@@ -2,7 +2,9 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import * as pdfjsViewer from 'pdfjs-dist/web/pdf_viewer';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min?raw';
-import { onMounted, ref, reactive } from 'vue';
+import { storeToRefs } from 'pinia';
+import { onMounted, ref, reactive, computed, getCurrentInstance } from 'vue';
+import { useSuperdocStore } from '@/stores/superdoc-store';
 import useSelection from '@/helpers/use-selection';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
@@ -15,9 +17,11 @@ const emit = defineEmits([
   'page-loaded',
   'ready',
   'selection-change',
-  'selection-drag',
-  'selection-drag-end',
+  'bypass-selection'
 ]);
+const superdocStore = useSuperdocStore();
+const { proxy } = getCurrentInstance();
+const { activeZoom } = storeToRefs(superdocStore);
 const totalPages = ref(null);
 const viewer = ref(null);
 const props = defineProps({
@@ -46,7 +50,6 @@ async function initPdfLayer(arrayBuffer) {
 async function loadPDF(fileObject) {
   const fileReader = new FileReader();
   fileReader.onload = async function(event) {
-    console.debug('File loaded');
     const pdfDocument = await initPdfLayer(event.target.result);
     await renderPages(pdfDocument);
   }
@@ -98,10 +101,6 @@ async function _renderPages(pdfDocument) {
 
       // Emit page information
       emit('page-loaded', id, i, containerBounds);
-
-      // Highlight event listeners
-      // container.addEventListener('touchstart', (e) => onTouchStart(e, container), { passive: false });
-      container.addEventListener('mousedown', (e) => onDragStart(e, container), { passive: false });
     }
 
     emit('ready', id, viewer)
@@ -145,125 +144,48 @@ function getSelectedTextBoundingBox(container) {
 
   // Get the bounding box of the container
   const containerRect = container.getBoundingClientRect();
+  const viewerRect = viewer.value.getBoundingClientRect();
 
   // Adjust the bounding box relative to the page
-  boundingBox.top = boundingBox.top - containerRect.top + container.scrollTop;
-  boundingBox.left = boundingBox.left - containerRect.left + container.scrollLeft;
-  boundingBox.bottom = boundingBox.bottom - containerRect.top + container.scrollTop;
-  boundingBox.right = boundingBox.right - containerRect.left + container.scrollLeft;
+  boundingBox.top = (boundingBox.top - containerRect.top) / activeZoom.value + container.scrollTop;
+  boundingBox.left = (boundingBox.left - containerRect.left) / activeZoom.value + container.scrollLeft;
+  boundingBox.bottom = (boundingBox.bottom - containerRect.top) / activeZoom.value + container.scrollTop;
+  boundingBox.right = (boundingBox.right - containerRect.left) / activeZoom.value + container.scrollLeft;
 
   return boundingBox;
 }
 
-let isDragging = false;
-
-const onDragStart = (e, container) => {
-  const { target } = e;
-  if (target.tagName !== 'SPAN') {
-    isDragging = true;
-    selectionBounds.left = e.offsetX;
-    selectionBounds.top = e.offsetY;
-    enableTextLayer(container, false);
-  }
-
-  const onDragMoveWrapper = (e) => onDragMove(e, container);
-  const onDragEndWrapper = (e) => {
-    document.removeEventListener('mouseup', onDragEndWrapper);
-    document.removeEventListener('mousemove', onDragMoveWrapper);
-    onDragEnd(e, container);
-  }
-
-  document.addEventListener('mouseup', onDragEndWrapper);
-  document.addEventListener('mousemove', onDragMoveWrapper);
-};
-
-const onDragEnd = (e, container) => {
-  let boundingBox = getSelectedTextBoundingBox(container) || {};
-  if (isDragging) boundingBox = selectionBounds;
-
-  const selection = useSelection({
-    selectionBounds: boundingBox,
-    page: container.dataset.pageNumber,
-    documentId: id,
-  });
-
-  const containerBounds = container.getBoundingClientRect();
-  if (isDragging) emit('selection-drag-end', selection, containerBounds);
-  emit('selection-change', selection, container);
-
-  isDragging = false;
-  enableTextLayer(container, true);
-}
-
-const onDragMove = (e, container) => {
-  if (!isDragging) return;
-  selectionBounds.right = e.offsetX;
-  selectionBounds.bottom = e.offsetY;
-  const selection = useSelection({
-    selectionBounds: selectionBounds,
-    page: container.dataset.pageNumber,
-    documentId: id,
-  });
-  emit('selection-drag', selection, e)
-}
-
-const onTouchStart = (e, container) => {
-  isDragging = true;
-
-  document.addEventListener('touchend', (e) => onTouchEnd(e, container));
-  document.addEventListener('touchmove', (e) => onTouchMove(e, container));
-
-  const touch = e.touches[0];
-  const containerBounds = container.getBoundingClientRect();
-  selectionBounds.left = touch.clientX;
-  selectionBounds.top = touch.clientY - containerBounds.top;
-};
-
-const onTouchMove = (e, container) => {
-  if (!isDragging || !container) return;
-
-  const touch = e.touches[0];
-  const containerBounds = container.getBoundingClientRect();
-  selectionBounds.right = touch.clientX - containerBounds.left;
-  selectionBounds.bottom = touch.clientY - containerBounds.top;
-  const selection = useSelection({
-    selectionBounds: selectionBounds,
-    page: container.dataset.pageNumber,
-    documentId: id,
-  });
-
-  emit('selection-drag', selection, e)
-};
-
-const onTouchEnd = (e, container) => {
-  isDragging = false;
-  document.removeEventListener('touchend', onTouchEnd);
-  document.removeEventListener('touchmove', onTouchMove);
-
-  const selection = useSelection({
-    selectionBounds: selectionBounds,
-    page: container.dataset.pageNumber,
-    documentId: id,
-  });
-  const containerBounds = container.getBoundingClientRect();
-  emit('selection-drag-end', selection, containerBounds);
-  emit('selection-change', selection, container);
-};
-
 onMounted(async () => {
   const doc = await loadPDF(pdfData);
 });
+
+const handlePdfClick = (e) => {
+  const { target } = e;
+  if (target.tagName !== 'SPAN') {
+    emit('bypass-selection', e);
+  }
+};
+
+const handleMouseUp = (e) => {
+  const selection = window.getSelection();
+  if (selection.toString().length > 0) {
+    const selectionBounds = getSelectedTextBoundingBox(viewer.value);
+    const sel = useSelection({
+      selectionBounds,
+      documentId: id,
+    });
+    emit('selection-change', sel);
+  }
+}
 </script>
 
 <template>
-  <div>
+  <div @mousedown="handlePdfClick" @mouseup="handleMouseUp">
     <div
         class="superdoc-viewer"
         ref="viewer"
-        id="viewerId"
-        @mousedown="onMouseDown"
-        @mousemove="onMouseMove">
-    </div>
+        id="viewerId">
+      </div>
   </div>
 </template>
 

@@ -154,6 +154,8 @@ export class Superdoc extends EventEmitter {
     this.log('[superdoc] Toolbar command:', item, argument);
     if (item.command === 'setDocumentMode') {
       this.setDocumentMode(argument);
+    } else if (item.command === 'setZoom') {
+      this.superdocStore.activeZoom = argument;
     }
   }
 

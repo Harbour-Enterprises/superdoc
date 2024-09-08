@@ -1,6 +1,7 @@
 import { ref, reactive, toRaw } from 'vue';
 
 export default function useComment(params) {
+  const id = ref(params.id);
   const comment = ref(params.comment);
   const user = reactive({
     name: params.user.name,
@@ -16,6 +17,7 @@ export default function useComment(params) {
     }
   }
   return {
+    id,
     comment,
     user,
     timestamp,
