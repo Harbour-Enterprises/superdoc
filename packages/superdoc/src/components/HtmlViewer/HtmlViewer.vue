@@ -9,20 +9,6 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  // fields only, annotations are inlined
-  fields: {
-    type: Array,
-    required: false,
-    default: () => [],
-  },
-  fieldClasses: {
-    type: Array,
-    required: false,
-  },
-  fieldFormat: {
-    type: Object,
-    required: false
-  }
 });
 
 const documentContent = ref('');
@@ -36,30 +22,6 @@ const handleSelectionChange = () => {
   const selection = window.getSelection();
   console.log('selection from html viewer', selection);
   emit('selection-change', selection);
-}
-
-const getDocumentHtmlWithFilledFields = (htmlString) => {
-  const parser = new DOMParser().parseFromString(htmlString, 'text/html');
-
-  const fieldElements = parser.querySelectorAll('.annotation');
-  if (!fieldElements.length) return;
-
-  fieldElements.forEach((field) => {
-    // find matching field
-    const itemId = field.dataset.itemid;
-    const matchingField = props.fields.find(f => f.id === itemId);
-    if (!matchingField) return null;
-
-    // replace inline annotation text
-    let newFieldElementText = matchingField.label;
-    if (matchingField.value && typeof matchingField.value !== 'object') {
-      newFieldElementText = matchingField.value;
-    }
-    const fieldElementTextCtn = field.querySelector('.annotation-text');
-    fieldElementTextCtn.innerHTML = newFieldElementText;
-  });
-
-  return parser.documentElement.outerHTML;
 }
 
 const getDocumentHtml = (fileSource) => {
@@ -78,8 +40,7 @@ const getDocumentHtml = (fileSource) => {
 onMounted(async () => {
   try {
     const documentHtml = await getDocumentHtml(props.fileSource);
-    const documentHtmlWithFilledFields = getDocumentHtmlWithFilledFields(documentHtml);
-    documentContent.value = documentHtmlWithFilledFields || documentHtml;
+    documentContent.value = documentHtml;
     emit('ready', props.documentId);
   } catch (error) {
     console.error('Error loading document', error);

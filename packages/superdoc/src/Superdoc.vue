@@ -286,7 +286,6 @@ onBeforeUnmount(() => {
               @ready="(id) => handleDocumentReady(id, null)" 
               @selection-change="handleSelectionChange"
               :file-source="doc.data"
-              :fields="doc.fields"
               :document-id="doc.id" />
       </div>
     </div>
