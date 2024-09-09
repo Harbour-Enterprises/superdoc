@@ -49,6 +49,13 @@ export function handleTableNode(node, docx, nodeListHandler, insideTrackChange) 
     const tableBorders = tableBordersElement?.elements || [];
     const { borders, rowBorders } = processTableBorders(tableBorders);
     const tblStyleTag = tblPr.elements.find((el) => el.name === 'w:tblStyle');
+
+    const tableStyleId = tblStyleTag?.attributes['w:val'];
+
+    // Other table properties
+    const tableIndent = tblPr?.elements.find((el) => el.name === 'w:tblInd');
+    const tableLayout = tblPr?.elements.find((el) => el.name === 'w:tblLayout');
+
     const referencedStyles = getReferencedTableStyles(tblStyleTag, docx);
 
     const tblW = tblPr.elements.find((el) => el.name === 'w:tblW');
@@ -73,6 +80,9 @@ export function handleTableNode(node, docx, nodeListHandler, insideTrackChange) 
             tableWidth,
             tableWidthType,
             gridColumnWidths,
+            tableStyleId,
+            tableIndent,
+            tableLayout,
             borders: borderData
         }
     }
@@ -204,7 +214,12 @@ export function handleTableRowNode(node, rowBorders, docx, nodeListHandler, insi
         console.error('Standard node handler not found');
         return {nodes: [], consumed: 0};
     }
-    const newNode = handleStandardNode([node], docx, nodeListHandler, insideTrackChange);
+
+    const newNodes = handleStandardNode([node], docx, nodeListHandler, insideTrackChange);
+    if(newNodes.nodes.length === 0) {
+        return {nodes: [], consumed: 0};
+    }
+    const newNode = newNodes.nodes[0];
 
     const tPr = node.elements.find((el) => el.name === 'w:trPr');
     const rowHeightTag = tPr?.elements.find((el) => el.name === 'w:trHeight');
@@ -214,9 +229,10 @@ export function handleTableRowNode(node, rowBorders, docx, nodeListHandler, insi
     const borders = {};
     if (rowBorders?.insideH) borders['bottom'] = rowBorders.insideH;
     if (rowBorders?.insideV) borders['right'] = rowBorders.insideV;
+    if(!newNode.attrs) newNode.attrs = {};
     newNode.attrs['borders'] = borders;
 
-    if (rowHeight && newNode.attrs['rowHeight']) {
+    if (rowHeight) {
         newNode.attrs['rowHeight'] = twipsToPixels(rowHeight);
         console.debug('Row node:', newNode);
     }

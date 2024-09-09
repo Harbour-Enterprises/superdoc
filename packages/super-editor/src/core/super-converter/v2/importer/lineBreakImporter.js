@@ -6,11 +6,17 @@ export const handleLineBreakNode = (nodes, docx, nodeListHandler, insideTrackCha
         return {nodes: [], consumed: 0};
     }
 
+    const attrs = {};
+
+    const lineBreakType = nodes[0].attributes?.['w:type'];
+    if (lineBreakType) attrs['lineBreakType'] = lineBreakType;
+
+
     return {
         nodes: [{
             type: 'lineBreak',
             content: [],
-            attrs: {},
+            attrs,
         }], consumed: 1
     };
 }

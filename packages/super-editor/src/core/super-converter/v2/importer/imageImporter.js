@@ -14,7 +14,7 @@ export const handleDrawingNode= (nodes, docx, nodeListHandler, insideTrackChange
 
     // Inline images
     const inlineImage = elements.find((el) => el.name === 'wp:inline');
-    if (inlineImage) result = handleInlineImageNode(inlineImage);
+    if (inlineImage) result = handleInlineImageNode(inlineImage, docx);
     return {nodes: result ? [result] : [], consumed: 1};
 }
 

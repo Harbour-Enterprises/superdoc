@@ -111,7 +111,6 @@ describe("trackChanges live xml test", () => {
     });
     it("parses mark change xml", () => {
         const nodes = parseXmlToJson(markChangeXml).elements
-        console.log(nodes)
         const handler = defaultNodeListHandler()
         const result = handler.handler(nodes, null, false);
         expect(result.length).toBe(1);

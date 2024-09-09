@@ -1,9 +1,10 @@
 import xmljs from 'xml-js';
 import { getNodeNumberingDefinition } from './numbering';
-import { toKebabCase } from '@harbour-enterprises/common';
 
 import { DocxExporter, exportSchemaToJson } from './exporter';
 import { DocxImporter } from './importer';
+import {createDocumentJson} from "./v2/importer/docxImporter.js";
+import {getInitialJSON} from "./v2/docxHelper.js";
 
 
 class SuperConverter {
@@ -157,8 +158,14 @@ class SuperConverter {
   }
 
   getSchema() {
-    const importer = new DocxImporter(this);
-    return importer.getSchema();
+    const result = createDocumentJson({...this.convertedXml, media: this.media});
+    if (result) {
+      this.savedTagsToRestore.push({...result.savedTagsToRestore});
+      this.pageStyles = result.pageStyles;
+      return result.pmDoc;
+    } else {
+      return null;
+    }
   }
 
   schemaToXml(data) {

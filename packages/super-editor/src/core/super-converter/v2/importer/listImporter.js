@@ -1,4 +1,3 @@
-import {convertToSchema} from "./docxImporter.js";
 import {carbonCopy} from "../../../utilities/cabonCopy.js";
 import {hasTextNode} from "./importerHelpers.js";
 
