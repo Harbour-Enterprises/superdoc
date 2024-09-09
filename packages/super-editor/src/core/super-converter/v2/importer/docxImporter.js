@@ -13,6 +13,7 @@ import {paragraphNodeHandlerEntity} from "./paragraphNodeImporter.js";
 import {standardNodeHandlerEntity} from "./standardNodeImporter.js";
 import {lineBreakNodeHandlerEntity} from "./lineBreakImporter.js";
 import {bookmarkNodeHandlerEntity} from "./bookmarkNodeImporter.js";
+import {listHandlerEntity} from "./listImporter.js";
 
 /**
  * @typedef {import()} XmlNode
@@ -34,7 +35,6 @@ import {bookmarkNodeHandlerEntity} from "./bookmarkNodeImporter.js";
 export const createDocumentJson = (docx) => {
     const json = carbonCopy(getInitialJSON(docx));
     if (!json) return null;
-    console.log("JSON", json);
 
     console.debug('\n\n JSON', json,)
     const nodeListHandler = defaultNodeListHandler();
@@ -63,6 +63,7 @@ export const defaultNodeListHandler = () => {
     const entities = [
         runNodeHandlerEntity,
         paragraphNodeHandlerEntity,
+        listHandlerEntity,
         textNodeHandlerEntity,
         lineBreakNodeHandlerEntity,
         bookmarkNodeHandlerEntity,

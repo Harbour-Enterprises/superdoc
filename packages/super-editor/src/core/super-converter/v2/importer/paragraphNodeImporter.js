@@ -99,7 +99,7 @@ function getDefaultStyleDefinition(defaultStyleId, docx) {
  * @param {XmlNode[]} nodes
  * @returns
  */
-function preProcessNodesForFldChar(nodes) {
+export function preProcessNodesForFldChar(nodes) {
     const processedNodes = [];
     const nodesToCombine = [];
     let isCombiningNodes = false;
