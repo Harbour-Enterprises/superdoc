@@ -1,4 +1,9 @@
-
+/**
+ * Find first field annotation by field ID.
+ * @param fieldId The field ID.
+ * @param state The editor state.
+ * @returns The field annotation or null.
+ */
 export function findFirstFieldAnnotationByFieldId(fieldId, state) {
   let fieldAnnotation = findNode(state.doc, (node) => {
     return (

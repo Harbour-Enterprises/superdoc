@@ -32,6 +32,7 @@ export class FieldAnnotationView {
     this.borderColor = options.borderColor;
 
     this.handleAnnotationClick = this.handleAnnotationClick.bind(this);
+    this.handleAnnotationDoubleClick = this.handleAnnotationDoubleClick.bind(this);
     this.handleSelectionUpdate = this.handleSelectionUpdate.bind(this);
     
     this.buildView();
@@ -162,15 +163,21 @@ export class FieldAnnotationView {
 
   attachEventListeners() {
     this.dom.addEventListener('click', this.handleAnnotationClick);
+    this.dom.addEventListener('dblclick', this.handleAnnotationDoubleClick);
     this.editor.on('selectionUpdate', this.handleSelectionUpdate);
   }
 
   removeEventListeners() {
     this.dom.removeEventListener('click', this.handleAnnotationClick);
+    this.dom.removeEventListener('dblclick', this.handleAnnotationDoubleClick);
     this.editor.off('selectionUpdate', this.handleSelectionUpdate);
   }
 
   handleSelectionUpdate({ editor, transaction }) {
+    if (!this.editor.isEditable) {
+      return;
+    }
+
     let { selection } = editor.state;
     
     if (selection instanceof NodeSelection) {
@@ -188,7 +195,25 @@ export class FieldAnnotationView {
   }
 
   handleAnnotationClick(event) {
+    if (!this.editor.isEditable) {
+      return;
+    }
+
     this.editor.emit('fieldAnnotationClicked', {
+      editor: this.editor,
+      node: this.node,
+      nodePos: this.getPos(),
+      event,
+      currentTarget: event.currentTarget,
+    });
+  }
+  
+  handleAnnotationDoubleClick(event) {
+    if (!this.editor.isEditable) {
+      return;
+    }
+
+    this.editor.emit('fieldAnnotationDoubleClicked', {
       editor: this.editor,
       node: this.node,
       nodePos: this.getPos(),
@@ -198,6 +223,11 @@ export class FieldAnnotationView {
   }
 
   stopEvent(event) {
+    if (!this.editor.isEditable) {
+      event.preventDefault();
+      return true;
+    }
+
     return false;
   }
 

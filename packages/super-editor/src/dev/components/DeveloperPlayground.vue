@@ -119,6 +119,7 @@ const attachAnnotationEventHandlers = () => {
     editor.commands.addFieldAnnotation(pos, {
       displayLabel: 'Enter your info',
       fieldId: `agreementinput-${Date.now()}-${Math.floor(Math.random() * 1000000000000)}`,
+      // fieldId: `111`,
       fieldType: 'TEXTINPUT',
       fieldColor: signer?.signercolor,
     });
@@ -146,18 +147,26 @@ const attachAnnotationEventHandlers = () => {
     console.log('fieldAnnotationClicked', { params });
   });
 
+  activeEditor?.on('fieldAnnotationDoubleClicked', (params) => {
+    console.log('fieldAnnotationDoubleClicked', { params });
+  });
+
+  activeEditor?.on('fieldAnnotationSelected', (params) => {
+    console.log('fieldAnnotationSelected', { params });
+  });
+
   // Update annotations by fieldId.
   // setTimeout(() => {
   //   activeEditor?.commands.updateFieldAnnotations('111', {
   //     displayLabel: 'Updated!',
   //     fieldColor: '#6943d0',
   //   });
-  // }, 3000);
+  // }, 5000);
 
   // Delete annotation by fieldId.
   // setTimeout(() => {
   //   activeEditor?.commands.deleteFieldAnnotations('111');
-  // }, 3000);
+  // }, 5000);
 
   // Get all field annotations with dom rect (to get coordinates).
   // setTimeout(() => {
@@ -243,6 +252,10 @@ onMounted(async () => {
                 />
               </div>
             </div>
+        </div>
+
+        <div>
+          <!-- -->
         </div>
       </div>
 

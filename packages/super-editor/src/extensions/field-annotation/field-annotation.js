@@ -1,6 +1,7 @@
 import { Node, Attribute, helpers } from '@core/index.js';
 import { FieldAnnotationView } from './FieldAnnotationView.js';
 import { FieldAnnotationPlugin } from './FieldAnnotationPlugin.js';
+import { findFieldAnnotationsByFieldId } from './fieldAnnotationHelpers/index.js';
 import { toHex } from 'color2k';
 
 const { findChildren } = helpers;
@@ -214,14 +215,7 @@ export const FieldAnnotation = Node.create({
         state,
         tr,
       }) => {
-        let annotations = findChildren(state.doc, (node) => {
-          let isFieldAnnotation = node.type.name === this.name;
-          if (Array.isArray(fieldIdOrArray)) {
-            return isFieldAnnotation && fieldIdOrArray.includes(node.attrs.fieldId);
-          } else {
-            return isFieldAnnotation && node.attrs.fieldId === fieldIdOrArray;
-          }
-        });
+        let annotations = findFieldAnnotationsByFieldId(fieldIdOrArray, state);
 
         if (!annotations.length) return false;
 
@@ -256,14 +250,7 @@ export const FieldAnnotation = Node.create({
         state,
         tr,
       }) => {
-        let annotations = findChildren(state.doc, (node) => {
-          let isFieldAnnotation = node.type.name === this.name;
-          if (Array.isArray(fieldIdOrArray)) {
-            return isFieldAnnotation && fieldIdOrArray.includes(node.attrs.fieldId);
-          } else {
-            return isFieldAnnotation && node.attrs.fieldId === fieldIdOrArray;
-          }
-        });
+        let annotations = findFieldAnnotationsByFieldId(fieldIdOrArray, state);
 
         if (!annotations.length) return false;
 
