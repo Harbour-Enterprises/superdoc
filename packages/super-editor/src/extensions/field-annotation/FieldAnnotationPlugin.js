@@ -1,7 +1,10 @@
 import { Plugin, PluginKey } from 'prosemirror-state';
 
 export const FieldAnnotationPlugin = (options = {}) => {
-  let { editor, annotationClass } = options;
+  let { 
+    editor, 
+    annotationClass, 
+  } = options;
 
   return new Plugin({
     key: new PluginKey('fieldAnnotation'),
