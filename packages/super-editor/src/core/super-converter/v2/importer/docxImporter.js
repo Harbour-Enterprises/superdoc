@@ -15,6 +15,7 @@ import {lineBreakNodeHandlerEntity} from "./lineBreakImporter.js";
 import {bookmarkNodeHandlerEntity} from "./bookmarkNodeImporter.js";
 
 /**
+ * @typedef {import()} XmlNode
  * @typedef {{type: string, content: *, attrs: {}}} PmNodeJson
  * @typedef {{type: string, attrs: {}}} PmMarkJson
  *
@@ -28,18 +29,19 @@ import {bookmarkNodeHandlerEntity} from "./bookmarkNodeImporter.js";
 /**
  *
  * @param {ParsedDocx} docx
- * @returns {{pmNodes: PmNodeJson, savedTagsToRestore: XmlNode, pageStyles: *}|null}
+ * @returns {{pmDoc: PmNodeJson, savedTagsToRestore: XmlNode, pageStyles: *}|null}
  */
 export const createDocumentJson = (docx) => {
     const json = carbonCopy(getInitialJSON(docx));
     if (!json) return null;
+    console.log("JSON", json);
 
     console.debug('\n\n JSON', json,)
     const nodeListHandler = defaultNodeListHandler();
-    if(json.elements[0].elements[0].type === 'w:body') {
+    if(json.elements[0].elements[0].name === 'w:body') {
         const node = json.elements[0].elements[0];
         const ignoreNodes = ['w:sectPr'];
-        const content = node.elements.filter((n) => !ignoreNodes.includes(n.name));
+        const content = node.elements?.filter((n) => !ignoreNodes.includes(n.name)) ?? [];
 
         const result = {
             type: 'doc',
@@ -49,7 +51,7 @@ export const createDocumentJson = (docx) => {
             }
         }
         return {
-            pmNodes: result,
+            pmDoc: result,
             savedTagsToRestore: node,
             pageStyles: getDocumentStyles(node),
         };

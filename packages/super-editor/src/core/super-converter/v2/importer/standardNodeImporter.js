@@ -1,6 +1,4 @@
-import {convertToSchema} from "./docxImporter.js";
 import {getElementName, parseProperties} from "./importerHelpers.js";
-import {handleTextNode} from "./textNodeImporter.js";
 
 /**
  * @type {import("docxImporter").NodeHandler}
@@ -22,7 +20,7 @@ export const handleStandardNode = (nodes, docx, nodeListHandler, insideTrackChan
             el.marks.push(...marks);
             return el;
         })
-        content.push(...nodeListHandler.handler(updatedElements));
+        content.push(...nodeListHandler.handler(updatedElements, docx, insideTrackChange));
     }
 
     const resultNode = {

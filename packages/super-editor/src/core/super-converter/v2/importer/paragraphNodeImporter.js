@@ -42,6 +42,12 @@ export const handleParagraphNode = (nodes, docx, nodeListHandler, insideTrackCha
         const defaultStyleId = node.attributes['w:rsidRDefault'];
         const { lineSpaceAfter, lineSpaceBefore } = getDefaultStyleDefinition(defaultStyleId, docx);
 
+        const pPr = node.elements.find((el) => el.name === 'w:pPr');
+        const styleTag = pPr?.elements.find((el) => el.name === 'w:pStyle');
+        if (styleTag) {
+            schemaNode.attrs['styleId'] = styleTag.attributes['w:val'];
+        }
+
         if (!('attributes' in schemaNode)) schemaNode.attributes = {};
         schemaNode.attrs['paragraphSpacing'] = { lineSpaceAfter, lineSpaceBefore };
     }
