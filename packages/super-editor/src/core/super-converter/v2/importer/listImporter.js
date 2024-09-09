@@ -1,12 +1,15 @@
 import {carbonCopy} from "../../../utilities/cabonCopy.js";
-import {hasTextNode} from "./importerHelpers.js";
+import {hasTextNode, parseProperties} from "./importerHelpers.js";
+import {preProcessNodesForFldChar} from "./paragraphNodeImporter.js";
 
-
+/**
+ * @type {import("docxImporter").NodeHandler}
+ */
 export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange)  => {
     if(nodes.length === 0 || nodes[0].name !== 'w:p') {
         return {nodes: [], consumed: 0};
     }
-    const node = nodes[0];
+    const node = carbonCopy(nodes[0])
 
     let schemaNode;
 
@@ -34,13 +37,22 @@ export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange) 
         }
 
         // TODO - Check that this change is OK
-        return {nodes: handleListNodes(listItems, 0, node), consumed: listItems.filter(i => i.seen).length};
+        return {
+            nodes: [handleListNodes(listItems, docx, nodeListHandler, 0)],
+            consumed: listItems.filter(i => i.seen).length
+        };
     } else {
         return {nodes: [], consumed: 0};
     }
 }
 
-
+/**
+ * @type {import("docxImporter").NodeHandlerEntry}
+ */
+export const listHandlerEntity = {
+    handlerName: 'listHandler',
+    handler: handleListNode
+}
 
 
 /**
@@ -52,13 +64,22 @@ export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange) 
  * with the same set of list items (as we do not know the node levels until we process them).
  *
  * @param {Array} listItems - Array of list items to process.
+ * @param {ParsedDocx} docx - The parsed docx object.
+ * @param {NodeListHandler} nodeListHandler - The node list handler function.
+ * @param {boolean} insideTrackChange - Whether we are inside a track change.
  * @param {number} [listLevel=0] - The current indentation level of the list.
  * @returns {Object} The processed list node with structured content.
  */
-function handleListNodes(listItems, listLevel = 0) {
+function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, listLevel = 0) {
     const parsedListItems = [];
     let overallListType;
     let listStyleType;
+
+    const handleStandardNode = nodeListHandler.handlerEntities.find(e => e.handlerName === 'standardNodeHandler')?.handler;
+    if (!handleStandardNode) {
+        console.error('Standard node handler not found');
+        return {nodes: [], consumed: 0};
+    }
 
     for (let [index, item] of listItems.entries()) {
         // Skip items we've already processed
@@ -67,7 +88,7 @@ function handleListNodes(listItems, listLevel = 0) {
         // Sometimes there are paragraph nodes that only have pPr element and no text node - these are
         // Spacers in the XML and need to be appended to the last item.
         if (item.elements && !hasTextNode(item.elements)) {
-            const n = handleStandardNode(item, listItems, index);
+            const n = handleStandardNode([item], docx, nodeListHandler, insideTrackChange).nodes[0];
             parsedListItems[parsedListItems.length - 1]?.content.push(n);
             item.seen = true;
             continue;
@@ -98,7 +119,7 @@ function handleListNodes(listItems, listLevel = 0) {
             const schemaElements = [];
             schemaElements.push({
                 type: 'paragraph',
-                content: convertToSchema(elements)?.filter(n => n)
+                content: nodeListHandler.handler(elements, docx, insideTrackChange)?.filter(n => n)
             });
 
             console.debug('\n\n LIST ITEM', listpPrs, listrPrs, start, lvlText, lvlJc, '\n\n')
@@ -117,7 +138,7 @@ function handleListNodes(listItems, listLevel = 0) {
             // If this item belongs in a deeper list level, we need to process it by calling this function again
         // But going one level deeper.
         else if (listLevel < intLevel) {
-            const sublist = handleListNodes(listItems.slice(index), listLevel + 1);
+            const sublist = handleListNodes(listItems.slice(index), docx, nodeListHandler, insideTrackChange, listLevel + 1);
             const lastItem = parsedListItems[parsedListItems.length - 1];
             if (!lastItem) {
                 parsedListItems.push(createListItem([sublist], nodeAttributes, []));
