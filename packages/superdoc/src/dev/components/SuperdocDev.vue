@@ -120,28 +120,6 @@ const attachEditorEventsHandlers = () => {
     editor.on('fieldAnnotationSelected', (params) => {
       console.log('fieldAnnotationSelected', { params });
     });
-
-    // Update annotations by fieldId.
-    // setTimeout(() => {
-    //   editor.commands.updateFieldAnnotations('111', {
-    //     displayLabel: 'Updated!',
-    //     fieldColor: '#6943d0',
-    //   });
-    // }, 3000);
-
-    // Delete annotation by fieldId.
-    // setTimeout(() => {
-    //   editor.commands.deleteFieldAnnotations('111');
-    // }, 3000);
-
-    // Get all field annotations with dom rect (to get coordinates).
-    // setTimeout(() => {
-    //   let fieldAnnotationsWithRect = fieldAnnotationHelpers.getAllFieldAnnotationsWithRect(
-    //     editor.view,
-    //     editor.state
-    //   );
-    //   console.log({ fieldAnnotationsWithRect });
-    // }, 3000);
   };
 
   superdoc.value?.on('editorCreate', onEditorCreate);
