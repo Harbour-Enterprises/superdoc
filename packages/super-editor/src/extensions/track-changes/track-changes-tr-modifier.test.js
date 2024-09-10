@@ -1,9 +1,16 @@
 import {EditorState} from "prosemirror-state";
 import {Slice, Fragment} from "prosemirror-model";
+import {findWrapping, liftTarget} from "prosemirror-transform";
 import {Schema} from "../../core/index.js";
 import {getStarterExtensions} from "../index.js";
 import {trackTransaction} from "./track-changes-tr-modifier.js";
-import {TrackDeleteMarkName, TrackInsertMarkName, TrackMarksMarkName} from "./constants.js";
+import {
+    TrackChangeBlockChangeAttributeName,
+    TrackDeleteMarkName,
+    TrackInsertMarkName,
+    TrackMarksMarkName
+} from "./constants.js";
+import {applyTrackChanges} from "./track-changes-base.js";
 
 const createEmptyDocState = () => {
     const emptyDoc = {content: [], type: "doc"}
@@ -103,8 +110,8 @@ describe('Track Changes TR Modifier', () => {
             const trackMarksMark = doc3Json.content[0].content[0].marks.find(mark => mark.type === TrackMarksMarkName);
             expect(trackMarksMark).toBeTruthy();
             expect(trackMarksMark.attrs.author).toBe("TestUser1");
-            expect(trackMarksMark.attrs.before).toStrictEqual([]);
-            expect(trackMarksMark.attrs.after).toStrictEqual([{
+            expect(trackMarksMark.attrs.before).toEqual([]);
+            expect(trackMarksMark.attrs.after).toEqual([{
                 attrs: {},
                 type: "bold"
             }]);
@@ -137,7 +144,7 @@ describe('Track Changes TR Modifier', () => {
             const trackMarksMark = doc3Json.content[0].content[0].marks.find(mark => mark.type === TrackMarksMarkName);
             expect(trackMarksMark).toBeTruthy();
             expect(trackMarksMark.attrs.author).toBe("TestUser1");
-            expect(trackMarksMark.attrs.before).toStrictEqual([
+            expect(trackMarksMark.attrs.before).toEqual([
                 {
                 attrs: {},
                 type: "bold"
@@ -149,7 +156,7 @@ describe('Track Changes TR Modifier', () => {
                 },
                 type: "textStyle"
             }]);
-            expect(trackMarksMark.attrs.after).toStrictEqual([
+            expect(trackMarksMark.attrs.after).toEqual([
                 {
                     attrs: {},
                     type: "bold"
@@ -191,7 +198,7 @@ describe('Track Changes TR Modifier', () => {
             const trackMarksMark = doc3Json.content[0].content[0].marks.find(mark => mark.type === TrackMarksMarkName);
             expect(trackMarksMark).toBeTruthy();
             expect(trackMarksMark.attrs.author).toBe("TestUser1");
-            expect(trackMarksMark.attrs.before).toStrictEqual([
+            expect(trackMarksMark.attrs.before).toEqual([
                 {
                     attrs: {},
                     type: "bold"
@@ -203,7 +210,7 @@ describe('Track Changes TR Modifier', () => {
                     },
                     type: "textStyle"
                 }]);
-            expect(trackMarksMark.attrs.after).toStrictEqual([
+            expect(trackMarksMark.attrs.after).toEqual([
                 {
                     attrs: {
                         color: "#FF004D",
@@ -241,7 +248,7 @@ describe('Track Changes TR Modifier', () => {
             const trackMarksMark = doc3Json.content[0].content[0].marks.find(mark => mark.type === TrackMarksMarkName);
             expect(trackMarksMark).toBeTruthy();
             expect(trackMarksMark.attrs.author).toBe("TestUser1");
-            expect(trackMarksMark.attrs.before).toStrictEqual([
+            expect(trackMarksMark.attrs.before).toEqual([
                 {
                     attrs: {},
                     type: "bold"
@@ -253,7 +260,7 @@ describe('Track Changes TR Modifier', () => {
                     },
                     type: "textStyle"
                 }]);
-            expect(trackMarksMark.attrs.after).toStrictEqual([
+            expect(trackMarksMark.attrs.after).toEqual([
                 {
                     attrs: {},
                     type: "bold"
@@ -267,5 +274,310 @@ describe('Track Changes TR Modifier', () => {
                     type: "textStyle"
                 }]);
         })
+    });
+    describe("handleNodeChanges", () => {
+        describe("attribute change", () => {
+            test("change a H1 to H2", () => {
+                //init
+                const state = createEmptyDocState();
+                //mod
+                const tr = state.tr;
+                const node = state.schema.nodes["heading"].create({level: 1}, state.schema.text("test"));
+                tr.insert(0, node);
+                const state2 = state.apply(tr);
+                const tr2 = state2.tr;
+                tr2.setNodeMarkup(0, null, {level: 2});
+                const state3 = state2.apply(trackTransaction(tr2, state2, "TestUser1"))
+                //check
+                const doc3Json = state3.doc.toJSON();
+                expect(doc3Json.content.length).toBe(1);
+                expect(doc3Json.content[0].type).toBe("heading");
+                expect(doc3Json.content[0].attrs.level).toBe(2);
+                expect(doc3Json.content[0].attrs.track.length).toBe(1);
+                expect(doc3Json.content[0].attrs.track[0].type).toBe(TrackChangeBlockChangeAttributeName);
+                expect(doc3Json.content[0].attrs.track[0].author).toBe("TestUser1");
+                expect(doc3Json.content[0].attrs.track[0].before.type).toBe("heading");
+                expect(doc3Json.content[0].attrs.track[0].before.attrs).toEqual({
+                    lineHeight: null,
+                    textAlign: undefined,
+                    textIndent: null,
+                    level: 1,
+                });
+            });
+            test("change a H1 to H2 and accept", () => {
+                //init
+                const state = createEmptyDocState();
+                //mod
+                const tr = state.tr;
+                const node = state.schema.nodes["heading"].create({level: 1}, state.schema.text("test"));
+                tr.insert(0, node);
+                const state2 = state.apply(tr);
+                const tr2 = state2.tr;
+                tr2.setNodeMarkup(0, null, {level: 2});
+                const state3 = state2.apply(trackTransaction(tr2, state2, "TestUser1"))
+                const tr3 = state3.tr;
+                applyTrackChanges("accept", state3, tr3, 0, state3.doc.nodeSize - 2)
+                const state4 = state3.apply(tr3);
+                //check
+                const doc4Json = state4.doc.toJSON();
+                expect(doc4Json.content.length).toBe(1);
+                expect(doc4Json.content[0].type).toBe("heading");
+                expect(doc4Json.content[0].attrs.level).toBe(2);
+                expect(doc4Json.content[0].attrs.track.length).toBe(0);
+            });
+            test("change a H1 to H2 and revert", () => {
+                //init
+                const state = createEmptyDocState();
+                //mod
+                const tr = state.tr;
+                const node = state.schema.nodes["heading"].create({level: 1}, state.schema.text("test"));
+                tr.insert(0, node);
+                const state2 = state.apply(tr);
+                const tr2 = state2.tr;
+                tr2.setNodeMarkup(0, null, {level: 2});
+                const state3 = state2.apply(trackTransaction(tr2, state2, "TestUser1"))
+                const tr3 = state3.tr;
+                applyTrackChanges("revert", state3, tr3, 0, state3.doc.nodeSize - 2)
+                const state4 = state3.apply(tr3);
+                //check
+                const doc4Json = state4.doc.toJSON();
+                expect(doc4Json.content.length).toBe(1);
+                expect(doc4Json.content[0].type).toBe("heading");
+                expect(doc4Json.content[0].attrs.level).toBe(1);
+                expect(doc4Json.content[0].attrs.track.length).toBe(0);
+            });
+        });
+        describe("node type change", () => {
+            test("change an orderedList to unorderedList", () => {
+                //init
+                const state = createEmptyDocState();
+                //mod
+                const tr = state.tr;
+                const node = state.schema.nodes["orderedList"].create(null, state.schema.nodes["listItem"].create(null, state.schema.text("test")));
+                tr.insert(0, node);
+                const state2 = state.apply(tr);
+                const tr2 = state2.tr;
+                tr2.setNodeMarkup(0, state2.schema.nodes["bulletList"], null);
+                const state3 = state2.apply(trackTransaction(tr2, state2, "TestUser1"))
+                //check
+                const doc3Json = state3.doc.toJSON();
+                expect(doc3Json.content.length).toBe(1);
+                expect(doc3Json.content[0].type).toBe("bulletList");
+                expect(doc3Json.content[0].content.length).toBe(1);
+                expect(doc3Json.content[0].content[0].type).toBe("listItem");
+                expect(doc3Json.content[0].content[0].content.length).toBe(1);
+                expect(doc3Json.content[0].content[0].content[0].text).toBe("test");
+                expect(doc3Json.content[0].attrs.track.length).toBe(1);
+                expect(doc3Json.content[0].attrs.track[0].type).toBe(TrackChangeBlockChangeAttributeName);
+                expect(doc3Json.content[0].attrs.track[0].author).toBe("TestUser1");
+                expect(doc3Json.content[0].attrs.track[0].before.type).toBe("orderedList");
+            });
+            test("change an orderedList to unorderedList and accept", () => {
+                //init
+                const state = createEmptyDocState();
+                //mod
+                const tr = state.tr;
+                const node = state.schema.nodes["orderedList"].create(null, state.schema.nodes["listItem"].create(null, state.schema.text("test")));
+                tr.insert(0, node);
+                const state2 = state.apply(tr);
+                const tr2 = state2.tr;
+                tr2.setNodeMarkup(0, state2.schema.nodes["bulletList"], null);
+                const state3 = state2.apply(trackTransaction(tr2, state2, "TestUser1"))
+                const tr3 = state3.tr;
+                applyTrackChanges("accept", state3, tr3, 0, state3.doc.nodeSize - 2)
+                const state4 = state3.apply(tr3);
+                //check
+                const doc4Json = state4.doc.toJSON();
+                expect(doc4Json.content.length).toBe(1);
+                expect(doc4Json.content[0].type).toBe("bulletList");
+                expect(doc4Json.content[0].content.length).toBe(1);
+                expect(doc4Json.content[0].content[0].type).toBe("listItem");
+                expect(doc4Json.content[0].content[0].content.length).toBe(1);
+                expect(doc4Json.content[0].content[0].content[0].text).toBe("test");
+                expect(doc4Json.content[0].attrs.track.length).toBe(0);
+            });
+            test("change an orderedList to unorderedList and revert", () => {
+                //init
+                const state = createEmptyDocState();
+                //mod
+                const tr = state.tr;
+                const node = state.schema.nodes["orderedList"].create(null, state.schema.nodes["listItem"].create(null, state.schema.text("test")));
+                tr.insert(0, node);
+                const state2 = state.apply(tr);
+                const tr2 = state2.tr;
+                tr2.setNodeMarkup(0, state2.schema.nodes["bulletList"], null);
+                const state3 = state2.apply(trackTransaction(tr2, state2, "TestUser1"))
+                const tr3 = state3.tr;
+                applyTrackChanges("revert", state3, tr3, 0, state3.doc.nodeSize - 2)
+                const state4 = state3.apply(tr3);
+                //check
+                const doc4Json = state4.doc.toJSON();
+                expect(doc4Json.content.length).toBe(1);
+                expect(doc4Json.content[0].type).toBe("orderedList");
+                expect(doc4Json.content[0].content.length).toBe(1);
+                expect(doc4Json.content[0].content[0].type).toBe("listItem");
+                expect(doc4Json.content[0].content[0].content.length).toBe(1);
+                expect(doc4Json.content[0].content[0].content[0].text).toBe("test");
+                expect(doc4Json.content[0].attrs.track.length).toBe(0);
+            });
+        });
+        describe("wrap a node", () => {
+           test("wrap a paragraph to an unorderedList", () => {
+                //init
+                const state = createEmptyDocState();
+                //mod
+                const tr = state.tr;
+                const node = state.schema.nodes["paragraph"].create(null, state.schema.text("test"));
+                tr.insert(0, node);
+                const state2 = state.apply(tr);
+                const tr2 = state2.tr;
+                const nodeRange = state2.doc.resolve(0).blockRange(state2.doc.resolve(state2.doc.nodeSize - 2));
+                const wrapParam = findWrapping(nodeRange, state2.schema.nodes["bulletList"]);
+                tr2.wrap(nodeRange, wrapParam);
+                const state3 = state2.apply(trackTransaction(tr2, state2, "TestUser1"))
+                //check
+                const doc3Json = state3.doc.toJSON();
+                expect(doc3Json.content.length).toBe(1);
+                expect(doc3Json.content[0].type).toBe("bulletList");
+                expect(doc3Json.content[0].content.length).toBe(1);
+                expect(doc3Json.content[0].content[0].type).toBe("listItem");
+                expect(doc3Json.content[0].content[0].content.length).toBe(1);
+                expect(doc3Json.content[0].content[0].content[0].content.length).toBe(1);
+                expect(doc3Json.content[0].content[0].content[0].content[0].text).toBe("test");
+                expect(doc3Json.content[0].content[0].attrs.track.length).toBe(1);
+                expect(doc3Json.content[0].content[0].attrs.track[0].type).toBe(TrackInsertMarkName);
+                expect(doc3Json.content[0].content[0].attrs.track[0].author).toBe("TestUser1");
+                expect(doc3Json.content[0].content[0].attrs.track[0].before).toBe(undefined);
+           });
+            test("wrap a paragraph to an unorderedList and accept", () => {
+                //init
+                const state = createEmptyDocState();
+                //mod
+                const tr = state.tr;
+                const node = state.schema.nodes["paragraph"].create(null, state.schema.text("test"));
+                tr.insert(0, node);
+                const state2 = state.apply(tr);
+                const tr2 = state2.tr;
+                const nodeRange = state2.doc.resolve(0).blockRange(state2.doc.resolve(state2.doc.nodeSize - 2));
+                const wrapParam = findWrapping(nodeRange, state2.schema.nodes["bulletList"]);
+                tr2.wrap(nodeRange, wrapParam);
+                const state3 = state2.apply(trackTransaction(tr2, state2, "TestUser1"))
+                const tr3 = state3.tr;
+                applyTrackChanges("accept", state3, tr3, 0, state3.doc.nodeSize - 2)
+                const state4 = state3.apply(tr3);
+                //check
+                const doc4Json = state4.doc.toJSON();
+                expect(doc4Json.content.length).toBe(1);
+                expect(doc4Json.content[0].type).toBe("bulletList");
+                expect(doc4Json.content[0].content.length).toBe(1);
+                expect(doc4Json.content[0].content[0].type).toBe("listItem");
+                expect(doc4Json.content[0].content[0].content.length).toBe(1);
+                expect(doc4Json.content[0].content[0].content[0].content.length).toBe(1);
+                expect(doc4Json.content[0].content[0].content[0].content[0].text).toBe("test");
+                expect(doc4Json.content[0].content[0].attrs.track.length).toBe(0);
+            });
+            test("wrap a paragraph to an unorderedList and revert", () => {
+                //init
+                const state = createEmptyDocState();
+                //mod
+                const tr = state.tr;
+                const node = state.schema.nodes["paragraph"].create(null, state.schema.text("test"));
+                tr.insert(0, node);
+                const state2 = state.apply(tr);
+                const tr2 = state2.tr;
+                const nodeRange = state2.doc.resolve(0).blockRange(state2.doc.resolve(state2.doc.nodeSize - 2));
+                const wrapParam = findWrapping(nodeRange, state2.schema.nodes["bulletList"]);
+                tr2.wrap(nodeRange, wrapParam);
+                const state3 = state2.apply(trackTransaction(tr2, state2, "TestUser1"))
+                const tr3 = state3.tr;
+                applyTrackChanges("revert", state3, tr3, 0, state3.doc.nodeSize - 2)
+                const state4 = state3.apply(tr3);
+                //check
+                const doc4Json = state4.doc.toJSON();
+                expect(doc4Json.content.length).toBe(1);
+                expect(doc4Json.content[0].type).toBe("paragraph");
+                expect(doc4Json.content[0].content.length).toBe(1);
+                expect(doc4Json.content[0].content[0].text).toBe("test");
+                expect(doc4Json.content[0].attrs.track.length).toBe(0);
+            });
+        });
+        describe("unwrap a node", () => {
+            test("unwrap a paragraph from an unorderedList", () => {
+                //init
+                const state = createEmptyDocState();
+                //mod
+                const tr = state.tr;
+                const node = state.schema.nodes["bulletList"].create(null, state.schema.nodes["listItem"].create(null, state.schema.nodes["paragraph"].create(null, state.schema.text("test"))));
+                tr.insert(0, node);
+                const state2 = state.apply(tr);
+                const tr2 = state2.tr;
+                const nodeRange = state2.doc.resolve(2).blockRange(state2.doc.resolve(state2.doc.nodeSize - 4));
+                const target = liftTarget(nodeRange);
+                tr2.lift(nodeRange, target);
+                const state3 = state2.apply(trackTransaction(tr2, state2, "TestUser1"));
+                //check
+                const doc3Json = state3.doc.toJSON();
+                expect(doc3Json.content.length).toBe(1);
+                expect(doc3Json.content[0].type).toBe("bulletList");
+                expect(doc3Json.content[0].content.length).toBe(1);
+                expect(doc3Json.content[0].content[0].type).toBe("listItem");
+                expect(doc3Json.content[0].content[0].content.length).toBe(1);
+                expect(doc3Json.content[0].content[0].attrs.track.length).toBe(1);
+                expect(doc3Json.content[0].content[0].attrs.track[0].type).toBe(TrackDeleteMarkName);
+                expect(doc3Json.content[0].content[0].attrs.track[0].author).toBe("TestUser1");
+                expect(doc3Json.content[0].content[0].attrs.track[0].before).toBe(undefined);
+                expect(doc3Json.content[0].content[0].content[0].type).toBe("paragraph");
+            });
+            test("unwrap a paragraph from an unorderedList and accept", () => {
+                //init
+                const state = createEmptyDocState();
+                //mod
+                const tr = state.tr;
+                const node = state.schema.nodes["bulletList"].create(null, state.schema.nodes["listItem"].create(null, state.schema.nodes["paragraph"].create(null, state.schema.text("test"))));
+                tr.insert(0, node);
+                const state2 = state.apply(tr);
+                const tr2 = state2.tr;
+                const nodeRange = state2.doc.resolve(2).blockRange(state2.doc.resolve(state2.doc.nodeSize - 4));
+                const target = liftTarget(nodeRange);
+                tr2.lift(nodeRange, target);
+                const state3 = state2.apply(trackTransaction(tr2, state2, "TestUser1"));
+                const tr3 = state3.tr;
+                applyTrackChanges("accept", state3, tr3, 0, state3.doc.nodeSize - 2)
+                const state4 = state3.apply(tr3);
+                //check
+                const doc4Json = state4.doc.toJSON();
+                expect(doc4Json.content.length).toBe(1);
+                expect(doc4Json.content[0].type).toBe("paragraph");
+                expect(doc4Json.content[0].content.length).toBe(1);
+                expect(doc4Json.content[0].content[0].text).toBe("test");
+                expect(doc4Json.content[0].attrs.track.length).toBe(0);
+            });
+            test("unwrap a paragraph from an unorderedList and revert", () => {
+                //init
+                const state = createEmptyDocState();
+                //mod
+                const tr = state.tr;
+                const node = state.schema.nodes["bulletList"].create(null, state.schema.nodes["listItem"].create(null, state.schema.nodes["paragraph"].create(null, state.schema.text("test"))));
+                tr.insert(0, node);
+                const state2 = state.apply(tr);
+                const tr2 = state2.tr;
+                const nodeRange = state2.doc.resolve(2).blockRange(state2.doc.resolve(state2.doc.nodeSize - 4));
+                const target = liftTarget(nodeRange);
+                tr2.lift(nodeRange, target);
+                const state3 = state2.apply(trackTransaction(tr2, state2, "TestUser1"));
+                const tr3 = state3.tr;
+                applyTrackChanges("revert", state3, tr3, 0, state3.doc.nodeSize - 2)
+                const state4 = state3.apply(tr3);
+                //check
+                const doc4Json = state4.doc.toJSON();
+                expect(doc4Json.content.length).toBe(1);
+                expect(doc4Json.content[0].type).toBe("bulletList");
+                expect(doc4Json.content[0].content.length).toBe(1);
+                expect(doc4Json.content[0].content[0].type).toBe("listItem");
+                expect(doc4Json.content[0].content[0].content.length).toBe(1);
+                expect(doc4Json.content[0].content[0].content[0].content[0].text).toBe("test");
+                expect(doc4Json.content[0].attrs.track.length).toBe(0);
+            });
+        });
     });
 });

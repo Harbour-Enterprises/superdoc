@@ -1,8 +1,14 @@
 import {Extension} from '@core/Extension.js';
 import {Plugin, PluginKey, EditorState, Transaction} from "prosemirror-state";
 import {Decoration, DecorationSet} from "prosemirror-view";
+import { liftTarget } from "prosemirror-transform";
 import {Mark, Node} from "prosemirror-model";
-import {TrackDeleteMarkName, TrackInsertMarkName, TrackMarksMarkName} from "./constants.js";
+import {
+    TrackChangeBlockChangeAttributeName,
+    TrackDeleteMarkName,
+    TrackInsertMarkName,
+    TrackMarksMarkName
+} from "./constants.js";
 
 
 const trackChangesCallback = (action, original, modified, modifiers) => {
@@ -238,6 +244,38 @@ export const TrackChangesBase = Extension.create({
     }
 });
 
+/**
+ *
+ * @param schema
+ * @param {Transaction} tr
+ * @param {Node} node
+ * @param {number} pos
+ * @returns void - modifies the tr inplace
+ */
+const removeParentNode = (schema, tr, node, pos) => {
+    // Define the starting and ending positions for the paragraphs within the listItem
+    const startPos = pos + 1; // Position where the first child (paragraph) starts
+    const endPos = startPos + node.nodeSize - 2; // The position after the last child
+
+    // Resolve positions for lifting
+    const startResolved = tr.doc.resolve(startPos);
+    const endResolved = tr.doc.resolve(endPos);
+
+    // Create a block range for all paragraphs within the listItem
+    const blockRange = startResolved.blockRange(endResolved);
+
+    if(blockRange === null) {
+        return;
+    }
+
+    // Find the lift target
+    const target = liftTarget(blockRange);
+
+    // If there is a valid lift target, apply the transformation
+    if (target != null) {
+        tr.lift(blockRange, target);
+    }
+}
 
 /**
  *
@@ -248,7 +286,7 @@ export const TrackChangesBase = Extension.create({
  * @param {number} to
  * @returns {{offset: number, modifiers: *[]}}
  */
-const applyTrackChanges = (action, state, tr, from, to) => {
+export const applyTrackChanges = (action, state, tr, from, to) => {
     let offset = 0;
     const modifiers = [];
     state.doc.nodesBetween(from, to, (node, pos) => {
@@ -290,6 +328,40 @@ const applyTrackChanges = (action, state, tr, from, to) => {
                 }
             }
         });
+        if(node.attrs && node.attrs.track && Array.isArray(node.attrs.track) && node.attrs.track.length > 0) {
+            let blockTrack = node.attrs.track.find(track => track.type === TrackChangeBlockChangeAttributeName)
+            let blockDelete = node.attrs.track.find(track => track.type === TrackDeleteMarkName)
+            let blockInsert = node.attrs.track.find(track => track.type === TrackInsertMarkName)
+            if(blockTrack) {
+                if (action === "accept") {
+                    tr.setNodeMarkup(pos + offset, null, {
+                        ...node.attrs,
+                        track: node.attrs.track.filter(track => track.type !== TrackChangeBlockChangeAttributeName)
+                    });
+                } else if (action === "revert") {
+                    const nodeType = state.schema.nodes[blockTrack.before.type];
+                    tr.setNodeMarkup(pos + offset, nodeType, blockTrack.before.attrs);
+                }
+            } else if (blockDelete) {
+                if (action === "accept") {
+                    removeParentNode(state.schema, tr, node, pos);
+                } else if (action === "revert") {
+                    tr.setNodeMarkup(pos + offset, null, {
+                        ...node.attrs,
+                        track: node.attrs.track.filter(track => track.type !== TrackDeleteMarkName)
+                    });
+                }
+            } else if (blockInsert) {
+                if (action === "accept") {
+                    tr.setNodeMarkup(pos + offset, null, {
+                        ...node.attrs,
+                        track: node.attrs.track.filter(track => track.type !== TrackInsertMarkName)
+                    });
+                } else if (action === "revert") {
+                    removeParentNode(state.schema, tr, node, pos);
+                }
+            }
+        }
     });
     return {modifiers, offset};
 };

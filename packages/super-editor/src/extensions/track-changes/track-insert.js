@@ -10,6 +10,33 @@ export const TrackInsert = Mark.create({
         }
     },
 
+    addGlobalAttributes() {
+        return [{
+            types: ["bulletList", "orderedList", "listItem", "paragraph", "heading", "blockQuote", "codeBlock", "table", "tableRow", "tableCell", "tableHeader"],
+            attributes: {
+                track: {
+                    default: [],
+                    parseHTML: element => {
+                        try {
+                            const res = JSON.parse(element.getAttribute('track'));
+                            if(Array.isArray(res)) {
+                                return res;
+                            }
+                        } catch (e) {
+                            return [];
+                        }
+                        return [];
+                    },
+                    renderHTML: attributes => {
+                        return {
+                            'track': JSON.stringify(attributes.track),
+                        }
+                    },
+                }
+            }
+        }]
+    },
+
     addAttributes() {
         return {
             // word id like `<w:ins w:id="1"`
