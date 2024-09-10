@@ -123,80 +123,15 @@ const attachAnnotationEventHandlers = () => {
       fieldType: 'TEXTINPUT',
       fieldColor: signer?.signercolor,
     });
-
-    // editor.commands.addFieldAnnotation(pos, {
-    //   displayLabel: 'Upload your image',
-    //   fieldId: `agreementinput-${Date.now()}-${Math.floor(Math.random() * 1000000000000)}`,
-    //   fieldType: 'IMAGEINPUT',
-    //   fieldColor: signer?.signercolor,
-    //   imageSrc: 'https://placehold.co/200x200?text=Image',
-    //   type: 'image',
-    // });
-
-    // editor.commands.addFieldAnnotation(pos, {
-    //   displayLabel: 'Signature',
-    //   fieldId: `agreementinput-${Date.now()}-${Math.floor(Math.random() * 1000000000000)}`,
-    //   fieldType: 'SIGNATUREINPUT',
-    //   fieldColor: signer?.signercolor,
-    //   imageSrc: 'https://placehold.co/85x25?text=Signature',
-    //   type: 'signature',
-    // });
   });
 
   activeEditor?.on('fieldAnnotationClicked', (params) => {
     console.log('fieldAnnotationClicked', { params });
   });
 
-  activeEditor?.on('fieldAnnotationDoubleClicked', (params) => {
-    console.log('fieldAnnotationDoubleClicked', { params });
-  });
-
   activeEditor?.on('fieldAnnotationSelected', (params) => {
     console.log('fieldAnnotationSelected', { params });
   });
-
-  // Update annotations by fieldId.
-  // setTimeout(() => {
-  //   activeEditor?.commands.updateFieldAnnotations('111', {
-  //     displayLabel: 'Updated!',
-  //     fieldColor: '#6943d0',
-  //   });
-  // }, 5000);
-
-  // Delete annotation by fieldId.
-  // setTimeout(() => {
-  //   activeEditor?.commands.deleteFieldAnnotations('111');
-  // }, 5000);
-
-  // Get all field annotations with dom rect (to get coordinates).
-  // setTimeout(() => {
-  //   let fieldAnnotationsWithRect = fieldAnnotationHelpers.getAllFieldAnnotationsWithRect(
-  //     activeEditor.view,
-  //     activeEditor.state
-  //   );
-
-  //   console.log({ fieldAnnotationsWithRect });
-  // }, 3000);
-
-  // Find field annotations by field id.
-  // setTimeout(() => {
-  //   let fieldAnnotationsByFieldId = fieldAnnotationHelpers.findFieldAnnotationsByFieldId(
-  //     'test-id',
-  //     activeEditor.state,
-  //   );
-
-  //   console.log({ fieldAnnotationsByFieldId });
-  // }, 4000);
-
-  // Find first field annotation by field id.
-  // setTimeout(() => {
-  //   let firstFieldAnnotation = fieldAnnotationHelpers.findFirstFieldAnnotationByFieldId(
-  //     'test-id',
-  //     activeEditor.state,
-  //   );
-
-  //   console.log({ firstFieldAnnotation });
-  // }, 4000);
 };
 /* Inputs pane and field annotations */
 

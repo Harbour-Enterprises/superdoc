@@ -1,6 +1,6 @@
 import { helpers } from '@core/index.js';
 
-const { findChildren, getNodeType } = helpers;
+const { findChildren } = helpers;
 
 /**
  * Get all field annotations in the doc.

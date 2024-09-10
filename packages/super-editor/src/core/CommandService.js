@@ -66,7 +66,7 @@ export class CommandService {
    * Check if a command or a chain of commands can be executed. Without executing it.
    */
   get can() {
-    return () => this.createChain();
+    return () => this.createCan();
   }
 
   /**
