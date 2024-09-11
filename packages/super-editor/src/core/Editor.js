@@ -62,7 +62,8 @@ export class Editor extends EventEmitter {
     onDestroy: () => null,
     onContentError: ({ error }) => { throw error },
     onCommentsLoaded: () => null,
-    onCommentClicked: () => null
+    onCommentClicked: () => null,
+    onCommentsUpdate: () => null,
   }
 
   constructor(options) {
@@ -106,6 +107,7 @@ export class Editor extends EventEmitter {
     this.on('destroy', this.options.onDestroy);
     this.on('commentsLoaded', this.options.onCommentsLoaded);
     this.on('commentClick', this.options.onCommentClicked);
+    this.on('commentsUpdate', this.options.onCommentsUpdate);
 
     this.#loadComments();
 
@@ -498,7 +500,7 @@ export class Editor extends EventEmitter {
     if (this.view.isDestroyed) {
       return;
     }
-
+    
     let state;
     try {
       const trackedTr = amendTransaction(transaction, this.view, "AuthorUser")
@@ -539,6 +541,18 @@ export class Editor extends EventEmitter {
         event: blur.event,
         transaction,
       })
+    }
+
+    const commentsPluginState = this.view.state.plugins.find((plugin) => plugin.key.startsWith('comments'));
+    if (commentsPluginState) {
+      if (transaction.docChanged) {
+        const pluginState = commentsPluginState.getState(this.view.state);
+        transaction.setMeta('comments', commentsPluginState.getState(this.view.state));
+
+        this.emit('commentsUpdate', {
+          editor: this, transaction, pluginState
+        });
+      }
     }
 
     if (!transaction.docChanged) {

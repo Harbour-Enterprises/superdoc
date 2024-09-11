@@ -79,7 +79,6 @@ const parseCommentsForSuperdoc = (comments, documentId, editor) => {
       suppressHighlight: true,
       suppressClick: true,
     };
-    console.debug('\n\n CONVO', convo)
 
     conversations.push(convo);
   })

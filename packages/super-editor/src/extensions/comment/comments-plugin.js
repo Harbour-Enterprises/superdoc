@@ -3,34 +3,42 @@ import { Decoration, DecorationSet } from 'prosemirror-view';
 import { Extension } from '@core/Extension.js';
 
 
+const CommentsPluginKey = new PluginKey('comments');
+
 export const CommentsPlugin = Extension.create({
   name: 'comments',
 
   addPmPlugins() {
+    const editor = this.editor;
     const commentsPlugin = new Plugin({
-      key: new PluginKey('comments'),
+      key: CommentsPluginKey,
       state: {
-        init(_, { doc }) {
-          const { decorations } = highlightComments(doc);
-          return DecorationSet.empty;
+        init(_, { doc, selection }) {
+          return {
+            commentPositions: highlightComments(editor, doc, selection),
+            activeThreadId: null,
+          }
         },
         apply(tr, oldState, oldEditorState, newEditorState) {
-          
-          let decorationSet = oldState.map(tr.mapping, tr.doc);
           const { selection } = tr;
-          const doc = tr.doc;
-          if (tr.docChanged || tr.selectionSet) {
-            decorationSet = highlightComments(doc, selection);
-            const { decorations, commentId } = highlightComments(doc, selection);
-            tr.setMeta("activeThreadId", commentId);
-            decorationSet = decorations;
+          const doc = newEditorState.doc;
+          
+          let commentPositions = [];
+          let activeThreadId = null;
+          if (tr.docChanged) {
+            commentPositions = highlightComments(editor, doc, selection);
+            activeThreadId = getActiveCommentId(editor, doc, selection);
           }
-          return DecorationSet.empty;
-        },
-      },
-      props: {
-        decorations(state) {
-          return this.getState(state);
+
+          // If the selection changes, check if we're inside a comment
+          else if (tr.selectionSet) {
+            activeThreadId = getActiveCommentId(editor, doc, selection);
+          }
+
+          return {
+            commentPositions,
+            activeThreadId,
+          }
         },
       },
     });
@@ -38,12 +46,45 @@ export const CommentsPlugin = Extension.create({
   }
 });
 
-const highlightComments = (doc, selection) => {
-  const decorations = [];
-  let startPos = null;
+const getActiveCommentId = (editor, doc, selection) => {
+  if (!selection) return;
+
+  const { $from, $to } = selection;
+  
+  // We only need to check for active comment ID if the selection is empty
+  if ($from.pos !== $to.pos) return;
+
+  const overlappingThreadIds = new Set();
+  doc.descendants((node, pos) => {
+    if (node.type.name === 'commentRangeStart') {
+      // Track nodes that overlap with the selection
+      if ($from.pos >= pos) {
+        overlappingThreadIds.add(node.attrs['w:id']);
+      }
+    };
+
+    if (node.type.name === 'commentRangeEnd') {
+      const threadId = node.attrs['w:id'];
+      const endPos = pos;
+      if ($from.pos > endPos) {
+        overlappingThreadIds.delete(threadId);
+      }
+    };
+
+    // If we pass the selection, return the ID if any
+    if (pos > $from.pos) {
+      return overlappingThreadIds;
+    }
+
+  });
+  return overlappingThreadIds;
+}
+
+const highlightComments = (editor, doc, selection) => {
+  const { view } = editor;
   let currentSelectionPos = {};
-  let isInsideComment = false;
-  let commentId = null;
+  const allCommentPositions = {};
+  const openNodes = new Set();
 
   if (selection) {
     const { $from, $to } = selection;
@@ -53,37 +94,51 @@ const highlightComments = (doc, selection) => {
 
   doc.descendants((node, pos) => {
     if (node.type.name === 'commentRangeStart') {
-      startPos = pos;
-    };
-
-    if (node.type.name === 'commentRangeEnd' && startPos !== null) {
-
-      if (selection && isSelectionOverlapping(selection, startPos, pos + 1)) {
-        isInsideComment = true;
-        commentId = node.attrs['w:id'];
-      }
-  
       const threadId = node.attrs['w:id'];
-      let highlightClass = 'sd-highlight';
-      if (selection && isSelectionOverlapping(selection, startPos, pos + 1)) {
-        highlightClass = 'sd-highlight sd-highlight-active';
-      }
 
-      decorations.push(
-        Decoration.inline(startPos, pos + 1, { class: highlightClass, 'data-thread-id': threadId })
-      );
-      startPos = null;
-    };
+      let startPos = pos;
+      if (pos > currentSelectionPos.from) { startPos += 1 };
+
+      // Track DOM positions of all comment nodes
+      const domBounds = view.coordsAtPos(startPos);
+      allCommentPositions[threadId] = { start: domBounds, end: null, position: startPos };
+
+      openNodes.add(threadId);
+    }
+    
+    else if (node.type.name === 'commentRangeEnd') {
+      const threadId = node.attrs['w:id'];
+      
+      // Track end positions for the node
+      allCommentPositions[threadId].end = view.coordsAtPos(pos + 1);
+      openNodes.delete(threadId);
+    }
+
+    else {
+      console.debug('--other node', openNodes, node);
+    }
   });
 
-  return {
-    decorations: DecorationSet.create(doc, decorations),
-    isInsideComment,
-    commentId
-  }
+
+  const positions = processCommentHighlights(allCommentPositions);
+  return positions;
 }
 
-function isSelectionOverlapping(selection, start, end) {
-  const { from, to } = selection;
-  return (from <= end && to >= start);
+function processCommentHighlights(allPositions) {
+  return Object.keys(allPositions).map((threadId) => {
+    const comment = allPositions[threadId];
+    const { start, end } = comment;
+
+    const left = Math.min(start.left, end.left);
+    const top = Math.min(start.top, end.top);
+    const right = Math.max(start.right, end.right);
+    const bottom = Math.max(start.bottom, end.bottom);
+    return {
+      threadId,
+      top,
+      left,
+      bottom,
+      right,
+    }
+  });
 }
