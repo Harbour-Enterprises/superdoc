@@ -124,20 +124,40 @@ const onEditorFocus = ({ editor }) => {
   proxy.$superdoc.setActiveEditor(editor);
 }
 
-const onEditorSelectionChange = ({ editor, transaction, pluginState }) => {  
+const onEditorSelectionChange = ({ editor, transaction }) => {
   const { documentId } = editor.options;
   const { $from, $to } = transaction.selection;
   if ($from.pos === $to.pos) {
     updateSelection({ x: null, y: null, x2: null, y2: null });
   }
 
+  const layerBounds = layers.value.getBoundingClientRect();
+  const bounds = getSelectionBoundingBox();
+  const selectionBounds = {
+    top: (bounds.top - layerBounds.top) / activeZoom.value,
+    left: (bounds.left - layerBounds.left) / activeZoom.value,
+    right: (bounds.right - layerBounds.left) / activeZoom.value,
+    bottom: (bounds.bottom - layerBounds.top) / activeZoom.value,
+  };
+
+  const selection = useSelection({
+    selectionBounds,
+    page: 1,
+    documentId,
+    source: 'super-editor',
+  });
+
+  handleSelectionChange(selection);
+};
+
+const onEditorCommentsUpdate = ({ editor, transaction, pluginState }) => {  
+  const { documentId } = editor.options;
   const { commentPositions, activeThreadId } = transaction.getMeta('comments') || {};
   if (!commentPositions?.length) return;
   
   const containerBounds = layers.value.getBoundingClientRect();
   const document = getDocument(documentId);
 
-  console.debug('Comment positions', commentPositions);
   Object.keys(commentPositions).forEach((threadId) => {    
     const convo = document.conversations.find((c) => c.thread == threadId);
     if (!convo) return;
@@ -148,7 +168,6 @@ const onEditorSelectionChange = ({ editor, transaction, pluginState }) => {
       right: commentPositions[threadId].right - containerBounds.left,
       bottom: commentPositions[threadId].bottom - containerBounds.top,
     }
-    console.debug('Adjusted selection', adjustedSelection.right);
     const newSelection = useSelection({
       selectionBounds: adjustedSelection,
       documentId,
@@ -156,26 +175,7 @@ const onEditorSelectionChange = ({ editor, transaction, pluginState }) => {
     });
     convo.selection = newSelection;
   });
-  console.debug('\n\n')
 
-  // const document = getDocument(documentId);
-  // const convo = document.conversations.find((c) => c.thread == activeThreadId);
-
-  // const layerBounds = layers.value.getBoundingClientRect();
-  // const bounds = getSelectionBoundingBox();
-  // const selectionBounds = {
-  //   top: (bounds.top - layerBounds.top) / activeZoom.value,
-  //   left: (bounds.left - layerBounds.left) / activeZoom.value,
-  //   right: (bounds.right - layerBounds.left) / activeZoom.value,
-  //   bottom: (bounds.bottom - layerBounds.top) / activeZoom.value,
-  // }
-  // const selection = useSelection({
-  //   selectionBounds,
-  //   page: 1,
-  //   documentId,
-  //   source: 'super-editor',
-  // });
-  // handleSelectionChange(selection);
 
   // TODO: Figure out why the selection is being undone sometimes
   // setTimeout(() => {
@@ -204,9 +204,10 @@ const editorOptions = computed(() => {
     onCreate: onEditorCreate,
     onDestroy: onEditorDestroy,
     onFocus: onEditorFocus,
+    onSelectionUpdate: onEditorSelectionChange,
     onCommentsLoaded,
     onCommentClicked,
-    onCommentsUpdate: onEditorSelectionChange,
+    onCommentsUpdate: onEditorCommentsUpdate,
     documentMode: proxy.$documentMode,
   }
 });

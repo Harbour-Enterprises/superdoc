@@ -101,7 +101,11 @@ const highlightComments = (editor, doc, selection) => {
 
       // Track DOM positions of all comment nodes
       const domBounds = view.coordsAtPos(startPos);
-      allCommentPositions[threadId] = { start: domBounds, end: null, position: startPos };
+      allCommentPositions[threadId] = { 
+        top: domBounds.top,
+        left: domBounds.left,
+        r
+      };
 
       openNodes.add(threadId);
     }
@@ -110,12 +114,31 @@ const highlightComments = (editor, doc, selection) => {
       const threadId = node.attrs['w:id'];
       
       // Track end positions for the node
-      allCommentPositions[threadId].end = view.coordsAtPos(pos + 1);
+      const existingTop = allCommentPositions[threadId].top;
+      const existingLeft = allCommentPositions[threadId].left;
+      const existingRight = allCommentPositions[threadId].right;
+      const existingBottom = allCommentPositions[threadId].bottom;
+
+      const endNodeCoords = view.coordsAtPos(pos + 1);
+      allCommentPositions[threadId].top = Math.min(endNodeCoords.top, existingTop);
+      allCommentPositions[threadId].left = Math.min(endNodeCoords.left, existingLeft);
+      allCommentPositions[threadId].right = Math.min(endNodeCoords.right, existingRight);
+      allCommentPositions[threadId].bottom = Math.min(endNodeCoords.bottom, existingBottom);
       openNodes.delete(threadId);
     }
 
     else {
-      console.debug('--other node', openNodes, node);
+      const currentCoords = view.coordsAtPos(pos + 1);
+      openNodes.forEach((threadId) => {
+        const { top, left, bottom, right } = allCommentPositions[threadId];
+
+        console.debug('MID', allCommentPositions, threadId);
+
+        allCommentPositions[threadId].top = Math.min(currentCoords.top, top);
+        allCommentPositions[threadId].left = Math.min(currentCoords.left, left);
+        allCommentPositions[threadId].right = Math.min(currentCoords.right, right);
+        allCommentPositions[threadId].bottom = Math.min(currentCoords.bottom, bottom);
+      })
     }
   });
 
