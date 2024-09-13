@@ -62,6 +62,7 @@ export class Editor extends EventEmitter {
     onBlur: () => null,
     onDestroy: () => null,
     onContentError: ({ error }) => { throw error },
+    onTrackedChangesUpdate: () => null,
     onCommentsUpdate: () => null,
     onCommentsLoaded: () => null,
     onCommentClicked: () => null,
@@ -106,6 +107,7 @@ export class Editor extends EventEmitter {
     this.on('focus', this.#onFocus);
     this.on('blur', this.options.onBlur);
     this.on('destroy', this.options.onDestroy);
+    this.on('trackedChangesUpdate', this.options.onTrackedChangesUpdate);
     this.on('commentsLoaded', this.options.onCommentsLoaded);
     this.on('commentClick', this.options.onCommentClicked);
     this.on('commentsUpdate', this.options.onCommentsUpdate);
@@ -543,12 +545,6 @@ export class Editor extends EventEmitter {
         event: blur.event,
         transaction,
       })
-    }
-
-    const commentsPluginState = this.view.state.plugins.find((plugin) => plugin.key.startsWith('comments'));
-    if (commentsPluginState) {
-      transaction.setMeta('commentsPluginState', commentsPluginState.getState(this.view.state));
-      this.emit('commentsUpdate', { editor: this, transaction });
     }
   
     if (!transaction.docChanged) {

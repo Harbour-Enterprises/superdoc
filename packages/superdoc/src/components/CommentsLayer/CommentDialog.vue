@@ -14,7 +14,7 @@ const superdocStore = useSuperdocStore();
 const commentsStore = useCommentsStore();
 const { COMMENT_EVENTS } = commentsStore;
 const { getConfig, activeComment, pendingComment, floatingCommentsOffset } = storeToRefs(commentsStore);
-const { areDocumentsReady } = superdocStore;
+const { areDocumentsReady, getDocument } = superdocStore;
 const { selectionPosition, activeZoom } = storeToRefs(superdocStore);
 const { proxy } = getCurrentInstance();
 
@@ -276,14 +276,26 @@ const showSeparator = computed(() => (index) => {
   return props.data.comments.length > 1 && index !== props.data.comments.length - 1;
 });
 
+/**
+ * Mark a tracked change as accepted or rejected. Only available in SuperEditor docs.
+ */
 const markAccepted = () => {
   const convo = getCurrentConvo();
-  console.debug('\nTODO: Mark accepted\n', convo);
-};
+  const editor = props.currentDocument.getEditor();
+  editor.commands.acceptTrackedChange(convo.comments[0]);
+  proxy.$superdoc.broadcastComments(COMMENT_EVENTS.CHANGE_ACCEPTED, convo.getValues());
 
-const markRejected = (item) => {
+  const document = getDocument(convo.documentId);
+  document.conversations = document.conversations.filter((c) => c.conversationId !== convo.conversationId);
+};
+const markRejected = () => {
   const convo = getCurrentConvo();
-  console.debug('\nTODO: Mark rejecetd\n', convo);
+  const editor = props.currentDocument.getEditor();
+  editor.commands.rejectTrackedChange(convo.comments[0]);
+  proxy.$superdoc.broadcastComments(COMMENT_EVENTS.CHANGE_REJECTED, convo.getValues());
+
+  const document = getDocument(convo.documentId);
+  document.conversations = document.conversations.filter((c) => c.conversationId !== convo.conversationId);
 };
 
 onMounted(() => {
@@ -357,13 +369,13 @@ onMounted(() => {
       </div>
 
       <!-- Tracked change comment area -->
-      <div class="card-section comment-body" v-if="data.isTrackedChange">
-        <div class="change-type" v-if="item.trackedChange.insertion">
-          <span>Add: </span>
+      <div class="card-section comment-body" v-if="data.isTrackedChange && index === 0">
+        <div class="comment tracked-change" v-if="item.trackedChange?.insertion">
+          <span class="change-type">Add: </span>
           {{ item.trackedChange.insertion }}
         </div>
-        <div class="change-type" v-if="item.trackedChange.deletion">
-          <span>Remove: </span>
+        <div class="comment tracked-change" v-if="item.trackedChange?.deletion">
+          <span class="change-type">Remove: </span>
           {{ item.trackedChange.deletion }}
         </div>
       </div>
@@ -518,7 +530,7 @@ onMounted(() => {
   margin-left: 5px;
 }
 .comment {
-  font-size: 14px;
+  font-size: 13px;
   margin: 10px 0;
 }
 .conversation-item {
@@ -546,5 +558,8 @@ onMounted(() => {
   border: 1px solid #DBDBDB !important;
   width: 100%;
   transition: all 250ms ease;
+}
+.tracked-change {
+  margin: 0;
 }
 </style>

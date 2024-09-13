@@ -26,6 +26,7 @@ export default function useDocument(params, superdocConfig) {
 
   const restoreComments = () => {
     conversations.value = conversationsBackup.value;
+    console.debug('[superdoc] Restored comments:', conversations.value);
   };
 
   // Modules
@@ -33,7 +34,7 @@ export default function useDocument(params, superdocConfig) {
   const fields = ref(params.fields?.map((f) => useField(f)) || []);
   const annotations = ref(params.annotations || []);
   const conversations = ref(initConversations());
-  const conversationsBackup = ref([]);
+  const conversationsBackup = ref(conversations.value);
 
   function initConversations() {
     if (!config.modules.comments) return [];

@@ -148,9 +148,8 @@ const removeTrackChangesFromTransaction = (tr, state) => {
  * @param {string} date
  * @returns {void} tr is modified in place
  */
-const markInsertion = (tr, from, to, user, date) => {
+const markInsertion = (tr, from, to, user, date, wid) => {
     // check if we are adding to an existing insertion mark
-    let wid = uuidv4()
     let addingToExisting = false
     const prevNode = tr.doc.nodeAt(from - 1)
     const nextNode = tr.doc.nodeAt(to + 1)
@@ -190,8 +189,7 @@ const markInsertion = (tr, from, to, user, date) => {
  * @param {string} date
  * @returns {void} tr is modified in place
  */
-const markDeletion = (tr, from, to, user, date) => {
-    let wid = uuidv4();
+const markDeletion = (tr, from, to, user, date, wid) => {
     let addingToExisting = false;
     const prevNode = tr.doc.nodeAt(from - 1)
     const nextNode = tr.doc.nodeAt(to)
@@ -269,6 +267,8 @@ const handleReplaceStep = (state, tr, step, stepIndex, newTr, map, user, date) =
     if(invertStep) {
         map.appendMap(invertStep.getMap())
     }
+
+    const wid = uuidv4()
     if (newStep) {
         const trTemp = state.apply(newTr).tr
         if (!trTemp.maybeStep(newStep).failed) {
@@ -279,6 +279,7 @@ const handleReplaceStep = (state, tr, step, stepIndex, newTr, map, user, date) =
                 mappedNewStepTo,
                 user,
                 date,
+                wid,
             )
             // We condense it down to a single replace step.
             const condensedStep = new ReplaceStep(newStep.from, newStep.to, trTemp.doc.slice(newStep.from, mappedNewStepTo))
@@ -294,7 +295,7 @@ const handleReplaceStep = (state, tr, step, stepIndex, newTr, map, user, date) =
     }
     if (step.from !== step.to) {
         map.appendMapping(
-            markDeletion(newTr, step.from, step.to, user, date)
+            markDeletion(newTr, step.from, step.to, user, date, wid)
         )
     }
 }

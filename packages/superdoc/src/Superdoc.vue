@@ -159,16 +159,6 @@ const onEditorSelectionChange = ({ editor, transaction }) => {
   }, 250);
 };
 
-const getTrackedChange = (commentData) => {
-  const trackedChange = {};
-  if (commentData.insertion) {
-    trackedChange.insertion = commentData.insertion;
-  } else if (commentData.deletion) {
-    trackedChange.deletion = commentData.deletion;
-  }
-  return trackedChange;
-}
-
 const onEditorCommentsUpdate = ({ editor, transaction }) => {  
   const { documentId } = editor.options;
   const { commentPositions = {}, activeThreadId } = transaction.getMeta('commentsPluginState') || {};
@@ -185,26 +175,26 @@ const onEditorCommentsUpdate = ({ editor, transaction }) => {
 
     if (!convo && commentData.type === 'trackedChange') {
       const selection = useSelection({
-        page: 1,
-          selectionBounds: commentPositions[threadId],
-          documentId,
-          source: 'super-editor',
-        });
+      page: 1,
+        selectionBounds: commentPositions[threadId],
+        documentId,
+        source: 'super-editor',
+      });
 
-        const trackedChange = {};
-        if (commentData.insertion) {
-          trackedChange.insertion = commentData.insertion;
-        } else if (commentData.deletion) {
-          trackedChange.deletion = commentData.deletion;
+      const trackedChange = {};
+      if (commentData.insertion) {
+        trackedChange.insertion = commentData.insertion;
+      } else if (commentData.deletion) {
+        trackedChange.deletion = commentData.deletion;
+      }
+      const comment = useComment({
+        id: threadId,
+        trackedChange: commentData,
+        user: {
+          email: proxy.$superdoc.user.email,
+          name: proxy.$superdoc.user.name,
         }
-        const comment = useComment({
-          id: threadId,
-          trackedChange: getTrackedChange(commentData),
-          user: {
-            email: proxy.$superdoc.user.email,
-            name: proxy.$superdoc.user.name,
-          }
-        });
+      });
 
       convo = useConversation({
         thread: threadId,
@@ -215,25 +205,26 @@ const onEditorCommentsUpdate = ({ editor, transaction }) => {
         creatorName: proxy.$superdoc.user.name,
         selection,
       });
-      // console.debug('New conversation', convo);
       document.conversations.push(convo);
     } else if (commentData.type === 'trackedChange') {
-      convo.comments[0].trackedChange = getTrackedChange(commentData);
+      convo.comments[0].trackedChange = commentData;
     }
 
-    const adjustedSelection = {
-      top: commentPositions[threadId].top - containerBounds.top,
-      left: commentPositions[threadId].left - containerBounds.left,
-      right: commentPositions[threadId].right - containerBounds.left,
-      bottom: commentPositions[threadId].bottom - containerBounds.top,
-    };
+    if (convo) {
+      const adjustedSelection = {
+        top: commentPositions[threadId].top - containerBounds.top,
+        left: commentPositions[threadId].left - containerBounds.left,
+        right: commentPositions[threadId].right - containerBounds.left,
+        bottom: commentPositions[threadId].bottom - containerBounds.top,
+      };
 
-    const newSelection = useSelection({
-      selectionBounds: adjustedSelection,
-      documentId,
-      source: 'super-editor',
-    });
-    convo.selection = newSelection;
+      const newSelection = useSelection({
+        selectionBounds: adjustedSelection,
+        documentId,
+        source: 'super-editor',
+      });
+      convo.selection = newSelection;
+    }
   });
 }
 
