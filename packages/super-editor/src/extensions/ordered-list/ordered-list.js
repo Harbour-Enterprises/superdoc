@@ -29,6 +29,11 @@ export const OrderedList = Node.create({
             ? parseInt(element.getAttribute('start') || '', 10)
             : 1;
         },
+        renderDOM: (attrs) => {
+          return {
+            start: attrs.order,
+          };
+        },
       },
 
       'list-style-type': {
@@ -106,6 +111,67 @@ export const OrderedList = Node.create({
               ...{
                 'list-style-type': listStyle,
               },
+            });
+          }
+        }
+
+        return true;
+      },
+
+      /**
+       * Continue list numbering after `liftEmptyBlock` command.
+       * @example
+       * <ol start="1">
+       *  <li>item</li>
+       *  <li>item</li>
+       * </ol>
+       * <ol start="3">
+       *  <li>item</li>
+       *  <li>item</li>
+       * </ol>
+       */
+      continueListNumberingAfterLiftEmpty: () => ({
+        editor,
+        dispatch,
+        state,
+        tr,
+        commands,
+      }) => {
+        let list = findParentNode((node) => node.type.name === this.name)(state.selection);
+
+        if (!list) {
+          return false;
+        }
+
+        let canLiftEmptyBlock = editor.can().liftEmptyBlock();
+        let isRootDepth = list.depth === 1;
+        if (!canLiftEmptyBlock || !isRootDepth) return false;
+
+        if (dispatch) {
+          let { $from } = state.selection;
+          // save pos before liftEmptyBlock command
+          let prevListPos = $from.before(-2);
+
+          if (!commands.liftEmptyBlock(state, dispatch)) {
+            return false;
+          }
+
+          let { $to } = state.selection;
+          let prevListNode = tr.doc.nodeAt(prevListPos);
+          let newListPos = $to.after();
+          let newListNode = tr.doc.nodeAt(newListPos);
+
+          let isPrevOrderedList = prevListNode?.type.name === this.name;
+          let isNewOrderedList = newListNode?.type.name === this.name;
+
+          if (isPrevOrderedList && isNewOrderedList) {
+            let lastOrder = prevListNode.attrs.order || 1;
+            let lastIndex = prevListNode.childCount;
+            let start = lastIndex + lastOrder;
+
+            tr.setNodeMarkup(newListPos, undefined, {
+              ...newListNode.attrs,
+              order: start,
             });
           }
         }
