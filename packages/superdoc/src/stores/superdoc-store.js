@@ -31,6 +31,7 @@ export const useSuperdocStore = defineStore('superdoc', () => {
     top: 0,
     width: 0,
     height: 0,
+    source: null,
   })
 
   const reset = () => {

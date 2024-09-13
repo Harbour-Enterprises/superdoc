@@ -60,6 +60,9 @@ export class Superdoc extends EventEmitter {
     this.superdocStore = superdocStore;
     this.version = config.version;
 
+    // Current user
+    this.user = config.user;
+
     // Toolbar
     this.toolbarElement = config.toolbar;
     this.toolbar = null;

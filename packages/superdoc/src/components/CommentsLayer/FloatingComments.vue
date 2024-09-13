@@ -132,6 +132,7 @@ const initializeConvos = () => {
   const firstDoc = documentsWithConverations.value[0];
   const conversations = [...firstDoc.conversations];
   sortedConversations.value = conversations.sort(sortByLocation);
+  console.debug('sortedConversations', sortedConversations.value);
   visibleConversations.value.push(useFloatingConversation(sortedConversations.value[0]));
 }
 
@@ -173,13 +174,14 @@ onMounted(() => {
     <div :style="getFloatingSidebarStyle" class="sidebar-container">
       <div v-for="floatingConversation in visibleConversations">
         <CommentDialog
-              class="floating-comment"
-              @ready="handleDialogReady"
-              @dialog-exit="initialize"
-              :style="getCommentPosition(floatingConversation)"
-              :data="floatingConversation.conversation"
-              :current-document="currentDocument"
-              :user="user" />
+            class="floating-comment"
+            @ready="handleDialogReady"
+            @dialog-exit="initialize"
+            :style="getCommentPosition(floatingConversation)"
+            :data="floatingConversation.conversation"
+            :current-document="currentDocument"
+            :parent="parent"
+            :user="user" />
         </div>
     </div>
   </div>

@@ -11,6 +11,7 @@ export default function useSelection(params) {
 
   /* Get the location of the container */
   const getContainerLocation = (parentContainer) => {
+    if (!parentContainer) return { top: 0, left: 0 };
     const parentBounds = parentContainer.getBoundingClientRect();
     const container = document.getElementById(getContainerId());
 

@@ -1,4 +1,5 @@
 import { Node } from '@core/index.js';
+import { v4 as uuidv4 } from 'uuid';
 
 export const CommentRangeStart = Node.create({
   name: 'commentRangeStart',
@@ -19,7 +20,7 @@ export const CommentRangeStart = Node.create({
 
   addAttributes() {
     return {
-      'w:id': { default: null },
+      'w:id': { default: uuidv4() },
     };
   },
 });
@@ -43,7 +44,7 @@ export const CommentRangeEnd = Node.create({
 
   addAttributes() {
     return {
-      'w:id': { default: null },
+      'w:id': { default: uuidv4() },
     };
   },
 });

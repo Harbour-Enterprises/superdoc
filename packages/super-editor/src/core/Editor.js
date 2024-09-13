@@ -41,6 +41,7 @@ export class Editor extends EventEmitter {
   options = {
     element: document.createElement('div'),
     content: '', // XML content
+    user: null,
     media: {},
     mode: 'docx',
     converter: null,
@@ -241,6 +242,7 @@ export class Editor extends EventEmitter {
     else if (this.documentMode === 'editing') {
       this.#registerPluginByNameIfNotExists('TrackChangesBase');
       this.#registerPluginByNameIfNotExists('comments');
+      this.commands.disableTrackChangesShowOriginal();
       this.commands.disableTrackChanges();
       this.setEditable(true, false);
     }
@@ -503,7 +505,7 @@ export class Editor extends EventEmitter {
 
     let state;
     try {
-      const trackedTr = amendTransaction(transaction, this.view, "AuthorUser")
+      const trackedTr = amendTransaction(transaction, this.view, this.options.user)
       const {state: newState} = this.view.state.applyTransaction(trackedTr)
       state = newState
     } catch (e) {

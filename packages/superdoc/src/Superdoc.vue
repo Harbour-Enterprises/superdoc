@@ -17,6 +17,7 @@ import { DOCX, PDF, HTML } from '@harbour-enterprises/common';
 import { SuperEditor } from '@harbour-enterprises/super-editor';
 import HtmlViewer from './components/HtmlViewer/HtmlViewer.vue';
 import useConversation from './components/CommentsLayer/use-conversation';
+import useComment from './components/CommentsLayer/use-comment';
 
 // Stores
 const superdocStore = useSuperdocStore();
@@ -128,7 +129,7 @@ const onEditorSelectionChange = ({ editor, transaction }) => {
   const { documentId } = editor.options;
   const { $from, $to } = transaction.selection;
   if ($from.pos === $to.pos) {
-    updateSelection({ x: null, y: null, x2: null, y2: null });
+    updateSelection({ x: null, y: null, x2: null, y2: null, source: 'super-editor' });
   }
 
   const layerBounds = layers.value.getBoundingClientRect();
@@ -158,18 +159,67 @@ const onEditorSelectionChange = ({ editor, transaction }) => {
   }, 250);
 };
 
+const getTrackedChange = (commentData) => {
+  const trackedChange = {};
+  if (commentData.insertion) {
+    trackedChange.insertion = commentData.insertion;
+  } else if (commentData.deletion) {
+    trackedChange.deletion = commentData.deletion;
+  }
+  return trackedChange;
+}
+
 const onEditorCommentsUpdate = ({ editor, transaction }) => {  
   const { documentId } = editor.options;
   const { commentPositions = {}, activeThreadId } = transaction.getMeta('commentsPluginState') || {};
   if (activeThreadId) onEditorSelectionChange({ editor, transaction });
+
   if (!Object.keys(commentPositions).length) return;
 
   const containerBounds = layers.value.getBoundingClientRect();
   const document = getDocument(documentId);
 
   Object.keys(commentPositions).forEach((threadId) => {    
-    const convo = document.conversations.find((c) => c.thread == threadId);
-    if (!convo) return;
+    let convo = document.conversations.find((c) => c.thread == threadId);
+    const commentData = commentPositions[threadId];
+
+    if (!convo && commentData.type === 'trackedChange') {
+      const selection = useSelection({
+        page: 1,
+          selectionBounds: commentPositions[threadId],
+          documentId,
+          source: 'super-editor',
+        });
+
+        const trackedChange = {};
+        if (commentData.insertion) {
+          trackedChange.insertion = commentData.insertion;
+        } else if (commentData.deletion) {
+          trackedChange.deletion = commentData.deletion;
+        }
+        const comment = useComment({
+          id: threadId,
+          trackedChange: getTrackedChange(commentData),
+          user: {
+            email: proxy.$superdoc.user.email,
+            name: proxy.$superdoc.user.name,
+          }
+        });
+
+      convo = useConversation({
+        thread: threadId,
+        isTrackedChange: true,
+        documentId,
+        comments: [comment],
+        creatorEmail: proxy.$superdoc.user.email,
+        creatorName: proxy.$superdoc.user.name,
+        selection,
+      });
+      // console.debug('New conversation', convo);
+      document.conversations.push(convo);
+    } else if (commentData.type === 'trackedChange') {
+      convo.comments[0].trackedChange = getTrackedChange(commentData);
+    }
 
     const adjustedSelection = {
       top: commentPositions[threadId].top - containerBounds.top,
@@ -205,6 +255,7 @@ const onCommentClicked = ({ conversation }) => {
 
 const editorOptions = computed(() => {
   return {
+    user: proxy.$superdoc.user,
     onCreate: onEditorCreate,
     onDestroy: onEditorDestroy,
     onFocus: onEditorFocus,
@@ -244,7 +295,10 @@ const selectionLayer = ref(null);
 const isDragging = ref(false);
 
 const getSelectionPosition = computed(() => {
-  if (!selectionPosition.value) return;
+  if (!selectionPosition.value || selectionPosition.value.source === 'super-editor') {
+    return { top: null, left: null, right: null, bottom: null };
+  };
+
   const style = {
     zIndex: 500,
     borderRadius: '4px',
@@ -257,12 +311,13 @@ const getSelectionPosition = computed(() => {
 });
 
 const handleSelectionChange = (selection) => {
-  if (!selection.selectionBounds) return;  
+  if (!selection.selectionBounds) return;
+
   const x = selection.selectionBounds.left;
   const y = selection.selectionBounds.top;
   const x2 = selection.selectionBounds.right;
   const y2 = selection.selectionBounds.bottom;
-  updateSelection({ x, y, x2, y2 });
+  updateSelection({ x, y, x2, y2, source: selection.source.value });
 
   activeSelection.value = selection
 
@@ -275,7 +330,8 @@ const handleSelectionChange = (selection) => {
   toolsMenuPosition.top = top - 20 + 'px';
 }
 
-const updateSelection = ({ x, y, x2, y2 }) => {
+const updateSelection = ({ x, y, x2, y2, source }) => {
+
   if (y != null) {
     selectionPosition.value.top = y;
     selectionPosition.value.height = 0;
@@ -286,6 +342,8 @@ const updateSelection = ({ x, y, x2, y2 }) => {
   }
   if (y2 != null) selectionPosition.value.height = y2 - selectionPosition.value.top;
   if (x2 != null) selectionPosition.value.width = x2 - selectionPosition.value.left;
+
+  selectionPosition.value.source = source;
 };
 
 const handleSelectionStart = (e) => {

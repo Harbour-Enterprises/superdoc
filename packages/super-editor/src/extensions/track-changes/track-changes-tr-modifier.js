@@ -2,6 +2,7 @@ import {TextSelection, Selection, Transaction, EditorState} from "prosemirror-st
 import {Mapping, ReplaceStep, AddMarkStep, RemoveMarkStep} from "prosemirror-transform";
 import {EditorView} from "prosemirror-view";
 import {Slice, Fragment, Mark, Node} from "prosemirror-model";
+import { v4 as uuidv4 } from 'uuid';
 import {TrackInsertMarkName, TrackDeleteMarkName, TrackMarksMarkName} from "./constants.js";
 import {TrackChangesBasePluginKey} from "./track-changes-base.js";
 /**
@@ -148,7 +149,20 @@ const removeTrackChangesFromTransaction = (tr, state) => {
  * @returns {void} tr is modified in place
  */
 const markInsertion = (tr, from, to, user, date) => {
-    const insertionMark = tr.doc.type.schema.marks[TrackInsertMarkName].create({author: user, date})
+    // check if we are adding to an existing insertion mark
+    let wid = uuidv4()
+    let addingToExisting = false
+    const prevNode = tr.doc.nodeAt(from - 1)
+    const nextNode = tr.doc.nodeAt(to + 1)
+    const prevNodeInsertion = prevNode && prevNode.marks.find(mark => mark.type.name === TrackInsertMarkName && mark.attrs.authorEmail === user.email)
+    const nextNodeInsertion = nextNode && nextNode.marks.find(mark => mark.type.name === TrackInsertMarkName && mark.attrs.authorEmail === user.email)
+    const markNode = prevNodeInsertion || nextNodeInsertion
+    if (markNode) {
+        wid = markNode.attrs.wid;
+        addingToExisting = true
+    }
+
+    const insertionMark = tr.doc.type.schema.marks[TrackInsertMarkName].create({authorEmail: user.email, author: user.name, date, wid})
     tr.doc.nodesBetween(
         from,
         to,
@@ -177,7 +191,19 @@ const markInsertion = (tr, from, to, user, date) => {
  * @returns {void} tr is modified in place
  */
 const markDeletion = (tr, from, to, user, date) => {
-    const deletionMark = tr.doc.type.schema.marks[TrackDeleteMarkName].create({author: user, date})
+    let wid = uuidv4();
+    let addingToExisting = false;
+    const prevNode = tr.doc.nodeAt(from - 1)
+    const nextNode = tr.doc.nodeAt(to)
+    const prevNodeInsertion = prevNode && prevNode.marks.find(mark => mark.type.name === TrackDeleteMarkName && mark.attrs.authorEmail === user.email)
+    const nextNodeInsertion = nextNode && nextNode.marks.find(mark => mark.type.name === TrackDeleteMarkName && mark.attrs.authorEmail === user.email)
+    const markNode = prevNodeInsertion || nextNodeInsertion
+    if (markNode) {
+        wid = markNode.attrs.wid;
+        addingToExisting = true
+    }
+
+    const deletionMark = tr.doc.type.schema.marks[TrackDeleteMarkName].create({authorEmail: user.email, author: user.name, date, wid})
     let firstTableCellChild = false
     let listItem = false
     const deletionMap = new Mapping()
