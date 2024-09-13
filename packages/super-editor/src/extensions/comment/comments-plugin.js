@@ -68,7 +68,7 @@ export const CommentsPlugin = Extension.create({
 /**
  * Check if this node is a tracked changes node
  * @param {Node} node The node to check
- * @returns Either a tracked change node (insert, delete) or null
+ * @returns {Node | null} Either a tracked change node (insert, delete) or null
  */
 const getTrackedChangeNode = (node) => {
   const nodeMarks = node.marks;
@@ -83,6 +83,7 @@ const getTrackedChangeNode = (node) => {
  * @param {Object} allCommentPositions The current positions of nodes being tracked
  * @param {Node} node The current node to consider
  * @param {Number} pos The position of the node
+ * @returns {void} allCommentPositions is modified in place
  */
 const trackTrackedChangeNodes = (view, allCommentPositions, node, pos) => {
   // Check for tracked changes
@@ -141,10 +142,12 @@ const updatePositions = (view, pos, currentPos) => {
 
 /**
  * Main function to track comment and tracked change nodes
+ * 
  * @param {EditorView} view The current editor view
  * @param {Object} allCommentPositions The current positions of nodes being tracked
  * @param {Node} node The current node to consider
  * @param {Number} pos The position of the node
+ * @returns {void} allCommentPositions is modified in place
  */
 const trackCommentNodes = (view, allCommentPositions, node, pos) => {
   const openNodes = new Set();
@@ -215,7 +218,7 @@ const processDocumentComments = (editor, doc) => {
  * 
  * @param {Object} doc The current document
  * @param {Selection} selection The current selection
- * @returns {String} The active comment ID, if any
+ * @returns {String | null} The active comment ID, if any
  */
 const getActiveCommentId = (doc, selection) => {
   if (!selection) return;

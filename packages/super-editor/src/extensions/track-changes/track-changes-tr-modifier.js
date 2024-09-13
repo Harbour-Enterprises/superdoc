@@ -140,6 +140,28 @@ const removeTrackChangesFromTransaction = (tr, state) => {
 }
 
 /**
+ * Get the tracked change node
+ * 
+ * @param {from} number the start position
+ * @param {to} number the end position
+ * @param {tr} Transaction the transaction
+ * @param {user} string the user
+ * @returns {Node | null} the tracked change node or null
+ */
+const getMarkNode = (from, to, tr, user) => {
+    const prevNode = tr.doc.nodeAt(from)
+    const nextNode = tr.doc.nodeAt(to)
+    const prevNodeInsertion = prevNode && prevNode.marks.find((mark) => {
+        return mark.type.name === TrackInsertMarkName && mark.attrs.authorEmail === user.email
+    });
+    const nextNodeInsertion = nextNode && nextNode.marks.find((mark) => {
+        return mark.type.name === TrackInsertMarkName && mark.attrs.authorEmail === user.email
+    });
+
+    return prevNodeInsertion || nextNodeInsertion;
+}
+
+/**
  * Mark insertion
  * @param {Transaction} tr
  * @param {number} from
@@ -151,25 +173,35 @@ const removeTrackChangesFromTransaction = (tr, state) => {
 const markInsertion = (tr, from, to, user, date, wid) => {
     // check if we are adding to an existing insertion mark
     let addingToExisting = false
-    const prevNode = tr.doc.nodeAt(from - 1)
-    const nextNode = tr.doc.nodeAt(to + 1)
-    const prevNodeInsertion = prevNode && prevNode.marks.find(mark => mark.type.name === TrackInsertMarkName && mark.attrs.authorEmail === user.email)
-    const nextNodeInsertion = nextNode && nextNode.marks.find(mark => mark.type.name === TrackInsertMarkName && mark.attrs.authorEmail === user.email)
-    const markNode = prevNodeInsertion || nextNodeInsertion
+
+    const markNode = getMarkNode(from, to, tr, user);
     if (markNode) {
         wid = markNode.attrs.wid;
         addingToExisting = true
     }
 
-    const insertionMark = tr.doc.type.schema.marks[TrackInsertMarkName].create({authorEmail: user.email, author: user.name, date, wid})
+    const markAttrs = {authorEmail: user.email, author: user.name, date, wid};
+    const insertionMark = tr.doc.type.schema.marks[TrackInsertMarkName].create(markAttrs)
     tr.doc.nodesBetween(
         from,
         to,
         (node, pos) => {
             if (node.isInline) {
-                tr.removeMark(Math.max(from, pos), Math.min(pos + node.nodeSize, to), tr.doc.type.schema.marks[TrackDeleteMarkName])
-                tr.removeMark(Math.max(from, pos), Math.min(pos + node.nodeSize, to), tr.doc.type.schema.marks[TrackInsertMarkName])
-                tr.addMark(Math.max(from, pos), Math.min(pos + node.nodeSize, to), insertionMark)
+                tr.removeMark(
+                    Math.max(from, pos),
+                    Math.min(pos + node.nodeSize, to),
+                    tr.doc.type.schema.marks[TrackDeleteMarkName]
+                );
+                tr.removeMark(
+                    Math.max(from, pos),
+                    Math.min(pos + node.nodeSize, to),
+                    tr.doc.type.schema.marks[TrackInsertMarkName]
+                );
+                tr.addMark(
+                    Math.max(from, pos),
+                    Math.min(pos + node.nodeSize, to),
+                    insertionMark
+                );
                 return false
             } /*else if (pos < from || ["bullet_list", "ordered_list"].includes(node.type.name)) {
                 return true
@@ -191,11 +223,7 @@ const markInsertion = (tr, from, to, user, date, wid) => {
  */
 const markDeletion = (tr, from, to, user, date, wid) => {
     let addingToExisting = false;
-    const prevNode = tr.doc.nodeAt(from - 1)
-    const nextNode = tr.doc.nodeAt(to)
-    const prevNodeInsertion = prevNode && prevNode.marks.find(mark => mark.type.name === TrackDeleteMarkName && mark.attrs.authorEmail === user.email)
-    const nextNodeInsertion = nextNode && nextNode.marks.find(mark => mark.type.name === TrackDeleteMarkName && mark.attrs.authorEmail === user.email)
-    const markNode = prevNodeInsertion || nextNodeInsertion
+    const markNode = getMarkNode(from, to, tr, user);
     if (markNode) {
         wid = markNode.attrs.wid;
         addingToExisting = true

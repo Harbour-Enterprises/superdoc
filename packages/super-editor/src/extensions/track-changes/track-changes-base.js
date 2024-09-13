@@ -6,19 +6,12 @@ import {TrackDeleteMarkName, TrackInsertMarkName, TrackMarksMarkName} from "./co
 
 
 const trackChangesCallback = (action, acceptedChanges, revertedChanges, editor) => {
-
-    const { state, view } = editor;
-    const { dispatch } = view;
-    const { tr } = state;
     const wid = acceptedChanges.modifiers[0]?.wid || revertedChanges.modifiers[0]?.wid;
-
-    tr.setMeta("trackedChangesUpdate", { action, id: wid });
-    dispatch(tr);
-    // if(action === "accept") {
-    //     editor.emit('trackedChangesUpdate', { action, id: wid })
-    // } else {
-    //     editor.emit('trackedChangesUpdate', { action, id: wid })
-    // }
+    if(action === "accept") {
+        editor.emit('trackedChangesUpdate', { action, id: wid })
+    } else {
+        editor.emit('trackedChangesUpdate', { action, id: wid })
+    }
 }
 
 export const TrackChangesBasePluginKey = new PluginKey("TrackChangesBase");
