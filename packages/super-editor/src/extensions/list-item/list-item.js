@@ -60,7 +60,10 @@ export const ListItem = Node.create({
   addShortcuts() {
     return {
       Enter: () => {
-        return this.editor.commands.splitListItem(this.name);
+        return this.editor.commands.first(({ commands }) => [
+          () => commands.splitListItem(this.name),
+          () => commands.continueListNumberingAfterLiftEmpty(),
+        ]);
       },
       'Shift-Enter': () => {
         return this.editor.commands.first(({ commands }) => [
