@@ -332,7 +332,7 @@ export const applyTrackChanges = (action, state, tr, from, to) => {
             let blockTrack = node.attrs.track.find(track => track.type === TrackChangeBlockChangeAttributeName)
             let blockDelete = node.attrs.track.find(track => track.type === TrackDeleteMarkName)
             let blockInsert = node.attrs.track.find(track => track.type === TrackInsertMarkName)
-            if(blockTrack) {
+            if (blockTrack) {
                 if (action === "accept") {
                     tr.setNodeMarkup(pos + offset, null, {
                         ...node.attrs,
@@ -342,16 +342,18 @@ export const applyTrackChanges = (action, state, tr, from, to) => {
                     const nodeType = state.schema.nodes[blockTrack.before.type];
                     tr.setNodeMarkup(pos + offset, nodeType, blockTrack.before.attrs);
                 }
-            } else if (blockDelete) {
+            }
+            if (blockDelete) {
                 if (action === "accept") {
-                    removeParentNode(state.schema, tr, node, pos);
-                } else if (action === "revert") {
                     tr.setNodeMarkup(pos + offset, null, {
                         ...node.attrs,
                         track: node.attrs.track.filter(track => track.type !== TrackDeleteMarkName)
                     });
+                } else if (action === "revert") {
+                    //TODO: we should create all of the marks again
                 }
-            } else if (blockInsert) {
+            }
+            if (blockInsert) {
                 if (action === "accept") {
                     tr.setNodeMarkup(pos + offset, null, {
                         ...node.attrs,
@@ -448,6 +450,29 @@ const recalcDecorations = (state, onlyOriginalShown,onlyModifiedShown ) => {
                 }
             }
         });
+        if(node.attrs.track && node.attrs.track.length > 0) {
+            let blockTrack = node.attrs.track.find(track => track.type === TrackChangeBlockChangeAttributeName)
+            let blockDelete = node.attrs.track.find(track => track.type === TrackDeleteMarkName)
+            let blockInsert = node.attrs.track.find(track => track.type === TrackInsertMarkName)
+            if (blockTrack || blockDelete || blockInsert) {
+                if(onlyOriginalShown) {
+                    const decoration = Decoration.node(pos, pos + node.nodeSize, {
+                        class: "blockChange normal",
+                    });
+                    decorations.push(decoration);
+                } else if(onlyModifiedShown) {
+                    const decoration = Decoration.node(pos, pos + node.nodeSize, {
+                        class: "blockChange hidden",
+                    });
+                    decorations.push(decoration);
+                } else {
+                    const decoration = Decoration.node(pos, pos + node.nodeSize, {
+                        class: "blockChange highlighted",
+                    });
+                    decorations.push(decoration);
+                }
+            }
+        }
     });
 
     return DecorationSet.create(state.doc, decorations);

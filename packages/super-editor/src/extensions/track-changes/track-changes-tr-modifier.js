@@ -9,6 +9,7 @@ import {
     TrackChangeBlockChangeAttributeName
 } from "./constants.js";
 import {TrackChangesBasePluginKey} from "./track-changes-base.js";
+import {carbonCopy} from "../../core/utilities/cabonCopy.js";
 /**
  * Amend transaction to track changes
  * @param {Transaction} tr
@@ -183,15 +184,16 @@ const markInsertion = (tr, from, to, user, date) => {
  * @param {Transaction} tr
  * @param {number} from
  * @param {number} to
+ * @param {number | null} to2
  * @param {string} user
  * @param {string} date
  * @returns {Mapping} - tr is modified in place, but the mapping is returned
  */
-const markDeletion = (tr, from, to, user, date) => {
+const markDeletion = (tr, from, to, to2, user, date) => {
     const deletionMark = tr.doc.type.schema.marks[TrackDeleteMarkName].create({author: user, date})
     let firstTableCellChild = false
-    let listItem = false
     const deletionMap = new Mapping()
+    const deletedNodes = []
     // Add deletion mark to block nodes (figures, text blocks) and find already deleted inline nodes (and leave them alone)
     tr.doc.nodesBetween(
         from,
@@ -220,60 +222,99 @@ const markDeletion = (tr, from, to, user, date) => {
                     deletionMap.map(Math.min(to, pos + node.nodeSize)),
                     deletionMark
                 )
-            } else if (
-                !node.attrs.track?.find(trackAttr => trackAttr.type === TrackDeleteMarkName) &&
-                !["bulletList", "orderedList"].includes(node.type.name)
-            ) {
-                if (node.attrs.track?.find(
-                    trackAttr => trackAttr.type === TrackInsertMarkName && trackAttr.user === user.id
-                )) {
-                    let removeStep
-                    // user has created element. so (s)he is allowed to delete it again.
-                    if (node.isTextblock && to < (pos + node.nodeSize)) {
-                        // The node is a textblock. So we need to merge into the last possible
-                        // position inside the last text block.
-                        const selectionBefore = Selection.findFrom(tr.doc.resolve(pos), -1)
-                        if (selectionBefore instanceof TextSelection) {
-                            removeStep = new ReplaceStep(
-                                deletionMap.map(selectionBefore.$anchor.pos),
-                                deletionMap.map(to),
-                                Slice.empty
-                            )
-                        }
-                    } else {
-                        removeStep = new ReplaceStep(
-                            deletionMap.map(Math.max(from, pos)),
-                            deletionMap.map(Math.min(to, pos + node.nodeSize)),
-                            Slice.empty
-                        )
-                    }
-
-                    if (!tr.maybeStep(removeStep).failed) {
-                        deletionMap.appendMap(removeStep.getMap())
-                    }
-                    if (node.type.name === "listItem" && listItem) {
-                        listItem = false
-                    }
-                } else if (node.attrs.track) {
-                    if (node.type.name === "listItem") {
-                        listItem = true
-                    } else if (listItem) {
-                        // The first child of the first list item (likely a par) will not be merged with the paragraph
-                        // before it.
-                        listItem = false
-                        return
-                    }
-                    const track = node.attrs.track.slice()
-                    track.push({type: TrackDeleteMarkName, author: user, date: date})
-                    tr.setNodeMarkup(deletionMap.map(pos), null, Object.assign({}, node.attrs, {track}), node.marks)
+            } else if (node.attrs.track?.find(
+                trackAttr => trackAttr.type === TrackInsertMarkName
+            )) {
+                //we do nothing, it will be simply deleted by the step
+            } else if (!node.isInline && node.attrs.track){
+                /*
+                if we have a;
+                 - list1<listItem1<list2<listItem2<list3<listItem3<paragraph>>>>>>
+                 - and we first remove the middle list
+                 - list1<listItem1<list3[removed: list2, listItem2]<listItem3<paragraph>>>
+                 - and
+                    1. we remove the outer list:
+                    - list3[removed: list1, listItem1, list2, listItem2]<listItem3<paragraph>>>
+                    2. we remove the inner list:
+                    - list1<listItem1<paragraph[removed: list2, listItem2, list3, listItem3]>>>
+                 */
+                const deleted = node.attrs.track.find(track => track.type === TrackDeleteMarkName)
+                if(deleted) {
+                    deletedNodes.push(...deleted.before.wrappers)
                 }
-                if (node.type.name === "figure") {
-                    return false
-                }
+                deletedNodes.push({
+                    type: node.type.name,
+                    attrs: {...node.attrs, track: node.attrs.track.filter(track => track.type !== TrackDeleteMarkName)},
+                })
             }
         }
     )
 
+    if(to !== from && to2 === null) {
+        const lastPos = tr.doc.resolve(to)
+        const lastNode = lastPos.parent
+        const fromAndToInLastNode = lastPos.start(lastPos.depth) <= from && lastPos.end(lastPos.depth) >= to
+        if (lastNode && !fromAndToInLastNode && lastPos.before(lastPos.depth) <= to && lastPos.after(lastPos.depth) >= to) {
+            to2 = to + lastNode.nodeSize - 1
+            const removeStep = new ReplaceStep(
+                deletionMap.map(Math.max(from, lastPos.before(lastPos.depth)-1)),
+                deletionMap.map(to),
+                Slice.empty
+            )
+            if (!tr.maybeStep(removeStep).failed) {
+                deletionMap.appendMap(removeStep.getMap())
+            }
+        }
+    }
+
+    if(deletedNodes.length > 0 && to2 !== null ) {
+        tr.doc.nodesBetween(
+            deletionMap.map(to),
+            deletionMap.map(to2),
+            (nodeToMod, nodeToModPos) => {
+                if(nodeToModPos < to) {
+                    return true
+                }
+            if (nodeToMod.attrs.track && nodeToMod.type.name !== "listItem") {
+                const deletedMark = nodeToMod.attrs.track.find(track => track.type === TrackDeleteMarkName)
+                const track = carbonCopy(nodeToMod.attrs.track.filter(track => track.type !== TrackDeleteMarkName))
+                if(deletedMark) {
+                    const newDeletedMark = carbonCopy(deletedMark)
+                    newDeletedMark.author = user
+                    newDeletedMark.date = date
+                    const newWrappers = newDeletedMark.before.wrappers ?? []
+                    if(deletedNodes[deletedNodes.length - 1].type === "listItem") {
+                        if(newWrappers.length > 0 && newWrappers[0].type === "listItem") {
+                            newWrappers.shift() //we inplace remove the first item so when we collapse lists we won't have a [list, listItem, listItem, listItem]
+                        }
+                    }
+                    newDeletedMark.before.wrappers = [...deletedNodes, ...newWrappers]
+                    track.push(newDeletedMark)
+                } else {
+                    track.push({
+                        type: TrackDeleteMarkName, author: user, date: date, before: {
+                            wrappers: [...deletedNodes]
+                        }
+                    })
+                }
+                //console.log(nodeToModPos, nodeToMod)
+                let newNode = nodeToMod.type.create(Object.assign({}, nodeToMod.attrs, {track}), null, nodeToMod.marks)
+                const setNodeMarkupStep = new ReplaceAroundStep(
+                    nodeToModPos,
+                    nodeToModPos + nodeToMod.nodeSize,
+                    nodeToModPos + 1,
+                    nodeToModPos + nodeToMod.nodeSize - 1,
+                    new Slice(Fragment.from(newNode), 0, 0),
+                    1,
+                    true)
+                if (!tr.maybeStep(setNodeMarkupStep).failed) {
+                    deletionMap.appendMap(setNodeMarkupStep.getMap())
+                }
+                //we won't recurse to children
+                return false;
+            }
+        });
+    }
     return deletionMap;
 }
 
@@ -363,7 +404,6 @@ const handleReplaceStep = (state, tr, step, stepIndex, newTr, map, user, date) =
             const mirrorIndex = map.maps.length - 1
             map.appendMap(condensedStep.getMap(), mirrorIndex)
             if (!newTr.selection.eq(trTemp.selection)) {
-                console.log(trTemp.selection.toJSON())
                 newTr.setSelection(Selection.fromJSON(newTr.doc, trTemp.selection.toJSON()))
             }
         }
@@ -371,7 +411,7 @@ const handleReplaceStep = (state, tr, step, stepIndex, newTr, map, user, date) =
     }
     if (step.from !== step.to) {
         map.appendMapping(
-            markDeletion(newTr, step.from, step.to, user, date)
+            markDeletion(newTr, step.from, step.to, null, user, date)
         )
     }
 }
@@ -462,11 +502,10 @@ const handleNodeTypeChanges = (state, tr, step, stepIndex, newTr, map, user, dat
         const to = step.getMap().map(step.gapFrom)
         markInsertion(newTr, from, to, user, date) // we only mark the wrapping node itself which is indded an insertion
     } else if (!step.slice.size || step.slice.content.content.length === 2) {// unwrapped from something
-        const invertStep = tr.steps[stepIndex].invert(tr.docs[stepIndex]).map(map)
-        map.appendMap(invertStep.getMap())
         map.appendMap(
-            markDeletion(newTr, step.from, step.gapFrom, user, date)
+            markDeletion(newTr, step.from, step.gapFrom, step.gapTo, user, date)
         )
+        newTr.step(step)
     } else if (step.slice.size === 2 && step.gapFrom - step.from === 1 && step.to - step.gapTo === 1) { // Replaced one wrapping with another
         const oldNode = newTr.doc.nodeAt(step.from)
         newTr.step(step)
@@ -526,6 +565,7 @@ export const trackTransaction = (tr, state, user) => {
             handleMarkStep(state, step, newTr, user, fixedTimeTo10MinutesString)
         } else if (step instanceof ReplaceAroundStep){
             handleNodeTypeChanges(state, tr, step, originalStepIndex, newTr, map, user, fixedTimeTo10MinutesString);
+            //newTr.step(step)
         } else {
             newTr.step(step)
         }

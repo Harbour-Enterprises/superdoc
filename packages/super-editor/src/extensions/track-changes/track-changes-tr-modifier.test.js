@@ -1,5 +1,5 @@
-import {EditorState} from "prosemirror-state";
-import {Slice, Fragment} from "prosemirror-model";
+import {EditorState, TextSelection} from "prosemirror-state";
+import {Fragment, Slice} from "prosemirror-model";
 import {findWrapping, liftTarget} from "prosemirror-transform";
 import {Schema} from "../../core/index.js";
 import {getStarterExtensions} from "../index.js";
@@ -11,6 +11,7 @@ import {
     TrackMarksMarkName
 } from "./constants.js";
 import {applyTrackChanges} from "./track-changes-base.js";
+import {liftListItem} from "../../core/commands/index.js";
 
 const createEmptyDocState = () => {
     const emptyDoc = {content: [], type: "doc"}
@@ -19,7 +20,7 @@ const createEmptyDocState = () => {
     return EditorState.create({
         schema,
         doc,
-    })
+    });
 }
 
 describe('Track Changes TR Modifier', () => {
@@ -518,15 +519,35 @@ describe('Track Changes TR Modifier', () => {
                 //check
                 const doc3Json = state3.doc.toJSON();
                 expect(doc3Json.content.length).toBe(1);
-                expect(doc3Json.content[0].type).toBe("bulletList");
+                expect(doc3Json.content[0].type).toBe("paragraph");
                 expect(doc3Json.content[0].content.length).toBe(1);
-                expect(doc3Json.content[0].content[0].type).toBe("listItem");
-                expect(doc3Json.content[0].content[0].content.length).toBe(1);
-                expect(doc3Json.content[0].content[0].attrs.track.length).toBe(1);
-                expect(doc3Json.content[0].content[0].attrs.track[0].type).toBe(TrackDeleteMarkName);
-                expect(doc3Json.content[0].content[0].attrs.track[0].author).toBe("TestUser1");
-                expect(doc3Json.content[0].content[0].attrs.track[0].before).toBe(undefined);
-                expect(doc3Json.content[0].content[0].content[0].type).toBe("paragraph");
+                expect(doc3Json.content[0].content[0].type).toBe("text");
+                expect(doc3Json.content[0].attrs.track.length).toBe(1);
+                expect(doc3Json.content[0].attrs.track[0].type).toBe(TrackDeleteMarkName);
+                expect(doc3Json.content[0].attrs.track[0].author).toBe("TestUser1");
+                expect(doc3Json.content[0].attrs.track[0].before.wrappers).toBeDefined();
+                expect(doc3Json.content[0].attrs.track[0].before.wrappers).toEqual([
+                    {
+                        type: "bulletList",
+                        attrs: {
+                            attributes: null,
+                            "list-style-type": "bullet",
+                            track: [],
+
+                        },
+                    },
+                    {
+                        type: "listItem",
+                        attrs: {
+                            attributes: null,
+                            listParagraphProperties: null,
+                            listRunProperties: null,
+                            lvlJc: null,
+                            lvlText: null,
+                            track: [],
+                        },
+                    },
+                ]);
             });
             test("unwrap a paragraph from an unorderedList and accept", () => {
                 //init
@@ -577,6 +598,134 @@ describe('Track Changes TR Modifier', () => {
                 expect(doc4Json.content[0].content[0].content.length).toBe(1);
                 expect(doc4Json.content[0].content[0].content[0].content[0].text).toBe("test");
                 expect(doc4Json.content[0].attrs.track.length).toBe(0);
+            });
+        });
+        describe("unwrap multiple nodes", () => {
+           test("unwrap 4 paragraphs from an unorderedList", () => {
+                //init
+                const state = createEmptyDocState();
+                //mod
+                const tr = state.tr;
+                const node = state.schema.nodes["bulletList"].create(null, [
+                    state.schema.nodes["listItem"].create(null, state.schema.nodes["paragraph"].create(null, state.schema.text("test1"))),
+                    state.schema.nodes["listItem"].create(null, state.schema.nodes["paragraph"].create(null, state.schema.text("test2"))),
+                    state.schema.nodes["listItem"].create(null, state.schema.nodes["paragraph"].create(null, state.schema.text("test3"))),
+                    state.schema.nodes["listItem"].create(null, state.schema.nodes["paragraph"].create(null, state.schema.text("test4"))),
+                ]);
+                tr.insert(0, node);
+                tr.setSelection(TextSelection.create(tr.doc, 4, tr.doc.nodeSize - 6));
+                const state2 = state.apply(tr);
+
+                let state3;
+                const dispatch = (tr)  => {
+                    state3 = state2.apply(trackTransaction(tr, state2, "TestUser1"));
+                }
+                liftListItem("listItem")({state: state2, dispatch});
+
+                //check
+                const doc3Json = state3.doc.toJSON();
+                expect(doc3Json.content.length).toBe(4);
+                for(let i = 0; i < 4; i++) {
+                    expect(doc3Json.content[i].type).toBe("paragraph");
+                    expect(doc3Json.content[i].content.length).toBe(1);
+                    expect(doc3Json.content[i].content[0].text).toBe(`test${i+1}`);
+                    expect(doc3Json.content[i].attrs.track.length).toBe(1);
+                    expect(doc3Json.content[i].attrs.track[0].type).toBe(TrackDeleteMarkName);
+                    expect(doc3Json.content[i].attrs.track[0].author).toBe("TestUser1");
+                    expect(doc3Json.content[i].attrs.track[0].before.wrappers).toBeDefined();
+                    expect(doc3Json.content[i].attrs.track[0].before.wrappers).toEqual([
+                        {
+                            type: "bulletList",
+                            attrs: {
+                                attributes: null,
+                                "list-style-type": "bullet",
+                                track: [],
+
+                            },
+                        },
+                        {
+                            type: "listItem",
+                            attrs: {
+                                attributes: null,
+                                listParagraphProperties: null,
+                                listRunProperties: null,
+                                lvlJc: null,
+                                lvlText: null,
+                                track: [],
+                            },
+                        },
+                    ]);
+                }
+           });
+            test("unwrap 3 paragraphs from an unorderedList and accept", () => {
+                //init
+                const state = createEmptyDocState();
+                //mod
+                const tr = state.tr;
+                const node = state.schema.nodes["bulletList"].create(null, [
+                    state.schema.nodes["listItem"].create(null, state.schema.nodes["paragraph"].create(null, state.schema.text("test1"))),
+                    state.schema.nodes["listItem"].create(null, state.schema.nodes["paragraph"].create(null, state.schema.text("test2"))),
+                    state.schema.nodes["listItem"].create(null, state.schema.nodes["paragraph"].create(null, state.schema.text("test3"))),
+                ]);
+                tr.insert(0, node);
+                tr.setSelection(TextSelection.create(tr.doc, 4, tr.doc.nodeSize - 6));
+                const state2 = state.apply(tr);
+
+                let state3;
+                const dispatch = (tr)  => {
+                    state3 = state2.apply(trackTransaction(tr, state2, "TestUser1"));
+                }
+                liftListItem("listItem")({state: state2, dispatch});
+
+                const tr3 = state3.tr;
+                applyTrackChanges("accept", state3, tr3, 0, state3.doc.nodeSize - 2)
+                const state4 = state3.apply(tr3);
+                //check
+                const doc4Json = state4.doc.toJSON();
+                expect(doc4Json.content.length).toBe(3);
+                for(let i = 0; i < 3; i++) {
+                    expect(doc4Json.content[i].type).toBe("paragraph");
+                    expect(doc4Json.content[i].content.length).toBe(1);
+                    expect(doc4Json.content[i].content[0].text).toBe(`test${i+1}`);
+                    expect(doc4Json.content[i].attrs.track.length).toBe(0);
+                }
+            });
+            test("unwrap 3 paragraphs from an unorderedList and revert", () => {
+                //init
+                const state = createEmptyDocState();
+                //mod
+                const tr = state.tr;
+                const node = state.schema.nodes["bulletList"].create(null, [
+                    state.schema.nodes["listItem"].create(null, state.schema.nodes["paragraph"].create(null, state.schema.text("test1"))),
+                    state.schema.nodes["listItem"].create(null, state.schema.nodes["paragraph"].create(null, state.schema.text("test2"))),
+                    state.schema.nodes["listItem"].create(null, state.schema.nodes["paragraph"].create(null, state.schema.text("test3"))),
+                ]);
+                tr.insert(0, node);
+                tr.setSelection(TextSelection.create(tr.doc, 4, tr.doc.nodeSize - 6));
+                const state2 = state.apply(tr);
+
+                let state3;
+                const dispatch = (tr)  => {
+                    state3 = state2.apply(trackTransaction(tr, state2, "TestUser1"));
+                }
+                liftListItem("listItem")({state: state2, dispatch});
+
+                const tr3 = state3.tr;
+                applyTrackChanges("revert", state3, tr3, 0, state3.doc.nodeSize - 2)
+                const state4 = state3.apply(tr3);
+                //check
+                const doc4Json = state4.doc.toJSON();
+                expect(doc4Json.content.length).toBe(1);
+                expect(doc4Json.content[0].type).toBe("bulletList");
+                expect(doc4Json.content[0].content.length).toBe(3);
+                for(let i = 0; i < 3; i++) {
+                    expect(doc4Json.content[0].content[i].type).toBe("listItem");
+                    expect(doc4Json.content[0].content[i].content.length).toBe(1);
+                    expect(doc4Json.content[0].content[i].content[0].type).toBe("paragraph");
+                    expect(doc4Json.content[0].content[i].content[0].content.length).toBe(1);
+                    expect(doc4Json.content[0].content[i].content[0].content[0].text).toBe(`test${i+1}`);
+                    expect(doc4Json.content[0].content[i].attrs.track.length).toBe(0);
+                }
             });
         });
     });
