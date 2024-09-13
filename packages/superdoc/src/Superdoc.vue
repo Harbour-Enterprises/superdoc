@@ -148,13 +148,22 @@ const onEditorSelectionChange = ({ editor, transaction }) => {
   });
 
   handleSelectionChange(selection);
+
+  // TODO: Figure out why the selection is being undone here andwe need the delay
+  setTimeout(() => {
+    const { activeThreadId } = transaction.getMeta('commentsPluginState') || {};
+    const document = getDocument(documentId);
+    const convo = document.conversations.find((c) => c.thread == activeThreadId);
+    activeComment.value = convo?.conversationId;
+  }, 250);
 };
 
-const onEditorCommentsUpdate = ({ editor, transaction, pluginState }) => {  
+const onEditorCommentsUpdate = ({ editor, transaction }) => {  
   const { documentId } = editor.options;
-  const { commentPositions, activeThreadId } = transaction.getMeta('comments') || {};
-  if (!commentPositions?.length) return;
-  
+  const { commentPositions = {}, activeThreadId } = transaction.getMeta('commentsPluginState') || {};
+  if (activeThreadId) onEditorSelectionChange({ editor, transaction });
+  if (!Object.keys(commentPositions).length) return;
+
   const containerBounds = layers.value.getBoundingClientRect();
   const document = getDocument(documentId);
 
@@ -167,7 +176,8 @@ const onEditorCommentsUpdate = ({ editor, transaction, pluginState }) => {
       left: commentPositions[threadId].left - containerBounds.left,
       right: commentPositions[threadId].right - containerBounds.left,
       bottom: commentPositions[threadId].bottom - containerBounds.top,
-    }
+    };
+
     const newSelection = useSelection({
       selectionBounds: adjustedSelection,
       documentId,
@@ -175,12 +185,6 @@ const onEditorCommentsUpdate = ({ editor, transaction, pluginState }) => {
     });
     convo.selection = newSelection;
   });
-
-
-  // TODO: Figure out why the selection is being undone sometimes
-  // setTimeout(() => {
-  //   activeComment.value = convo?.conversationId;
-  // }, 250);
 }
 
 function getSelectionBoundingBox() {

@@ -52,7 +52,6 @@ export const TableCell = Node.create({
       cellMargins: {
         renderDOM({ cellMargins }) {
           if (!cellMargins) return {};
-          console.debug('\n\n CELL MARGINS XX', cellMargins, '\n\n');
           let style = '';
           const { top, right, bottom, left } = cellMargins || {};
           if (top) style += `padding-top: ${top}px;`;
