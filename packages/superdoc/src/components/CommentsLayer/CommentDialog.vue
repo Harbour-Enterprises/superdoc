@@ -14,8 +14,8 @@ const superdocStore = useSuperdocStore();
 const commentsStore = useCommentsStore();
 const { COMMENT_EVENTS } = commentsStore;
 const { getConfig, activeComment, pendingComment, floatingCommentsOffset } = storeToRefs(commentsStore);
-const { areDocumentsReady } = superdocStore;
-const { selectionPosition } = storeToRefs(superdocStore);
+const { areDocumentsReady, getDocument } = superdocStore;
+const { selectionPosition, activeZoom } = storeToRefs(superdocStore);
 const { proxy } = getCurrentInstance();
 
 const props = defineProps({
@@ -51,7 +51,7 @@ const isFocused = ref(false);
 const addComment = () => {
   const value = currentComment.value;
   if (!value) return;
-
+  
   // create the new comment for the conversation
   const comment = useComment({
     user: {
@@ -66,7 +66,12 @@ const addComment = () => {
   if (pendingComment.value && pendingComment.value.conversationId === props.data.conversationId) {
     const newConversation = { ...pendingComment.value }
 
+    const parentBounds = props.parent.getBoundingClientRect();
+    
     const selection = pendingComment.value.selection.getValues();
+    selection.selectionBounds.top = selection.selectionBounds.top// - parentBounds.top;
+    selection.selectionBounds.bottom = selection.selectionBounds.bottom// - parentBounds.top;
+
     const bounds = selection.selectionBounds;
     if (bounds.top > bounds.bottom) {
       const temp = bounds.top;
@@ -78,14 +83,19 @@ const addComment = () => {
       bounds.left = bounds.right;
       bounds.right = temp;
     }
-    newConversation.selection = useSelection(selection)
-
-     // Remove the pending comment
-     pendingComment.value = null;
-    
-    // Reset the original selection
-    selectionPosition.value = null;
+    newConversation.selection = useSelection(selection)    
     newConversation.comments.push(comment);
+
+    // Suppress click if the selection was made by the super-editor
+    newConversation.suppressClick = isSuppressClick(pendingComment.value.selection);
+    newConversation.thread = newConversation.conversationId;
+
+    // Remove the pending comment
+    pendingComment.value = null;
+
+    const editor = proxy.$superdoc.activeEditor;
+    if (editor) createNewEditorComment({ conversation: newConversation, editor });
+  
     newConversation.isInternal = isInternal.value;
     props.currentDocument.conversations.push(newConversation);
     proxy.$superdoc.broadcastComments(COMMENT_EVENTS.ADD, props.data.getValues());
@@ -99,6 +109,13 @@ const addComment = () => {
   activeComment.value = null;
 }
 
+const createNewEditorComment = ({ conversation, editor }) => {
+  editor.commands.insertComment(conversation);
+}
+
+const isSuppressClick = (selection) => {
+  return selection.source === 'super-editor' ? true : false;
+}
 function formatDate(timestamp) {
   const date = new Date(timestamp);
   const hours = date.getHours();
@@ -123,9 +140,9 @@ const getSidebarCommentStyle = computed(() => {
   if (!props.data.comments.length && currentElement.value) {
     const selectionBounds = props.data.selection.getContainerLocation(props.parent)
     const bounds = props.data.selection.selectionBounds;
-    const parentTop = props.parent.getBoundingClientRect().top;
+    const parentTop = props.parent?.getBoundingClientRect()?.top || 0;
     const currentBounds = currentElement.value.getBoundingClientRect();
-    style.top = bounds.top + selectionBounds.top + 'px';
+    style.top = (bounds.top) * activeZoom.value + 'px';
   }
 
   return style;
@@ -133,7 +150,7 @@ const getSidebarCommentStyle = computed(() => {
 
 const cleanConversations = () => {
   if (props.data.comments.length) return;
-  if (pendingComment.value) selectionPosition.value = null;
+  // if (!pendingComment.value) selectionPosition.value = null;
   const id = props.data.conversationId;
   pendingComment.value = null;
   props.currentDocument.removeConversation(id);
@@ -259,6 +276,28 @@ const showSeparator = computed(() => (index) => {
   return props.data.comments.length > 1 && index !== props.data.comments.length - 1;
 });
 
+/**
+ * Mark a tracked change as accepted or rejected. Only available in SuperEditor docs.
+ */
+const markAccepted = () => {
+  const convo = getCurrentConvo();
+  const editor = props.currentDocument.getEditor();
+  editor.commands.acceptTrackedChange(convo.comments[0]);
+  proxy.$superdoc.broadcastComments(COMMENT_EVENTS.CHANGE_ACCEPTED, convo.getValues());
+
+  const document = getDocument(convo.documentId);
+  document.conversations = document.conversations.filter((c) => c.conversationId !== convo.conversationId);
+};
+const markRejected = () => {
+  const convo = getCurrentConvo();
+  const editor = props.currentDocument.getEditor();
+  editor.commands.rejectTrackedChange(convo.comments[0]);
+  proxy.$superdoc.broadcastComments(COMMENT_EVENTS.CHANGE_REJECTED, convo.getValues());
+
+  const document = getDocument(convo.documentId);
+  document.conversations = document.conversations.filter((c) => c.conversationId !== convo.conversationId);
+};
+
 onMounted(() => {
   emit('ready', props.data.conversationId, currentElement);
 });
@@ -276,7 +315,7 @@ onMounted(() => {
       ref="currentElement">
 
     <!-- internal/external dropdown when conversation has comments -->
-    <div v-if="!pendingComment" class="existing-internal-input">
+    <div v-if="!pendingComment && !data.isTrackedChange" class="existing-internal-input">
       <InternalDropdown
           class="internal-dropdown"
           :state="props.data.isInternal ? 'internal' : 'external'"
@@ -295,7 +334,24 @@ onMounted(() => {
             <div class="user-timestamp">{{ formatDate(item.timestamp) }}</div>
           </div>
         </div>
-        <div class="overflow-menu">
+
+         <!-- Tracked changes don't have resolution, only accept / reject -->
+        <div class="overflow-menu" v-if="data.isTrackedChange && index === 0">
+          <i
+              class="fal fa-check"
+              @click.stop.prevent="markAccepted"
+              title="Accept change">
+          </i>
+          <i
+              class="fal fa-times"
+              @click.stop.prevent="markRejected"
+              title="Reject change">
+          </i>
+          
+        </div>
+
+        <!-- comment actions -->
+        <div class="overflow-menu" v-else>
           <i
               v-if="index === 0 && getConfig.allowResolve"
               class="fal fa-check"
@@ -311,7 +367,21 @@ onMounted(() => {
           </n-dropdown>
         </div>
       </div>
-      <div class="card-section comment-body">
+
+      <!-- Tracked change comment area -->
+      <div class="card-section comment-body" v-if="data.isTrackedChange && index === 0">
+        <div class="comment tracked-change" v-if="item.trackedChange?.insertion">
+          <span class="change-type">Add: </span>
+          {{ item.trackedChange.insertion }}
+        </div>
+        <div class="comment tracked-change" v-if="item.trackedChange?.deletion">
+          <span class="change-type">Remove: </span>
+          {{ item.trackedChange.deletion }}
+        </div>
+      </div>
+
+      <!-- Comment area -->
+      <div class="card-section comment-body" v-else>
         <div class="comment" v-if="item !== isEditing" v-html="item.comment"></div>
 
         <div class="comment-editing" v-else-if="item === isEditing">
@@ -372,7 +442,10 @@ onMounted(() => {
 </template>
 
 <style scoped>
-
+.change-type {
+  font-style: italic;
+  font-weight: 600;
+}
 .comment-separator {
   background-color: #DBDBDB;
   height: 1px;
@@ -457,7 +530,7 @@ onMounted(() => {
   margin-left: 5px;
 }
 .comment {
-  font-size: 14px;
+  font-size: 13px;
   margin: 10px 0;
 }
 .conversation-item {
@@ -485,5 +558,8 @@ onMounted(() => {
   border: 1px solid #DBDBDB !important;
   width: 100%;
   transition: all 250ms ease;
+}
+.tracked-change {
+  margin: 0;
 }
 </style>

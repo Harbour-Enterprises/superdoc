@@ -52,6 +52,10 @@ const onCommentClicked = ({ conversation }) => {
 };
 
 const editorOptions = {
+    user: {
+      name: 'Developer playground',
+      email: 'devs@harbourshare.com',
+    },
     onCreate,
     onCommentClicked,
 }

@@ -2,6 +2,7 @@ import {TextSelection, Selection, Transaction, EditorState} from "prosemirror-st
 import {Mapping, ReplaceStep, AddMarkStep, RemoveMarkStep} from "prosemirror-transform";
 import {EditorView} from "prosemirror-view";
 import {Slice, Fragment, Mark, Node} from "prosemirror-model";
+import { v4 as uuidv4 } from 'uuid';
 import {TrackInsertMarkName, TrackDeleteMarkName, TrackMarksMarkName} from "./constants.js";
 import {TrackChangesBasePluginKey} from "./track-changes-base.js";
 /**
@@ -139,6 +140,28 @@ const removeTrackChangesFromTransaction = (tr, state) => {
 }
 
 /**
+ * Get the tracked change node
+ * 
+ * @param {from} number the start position
+ * @param {to} number the end position
+ * @param {tr} Transaction the transaction
+ * @param {user} string the user
+ * @returns {Node | null} the tracked change node or null
+ */
+const getMarkNode = (from, to, tr, user) => {
+    const prevNode = tr.doc.nodeAt(from)
+    const nextNode = tr.doc.nodeAt(to)
+    const prevNodeInsertion = prevNode && prevNode.marks.find((mark) => {
+        return mark.type.name === TrackInsertMarkName && mark.attrs.authorEmail === user.email
+    });
+    const nextNodeInsertion = nextNode && nextNode.marks.find((mark) => {
+        return mark.type.name === TrackInsertMarkName && mark.attrs.authorEmail === user.email
+    });
+
+    return prevNodeInsertion || nextNodeInsertion;
+}
+
+/**
  * Mark insertion
  * @param {Transaction} tr
  * @param {number} from
@@ -147,16 +170,38 @@ const removeTrackChangesFromTransaction = (tr, state) => {
  * @param {string} date
  * @returns {void} tr is modified in place
  */
-const markInsertion = (tr, from, to, user, date) => {
-    const insertionMark = tr.doc.type.schema.marks[TrackInsertMarkName].create({author: user, date})
+const markInsertion = (tr, from, to, user, date, wid) => {
+    // check if we are adding to an existing insertion mark
+    let addingToExisting = false
+
+    const markNode = getMarkNode(from, to, tr, user);
+    if (markNode) {
+        wid = markNode.attrs.wid;
+        addingToExisting = true
+    }
+
+    const markAttrs = {authorEmail: user.email, author: user.name, date, wid};
+    const insertionMark = tr.doc.type.schema.marks[TrackInsertMarkName].create(markAttrs)
     tr.doc.nodesBetween(
         from,
         to,
         (node, pos) => {
             if (node.isInline) {
-                tr.removeMark(Math.max(from, pos), Math.min(pos + node.nodeSize, to), tr.doc.type.schema.marks[TrackDeleteMarkName])
-                tr.removeMark(Math.max(from, pos), Math.min(pos + node.nodeSize, to), tr.doc.type.schema.marks[TrackInsertMarkName])
-                tr.addMark(Math.max(from, pos), Math.min(pos + node.nodeSize, to), insertionMark)
+                tr.removeMark(
+                    Math.max(from, pos),
+                    Math.min(pos + node.nodeSize, to),
+                    tr.doc.type.schema.marks[TrackDeleteMarkName]
+                );
+                tr.removeMark(
+                    Math.max(from, pos),
+                    Math.min(pos + node.nodeSize, to),
+                    tr.doc.type.schema.marks[TrackInsertMarkName]
+                );
+                tr.addMark(
+                    Math.max(from, pos),
+                    Math.min(pos + node.nodeSize, to),
+                    insertionMark
+                );
                 return false
             } /*else if (pos < from || ["bullet_list", "ordered_list"].includes(node.type.name)) {
                 return true
@@ -176,8 +221,15 @@ const markInsertion = (tr, from, to, user, date) => {
  * @param {string} date
  * @returns {void} tr is modified in place
  */
-const markDeletion = (tr, from, to, user, date) => {
-    const deletionMark = tr.doc.type.schema.marks[TrackDeleteMarkName].create({author: user, date})
+const markDeletion = (tr, from, to, user, date, wid) => {
+    let addingToExisting = false;
+    const markNode = getMarkNode(from, to, tr, user);
+    if (markNode) {
+        wid = markNode.attrs.wid;
+        addingToExisting = true
+    }
+
+    const deletionMark = tr.doc.type.schema.marks[TrackDeleteMarkName].create({authorEmail: user.email, author: user.name, date, wid})
     let firstTableCellChild = false
     let listItem = false
     const deletionMap = new Mapping()
@@ -243,6 +295,8 @@ const handleReplaceStep = (state, tr, step, stepIndex, newTr, map, user, date) =
     if(invertStep) {
         map.appendMap(invertStep.getMap())
     }
+
+    const wid = uuidv4()
     if (newStep) {
         const trTemp = state.apply(newTr).tr
         if (!trTemp.maybeStep(newStep).failed) {
@@ -253,6 +307,7 @@ const handleReplaceStep = (state, tr, step, stepIndex, newTr, map, user, date) =
                 mappedNewStepTo,
                 user,
                 date,
+                wid,
             )
             // We condense it down to a single replace step.
             const condensedStep = new ReplaceStep(newStep.from, newStep.to, trTemp.doc.slice(newStep.from, mappedNewStepTo))
@@ -268,7 +323,7 @@ const handleReplaceStep = (state, tr, step, stepIndex, newTr, map, user, date) =
     }
     if (step.from !== step.to) {
         map.appendMapping(
-            markDeletion(newTr, step.from, step.to, user, date)
+            markDeletion(newTr, step.from, step.to, user, date, wid)
         )
     }
 }

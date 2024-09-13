@@ -4,12 +4,14 @@ export default function useSelection(params) {
   const documentId = ref(params.documentId);
   const page = ref(params.page);
   const selectionBounds = reactive(params.selectionBounds);
+  const source = ref(params.source);
 
   /* Get the ID of the container */
   const getContainerId = () => `${documentId.value}-page-${page.value}`
 
   /* Get the location of the container */
   const getContainerLocation = (parentContainer) => {
+    if (!parentContainer) return { top: 0, left: 0 };
     const parentBounds = parentContainer.getBoundingClientRect();
     const container = document.getElementById(getContainerId());
 
@@ -37,6 +39,7 @@ export default function useSelection(params) {
     documentId,
     page,
     selectionBounds,
+    source,
 
     // Actions
     getValues,

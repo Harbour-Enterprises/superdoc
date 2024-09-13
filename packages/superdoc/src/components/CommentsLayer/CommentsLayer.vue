@@ -15,7 +15,7 @@ const {
   floatingCommentsOffset,
   visibleConversations
 } = storeToRefs(commentsStore);
-const { documents } = storeToRefs(superdocStore);
+const { documents, activeZoom } = storeToRefs(superdocStore);
 const { proxy } = getCurrentInstance();
 
 const emit = defineEmits(['highlight-click']);
@@ -65,7 +65,7 @@ const getStyle = (conversation) => {
   const { selection, conversationId } = conversation
   const containerBounds = selection.getContainerLocation(props.parent)
   const placement = conversation.selection.selectionBounds;
-  const top = parseFloat(placement.top) + containerBounds.top;
+  const top = (parseFloat(placement.top) + containerBounds.top) * activeZoom.value;
 
   const internalHighlightColor = '#078383';
   const externalHighlightColor = '#B1124B';
@@ -77,11 +77,12 @@ const getStyle = (conversation) => {
 
   return {
     position: 'absolute',
-    top: top + 'px',
+    top: parseFloat(placement.top) + 'px',
     left: placement.left + 'px',
-    width: placement.right - placement.left + 'px',
-    height: placement.bottom - placement.top + 'px',
+    width: (placement.right - placement.left) + 'px',
+    height: (placement.bottom - placement.top) + 'px',
     backgroundColor: fillColor,
+    pointerEvents: conversation.suppressClick ? 'none' : 'auto',
   }
 }
 
@@ -104,7 +105,8 @@ const getAllConversations = computed(() => {
 
 defineExpose({
   addCommentEntry,
-  activateComment
+  activateComment,
+  setFloatingCommentOffset
 });
 
 </script>

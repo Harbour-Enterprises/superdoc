@@ -5,21 +5,12 @@ import {Mark, Node} from "prosemirror-model";
 import {TrackDeleteMarkName, TrackInsertMarkName, TrackMarksMarkName} from "./constants.js";
 
 
-const trackChangesCallback = (action, original, modified, modifiers) => {
-    const rearrangedModifiers = new Map();
-    modifiers.forEach(modifier => {
-        if(!rearrangedModifiers.has(modifier.author)) {
-            rearrangedModifiers.set(modifier.author, []);
-        }
-        const dates = rearrangedModifiers.get(modifier.author)
-        if(dates.indexOf(modifier.date) === -1) {
-            dates.push(modifier.date);
-        }
-    });
+const trackChangesCallback = (action, acceptedChanges, revertedChanges, editor) => {
+    const wid = acceptedChanges.modifiers[0]?.wid || revertedChanges.modifiers[0]?.wid;
     if(action === "accept") {
-        console.log("We accepted a change, the original text was", original, "the modified text was", modified, rearrangedModifiers);
+        editor.emit('trackedChangesUpdate', { action, id: wid })
     } else {
-        console.log("We reverted a change, the original text was", original, "the modified text was", modified, rearrangedModifiers);
+        editor.emit('trackedChangesUpdate', { action, id: wid })
     }
 }
 
@@ -85,13 +76,24 @@ export const TrackChangesBase = Extension.create({
             insertTestNodes: () => ({state, dispatch}) => {
                 if (dispatch) {
                     const tr = state.tr;
+                    const mark = state.schema.marks.trackDelete.create({
+                        wid: '123',
+                        author: 'testAuthor',
+                        authorEmail: 'test@test.test',
+                    });
                     const node = state.schema.text("test");
+                    const node2 = state.schema.text("abc");
                     tr.insert(0, node);
-
-                    const node2 = state.schema.text("mytest2");
                     tr.insert(5, node2);
-                    tr.addMark(5, 13, state.schema.marks.trackInsert.create({}));
-                    tr.addMark(0, 5, state.schema.marks.trackDelete.create({}));
+
+                    tr.addMark(0, 5, mark);
+
+                    const insertMark = state.schema.marks.trackInsert.create({
+                        wid: '123',
+                        author: 'testAuthor',
+                        authorEmail: 'test@test.test',
+                    });
+                    tr.addMark(5, 8, insertMark);
                     dispatch(tr);
                 }
                 return true;
@@ -107,20 +109,27 @@ export const TrackChangesBase = Extension.create({
                         acceptedTr = EditorState.create({ doc: state.doc }).tr
                         revertedTr = state.tr
                     }
-                    const acceptedChanges = applyTrackChanges( "accept", state, acceptedTr, from, to);
+                    
+                    const isTrackedChangesActive = TrackChangesBasePluginKey.getState(state).isTrackChangesActive;
+                    if (isTrackedChangesActive) this.editor.commands.disableTrackChanges();
+                    const acceptedChanges = applyTrackChanges("accept", state, acceptedTr, from, to);
                     const revertedChanges = applyTrackChanges("revert", state, revertedTr, from, to);
 
                     trackChangesCallback(
                         action,
-                        revertedTr.doc.textBetween(from, revertedChanges.offset + to, " "),
-                        acceptedTr.doc.textBetween(from, acceptedChanges.offset + to, " "),
-                        acceptedChanges.modifiers
+                        acceptedChanges,
+                        revertedChanges,
+                        this.editor,
                     );
 
                     if(action === "accept") {
                         dispatch(acceptedTr);
                     } else if (action === "revert") {
                         dispatch(revertedTr);
+                    }
+
+                    if (isTrackedChangesActive) {
+                        setTimeout(() => this.editor.commands.enableTrackChanges());
                     }
                 }
                 return true;
@@ -163,6 +172,14 @@ export const TrackChangesBase = Extension.create({
                 } else {
                     return chain().applyChangeBetweenConcretePositions(correctedFrom, correctedTo, action);
                 }
+            },
+            acceptTrackedChange: ({ trackedChange }) => ({state, chain}) => {
+                const { start, end } = trackedChange;
+                return chain().applyChangesBetweenPositions(start, end, "accept");
+            },
+            rejectTrackedChange: ({ trackedChange }) => ({state, chain}) => {
+                const { start, end } = trackedChange;
+                return chain().applyChangesBetweenPositions(start, end, "revert");
             },
             acceptChangesOnCursorPositions: () => ({state, chain}) => {
                 const {from, to} = state.selection;
@@ -238,6 +255,19 @@ export const TrackChangesBase = Extension.create({
     }
 });
 
+/**
+ * 
+ * @param {Mark} mark 
+ * @returns {Object} The attributes from the mark
+ */
+const getModifiers = (mark) => {
+    return {
+        wid: mark.attrs.wid,
+        author: mark.attrs.author,
+        authorEmail: mark.attrs.authorEmail,
+        date: mark.attrs.date
+    }
+}
 
 /**
  *
@@ -257,26 +287,26 @@ const applyTrackChanges = (action, state, tr, from, to) => {
                 if (action === "accept") {
                     tr.deleteRange(pos + offset, pos + node.nodeSize + offset);
                     offset -= node.nodeSize;
-                    modifiers.push({author: mark.attrs.author, date: mark.attrs.date});
+                    modifiers.push(getModifiers(mark));
                 } else if (action === "revert") {
                     tr.removeMark(pos + offset, pos + node.nodeSize + offset, mark);
-                    modifiers.push({author: mark.attrs.author, date: mark.attrs.date});
+                    modifiers.push(getModifiers(mark));
                 }
             }
             if (mark.type.name === TrackInsertMarkName) {
                 if (action === "accept") {
                     tr.removeMark(pos + offset, pos + node.nodeSize + offset, mark);
-                    modifiers.push({author: mark.attrs.author, date: mark.attrs.date});
+                    modifiers.push(getModifiers(mark));
                 } else if (action === "revert") {
                     tr.deleteRange(pos + offset, pos + node.nodeSize + offset);
                     offset -= node.nodeSize;
-                    modifiers.push({author: mark.attrs.author, date: mark.attrs.date});
+                    modifiers.push(getModifiers(mark));
                 }
             }
             if (mark.type.name === TrackMarksMarkName) {
                 if (action === "accept") {
                     tr.removeMark(pos + offset, pos + node.nodeSize + offset, mark);
-                    modifiers.push({author: mark.attrs.author, date: mark.attrs.date});
+                    modifiers.push(getModifiers(mark));
                 } else if (action === "revert") {
                     const styleChangeMark = mark
                     tr.removeMark(pos + offset, pos + node.nodeSize + offset, styleChangeMark);
@@ -286,7 +316,7 @@ const applyTrackChanges = (action, state, tr, from, to) => {
                     for(const mark of styleChangeMark.attrs.before) {
                         tr.addMark(pos + offset, pos + node.nodeSize + offset, state.schema.marks[mark.type].create(mark.attrs));
                     }
-                    modifiers.push({author: mark.attrs.author, date: mark.attrs.date});
+                    modifiers.push(getModifiers(mark));
                 }
             }
         });

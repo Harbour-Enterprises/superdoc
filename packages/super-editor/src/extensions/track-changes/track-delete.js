@@ -12,7 +12,6 @@ export const TrackDelete = Mark.create({
 
     addAttributes() {
         return {
-            // word id like `<w:del w:id="1"`
             wid: {
                 default: "",
                 parseHTML: element => element.getAttribute('wid'),
@@ -28,6 +27,14 @@ export const TrackDelete = Mark.create({
                 renderHTML: attributes => {
                     return {
                         'author': attributes.author,
+                    }
+                },
+            },
+            authorEmail: {
+                default: null,
+                renderHTML: attributes => {
+                    return {
+                        'authorEmail': attributes.authorEmail,
                     }
                 },
             },

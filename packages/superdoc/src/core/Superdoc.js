@@ -60,6 +60,9 @@ export class Superdoc extends EventEmitter {
     this.superdocStore = superdocStore;
     this.version = config.version;
 
+    // Current user
+    this.user = config.user;
+
     // Toolbar
     this.toolbarElement = config.toolbar;
     this.toolbar = null;
@@ -151,9 +154,10 @@ export class Superdoc extends EventEmitter {
   }
 
   onToolbarCommand({ item, argument }) {
-    this.log('[superdoc] Toolbar command:', item, argument);
     if (item.command === 'setDocumentMode') {
       this.setDocumentMode(argument);
+    } else if (item.command === 'setZoom') {
+      this.superdocStore.activeZoom = argument;
     }
   }
 
@@ -181,7 +185,6 @@ export class Superdoc extends EventEmitter {
   }
 
   #setModeSuggesting() {
-    // TODO - Need to wait for tracked changes to finish this
     this.superdocStore.documents.forEach((doc) => {
       doc.restoreComments();
       const editor = doc.getEditor();

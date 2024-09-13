@@ -41,6 +41,7 @@ export class Editor extends EventEmitter {
   options = {
     element: document.createElement('div'),
     content: '', // XML content
+    user: null,
     media: {},
     mode: 'docx',
     converter: null,
@@ -61,8 +62,10 @@ export class Editor extends EventEmitter {
     onBlur: () => null,
     onDestroy: () => null,
     onContentError: ({ error }) => { throw error },
+    onTrackedChangesUpdate: () => null,
+    onCommentsUpdate: () => null,
     onCommentsLoaded: () => null,
-    onCommentClicked: () => null
+    onCommentClicked: () => null,
   }
 
   constructor(options) {
@@ -104,8 +107,10 @@ export class Editor extends EventEmitter {
     this.on('focus', this.#onFocus);
     this.on('blur', this.options.onBlur);
     this.on('destroy', this.options.onDestroy);
+    this.on('trackedChangesUpdate', this.options.onTrackedChangesUpdate);
     this.on('commentsLoaded', this.options.onCommentsLoaded);
     this.on('commentClick', this.options.onCommentClicked);
+    this.on('commentsUpdate', this.options.onCommentsUpdate);
 
     this.#loadComments();
 
@@ -116,8 +121,6 @@ export class Editor extends EventEmitter {
   }
 
   #initRichText(options) {
-    console.debug('Initializing rich text editor:', options);
-
     this.#createExtensionService();
     this.#createCommandService();
     this.#createSchema();
@@ -241,6 +244,7 @@ export class Editor extends EventEmitter {
     else if (this.documentMode === 'editing') {
       this.#registerPluginByNameIfNotExists('TrackChangesBase');
       this.#registerPluginByNameIfNotExists('comments');
+      this.commands.disableTrackChangesShowOriginal();
       this.commands.disableTrackChanges();
       this.setEditable(true, false);
     }
@@ -503,7 +507,7 @@ export class Editor extends EventEmitter {
 
     let state;
     try {
-      const trackedTr = amendTransaction(transaction, this.view, "AuthorUser")
+      const trackedTr = amendTransaction(transaction, this.view, this.options.user)
       const {state: newState} = this.view.state.applyTransaction(trackedTr)
       state = newState
     } catch (e) {
@@ -542,7 +546,7 @@ export class Editor extends EventEmitter {
         transaction,
       })
     }
-
+  
     if (!transaction.docChanged) {
       return;
     }
