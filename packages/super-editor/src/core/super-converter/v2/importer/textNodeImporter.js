@@ -12,7 +12,7 @@ export const handleTextNode =  (nodes, docx, nodeListHandler, insideTrackChange 
     const { type } = node;
 
     // Parse properties
-    const { attributes, elements, marks = [] } = parseProperties(node);
+    const { attributes, elements, marks = [] } = parseProperties(node, docx, nodeListHandler, insideTrackChange);
 
     // Text nodes have no children. Only text, and there should only be one child
     let text;

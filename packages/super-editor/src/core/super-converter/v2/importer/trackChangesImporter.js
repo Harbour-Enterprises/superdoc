@@ -10,7 +10,7 @@ export const handleTrackChangeNode = (nodes, docx, nodeListHandler, insideTrackC
     }
     const node = nodes[0];
     const { name } = node;
-    const { attributes, elements } = parseProperties(node);
+    const { attributes, elements } = parseProperties(node, docx, nodeListHandler, insideTrackChange);
 
     const subs = nodeListHandler.handler(elements, docx,true)
     const changeType = name === 'w:del' ? TrackDeleteMarkName : TrackInsertMarkName;

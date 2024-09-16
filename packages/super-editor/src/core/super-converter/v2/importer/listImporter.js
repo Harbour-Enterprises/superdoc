@@ -1,6 +1,7 @@
 import {carbonCopy} from "../../../utilities/cabonCopy.js";
 import {hasTextNode, parseProperties} from "./importerHelpers.js";
 import {preProcessNodesForFldChar} from "./paragraphNodeImporter.js";
+import {TrackChangeBlockChangeAttributeName} from "../../../../extensions/track-changes/constants.js";
 
 /**
  * @type {import("docxImporter").NodeHandler}
@@ -70,7 +71,7 @@ export const listHandlerEntity = {
  * @param {number} [listLevel=0] - The current indentation level of the list.
  * @returns {Object} The processed list node with structured content.
  */
-function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, listLevel = 0) {
+export function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, listLevel = 0) {
     const parsedListItems = [];
     let overallListType;
     let listStyleType;
@@ -96,7 +97,7 @@ function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, li
 
         // Get the properties of the node - this is where we will find depth level for the node
         // As well as many other list properties
-        const { attributes, elements, marks = [] } = parseProperties(item);
+        const { attributes, elements, marks = [] } = parseProperties(item, docx, nodeListHandler, insideTrackChange, listLevel);
         const {
             listType,
             listOrderingType,
@@ -150,6 +151,38 @@ function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, li
         // If this item belongs in a higher list level, we need to break out of the loop and return to higher levels
         else break;
     }
+    const track = []
+    if((listItems[0]?.attributes.track ?? []).length > 0) {
+        const trackOnLi = listItems[0].attributes.track[0]
+        if(trackOnLi.before.wrappers.length > 0) {
+            const firstWrapper = trackOnLi.before.wrappers[0];
+            const secondWrapper = trackOnLi.before.wrappers[1];
+            if(secondWrapper.type === 'listItem') {
+                track.push({
+                    type: TrackChangeBlockChangeAttributeName,
+                    author: trackOnLi.author,
+                    date: trackOnLi.date,
+                    wid: trackOnLi.wid,
+                    before: {
+                      type: firstWrapper.type,
+                      attrs: firstWrapper.attrs
+                    }
+                })
+                parsedListItems[0].attrs.track = [{
+                    type: TrackChangeBlockChangeAttributeName,
+                    author: trackOnLi.author,
+                    date: trackOnLi.date,
+                    wid: trackOnLi.wid,
+                    before: {
+                        type: secondWrapper.type,
+                        attrs: secondWrapper.attrs
+                    }
+                }]
+            }
+        }
+
+
+    }
 
     return {
         type: overallListType || 'bulletList',
@@ -158,7 +191,8 @@ function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, li
             'list-style-type': listStyleType,
             attributes: {
                 'parentAttributes': listItems[0]?.attributes || null,
-            }
+            },
+            track: track,
         }
     };
 }
@@ -248,7 +282,7 @@ function getNodeNumberingDefinition(attributes, level, docx) {
 
     // Get the indent level
     const ilvlTag = numPr.elements.find(style => style.name === 'w:ilvl');
-    const ilvl = ilvlTag.attributes['w:val'];
+    const ilvl = ilvlTag?.attributes['w:val'] ?? 0;
 
     // Get the list style id
     const numIdTag = numPr.elements.find(style => style.name === 'w:numId');

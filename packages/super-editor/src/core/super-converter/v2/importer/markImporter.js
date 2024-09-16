@@ -4,7 +4,7 @@ import {twipsToInches} from "../../helpers.js";
 
 /**
  *
- * @param property
+ * @param {XmlNode} property
  * @returns {PmMarkJson[]}
  */
 export function parseMarks(property) {

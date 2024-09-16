@@ -11,7 +11,7 @@ const handleRunNode = (nodes, docx, nodeListHandler, insideTrackChange = false) 
     let processedRun = nodeListHandler.handler(node.elements, docx, insideTrackChange)?.filter(n => n) || [];
     const hasRunProperties = node.elements.some(el => el.name === 'w:rPr');
     if (hasRunProperties) {
-        const { marks = [], attributes = {} } = parseProperties(node);
+        const { marks = [], attributes = {} } = parseProperties(node, docx, nodeListHandler, insideTrackChange);
         if (node.marks) marks.push(...node.marks);
         processedRun = processedRun.map(n => ({ ...n, marks, attributes }));
     }

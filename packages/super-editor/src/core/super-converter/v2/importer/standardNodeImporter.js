@@ -10,7 +10,7 @@ export const handleStandardNode = (nodes, docx, nodeListHandler, insideTrackChan
     const node = nodes[0];
     // Parse properties
     const { name, type } = node;
-    const { attributes, elements, marks = [] } = parseProperties(node);
+    const { attributes, elements, marks = [] } = parseProperties(node, docx, nodeListHandler, insideTrackChange);
 
     // Iterate through the children and build the schemaNode content
     const content = [];

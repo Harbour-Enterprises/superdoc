@@ -1,6 +1,6 @@
 import {SuperConverter} from "../../SuperConverter.js";
 import {handleLineBreakNode} from "./lineBreakImporter.js";
-import {createNodeListHandlerMock} from "./testUtils.test.js";
+import {createNodeListHandlerMock} from "./test-helpers/testUtils.test.js";
 
 describe('LineBreakNodeImporter', () => {
     it("parses only line break nodes", () => {
