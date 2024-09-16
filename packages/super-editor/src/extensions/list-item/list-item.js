@@ -7,6 +7,8 @@ export const ListItem = Node.create({
 
   defining: true,
 
+  priority: 101, // to run listItem commands first
+
   addOptions() {
     return {
       htmlAttributes: {},
@@ -60,10 +62,7 @@ export const ListItem = Node.create({
   addShortcuts() {
     return {
       Enter: () => {
-        return this.editor.commands.first(({ commands }) => [
-          () => commands.splitListItem(this.name),
-          () => commands.continueListNumberingAfterLiftEmpty(),
-        ]);
+        return this.editor.commands.splitListItem(this.name);
       },
       'Shift-Enter': () => {
         return this.editor.commands.first(({ commands }) => [
