@@ -26,7 +26,7 @@ const getFileObject = async (fileUrl) => {
   // Generate a file url
   const response = await fetch(fileUrl);
   const blob = await response.blob();
-  return new File([blob], 'docx-file.docx', { type: DOCX});
+  return new File([blob], 'docx-file.docx', { type: DOCX });
 }
 
 const onCreate = ({ editor }) => {
@@ -52,13 +52,17 @@ const onCommentClicked = ({ conversation }) => {
 };
 
 const editorOptions = {
+    user: {
+      name: 'Developer playground',
+      email: 'devs@harbourshare.com',
+    },
     onCreate,
     onCommentClicked,
 }
 
 const exportDocx = async () => {
   const result = await activeEditor?.exportDocx();
-  const blob = new Blob([result], { type: DOC_TYPE });
+  const blob = new Blob([result], { type: DOCX });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -119,61 +123,24 @@ const attachAnnotationEventHandlers = () => {
     editor.commands.addFieldAnnotation(pos, {
       displayLabel: 'Enter your info',
       fieldId: `agreementinput-${Date.now()}-${Math.floor(Math.random() * 1000000000000)}`,
+      // fieldId: `111`,
       fieldType: 'TEXTINPUT',
       fieldColor: signer?.signercolor,
     });
-
-    // editor.commands.addFieldAnnotation(pos, {
-    //   displayLabel: 'Upload your image',
-    //   fieldId: `agreementinput-${Date.now()}-${Math.floor(Math.random() * 1000000000000)}`,
-    //   fieldType: 'IMAGEINPUT',
-    //   fieldColor: signer?.signercolor,
-    //   imageSrc: 'https://placehold.co/200x200?text=Image',
-    //   type: 'image',
-    // });
-
-    // editor.commands.addFieldAnnotation(pos, {
-    //   displayLabel: 'Signature',
-    //   fieldId: `agreementinput-${Date.now()}-${Math.floor(Math.random() * 1000000000000)}`,
-    //   fieldType: 'SIGNATUREINPUT',
-    //   fieldColor: signer?.signercolor,
-    //   imageSrc: 'https://placehold.co/85x25?text=Signature',
-    //   type: 'signature',
-    // });
   });
 
   activeEditor?.on('fieldAnnotationClicked', (params) => {
     console.log('fieldAnnotationClicked', { params });
   });
 
-  // Update annotations by fieldId.
-  // setTimeout(() => {
-  //   activeEditor?.commands.updateFieldAnnotations('agreementinput-1723720330834-228771403177', {
-  //     displayLabel: 'Updated!',
-  //     fieldColor: '#6943d0',
-  //   });
-  // }, 3000);
-
-  // Delete annotation by fieldId.
-  // setTimeout(() => {
-  //   activeEditor?.commands.deleteFieldAnnotations('agreementinput-1723720330834-228771403177');
-  // }, 3000);
-
-  // Get all field annotations with dom rect (to get coordinates).
-  // setTimeout(() => {
-  //   let fieldAnnotationsWithRect = fieldAnnotationHelpers.getAllFieldAnnotationsWithRect(
-  //     'fieldAnnotation', 
-  //     activeEditor.view,
-  //     activeEditor.state
-  //   );
-
-  //   console.log({ fieldAnnotationsWithRect });
-  // }, 3000);
+  activeEditor?.on('fieldAnnotationSelected', (params) => {
+    console.log('fieldAnnotationSelected', { params });
+  });
 };
 /* Inputs pane and field annotations */
 
 const initToolbar = () => {
-  return new SuperToolbar({ element: 'toolbar', editor: activeEditor });
+  return new SuperToolbar({ element: 'toolbar', editor: activeEditor, isDev: true });
 }
 
 onMounted(async () => {
@@ -224,6 +191,10 @@ onMounted(async () => {
                 />
               </div>
             </div>
+        </div>
+
+        <div>
+          <!-- -->
         </div>
       </div>
 
@@ -302,7 +273,8 @@ onMounted(async () => {
 
 .dev-app__content-container {
   width: 100%;
-  max-width: 8.5in;
+  display: flex;
+  justify-content: center;
 }
 
 .dev-app__inputs-panel {

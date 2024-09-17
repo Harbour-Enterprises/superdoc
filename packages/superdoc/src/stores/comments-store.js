@@ -41,6 +41,7 @@ export const useCommentsStore = defineStore('comments', () => {
     const selection = { ...superdocStore.activeSelection };
     selection.selectionBounds = { ...selection.selectionBounds };
 
+    superdocStore.selectionPosition.source = null;
     pendingComment.value = getPendingComment(selection);
     activeComment.value = pendingComment.value.conversationId;
   };

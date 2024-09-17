@@ -7,6 +7,8 @@ export const ListItem = Node.create({
 
   defining: true,
 
+  priority: 101, // to run listItem commands first
+
   addOptions() {
     return {
       htmlAttributes: {},
@@ -69,10 +71,16 @@ export const ListItem = Node.create({
         ]);
       },
       Tab: () => {
-        return this.editor.commands.sinkListItem(this.name);
+        return this.editor.chain()
+          .sinkListItem(this.name)
+          .updateOrderedListStyleType()
+          .run();
       },
       'Shift-Tab': () => {
-        return this.editor.commands.liftListItem(this.name);
+        return this.editor.chain()
+          .liftListItem(this.name)
+          .updateOrderedListStyleType()
+          .run();
       },
     };
   },

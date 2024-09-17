@@ -61,22 +61,23 @@ const parseCommentsForSuperdoc = (comments, documentId, editor) => {
       documentId: docId,
       page: 1,
       selectionBounds: {
-        top: c.start.top,
+        top: c.start.top - editorBounds.top,
         left: c.start.left - editorBounds.left,
-        bottom: c.end.bottom,
+        bottom: c.end.bottom - editorBounds.top,
         right: c.end.right - editorBounds.left,
       }
     };
   
     const comment = _getCommentTextFromNode(c);
     const convo = {
-      thread: c.id,
+      thread: parentThread ? parentThread.thread : c.id,
       conversationId,
       documentId: docId,
       creatorName,
       comments: [comment],
       selection,
       suppressHighlight: true,
+      suppressClick: true,
     };
 
     conversations.push(convo);

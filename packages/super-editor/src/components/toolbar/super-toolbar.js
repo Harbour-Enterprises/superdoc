@@ -19,6 +19,7 @@ export class SuperToolbar extends EventEmitter {
       if (!argument) return;
       item.onActivate({ zoom: argument });
 
+      this.emit('superdoc-command', { item, argument });
       const layers = document.querySelector('.layers');
       if (!layers) return;
       layers.style.zoom = argument;
@@ -37,8 +38,9 @@ export class SuperToolbar extends EventEmitter {
     this.config = { ...this.config, ...config };
     this.toolbarItems = [];
     this.documentMode = 'editing';
+    this.isDev = config.isDev || false;
 
-    this.#makeToolbarItems(this);
+    this.#makeToolbarItems(this, config.isDev);
 
     let el = null;
     if (this.config.element) {
@@ -74,8 +76,8 @@ export class SuperToolbar extends EventEmitter {
     this.#updateToolbarState();
   }
 
-  #makeToolbarItems(superToolbar) {
-    const defaultItems = makeDefaultItems(superToolbar);
+  #makeToolbarItems(superToolbar, isDev = false) {
+    const defaultItems = makeDefaultItems(superToolbar, isDev);
     this.toolbarItems = defaultItems;
     this.#updateToolbarState();
   }

@@ -1,10 +1,10 @@
 import { Node, Attribute, helpers } from '@core/index.js';
 import { FieldAnnotationView } from './FieldAnnotationView.js';
 import { FieldAnnotationPlugin } from './FieldAnnotationPlugin.js';
+import { findFieldAnnotationsByFieldId, getAllFieldAnnotations } from './fieldAnnotationHelpers/index.js';
 import { toHex } from 'color2k';
 
-const { findChildren } = helpers;
-
+export const fieldAnnotationName = 'fieldAnnotation';
 export const annotationClass = 'annotation';
 export const annotationContentClass = 'annotation-content';
 
@@ -31,6 +31,7 @@ export const FieldAnnotation = Node.create({
       types: ['text', 'image', 'signature', 'checkbox'], // annotation types
       defaultType: 'text',
       borderColor: '#b015b3',
+      visibilityOptions: ['visible', 'hidden'],
       handleDropOutside: true,
     }
   },
@@ -108,6 +109,28 @@ export const FieldAnnotation = Node.create({
           };
         },
       },
+
+      hidden: {
+        default: false,
+        parseDOM: (elem) => elem.hasAttribute('hidden') ? true : null,
+        renderDOM: (attrs) => {
+          if (!attrs.hidden) return {};
+          return { hidden: '' };
+        },
+      },
+
+      visibility: {
+        default: 'visible',
+        parseDOM: (el) => {
+          let visibility = el.style.visibility || 'visible';
+          let containsVisibility = this.options.visibilityOptions.includes(visibility);
+          return containsVisibility ? visibility : 'visible';
+        },
+        renderDOM: (attrs) => {
+          if (!attrs.visibility || attrs.visibility === 'visible') return {};
+          return { style: `visibility: ${attrs.visibility}` };
+        },
+      },
     };
   },
 
@@ -172,7 +195,7 @@ export const FieldAnnotation = Node.create({
        *  fieldId: `123`,
        *  fieldType: 'TEXTINPUT',
        *  fieldColor: '#980043',
-       * });
+       * })
        */
       addFieldAnnotation: (pos, attrs = {}) => ({ 
         editor,
@@ -198,58 +221,75 @@ export const FieldAnnotation = Node.create({
 
       /**
        * Update annotations associated with a field.
-       * @param fieldId The field ID.
+       * @param fieldIdOrArray The field ID or array of field IDs.
        * @param attrs The attributes.
        * @example
        * editor.commands.updateFieldAnnotations('123', {
        *  displayLabel: 'Updated!',
-       * });
+       * })
+       * @example
+       * editor.commands.updateFieldAnnotations(['123', '456'], {
+       *  displayLabel: 'Updated!',
+       * })
        */
-      updateFieldAnnotations: (fieldId, attrs = {}) => ({
+      updateFieldAnnotations: (fieldIdOrArray, attrs = {}) => ({
         dispatch,
         state,
-        tr,
+        commands,
       }) => {
-        let annotations = findChildren(state.doc, (node) => (
-          node.type.name === this.name
-          && node.attrs.fieldId === fieldId
-        ));
+        let annotations = findFieldAnnotationsByFieldId(fieldIdOrArray, state);
 
         if (!annotations.length) return false;
 
         if (dispatch) {
-          annotations
-            .forEach((annotation) => {
-              let { pos, node } = annotation;
-              let newPos = tr.mapping.map(pos);
-
-              let currentNode = tr.doc.nodeAt(newPos);
-              if (node.eq(currentNode)) {
-                tr.setNodeMarkup(newPos, undefined, {
-                  ...node.attrs,
-                  ...attrs,
-                });
-              }
-            });
+          return commands.updateFieldAnnotationsAttributes(annotations, attrs);
         }
+
+        return true;
+      },
+      
+      /**
+       * Update the attributes of annotations.
+       * @param annotations The annotations array [{pos, node}].
+       * @param attrs The attributes object.
+       */
+      updateFieldAnnotationsAttributes: (annotations, attrs = {}) => ({
+        dispatch,
+        tr,
+      }) => {
+        if (!dispatch) return true;
+
+        annotations
+          .forEach((annotation) => {
+            let { pos, node } = annotation;
+            let newPos = tr.mapping.map(pos);
+            let currentNode = tr.doc.nodeAt(pos);
+
+            if (node.eq(currentNode)) {
+              tr.setNodeMarkup(newPos, undefined, {
+                ...node.attrs,
+                ...attrs,
+              });
+            }
+          });
 
         return true;
       },
 
       /**
        * Delete annotations associated with a field.
-       * @param fieldId The field ID.
-       * @example editor.commands.deleteFieldAnnotations('123');
+       * @param fieldIdOrArray The field ID or array of field IDs.
+       * @example 
+       * editor.commands.deleteFieldAnnotations('123')
+       * @example
+       * editor.commands.deleteFieldAnnotations(['123', '456'])
        */
-      deleteFieldAnnotations: (fieldId) => ({
+      deleteFieldAnnotations: (fieldIdOrArray) => ({
         dispatch,
         state,
         tr,
       }) => {
-        let annotations = findChildren(state.doc, (node) => (
-          node.type.name === this.name
-          && node.attrs.fieldId === fieldId
-        ));
+        let annotations = findFieldAnnotationsByFieldId(fieldIdOrArray, state);
 
         if (!annotations.length) return false;
 
@@ -267,6 +307,95 @@ export const FieldAnnotation = Node.create({
             });
         }
         
+        return true;
+      },
+
+      /**
+       * Set `hidden` for annotations matching predicate.
+       * Other annotations become unhidden.
+       * @param predicate The predicate function.
+       * @example 
+       * editor.commands.setFieldAnnotationsHiddenByCondition((node) => {
+       *   let ids = ['111', '222', '333'];
+       *   return ids.includes(node.attrs.fieldId);
+       * })
+       */
+      setFieldAnnotationsHiddenByCondition: (
+        predicate = () => false,
+      ) => ({
+        dispatch,
+        state,
+        chain,
+      }) => {
+        let annotations = getAllFieldAnnotations(state);
+
+        if (!annotations.length) return false;
+
+        if (dispatch) {
+          let otherAnnotations = [];
+          let matchedAnnotations = annotations.filter((annotation) => {
+            if (predicate(annotation.node)) return annotation;
+            else otherAnnotations.push(annotation);
+          });
+
+          return chain()
+            .updateFieldAnnotationsAttributes(matchedAnnotations, { hidden: true })
+            .updateFieldAnnotationsAttributes(otherAnnotations, { hidden: false })
+            .run();
+        }
+
+        return true;
+      },
+
+      /**
+       * Unset `hidden` for all annotations.
+       * @example 
+       * editor.commands.unsetFieldAnnotationsHidden()
+       */
+      unsetFieldAnnotationsHidden: () => ({
+        dispatch,
+        state,
+        commands,
+      }) => {
+        let annotations = getAllFieldAnnotations(state);
+
+        if (!annotations.length) return false;
+
+        if (dispatch) {
+          return commands
+            .updateFieldAnnotationsAttributes(annotations, { hidden: false })
+        }
+
+        return true;
+      },
+
+      /**
+       * Set `visibility` for all annotations (without changing the layout).
+       * @param visibility The visibility value (visible, hidden).
+       * @example
+       * editor.commands.setFieldAnnotationsVisibility('visible');
+       * @example
+       * editor.commands.setFieldAnnotationsVisibility('hidden');
+       */
+      setFieldAnnotationsVisibility: (visibility = 'visible') => ({
+        dispatch,
+        state,
+        commands,
+      }) => {
+        let annotations = getAllFieldAnnotations(state);
+
+        if (!annotations.length) return false;
+
+        let containsVisibility = this.options.visibilityOptions.includes(visibility);
+        
+        if (!containsVisibility) return false;
+
+        if (dispatch) {
+          return commands.updateFieldAnnotationsAttributes(annotations, {
+            visibility,
+          });
+        }
+
         return true;
       },
     };
@@ -293,12 +422,3 @@ export const FieldAnnotation = Node.create({
     ];
   },
 });
-
-function findNode(node, predicate) {
-  let found;
-  node.descendants((node, pos) => {
-    if (found) return false;
-    if (predicate(node)) found = { node, pos };
-  });
-  return found;
-};

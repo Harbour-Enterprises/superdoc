@@ -1,18 +1,23 @@
 import { SuperConverter } from './SuperConverter';
-import { twipsToPixels, twipsToInches, halfPointToPixels, emuToPixels } from './helpers.js';
-import { toKebabCase } from '@harbour-enterprises/common';
+import { twipsToPixels, twipsToInches, halfPointToPixels, emuToPixels, halfPointToPoints } from './helpers.js';
+import {
+  TrackDeleteMarkName,
+  TrackInsertMarkName,
+  TrackMarksMarkName
+} from "../../extensions/track-changes/constants.js";
 
 
 /**
  * The DocxImporter class is responsible for converting a JSON representation of a DOCX file.
  * It depends on SuperConverter and its xml converted data to build the schema.
- * 
+ *
  * Calling getSchema() will return a ProseMirror schema object.
  */
 export class DocxImporter {
 
   constructor(converter) {
     this.converter = converter;
+    this.currentFileName = null;
   }
 
   getSchema() {
@@ -36,11 +41,12 @@ export class DocxImporter {
 
   /**
    * Process a list of JSON elements and convert them to ProseMirror nodes.
-   * 
-   * @param {list} elements 
-   * @returns 
+   *
+   * @param {list} elements
+   * @param {boolean} insideTrackChange - If we are inside a track change node.
+   * @returns
    */
-  #convertToSchema(elements) {
+  #convertToSchema(elements, insideTrackChange = false) {
     // console.debug('\nConvert to schema:', elements,'\n')
     if (!elements || !elements.length) return;
 
@@ -49,13 +55,13 @@ export class DocxImporter {
       const node = elements[index];
       if (node.seen) continue;
 
-      // We will build a prose mirror ready schema node from XML node 
+      // We will build a prose mirror ready schema node from XML node
       let schemaNode;
       switch (node.name) {
         case 'w:body':
           return this.#handleBodyNode(node);
         case 'w:r':
-          processedElements.push(...this.#handleRunNode(node));
+          processedElements.push(...this.#handleRunNode(node, insideTrackChange));
           continue;
         case 'w:p':
           schemaNode = this.#handleParagraphNode(node, elements, index);
@@ -80,11 +86,11 @@ export class DocxImporter {
           schemaNode = this.#handleTableNode(node);
           break;
         case 'w:tr':
-          schemaNode = this.#handleTableRowNode(node);
-          break;
+          // Table rows are processed from inside the table node
+          return [];
         case 'w:tc':
-          schemaNode = this.#handleTableCellNode(node);
-          break;
+          // Table cells are processed from inside the table row node
+          return [];
         case 'w:drawing':
           schemaNode = this.#handleDrawingNode(node);
           break;
@@ -94,42 +100,71 @@ export class DocxImporter {
         case 'w:br':
           schemaNode = this.#handleLineBreakNode(node);
           break;
+        case 'w:del':
+        case 'w:ins':
+          schemaNode = this.#handleTrackChangeNode(node);
+          break;
+        case 'w:delText':
+          schemaNode = this.#handleDelText(node, insideTrackChange);
+          break;
+        case 'w:sdt':
+          schemaNode = this.#handleFieldAnnotationNode(node);
+          break;
         default:
           schemaNode = this.#handleStandardNode(node);
       }
 
-      if (schemaNode?.type) {
-        const ignore = ['runProperties'];
-        if (!ignore.includes(schemaNode.type)) processedElements.push(schemaNode);
+      if(!Array.isArray(schemaNode)) {
+        schemaNode = [schemaNode]
+      }
+
+      for(let node of schemaNode) {
+        if (node?.type) {
+          const ignore = ['runProperties'];
+          if (!ignore.includes(node.type)) processedElements.push(node);
+        }
       }
     }
     return processedElements;
   }
-  
+
   #handleLineBreakNode(node) {
+    const attrs = {};
+    
+    const { attrs: nodeAttrs = {} } = node;
+    const lineBreakType = nodeAttrs['w:type'];
+    if (lineBreakType) attrs['lineBreakType'] = lineBreakType;
+
     return {
       type: 'lineBreak',
+      attrs,
       content: [],
     }
   }
 
   #handleBookmarkNode(node) {
     const newNode = this.#handleStandardNode(node);
-    newNode.attrs.name = node.attributes['w:name'];
+    const { attrs = {} } = newNode;
+    newNode.attrs.name = attrs['w:name'];
     return newNode;
   }
 
   #handleDrawingNode(node) {
     let result;
     const { elements } = node;
-  
-    // Inline images
+
+    // Some images are identified by wp:anchor
+    const isAnchor = elements.find((el) => el.name === 'wp:anchor');
+    if (isAnchor) result = this.#handleImageImport(elements[0]);
+
+    // Others, wp:inline
     const inlineImage = elements.find((el) => el.name === 'wp:inline');
-    if (inlineImage) result = this.#handleInlineImageNode(inlineImage);
+    if (inlineImage) result = this.#handleImageImport(inlineImage);
     return result;
   }
 
-  #handleInlineImageNode(node) {
+  #handleImageImport(node) {
+
     const { attributes } = node;
     const padding = {
       top: emuToPixels(attributes['distT']),
@@ -144,42 +179,54 @@ export class DocxImporter {
       height: emuToPixels(extent.attributes['cy'])
     }
 
-    // TODO: Do we need this?
-    const effectExtent = node.elements.find((el) => el.name === 'wp:effectExtent');
-
     const graphic = node.elements.find((el) => el.name === 'a:graphic');
     const graphicData = graphic.elements.find((el) => el.name === 'a:graphicData');
-  
+
     const picture = graphicData.elements.find((el) => el.name === 'pic:pic');
     const blipFill = picture.elements.find((el) => el.name === 'pic:blipFill');
     const blip = blipFill.elements.find((el) => el.name === 'a:blip');
+
+    const positionHTag = node.elements.find((el) => el.name === 'wp:positionH');
+    const positionH = positionHTag?.elements.find((el) => el.name === 'wp:posOffset')
+    const positionHValue = emuToPixels(positionH?.elements[0]?.text);
+
+    const positionVTag = node.elements.find((el) => el.name === 'wp:positionV');
+    const positionV = positionVTag?.elements.find((el) => el.name === 'wp:posOffset')
+    const positionVValue = emuToPixels(positionV?.elements[0]?.text);
+
+    const marginOffset = {
+      left: positionHValue,
+      top: positionVValue,
+    }
+  
     const { attributes: blipAttributes } = blip;
     const rEmbed = blipAttributes['r:embed'];
-    const print = blipAttributes['r:print'];
+    const currentFile = this.currentFileName || 'document.xml';
+    let rels = this.converter.convertedXml[`word/_rels/${currentFile}.rels`];
+    if (!rels) rels = this.converter.convertedXml[`word/_rels/document.xml.rels`];
 
-    const rels = this.converter.convertedXml['word/_rels/document.xml.rels'];
     const relationships = rels.elements.find((el) => el.name === 'Relationships');
     const { elements } = relationships;
 
     const rel = elements.find((el) => el.attributes['Id'] === rEmbed);
     const { attributes: relAttributes } = rel;
-    const { media } = this.converter;
+
     const path = `word/${relAttributes['Target']}`;
 
     return {
-      type: 'image', 
+      type: 'image',
       attrs: {
-        src: media[path],
+        src: path,
         alt: 'Image',
-        title: 'Image',
         inline: true,
         padding,
+        marginOffset,
         size,
       }
     }
   }
 
-  #handleTableCellNode(node) {
+  #handleTableCellNode(node, styleTag) {
     const tcPr = node.elements.find((el) => el.name === 'w:tcPr');
     const borders = tcPr?.elements?.find((el) => el.name === 'w:tcBorders');
     const tcWidth = tcPr?.elements?.find((el) => el.name === 'w:tcW');
@@ -196,20 +243,24 @@ export class DocxImporter {
     const colspan = colspanTag?.attributes['w:val'];
 
     const marginTag = tcPr?.elements?.find((el) => el.name === 'w:tcMar');
-    const marginLeft = marginTag?.elements?.find((el) => el.name === 'w:left');
-    const marginRight = marginTag?.elements?.find((el) => el.name === 'w:right');
-    const marginTop = marginTag?.elements?.find((el) => el.name === 'w:top'); 
-    const marginBottom = marginTag?.elements?.find((el) => el.name === 'w:bottom');
 
     const verticalAlignTag = tcPr?.elements?.find((el) => el.name === 'w:vAlign');
     const verticalAlign = verticalAlignTag?.attributes['w:val'];
 
     const attributes = {};
+    const referencedStyles = this.#getReferencedTableStyles(styleTag) || {};
+    attributes.cellMargins = this.#getTableCellMargins(marginTag, referencedStyles);
+
+    const { fontSize, fonts = {} } = referencedStyles;
+    const fontFamily = fonts['ascii'];
+  
     if (width) attributes['width'] = width;
     if (widthType) attributes['widthType'] = widthType;
     if (colspan) attributes['colspan'] = colspan;
     if (background) attributes['background'] = background;
     if (verticalAlign) attributes['verticalAlign'] = verticalAlign;
+    if (fontSize) attributes['fontSize'] = fontSize;
+    if (fontFamily) attributes['fontFamily'] = fontFamily['ascii'];
 
     return {
       type: 'tableCell',
@@ -218,9 +269,38 @@ export class DocxImporter {
     }
   }
 
+  #getTableCellMargins(marginTag, referencedStyles) {
+    const inlineMarginLeftTag = marginTag?.elements?.find((el) => el.name === 'w:left');
+    const inlineMarginRightTag = marginTag?.elements?.find((el) => el.name === 'w:right');
+    const inlineMarginTopTag = marginTag?.elements?.find((el) => el.name === 'w:top');
+    const inlineMarginBottomTag = marginTag?.elements?.find((el) => el.name === 'w:bottom');
+
+    const inlineMarginLeftValue = twipsToPixels(inlineMarginLeftTag?.attributes['w:w']);
+    const inlineMarginRightValue = twipsToPixels(inlineMarginRightTag?.attributes['w:w']);
+    const inlineMarginTopValue = twipsToPixels(inlineMarginTopTag?.attributes['w:w']);
+    const inlineMarginBottomValue = twipsToPixels(inlineMarginBottomTag?.attributes['w:w']);
+
+    const { cellMargins = {} } = referencedStyles;
+    const {
+      marginLeft: marginLeftStyle,
+      marginRight: marginRightStyle,
+      marginTop: marginTopStyle,
+      marginBottom: marginBottomStyle
+    } = cellMargins;
+
+    const margins = {
+      left: twipsToPixels(inlineMarginLeftValue ?? marginLeftStyle),
+      right: twipsToPixels(inlineMarginRightValue ?? marginRightStyle),
+      top: twipsToPixels(inlineMarginTopValue ?? marginTopStyle),
+      bottom: twipsToPixels(inlineMarginBottomValue ?? marginBottomStyle),
+    };
+    return margins;
+  }
+
   #getReferencedTableStyles(tblStyleTag) {
     if (!tblStyleTag) return null;
 
+    const stylesToReturn = {};
     const { attributes } = tblStyleTag;
     const tableStyleReference = attributes['w:val'];
     if (!tableStyleReference) return null;
@@ -231,22 +311,54 @@ export class DocxImporter {
     const styleTag = styleElements.find((el) => el.attributes['w:styleId'] === tableStyleReference);
     if (!styleTag) return null;
 
-    const name = styleTag.elements.find((el) => el.name === 'w:name');
+    stylesToReturn.name = styleTag.elements.find((el) => el.name === 'w:name');
+
+    // TODO: Do we need this?
     const basedOn = styleTag.elements.find((el) => el.name === 'w:basedOn');
     const uiPriotity = styleTag.elements.find((el) => el.name === 'w:uiPriority');
+    
+    const pPr = styleTag.elements.find((el) => el.name === 'w:pPr');
+    if (pPr) {
+      const justification = pPr.elements.find((el) => el.name === 'w:jc');
+      if (justification) stylesToReturn.justification = justification.attributes['w:val'];
+    }
+
+    const rPr = styleTag?.elements.find((el) => el.name === 'w:rPr');
+    if (rPr) {
+      const fonts = rPr.elements.find((el) => el.name === 'w:rFonts');
+      if (fonts) {
+        const { 'w:ascii': ascii, 'w:hAnsi': hAnsi, 'w:cs': cs } = fonts.attributes;
+        stylesToReturn.fonts = { ascii, hAnsi, cs };
+      }
+
+      const fontSize = rPr.elements.find((el) => el.name === 'w:sz');
+      if (fontSize) stylesToReturn.fontSize = halfPointToPoints(fontSize.attributes['w:val']) + 'pt';
+    }
 
     const tblPr = styleTag.elements.find((el) => el.name === 'w:tblPr');
-    const tableBorders = tblPr?.elements.find((el) => el.name === 'w:tblBorders');
-    const { elements: borderElements = [] } = tableBorders || {};
-    const { borders, rowBorders } = this.#processTableBorders(borderElements);
-    
-    return {
-      name,
-      basedOn,
-      uiPriotity,
-      borders,
-      rowBorders,
+    if (tblPr) {
+      const tableBorders = tblPr?.elements.find((el) => el.name === 'w:tblBorders');
+      const { elements: borderElements = [] } = tableBorders || {};
+      const { borders, rowBorders } = this.#processTableBorders(borderElements);
+      if (borders) stylesToReturn.borders = borders;
+      if (rowBorders) stylesToReturn.rowBorders = rowBorders;
+
+      const tableCellMargin = tblPr?.elements.find((el) => el.name === 'w:tblCellMar');
+      if (tableCellMargin) {
+        const marginLeft = tableCellMargin.elements.find((el) => el.name === 'w:left');
+        const marginRight = tableCellMargin.elements.find((el) => el.name === 'w:right');
+        const marginTop = tableCellMargin.elements.find((el) => el.name === 'w:top');
+        const marginBottom = tableCellMargin.elements.find((el) => el.name === 'w:bottom');
+        stylesToReturn.cellMargins = {
+          marginLeft: marginLeft?.attributes['w:w'],
+          marginRight: marginRight?.attributes['w:w'],
+          marginTop: marginTop?.attributes['w:w'],
+          marginBottom: marginBottom?.attributes['w:w'],
+        }
+      }
     }
+
+    return stylesToReturn;
   }
 
   #processTableBorders(borderElements) {
@@ -274,8 +386,8 @@ export class DocxImporter {
     }
   }
 
-  #handleTableRowNode(node, rowBorders) {
-    const newNode = this.#handleStandardNode(node);
+  #handleTableRowNode(node, rowBorders, styleTag) {
+    const attrs = {};
 
     const tPr = node.elements.find((el) => el.name === 'w:trPr');
     const rowHeightTag = tPr?.elements.find((el) => el.name === 'w:trHeight');
@@ -285,13 +397,19 @@ export class DocxImporter {
     const borders = {};
     if (rowBorders?.insideH) borders['bottom'] = rowBorders.insideH;
     if (rowBorders?.insideV) borders['right'] = rowBorders.insideV;
-    newNode.attrs['borders'] = borders;
+    attrs['borders'] = borders;
 
-    if (rowHeight && newNode.attrs['rowHeight']) {
-      newNode.attrs['rowHeight'] = twipsToPixels(rowHeight);
-      console.debug('Row node:', newNode);
+    if (rowHeight) {
+      attrs['rowHeight'] = twipsToPixels(rowHeight);
     }
 
+    const cellNodes = node.elements.filter((el) => el.name === 'w:tc');
+    const content = cellNodes?.map((n) => this.#handleTableCellNode(n, styleTag)) || [];
+    const newNode = {
+      type: 'tableRow',
+      content,
+      attrs,
+    }
     return newNode;
   }
 
@@ -304,32 +422,50 @@ export class DocxImporter {
     const tableBorders = tableBordersElement?.elements || [];
     const { borders, rowBorders } = this.#processTableBorders(tableBorders);
     const tblStyleTag = tblPr.elements.find((el) => el.name === 'w:tblStyle');
+    const tableStyleId = tblStyleTag?.attributes['w:val'];
+
+    const attrs = { tableStyleId };
+  
+    // Other table properties
+    const tableIndent = tblPr?.elements.find((el) => el.name === 'w:tblInd');
+    if (tableIndent) {
+      const { 'w:w': width, 'w:type': type } = tableIndent.attributes;
+      attrs['tableIndent'] = { width: twipsToPixels(width), type };
+    }
+
+    const tableLayout = tblPr?.elements.find((el) => el.name === 'w:tblLayout');
+    if (tableLayout) {
+      const { 'w:type': type } = tableLayout.attributes;
+      attrs['tableLayout'] = type;
+    }
+
     const referencedStyles = this.#getReferencedTableStyles(tblStyleTag);
-
     const tblW = tblPr.elements.find((el) => el.name === 'w:tblW');
-    const tableWidth = twipsToInches(tblW.attributes['w:w']);
-    const tableWidthType = tblW.attributes['w:type'];
-
+    if (tblW) {
+      attrs['tableWidth'] = {
+        width: twipsToPixels(tblW.attributes['w:w']),
+        type: tblW.attributes['w:type'],
+      }
+    }
+    
     // TODO: What does this do?
     // const tblLook = tblPr.elements.find((el) => el.name === 'w:tblLook');
     const tblGrid = node.elements.find((el) => el.name === 'w:tblGrid');
     const gridColumnWidths = tblGrid.elements.map((el) => twipsToInches(el.attributes['w:w']));
+    if (gridColumnWidths) attrs['gridColumnWidths'] = gridColumnWidths;
 
     const rows = node.elements.filter((el) => el.name === 'w:tr');
 
     const borderData = Object.keys(borders)?.length ? borders : referencedStyles.borders;
     const borderRowData = Object.keys(rowBorders)?.length ? rowBorders : referencedStyles.rowBorders;
-    const content = rows.map((row) => this.#handleTableRowNode(row, borderRowData));
+    attrs['borders'] = borderData;
+
+    const content = rows.map((row) => this.#handleTableRowNode(row, borderRowData, tblStyleTag));
 
     return {
       type: 'table',
       content,
-      attrs: {
-        tableWidth,
-        tableWidthType,
-        gridColumnWidths,
-        borders: borderData
-      }
+      attrs,
     }
   }
 
@@ -348,7 +484,7 @@ export class DocxImporter {
     const rel = elements.find((el) => el.attributes['Id'] === rId) || {};
     const { attributes: relAttributes = {} } = rel;
     let href = relAttributes['Target'];
-    
+
     if (anchor && !href) href = `#${anchor}`;
 
     // Add marks to the run node and process it
@@ -376,6 +512,11 @@ export class DocxImporter {
     return updatedNode
   }
 
+  /**
+   *
+   * @param {{type: string, attrs: {}}[]} marks
+   * @returns {{type: string, attrs: {}}[]}
+   */
   #createImportMarks(marks) {
     const textStyleMarksToCombine = marks.filter((mark) => mark.type === 'textStyle');
     const remainingMarks = marks.filter((mark) => mark.type !== 'textStyle');
@@ -386,12 +527,12 @@ export class DocxImporter {
       textStyleMarksToCombine.forEach((mark) => {
         const { attrs } = mark;
 
-        Object.keys(attrs).forEach((attr) => {  
+        Object.keys(attrs).forEach((attr) => {
           combinedTextAttrs[attr] = attrs[attr];
         });
       });
     };
-    
+
     const result = [...remainingMarks, { type: 'textStyle', attrs: combinedTextAttrs }];
     return result;
   }
@@ -429,8 +570,8 @@ export class DocxImporter {
     return this.#convertToSchema(content);
   }
 
-  #handleRunNode(node) {
-    let processedRun = this.#convertToSchema(node.elements)?.filter(n => n) || [];
+  #handleRunNode(node, insideTrackChange = false) {
+    let processedRun = this.#convertToSchema(node.elements, insideTrackChange)?.filter(n => n) || [];
     const hasRunProperties = node.elements.some(el => el.name === 'w:rPr');
     if (hasRunProperties) {
       const { marks = [], attributes = {} } = this.#parseProperties(node);
@@ -442,7 +583,7 @@ export class DocxImporter {
 
   /**
    * Special cases of w:p based on paragraph properties
-   * 
+   *
    * If we detect a list node, we need to get all nodes that are also lists and process them together
    * in order to combine list item nodes into list nodes.
    */
@@ -454,7 +595,7 @@ export class DocxImporter {
     node.elements = processedElements;
 
     // Check if this paragraph node is a list
-    if (this.#testForList(node)) {          
+    if (this.#testForList(node)) {
       // Get all siblings that are list items and haven't been processed yet.
       const siblings = [...elements.slice(index)];
       const listItems = [];
@@ -471,29 +612,94 @@ export class DocxImporter {
         }
       }
 
-      // TODO - Check that this change is OK
       return this.#handleListNodes(listItems, 0, node);
-    }      
+    }
 
     // If it is a standard paragraph node, process normally
     schemaNode = this.#handleStandardNode(node);
 
     if ('attributes' in node) {
       const defaultStyleId = node.attributes['w:rsidRDefault'];
-      const { lineSpaceAfter, lineSpaceBefore } = this.#getDefaultStyleDefinition(defaultStyleId);
 
-      if (!('attributes' in schemaNode)) schemaNode.attributes = {};
-      schemaNode.attrs['paragraphSpacing'] = { lineSpaceAfter, lineSpaceBefore };
+      const pPr = node.elements.find((el) => el.name === 'w:pPr');
+      const styleTag = pPr?.elements.find((el) => el.name === 'w:pStyle');
+      if (styleTag) {
+        schemaNode.attrs['styleId'] = styleTag.attributes['w:val'];
+      }
+
+      const indent = pPr?.elements.find((el) => el.name === 'w:ind');
+      if (indent) {
+        const { 'w:left': left, 'w:right': right, 'w:firstLine': firstLine } = indent.attributes;
+        schemaNode.attrs['indent'] = { 
+          left: twipsToPixels(left),
+          right: twipsToPixels(right),
+          firstLine: twipsToPixels(firstLine),
+        };
+      }
+
+      const justify = pPr?.elements.find((el) => el.name === 'w:jc');
+      if (justify) {
+        schemaNode.attrs['textAlign'] = justify.attributes['w:val'];
+      }
+
+      const { lineSpaceAfter, lineSpaceBefore } = this.#getDefaultStyleDefinition(defaultStyleId);
+      const spacing = pPr?.elements.find((el) => el.name === 'w:spacing');
+      if (spacing) {
+        const {
+          'w:after': lineSpaceAfterInLine,
+          'w:before': lineSpaceBeforeInLine,
+          'w:line': lineInLine,
+        } = spacing.attributes;
+
+        schemaNode.attrs['spacing'] = {
+          lineSpaceAfter: twipsToPixels(lineSpaceAfterInLine) || lineSpaceAfter,
+          lineSpaceBefore: twipsToPixels(lineSpaceBeforeInLine) || lineSpaceBefore,
+          line: twipsToPixels(lineInLine),
+        };
+      }
     }
     return schemaNode;
+  }
+
+  #handleTrackChangeNode(node) {
+    const { name } = node;
+    const { attributes, elements } = this.#parseProperties(node);
+    const schemaNode = this.#handleStandardNode(node);
+
+    const subs = this.#convertToSchema(elements, true)
+    const changeType = name === 'w:del' ? TrackDeleteMarkName : TrackInsertMarkName;
+    const mappedAttributes = {
+        wid: attributes['w:id'],
+        date: attributes['w:date'],
+        author: attributes['w:author'],
+    }
+
+    subs.forEach(subElement => {
+      return subElement.marks.push({ type: changeType, attrs: mappedAttributes });
+    });
+
+    console.log("HERE!!!!", name, schemaNode, attributes, subs)
+
+    return subs;
+  }
+
+  #handleDelText(node, insideTrackChange) {
+      console.log(node, insideTrackChange)
+      if(!insideTrackChange) return undefined;
+
+      const nodeAsTextNode = this.#handleTextNode(node)
+
+      nodeAsTextNode.type = 'text';
+      console.log("2", nodeAsTextNode);
+      return nodeAsTextNode;
   }
 
   /**
    * We need to pre-process nodes in a paragraph to combine nodes together where necessary ie: links
    * TODO: Likely will find more w:fldChar to deal with.
-   * 
-   * @param {*} nodes 
-   * @returns 
+   *
+   * @param {*} nodes
+   * @returns
    */
   #preProcessNodesForFldChar(nodes) {
     const processedNodes = [];
@@ -578,9 +784,9 @@ export class DocxImporter {
 
   /**
    * List processing
-   * 
+   *
    * This recursive function takes a list of known list items and combines them into nested lists.
-   * 
+   *
    * It begins with listLevel = 0, and if we find an indented node, we call this function again and increase the level.
    * with the same set of list items (as we do not know the node levels until we process them).
    *
@@ -597,7 +803,7 @@ export class DocxImporter {
       // Skip items we've already processed
       if (item.seen) continue;
 
-      // Sometimes there are paragraph nodes that only have pPr element and no text node - these are 
+      // Sometimes there are paragraph nodes that only have pPr element and no text node - these are
       // Spacers in the XML and need to be appended to the last item.
       if (item.elements && !this.#hasTextNode(item.elements)) {
         const n = this.#handleStandardNode(item, listItems, index);
@@ -642,7 +848,7 @@ export class DocxImporter {
           parentAttributes: item?.attributes || null,
         }
         parsedListItems.push(this.#createListItem(schemaElements, nodeAttributes, []));
-      } 
+      }
 
       // If this item belongs in a deeper list level, we need to process it by calling this function again
       // But going one level deeper.
@@ -702,10 +908,10 @@ export class DocxImporter {
     else if (!elements.length && 'attributes' in node && node.attributes['xml:space'] === 'preserve') {
       text = ' ';
     }
-    
+
     // Ignore others - can catch other special cases here if necessary
     else return null;
-    
+
     return {
       type: this.#getElementName(node),
       text: text,
@@ -715,6 +921,11 @@ export class DocxImporter {
   }
 
 
+  /**
+   *
+   * @param property
+   * @returns {{type: string, attrs: {}}[]}
+   */
   #parseMarks(property) {
     const marks = [];
     const seen = new Set();
@@ -766,6 +977,28 @@ export class DocxImporter {
       })
     });
     return this.#createImportMarks(marks);
+  }
+
+  /**
+   *
+   * @param rPr
+   * @param {{type: string, attrs: {}}[]} currentMarks
+   * @returns {{type: string, attrs: {}}[]} a trackMarksMark, or an empty array
+   */
+  #handleStyleChangeMarks(rPr, currentMarks) {
+    const styleChangeMark = rPr.elements?.find((el) => el.name === 'w:rPrChange')
+    if(!styleChangeMark) {
+      return []
+    }
+
+    const { attributes } = styleChangeMark;
+    const mappedAttributes = {
+      wid: attributes['w:id'],
+      date: attributes['w:date'],
+      author: attributes['w:author'],
+    }
+    const submarks = this.#parseMarks(styleChangeMark);
+    return [{type: TrackMarksMarkName, attrs: {...mappedAttributes, before: submarks, after: [...currentMarks]}}]
   }
 
   #getIndentValue(attributes) {
@@ -852,6 +1085,8 @@ export class DocxImporter {
       if (paragraphProperties && paragraphProperties.elements?.length) {
         marks.push(...this.#parseMarks(paragraphProperties));
       }
+      //add style change marks
+      marks.push(...this.#handleStyleChangeMarks(runProperties, marks));
 
       // Maintain any extra properties
       if (paragraphProperties && paragraphProperties.elements?.length) {
@@ -924,5 +1159,59 @@ export class DocxImporter {
       }
     });
     return styles;
+  }
+
+  #getHeaderFooter(el, elementType) {
+    const rels = this.converter.convertedXml['word/_rels/document.xml.rels'];
+    const relationships = rels.elements.find((el) => el.name === 'Relationships');
+    const { elements } = relationships;
+
+    // sectionType as in default, first, odd, even
+    const sectionType = el.attributes['w:type'];
+
+    const rId = el.attributes['r:id'];
+    const rel = elements.find((el) => el.attributes['Id'] === rId);
+    const target = rel.attributes['Target'];
+
+    // Get the referenced file (ie: header1.xml)
+    const referenceFile = this.converter.convertedXml[`word/${target}`];
+    this.currentFileName = target;
+
+    const schema = this.#convertToSchema(referenceFile.elements[0].elements);
+    let storage, storageIds;
+
+    if (elementType === 'header') {
+      storage = this.converter.headers;
+      storageIds = this.converter.headerIds;
+    } else if (elementType === 'footer') {
+      storage = this.converter.footers;
+      storageIds = this.converter.footerIds;
+    }
+
+    storage[rId] = { type: 'doc', content: [...schema] };
+    storageIds[sectionType] = rId;
+  }
+
+  #handleFieldAnnotationNode(node) {
+    const sdtPr = node.elements.find((el) => el.name === 'w:sdtPr');
+    const alias = sdtPr?.elements.find((el) => el.name === 'w:alias');
+    const tag = sdtPr?.elements.find((el) => el.name === 'w:tag');
+    const fieldType = sdtPr?.elements.find((el) => el.name === 'w:fieldType')?.attributes['w:val'];
+    const type = sdtPr?.elements.find((el) => el.name === 'w:fieldTypeShort')?.attributes['w:val'];
+    const fieldColor = sdtPr?.elements.find((el) => el.name === 'w:fieldColor')?.attributes['w:val'];
+
+    const attrs = {
+      type,
+      fieldId: tag?.attributes['w:val'],
+      displayLabel: alias?.attributes['w:val'],
+      fieldType,
+      fieldColor,
+    }
+  
+    const result = {
+      type: 'fieldAnnotation',
+      attrs,
+    }
+    return result;
   }
 }

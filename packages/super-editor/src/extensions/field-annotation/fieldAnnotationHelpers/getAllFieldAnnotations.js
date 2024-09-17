@@ -1,18 +1,15 @@
 import { helpers } from '@core/index.js';
 
-const { findChildren, getNodeType } = helpers;
+const { findChildren } = helpers;
 
 /**
  * Get all field annotations in the doc.
- * @param typeOrName The node type or name.
  * @param state The editor state.
  * @returns The array of field annotations.
  */
-export function getAllFieldAnnotations(typeOrName, state) {
-  let nodeType = getNodeType(typeOrName, state.schema);
-
+export function getAllFieldAnnotations(state) {
   let fieldAnnotations = findChildren(state.doc, (node) => (
-    node.type.name === nodeType.name
+    node.type.name === 'fieldAnnotation'
   ));
 
   return fieldAnnotations;

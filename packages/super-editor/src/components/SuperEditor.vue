@@ -73,6 +73,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .super-editor {
+  display: inline-block;
   position: relative;
 }
 </style>

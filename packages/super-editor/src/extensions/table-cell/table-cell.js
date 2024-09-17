@@ -28,7 +28,7 @@ export const TableCell = Node.create({
       width: {
         renderDOM: ({ width }) => {
           if (!width) return {};
-          const style = `width: ${width}in;`;
+          const style = `width: ${width}in`;
           return { style };
         },
       },
@@ -38,18 +38,29 @@ export const TableCell = Node.create({
         renderDOM ({ background }) {
           if (!background) return {};
           const { color } = background || {};
-          const style = `background-color: #${color || 'transparent'};`;
+          const style = `background-color: #${color || 'transparent'}`;
+          return { style };
+        }
+      },
+      verticalAlign: { 
+        renderDOM({ verticalAlign }) {
+          if (!verticalAlign) return {};
+          const style = `vertical-align: ${verticalAlign}`;
+          return { style };
+        }
+      },
+      cellMargins: {
+        renderDOM({ cellMargins }) {
+          if (!cellMargins) return {};
+          let style = '';
+          const { top, right, bottom, left } = cellMargins || {};
+          if (top) style += `padding-top: ${top}px;`;
+          if (right) style += `padding-right: ${right}px;`;
+          if (bottom) style += `padding-bottom: ${bottom}px;`;
+          if (left) style += `padding-left: ${left}px;`;
           return { style };
         }
       }
-      // colwidth: {
-      //   default: '300px',
-      //   renderDOM: element => {
-      //     const colwidth = element.getAttribute('colwidth')
-      //     const value = colwidth ? [parseInt(colwidth, 10)] : null
-      //     return value
-      //   },
-      // },
     }
   },
 });
