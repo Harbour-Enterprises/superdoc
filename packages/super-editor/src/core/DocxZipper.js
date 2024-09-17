@@ -47,8 +47,10 @@ class DocxZipper {
       }
 
       else if (zipEntry.name.startsWith('word/media')) {
-        const mediaContent = await zipEntry.async("base64");
-        this.media[zipEntry.name] = `data:image/${this.getFileExtension(zipEntry.name)};base64,${mediaContent}`;
+        const blob = await zipEntry.async('blob');
+        const file = new File([blob], zipEntry.name, { type: blob.type });
+        const imageUrl = URL.createObjectURL(file);
+        this.media[zipEntry.name] = imageUrl;
       }
     }
 

@@ -91,6 +91,7 @@ export class Editor extends EventEmitter {
     this.#createCommandService();
     this.#createSchema();
     this.#createConverter();
+    this.#initMedia();
 
     this.on('beforeCreate', this.options.onBeforeCreate);
     this.emit('beforeCreate', { editor: this });
@@ -379,6 +380,13 @@ export class Editor extends EventEmitter {
   }
 
   /**
+   * Initialize media.
+   */
+  #initMedia() {
+    this.storage.image.media = this.options.media;
+  }
+
+  /**
    * Load the data from DOCX to be used in the schema.
    * Expects a DOCX file.
    */
@@ -393,6 +401,7 @@ export class Editor extends EventEmitter {
     const zipper = new DocxZipper();
     const xmlFiles = await zipper.getDocxData(fileSource);
     const mediaFiles = zipper.media;
+
     return [xmlFiles, mediaFiles];
   }
 

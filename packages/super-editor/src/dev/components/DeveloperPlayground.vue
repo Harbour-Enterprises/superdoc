@@ -273,7 +273,8 @@ onMounted(async () => {
 
 .dev-app__content-container {
   width: 100%;
-  max-width: 8.5in;
+  display: flex;
+  justify-content: center;
 }
 
 .dev-app__inputs-panel {

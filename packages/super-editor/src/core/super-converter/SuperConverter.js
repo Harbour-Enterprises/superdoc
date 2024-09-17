@@ -99,7 +99,6 @@ class SuperConverter {
 
   parseFromXml() {
     this.docx?.forEach(file => {
-      if (file.name === 'word/document.xml') console.debug('DOCX', file.content)
       this.convertedXml[file.name] = this.parseXmlToJson(file.content);
     });
     this.initialJSON = this.convertedXml['word/document.xml'];

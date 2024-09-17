@@ -17,6 +17,7 @@ export class DocxImporter {
 
   constructor(converter) {
     this.converter = converter;
+    this.currentFileName = null;
   }
 
   getSchema() {
@@ -149,13 +150,18 @@ export class DocxImporter {
     let result;
     const { elements } = node;
 
-    // Inline images
+    // Some images are identified by wp:anchor
+    const isAnchor = elements.find((el) => el.name === 'wp:anchor');
+    if (isAnchor) result = this.#handleImageImport(elements[0]);
+
+    // Others, wp:inline
     const inlineImage = elements.find((el) => el.name === 'wp:inline');
-    if (inlineImage) result = this.#handleInlineImageNode(inlineImage);
+    if (inlineImage) result = this.#handleImageImport(inlineImage);
     return result;
   }
 
-  #handleInlineImageNode(node) {
+  #handleImageImport(node) {
+
     const { attributes } = node;
     const padding = {
       top: emuToPixels(attributes['distT']),
@@ -170,36 +176,48 @@ export class DocxImporter {
       height: emuToPixels(extent.attributes['cy'])
     }
 
-    // TODO: Do we need this?
-    const effectExtent = node.elements.find((el) => el.name === 'wp:effectExtent');
-
     const graphic = node.elements.find((el) => el.name === 'a:graphic');
     const graphicData = graphic.elements.find((el) => el.name === 'a:graphicData');
 
     const picture = graphicData.elements.find((el) => el.name === 'pic:pic');
     const blipFill = picture.elements.find((el) => el.name === 'pic:blipFill');
     const blip = blipFill.elements.find((el) => el.name === 'a:blip');
+
+    const positionHTag = node.elements.find((el) => el.name === 'wp:positionH');
+    const positionH = positionHTag?.elements.find((el) => el.name === 'wp:posOffset')
+    const positionHValue = emuToPixels(positionH?.elements[0]?.text);
+
+    const positionVTag = node.elements.find((el) => el.name === 'wp:positionV');
+    const positionV = positionVTag?.elements.find((el) => el.name === 'wp:posOffset')
+    const positionVValue = emuToPixels(positionV?.elements[0]?.text);
+
+    const marginOffset = {
+      left: positionHValue,
+      top: positionVValue,
+    }
+  
     const { attributes: blipAttributes } = blip;
     const rEmbed = blipAttributes['r:embed'];
-    const print = blipAttributes['r:print'];
+    const currentFile = this.currentFileName || 'document.xml';
+    let rels = this.converter.convertedXml[`word/_rels/${currentFile}.rels`];
+    if (!rels) rels = this.converter.convertedXml[`word/_rels/document.xml.rels`];
 
-    const rels = this.converter.convertedXml['word/_rels/document.xml.rels'];
     const relationships = rels.elements.find((el) => el.name === 'Relationships');
     const { elements } = relationships;
 
     const rel = elements.find((el) => el.attributes['Id'] === rEmbed);
     const { attributes: relAttributes } = rel;
-    const { media } = this.converter;
+
     const path = `word/${relAttributes['Target']}`;
 
     return {
       type: 'image',
       attrs: {
-        src: media[path],
+        src: path,
         alt: 'Image',
-        title: 'Image',
         inline: true,
         padding,
+        marginOffset,
         size,
       }
     }
@@ -1138,5 +1156,36 @@ export class DocxImporter {
       }
     });
     return styles;
+  }
+
+  #getHeaderFooter(el, elementType) {
+    const rels = this.converter.convertedXml['word/_rels/document.xml.rels'];
+    const relationships = rels.elements.find((el) => el.name === 'Relationships');
+    const { elements } = relationships;
+
+    // sectionType as in default, first, odd, even
+    const sectionType = el.attributes['w:type'];
+
+    const rId = el.attributes['r:id'];
+    const rel = elements.find((el) => el.attributes['Id'] === rId);
+    const target = rel.attributes['Target'];
+
+    // Get the referenced file (ie: header1.xml)
+    const referenceFile = this.converter.convertedXml[`word/${target}`];
+    this.currentFileName = target;
+
+    const schema = this.#convertToSchema(referenceFile.elements[0].elements);
+    let storage, storageIds;
+
+    if (elementType === 'header') {
+      storage = this.converter.headers;
+      storageIds = this.converter.headerIds;
+    } else if (elementType === 'footer') {
+      storage = this.converter.footers;
+      storageIds = this.converter.footerIds;
+    }
+
+    storage[rId] = { type: 'doc', content: [...schema] };
+    storageIds[sectionType] = rId;
   }
 }

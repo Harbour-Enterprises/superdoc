@@ -40,7 +40,6 @@ const initEditor = async () => {
   editor.value = new Editor({
     mode: 'docx',
     element: editorElem.value,
-    fileSource: props.fileSource,
     extensions: getStarterExtensions(),
     documentId: props.documentId,
     content,
@@ -73,6 +72,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .super-editor {
+  display: inline-block;
   position: relative;
 }
 </style>

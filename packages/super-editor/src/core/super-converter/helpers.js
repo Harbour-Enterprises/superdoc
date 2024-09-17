@@ -35,7 +35,7 @@ function halfPointToPoints(halfPoints) {
 function emuToPixels(emu) {
   if (emu == null) return;
   if (typeof emu === 'string') emu = parseFloat(emu);
-  const pixels = (emu / 914400) * 96;
+  const pixels = (emu * 96) / 914400;
   return Math.round(pixels);
 }
 
