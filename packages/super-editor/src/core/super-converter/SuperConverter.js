@@ -169,10 +169,8 @@ class SuperConverter {
   exportToDocx(jsonData) {
     const bodyNode = this.savedTagsToRestore.find((el) => el.name === 'w:body');
     const [result, params] = exportSchemaToJson({ node: jsonData, bodyNode, relationships: [] });
-
     const exporter = new DocxExporter(this);
     const xml = exporter.schemaToXml(result);
-    console.debug('XML', xml);
     
     // Update the rels table
     this.#exportProcessNewRelationships(params.relationships);

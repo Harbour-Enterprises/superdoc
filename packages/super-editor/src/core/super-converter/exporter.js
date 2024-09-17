@@ -70,6 +70,7 @@ export function exportSchemaToJson(params) {
     tableRow: translateTableRow,
     tableCell: translateTableCell,
     bookmarkStart: translateBookmarkStart,
+    fieldAnnotation: translateFieldAnnotation,
   }
 
   if (!router[type]) {
@@ -855,6 +856,66 @@ function translateMark(mark) {
   }
 
   return markElement;
+};
+
+/**
+ * Translate a field annotation node
+ * 
+ * @param {ExportParams} params
+ * @returns {XmlReadyNode} The translated field annotation node
+ */
+function translateFieldAnnotation({ node }) {
+  const { attrs = {} } = node;
+
+  const customXmlns = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+  return {
+    name: 'w:sdt',
+    elements: [
+      {
+        name: 'w:sdtPr',
+        elements: [
+          { name: 'w:tag', attributes: { 'w:val': attrs.fieldId } },
+          { name: 'w:alias', attributes: { 'w:val': attrs.displayLabel } },
+          { name: 'w:lock', attributes: { 'w:val': 'sdtContentLocked' } },
+          {
+            name: 'w:fieldType',
+            attributes: {
+              'xmlns:w': customXmlns,
+              'w:val': attrs.fieldType,
+            }
+          },
+          {
+            name: 'w:fieldTypeShort',
+            attributes: {
+              'xmlns:w': customXmlns,
+              'w:val': attrs.type,
+            }
+          },
+          {
+            name: 'w:fieldColor',
+            attributes: {
+              'xmlns:w': customXmlns,
+              'w:val': attrs.fieldColor,
+            }
+          }
+        ]
+      },
+      {
+        name: 'w:sdtContent',
+        elements: [
+          {
+            name: 'w:r',
+            elements: [
+              {
+                name: 'w:t',
+                attributes: { 'xml:space': 'preserve' },
+                elements: [{ type: 'text', text: attrs.displayLabel }] }
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }
 
 
