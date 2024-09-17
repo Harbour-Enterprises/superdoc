@@ -107,6 +107,9 @@ export class DocxImporter {
         case 'w:delText':
           schemaNode = this.#handleDelText(node, insideTrackChange);
           break;
+        case 'w:sdt':
+          schemaNode = this.#handleFieldAnnotationNode(node);
+          break;
         default:
           schemaNode = this.#handleStandardNode(node);
       }
@@ -1187,5 +1190,28 @@ export class DocxImporter {
 
     storage[rId] = { type: 'doc', content: [...schema] };
     storageIds[sectionType] = rId;
+  }
+
+  #handleFieldAnnotationNode(node) {
+    const sdtPr = node.elements.find((el) => el.name === 'w:sdtPr');
+    const alias = sdtPr?.elements.find((el) => el.name === 'w:alias');
+    const tag = sdtPr?.elements.find((el) => el.name === 'w:tag');
+    const fieldType = sdtPr?.elements.find((el) => el.name === 'w:fieldType')?.attributes['w:val'];
+    const type = sdtPr?.elements.find((el) => el.name === 'w:fieldTypeShort')?.attributes['w:val'];
+    const fieldColor = sdtPr?.elements.find((el) => el.name === 'w:fieldColor')?.attributes['w:val'];
+
+    const attrs = {
+      type,
+      fieldId: tag?.attributes['w:val'],
+      displayLabel: alias?.attributes['w:val'],
+      fieldType,
+      fieldColor,
+    }
+  
+    const result = {
+      type: 'fieldAnnotation',
+      attrs,
+    }
+    return result;
   }
 }
