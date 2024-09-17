@@ -5,7 +5,7 @@ import {handleListNode} from "./listImporter.js";
 import {numberingBulletXml} from "./test-helpers/testUtils.test.js";
 
 
-describe("table live xml test", () => {
+describe("list live xml test", () => {
     it("parses simple bullet xml", () => {
         const exampleSingleBulletXml = `
             <w:p w14:paraId="4193DBDF" w14:textId="45C3B4F4" w:rsidR="003C58BC" w:rsidRDefault="004C5EF1" w:rsidP="004C5EF1">
@@ -27,16 +27,17 @@ describe("table live xml test", () => {
             'word/numbering.xml': numbering
         }
 
-        const result = handleListNode(nodes, docx, defaultNodeListHandler(), false);
-        expect(result.nodes.length).toBe(1);
-        expect(result.nodes[0].type).toBe("bulletList");
-        expect(result.nodes[0].content.length).toBe(1);
-        expect(result.nodes[0].content[0].type).toBe("listItem");
-        expect(result.nodes[0].content[0].content.length).toBe(1);
-        expect(result.nodes[0].content[0].content[0].type).toBe("paragraph");
-        expect(result.nodes[0].content[0].content[0].content.length).toBe(1);
-        expect(result.nodes[0].content[0].content[0].content[0].type).toBe("text");
-        expect(result.nodes[0].content[0].content[0].content[0].text).toBe("TEXTITEM");
+        const handler = defaultNodeListHandler()
+        const result = handler.handler(nodes, docx, false);
+        expect(result.length).toBe(1);
+        expect(result[0].type).toBe("bulletList");
+        expect(result[0].content.length).toBe(1);
+        expect(result[0].content[0].type).toBe("listItem");
+        expect(result[0].content[0].content.length).toBe(1);
+        expect(result[0].content[0].content[0].type).toBe("paragraph");
+        expect(result[0].content[0].content[0].content.length).toBe(1);
+        expect(result[0].content[0].content[0].content[0].type).toBe("text");
+        expect(result[0].content[0].content[0].content[0].text).toBe("TEXTITEM");
     });
 
     it("parses simple numbered xml", () => {
@@ -60,16 +61,17 @@ describe("table live xml test", () => {
             'word/numbering.xml': numbering
         }
 
-        const result = handleListNode(nodes, docx, defaultNodeListHandler(), false);
-        expect(result.nodes.length).toBe(1);
-        expect(result.nodes[0].type).toBe("orderedList");
-        expect(result.nodes[0].content.length).toBe(1);
-        expect(result.nodes[0].content[0].type).toBe("listItem");
-        expect(result.nodes[0].content[0].content.length).toBe(1);
-        expect(result.nodes[0].content[0].content[0].type).toBe("paragraph");
-        expect(result.nodes[0].content[0].content[0].content.length).toBe(1);
-        expect(result.nodes[0].content[0].content[0].content[0].type).toBe("text");
-        expect(result.nodes[0].content[0].content[0].content[0].text).toBe("numbered");
+        const handler = defaultNodeListHandler()
+        const result = handler.handler(nodes, docx, false);
+        expect(result.length).toBe(1);
+        expect(result[0].type).toBe("orderedList");
+        expect(result[0].content.length).toBe(1);
+        expect(result[0].content[0].type).toBe("listItem");
+        expect(result[0].content[0].content.length).toBe(1);
+        expect(result[0].content[0].content[0].type).toBe("paragraph");
+        expect(result[0].content[0].content[0].content.length).toBe(1);
+        expect(result[0].content[0].content[0].content[0].type).toBe("text");
+        expect(result[0].content[0].content[0].content[0].text).toBe("numbered");
     });
 
 
@@ -166,24 +168,25 @@ describe("table live xml test", () => {
             'word/numbering.xml': numbering
         }
 
-        const result = handleListNode(nodes, docx, defaultNodeListHandler(), false);
-        expect(result.nodes.length).toBe(1);
-        expect(result.nodes[0].type).toBe("bulletList");
-        expect(result.nodes[0].content.length).toBe(3);
-        expect(result.nodes[0].content[0].type).toBe("listItem");
-        expect(result.nodes[0].content[0].content.length).toBe(2);
-        expect(result.nodes[0].content[0].content[0].type).toBe("paragraph");
-        expect(result.nodes[0].content[0].content[0].content.length).toBe(1);
-        expect(result.nodes[0].content[0].content[0].content[0].type).toBe("text");
-        expect(result.nodes[0].content[0].content[0].content[0].text).toBe("L1: A");
-        expect(result.nodes[0].content[0].content[1].type).toBe("bulletList");
-        expect(result.nodes[0].content[0].content[1].content.length).toBe(1);
-        expect(result.nodes[0].content[0].content[1].content[0].type).toBe("listItem");
-        expect(result.nodes[0].content[0].content[1].content[0].content.length).toBe(1);
-        expect(result.nodes[0].content[0].content[1].content[0].content[0].type).toBe("paragraph");
-        expect(result.nodes[0].content[0].content[1].content[0].content[0].content.length).toBe(1);
-        expect(result.nodes[0].content[0].content[1].content[0].content[0].content[0].type).toBe("text");
-        expect(result.nodes[0].content[0].content[1].content[0].content[0].content[0].text).toBe("L2: B");
+        const handler = defaultNodeListHandler()
+        const result = handler.handler(nodes, docx, false);
+        expect(result.length).toBe(1);
+        expect(result[0].type).toBe("bulletList");
+        expect(result[0].content.length).toBe(3);
+        expect(result[0].content[0].type).toBe("listItem");
+        expect(result[0].content[0].content.length).toBe(2);
+        expect(result[0].content[0].content[0].type).toBe("paragraph");
+        expect(result[0].content[0].content[0].content.length).toBe(1);
+        expect(result[0].content[0].content[0].content[0].type).toBe("text");
+        expect(result[0].content[0].content[0].content[0].text).toBe("L1: A");
+        expect(result[0].content[0].content[1].type).toBe("bulletList");
+        expect(result[0].content[0].content[1].content.length).toBe(1);
+        expect(result[0].content[0].content[1].content[0].type).toBe("listItem");
+        expect(result[0].content[0].content[1].content[0].content.length).toBe(1);
+        expect(result[0].content[0].content[1].content[0].content[0].type).toBe("paragraph");
+        expect(result[0].content[0].content[1].content[0].content[0].content.length).toBe(1);
+        expect(result[0].content[0].content[1].content[0].content[0].content[0].type).toBe("text");
+        expect(result[0].content[0].content[1].content[0].content[0].content[0].text).toBe("L2: B");
     });
 
 });

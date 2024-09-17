@@ -13,7 +13,7 @@ import {paragraphNodeHandlerEntity} from "./paragraphNodeImporter.js";
 import {standardNodeHandlerEntity} from "./standardNodeImporter.js";
 import {lineBreakNodeHandlerEntity} from "./lineBreakImporter.js";
 import {bookmarkNodeHandlerEntity} from "./bookmarkNodeImporter.js";
-import {listHandlerEntity} from "./listImporter.js";
+import {listHandlerEntity, listNodeAggregator} from "./listImporter.js";
 
 /**
  * @typedef {import()} XmlNode
@@ -59,6 +59,9 @@ export const createDocumentJson = (docx) => {
     return null;
 }
 
+/**
+ * @returns {NodeListHandler}
+ */
 export const defaultNodeListHandler = () => {
     const entities = [
         runNodeHandlerEntity,
@@ -113,7 +116,10 @@ const createNodeListHandler = (nodeHandlers) => {
                 }
             }
         }
-        return processedElements;
+
+        const aggregatedNodes = listNodeAggregator(processedElements, docx);
+
+        return aggregatedNodes;
     }
 
     return nodeListHandlerFn;
