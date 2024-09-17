@@ -5,7 +5,7 @@ import {parseProperties} from "./importerHelpers.js";
  */
 const handleRunNode = (nodes, docx, nodeListHandler, insideTrackChange = false) => {
     if(nodes.length === 0 || nodes[0].name !== 'w:r') {
-        return {nodes: [], consumed: 0};
+        return [];
     }
     const node = nodes[0];
     let processedRun = nodeListHandler.handler(node.elements, docx, insideTrackChange)?.filter(n => n) || [];
@@ -15,7 +15,7 @@ const handleRunNode = (nodes, docx, nodeListHandler, insideTrackChange = false) 
         if (node.marks) marks.push(...node.marks);
         processedRun = processedRun.map(n => ({ ...n, marks, attributes }));
     }
-    return {nodes: processedRun, consumed: 1};
+    return processedRun;
 }
 
 /**

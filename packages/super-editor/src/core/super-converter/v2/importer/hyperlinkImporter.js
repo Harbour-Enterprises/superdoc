@@ -5,7 +5,7 @@
  */
 export const handleHyperlinkNode = (nodes, docx, nodeListHandler, insideTrackChange)  => {
     if(nodes.length === 0 || nodes[0].name !== 'w:hyperlink') {
-        return {nodes: [], consumed: 0};
+        return [];
     }
     const node = nodes[0];
 
@@ -48,7 +48,7 @@ export const handleHyperlinkNode = (nodes, docx, nodeListHandler, insideTrackCha
     }
 
     const updatedNode = nodeListHandler.handler([runNode], docx, insideTrackChange);
-    return {nodes: updatedNode, consumed: 1};
+    return updatedNode;
 }
 
 /**

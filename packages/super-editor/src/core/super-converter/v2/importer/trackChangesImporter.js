@@ -6,7 +6,7 @@ import {parseProperties} from "./importerHelpers.js";
  */
 export const handleTrackChangeNode = (nodes, docx, nodeListHandler, insideTrackChange = false) => {
     if(nodes.length === 0 || !(nodes[0].name === 'w:del' || nodes[0].name === 'w:ins')) {
-        return {nodes: [], consumed: 0};
+        return [];
     }
     const node = nodes[0];
     const { name } = node;
@@ -25,7 +25,7 @@ export const handleTrackChangeNode = (nodes, docx, nodeListHandler, insideTrackC
         subElement.marks.push({ type: changeType, attrs: mappedAttributes });
     });
 
-    return {nodes: subs, consumed: 1};
+    return subs;
 }
 
 /**

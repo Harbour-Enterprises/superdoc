@@ -12,7 +12,7 @@ import {carbonCopy} from "../../../utilities/cabonCopy.js";
  */
 export const handleParagraphNode = (nodes, docx, nodeListHandler, insideTrackChange)  => {
     if(nodes.length === 0 || nodes[0].name !== 'w:p') {
-        return {nodes: [], consumed: 0};
+        return [];
     }
     const node = carbonCopy(nodes[0])
 
@@ -24,18 +24,18 @@ export const handleParagraphNode = (nodes, docx, nodeListHandler, insideTrackCha
 
     // Check if this paragraph node is a list
     if (testForList(node)) {
-        return {nodes: [], consumed: 0};
+        return [];
     }
 
     // If it is a standard paragraph node, process normally
     const handleStandardNode = nodeListHandler.handlerEntities.find(e => e.handlerName === 'standardNodeHandler')?.handler;
     if (!handleStandardNode) {
         console.error('Standard node handler not found');
-        return {nodes: [], consumed: 0};
+        return [];
     }
     const result = handleStandardNode([node], docx, nodeListHandler, insideTrackChange);
-    if(result.nodes.length === 1) {
-        schemaNode = result.nodes[0];
+    if(result.length === 1) {
+        schemaNode = result[0];
     }
 
     if ('attributes' in node) {
@@ -51,7 +51,7 @@ export const handleParagraphNode = (nodes, docx, nodeListHandler, insideTrackCha
         if (!('attributes' in schemaNode)) schemaNode.attributes = {};
         schemaNode.attrs['paragraphSpacing'] = { lineSpaceAfter, lineSpaceBefore };
     }
-    return { nodes: schemaNode ? [schemaNode] : [], consumed: 1 };
+    return schemaNode ? [schemaNode] : [];
 }
 
 /**

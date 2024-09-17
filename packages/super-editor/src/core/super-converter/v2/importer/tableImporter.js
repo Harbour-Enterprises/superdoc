@@ -6,20 +6,20 @@ import {halfPointToPixels, twipsToInches, twipsToPixels} from "../../helpers.js"
  */
 export const handleAllTableNodes = (nodes, docx, nodeListHandler, insideTrackChange) => {
     if(nodes.length === 0) {
-        return {nodes: [], consumed: 0};
+        return [];
     }
     const node = nodes[0];
 
     switch (node.name) {
         case 'w:tbl':
-            return {nodes: [handleTableNode(node, docx, nodeListHandler)], consumed: 1};
+            return [handleTableNode(node, docx, nodeListHandler)];
         case 'w:tr':
-            return {nodes: [handleTableRowNode(node, undefined, docx, nodeListHandler, insideTrackChange)], consumed: 1};
+            return [handleTableRowNode(node, undefined, docx, nodeListHandler, insideTrackChange)];
         case 'w:tc':
-            return {nodes: [handleTableCellNode(node, docx, nodeListHandler, insideTrackChange)], consumed: 1};
+            return [handleTableCellNode(node, docx, nodeListHandler, insideTrackChange)];
     }
 
-    return {nodes: [], consumed: 0};
+    return [];
 }
 
 /**
@@ -212,14 +212,14 @@ export function handleTableRowNode(node, rowBorders, docx, nodeListHandler, insi
     const handleStandardNode = nodeListHandler.handlerEntities.find(e => e.handlerName === 'standardNodeHandler')?.handler;
     if (!handleStandardNode) {
         console.error('Standard node handler not found');
-        return {nodes: [], consumed: 0};
+        return [];
     }
 
     const newNodes = handleStandardNode([node], docx, nodeListHandler, insideTrackChange);
-    if(newNodes.nodes.length === 0) {
-        return {nodes: [], consumed: 0};
+    if(newNodes.length === 0) {
+        return [];
     }
-    const newNode = newNodes.nodes[0];
+    const newNode = newNodes[0];
 
     const tPr = node.elements.find((el) => el.name === 'w:trPr');
     const rowHeightTag = tPr?.elements.find((el) => el.name === 'w:trHeight');

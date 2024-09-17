@@ -23,7 +23,7 @@ import {listHandlerEntity, listNodeAggregator} from "./listImporter.js";
  * @typedef {(nodes: XmlNode[], docx: ParsedDocx, insideTrackCahange: boolean) => PmNodeJson[]} NodeListHandlerFn
  * @typedef {{handler: NodeListHandlerFn, handlerEntities: NodeHandlerEntry[]}} NodeListHandler
  *
- * @typedef {(nodes: XmlNode[], docx: ParsedDocx, nodeListHandler: NodeListHandler, insideTrackCahange: boolean) => {nodes: PmNodeJson[], consumed: number}} NodeHandler
+ * @typedef {(nodes: XmlNode[], docx: ParsedDocx, nodeListHandler: NodeListHandler, insideTrackCahange: boolean) => PmNodeJson[]} NodeHandler
  * @typedef {{handlerName: string, handler: NodeHandler}} NodeHandlerEntry
  */
 
@@ -99,14 +99,13 @@ const createNodeListHandler = (nodeHandlers) => {
         const processedElements = [];
 
         for (let index = 0; index < elements.length; index++) {
-            const {nodes, consumed} = nodeHandlers.reduce((res, handler) => {
-                if(res.consumed > 0) return res;
+            const nodes = nodeHandlers.reduce((res, handler) => {
+                if(res.length > 0) return res;
                 const nodesToHandle = elements.slice(index);
                 if(!nodesToHandle || nodesToHandle.length === 0) return res;
                 return handler.handler(nodesToHandle, docx, {handler: nodeListHandlerFn, handlerEntities: nodeHandlers}, insideTrackChange);
-            }, {nodes: [], consumed: 0});
-            index += consumed-1;
-            if(consumed === 0)  {
+            }, []);
+            if(nodes.length === 0)  {
                 console.warn("We have a node that we can't handle!", elements[index])
             }
             for(let node of nodes) {

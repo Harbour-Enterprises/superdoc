@@ -5,7 +5,7 @@ import {getElementName, parseProperties} from "./importerHelpers.js";
  */
 export const handleStandardNode = (nodes, docx, nodeListHandler, insideTrackChange = false) => {
     if(!nodes || nodes.length === 0) {
-        return {nodes: [], consumed: 0};
+        return [];
     }
     const node = nodes[0];
     // Parse properties
@@ -32,9 +32,9 @@ export const handleStandardNode = (nodes, docx, nodeListHandler, insideTrackChan
 
     if(node.name === 'w:tab') {
         resultNode.content = [{ type: 'text', text: ' ' }];
-        return { nodes: [resultNode], consumed: 1 };
+        return [resultNode];
     } else {
-        return { nodes: [resultNode], consumed: 1 };
+        return [resultNode];
     }
 }
 

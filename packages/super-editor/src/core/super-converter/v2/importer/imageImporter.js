@@ -5,7 +5,7 @@ import {emuToPixels} from "../../helpers.js";
  */
 export const handleDrawingNode= (nodes, docx, nodeListHandler, insideTrackChange)  => {
     if(nodes.length === 0 || nodes[0].name !== 'w:drawing') {
-        return {nodes: [], consumed: 0};
+        return [];
     }
     const node = nodes[0];
 
@@ -15,7 +15,7 @@ export const handleDrawingNode= (nodes, docx, nodeListHandler, insideTrackChange
     // Inline images
     const inlineImage = elements.find((el) => el.name === 'wp:inline');
     if (inlineImage) result = handleInlineImageNode(inlineImage, docx);
-    return {nodes: result ? [result] : [], consumed: 1};
+    return result ? [result] : [];
 }
 
 export function handleInlineImageNode(node, docx) {

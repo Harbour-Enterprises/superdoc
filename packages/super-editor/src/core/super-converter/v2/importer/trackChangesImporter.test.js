@@ -21,8 +21,7 @@ describe('TrackChangesImporter', () => {
         const nodesOfNodes = names.map((name) => ([{name}]));
         for(const nodes of nodesOfNodes) {
             const result = handleTrackChangeNode(nodes, null, null, false);
-            expect(result.nodes.length).toBe(0);
-            expect(result.consumed).toBe(0);
+            expect(result.length).toBe(0);
         }
     });
 
@@ -34,10 +33,9 @@ describe('TrackChangesImporter', () => {
                 {name: 'w:t', attributes: {}, elements: [{text: 'This is a test text!'}]}
             ]}];
         const result = handleTrackChangeNode(nodes, null, createNodeListHandlerMock(), false);
-        expect(result.nodes.length).toBe(1);
-        expect(result.consumed).toBe(1);
-        expect(result.nodes[0].marks[0].type).toBe(TrackDeleteMarkName);
-        expect(result.nodes[0].marks[0].attrs).toEqual({wid: '1', date: '2023-10-01', author: 'Author'});
+        expect(result.length).toBe(1);
+        expect(result[0].marks[0].type).toBe(TrackDeleteMarkName);
+        expect(result[0].marks[0].attrs).toEqual({wid: '1', date: '2023-10-01', author: 'Author'});
     });
 
     it("parses track change ins node and their attributes", () => {
@@ -48,10 +46,9 @@ describe('TrackChangesImporter', () => {
                 {name: 'w:t', attributes: {}, elements: [{text: 'This is a test text!'}]}
             ]}];
         const result = handleTrackChangeNode(nodes, null, createNodeListHandlerMock(), false);
-        expect(result.nodes.length).toBe(1);
-        expect(result.consumed).toBe(1);
-        expect(result.nodes[0].marks[0].type).toBe(TrackInsertMarkName);
-        expect(result.nodes[0].marks[0].attrs).toEqual({wid: '1', date: '2023-10-01', author: 'Author'});
+        expect(result.length).toBe(1);
+        expect(result[0].marks[0].type).toBe(TrackInsertMarkName);
+        expect(result[0].marks[0].attrs).toEqual({wid: '1', date: '2023-10-01', author: 'Author'});
     });
 });
 
@@ -92,28 +89,28 @@ describe("trackChanges live xml test", () => {
     it("parses insert xml", () => {
         const nodes = parseXmlToJson(inserXml).elements
         const result = handleTrackChangeNode(nodes, null, defaultNodeListHandler(), false);
-        expect(result.nodes.length).toBe(1);
-        const insertionMark = result.nodes[0].marks.find(mark => mark.type === TrackInsertMarkName);
+        expect(result.length).toBe(1);
+        const insertionMark = result[0].marks.find(mark => mark.type === TrackInsertMarkName);
         expect(insertionMark).toBeDefined();
         expect(insertionMark.attrs).toEqual({
             wid: '0',
             date: '2024-09-02T15:56:00Z',
             author: 'torcsi@harbourcollaborators.com',
         });
-        expect(result.nodes[0].text).toBe('short ');
+        expect(result[0].text).toBe('short ');
     });
     it("parses delete xml", () => {
         const nodes = parseXmlToJson(deleteXml).elements
         const result = handleTrackChangeNode(nodes, null, defaultNodeListHandler(), false);
-        expect(result.nodes.length).toBe(1);
-        const deletionMark = result.nodes[0].marks.find(mark => mark.type === TrackDeleteMarkName);
+        expect(result.length).toBe(1);
+        const deletionMark = result[0].marks.find(mark => mark.type === TrackDeleteMarkName);
         expect(deletionMark).toBeDefined();
         expect(deletionMark.attrs).toEqual({
             wid: '1',
             date: '2024-09-02T15:56:00Z',
             author: 'torcsi@harbourcollaborators.com',
         });
-        expect(result.nodes[0].text).toBe('long ');
+        expect(result[0].text).toBe('long ');
     });
     it("parses mark change xml", () => {
         const nodes = parseXmlToJson(markChangeXml).elements

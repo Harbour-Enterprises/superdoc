@@ -6,7 +6,7 @@ import {getElementName, parseProperties} from "./importerHelpers.js";
  */
 export const handleTextNode =  (nodes, docx, nodeListHandler, insideTrackChange = false) => {
     if(nodes.length === 0 || !(nodes[0].name === 'w:t' || (insideTrackChange && nodes[0].name === 'w:delText'))) {
-        return {nodes: [], consumed: 0};
+        return [];
     }
     const node = nodes[0];
     const { type } = node;
@@ -24,14 +24,14 @@ export const handleTextNode =  (nodes, docx, nodeListHandler, insideTrackChange 
     }
 
     // Ignore others - can catch other special cases here if necessary
-    else return {nodes: [], consumed: 0};
+    else return [];
 
-    return {nodes: [{
+    return [{
         type: getElementName(node),
         text: text,
         attrs: { type, attributes: attributes || {}, },
         marks,
-    }], consumed: 1};
+    }];
 }
 
 

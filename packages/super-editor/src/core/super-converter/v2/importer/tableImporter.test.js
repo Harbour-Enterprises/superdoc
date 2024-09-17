@@ -76,11 +76,11 @@ describe("table live xml test", () => {
         }
 
         const result = handleAllTableNodes(nodes, docx, defaultNodeListHandler(), false);
-        expect(result.nodes.length).toBe(1);
+        expect(result.length).toBe(1);
 
-        expect(result.nodes[0].type).toBe('table');
-        expect(result.nodes[0].content.length).toBe(2);
-        expect(result.nodes[0].attrs).toEqual({
+        expect(result[0].type).toBe('table');
+        expect(result[0].content.length).toBe(2);
+        expect(result[0].attrs).toEqual({
             tableWidth: '0.00',
             tableWidthType: 'auto',
             gridColumnWidths: ['3.25', '3.25'],
@@ -97,25 +97,25 @@ describe("table live xml test", () => {
             }
         });
 
-        expect(result.nodes[0].content[0].type).toBe('tableRow');
-        expect(result.nodes[0].content[0].content.length).toBe(2);
-        expect(result.nodes[0].content[0].content[0].content[0].type).toBe("paragraph");
-        expect(result.nodes[0].content[0].content[0].content[0].content[0].type).toBe("text");
-        expect(result.nodes[0].content[0].content[0].content[0].content[0].text).toBe("COL 1 ROW 1");
-        expect(result.nodes[0].content[0].content[1].content[0].type).toBe("paragraph");
-        expect(result.nodes[0].content[0].content[1].content[0].content[0].type).toBe("text");
-        expect(result.nodes[0].content[0].content[1].content[0].content[0].text).toBe("COL 2 ROW 1");
-        expect(result.nodes[0].content[0].attrs.borders).toBeDefined();
+        expect(result[0].content[0].type).toBe('tableRow');
+        expect(result[0].content[0].content.length).toBe(2);
+        expect(result[0].content[0].content[0].content[0].type).toBe("paragraph");
+        expect(result[0].content[0].content[0].content[0].content[0].type).toBe("text");
+        expect(result[0].content[0].content[0].content[0].content[0].text).toBe("COL 1 ROW 1");
+        expect(result[0].content[0].content[1].content[0].type).toBe("paragraph");
+        expect(result[0].content[0].content[1].content[0].content[0].type).toBe("text");
+        expect(result[0].content[0].content[1].content[0].content[0].text).toBe("COL 2 ROW 1");
+        expect(result[0].content[0].attrs.borders).toBeDefined();
 
-        expect(result.nodes[0].content[1].type).toBe('tableRow');
-        expect(result.nodes[0].content[1].content.length).toBe(2);
-        expect(result.nodes[0].content[1].content[0].content[0].type).toBe("paragraph");
-        expect(result.nodes[0].content[1].content[0].content[0].content[0].type).toBe("text");
-        expect(result.nodes[0].content[1].content[0].content[0].content[0].text).toBe("COL 1 ROW 2");
-        expect(result.nodes[0].content[1].content[1].content[0].type).toBe("paragraph");
-        expect(result.nodes[0].content[1].content[1].content[0].content[0].type).toBe("text");
-        expect(result.nodes[0].content[1].content[1].content[0].content[0].text).toBe("COL 2 ROW 2");
-        expect(result.nodes[0].content[1].attrs.borders).toBeDefined();
+        expect(result[0].content[1].type).toBe('tableRow');
+        expect(result[0].content[1].content.length).toBe(2);
+        expect(result[0].content[1].content[0].content[0].type).toBe("paragraph");
+        expect(result[0].content[1].content[0].content[0].content[0].type).toBe("text");
+        expect(result[0].content[1].content[0].content[0].content[0].text).toBe("COL 1 ROW 2");
+        expect(result[0].content[1].content[1].content[0].type).toBe("paragraph");
+        expect(result[0].content[1].content[1].content[0].content[0].type).toBe("text");
+        expect(result[0].content[1].content[1].content[0].content[0].text).toBe("COL 2 ROW 2");
+        expect(result[0].content[1].attrs.borders).toBeDefined();
 
     });
 });
