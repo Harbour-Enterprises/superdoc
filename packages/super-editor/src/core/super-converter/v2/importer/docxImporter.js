@@ -4,6 +4,8 @@ import {twipsToInches} from "../../helpers.js";
 import {tableNodeHandlerEntity} from "./tableImporter.js";
 import {drawingNodeHandlerEntity} from "./imageImporter.js";
 import {
+    handleParagraphNodeChange,
+    nodeTypeChangeAttributeChanger,
     trackChangeNodeHandlerEntity
 } from "./trackChangesImporter.js";
 import {hyperlinkNodeHandlerEntity} from "./hyperlinkImporter.js";
@@ -96,6 +98,8 @@ const createNodeListHandler = (nodeHandlers) => {
      */
     const nodeListHandlerFn = (elements, docx, insideTrackChange) => {
         if (!elements || !elements.length) return [];
+
+        const handlerObj = {handler: nodeListHandlerFn, handlerEntities: nodeHandlers}
         const processedElements = [];
 
         for (let index = 0; index < elements.length; index++) {
@@ -103,7 +107,12 @@ const createNodeListHandler = (nodeHandlers) => {
                 if(res.length > 0) return res;
                 const nodesToHandle = elements.slice(index);
                 if(!nodesToHandle || nodesToHandle.length === 0) return res;
-                return handler.handler(nodesToHandle, docx, {handler: nodeListHandlerFn, handlerEntities: nodeHandlers}, insideTrackChange);
+                const handlerResponse =  handler.handler(nodesToHandle, docx, handlerObj, insideTrackChange);
+                if(handlerResponse.length > 0) {
+                    handleParagraphNodeChange(nodesToHandle[0], handlerResponse[0], docx, handlerObj)
+                    return handlerResponse;
+                }
+                return res
             }, []);
             if(nodes.length === 0)  {
                 console.warn("We have a node that we can't handle!", elements[index])
@@ -116,7 +125,7 @@ const createNodeListHandler = (nodeHandlers) => {
             }
         }
 
-        const aggregatedNodes = listNodeAggregator(processedElements, docx);
+        const aggregatedNodes = listNodeAggregator(processedElements, docx, handlerObj);
 
         return aggregatedNodes;
     }
