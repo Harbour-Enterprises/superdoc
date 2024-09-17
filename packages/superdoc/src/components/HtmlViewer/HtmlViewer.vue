@@ -20,7 +20,7 @@ const emit = defineEmits([
 
 const handleSelectionChange = () => {
   const selection = window.getSelection();
-  console.log('selection from html viewer', selection);
+  console.debug('selection from html viewer', selection);
   emit('selection-change', selection);
 }
 
@@ -37,14 +37,19 @@ const getDocumentHtml = (fileSource) => {
   });
 }
 
-onMounted(async () => {
+const initViewer = async () => {
   try {
     const documentHtml = await getDocumentHtml(props.fileSource);
     documentContent.value = documentHtml;
     emit('ready', props.documentId);
   } catch (error) {
+    emit('error', error);
     console.error('Error loading document', error);
   }
+}
+
+onMounted(async () => {
+  initViewer();
 });
 
 </script>
