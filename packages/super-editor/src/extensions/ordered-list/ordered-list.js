@@ -1,6 +1,6 @@
 import { Node, Attribute } from '@core/index.js';
 import { toKebabCase } from '@harbour-enterprises/common';
-import { generateDocxListAttributes, findParentNode, findChildren } from '@helpers/index.js';
+import { generateDocxListAttributes, findParentNode } from '@helpers/index.js';
 import { Plugin, PluginKey } from 'prosemirror-state';
 
 export const OrderedList = Node.create({

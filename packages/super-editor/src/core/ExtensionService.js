@@ -62,11 +62,19 @@ export class ExtensionService {
   }
 
   /**
+   * Get all attributes defined in the extensions.
+   * @returns Array of attributes.
+   */
+  get attributes() {
+    return Attribute.getAttributesFromExtensions(this.extensions);
+  }
+
+  /**
    * Get all commands defined in the extensions.
    * @returns Object with commands (key - command name, value - function).
    */
   get commands() {
-    let container = {};
+    let commandsObject = {};
 
     for (const extension of this.extensions) {
       const context = {
@@ -79,19 +87,17 @@ export class ExtensionService {
 
       const addCommands = getExtensionConfigField(extension, 'addCommands', context);
       if (addCommands) {
-        container = { 
-          ...container, 
+        commandsObject = { 
+          ...commandsObject, 
           ...addCommands() 
         };
       }
     }
 
-    return container;
+    return commandsObject;
   }
 
   /**
-   * TODO:Artem Add input and paste rules.
-   * 
    * Get all PM plugins defined in the extensions.
    * And also keyboard shortcuts.
    * @returns Array of PM plugins.
@@ -113,20 +119,19 @@ export class ExtensionService {
 
       const addShortcuts = getExtensionConfigField(extension, 'addShortcuts', context);
 
-      let bindingsContainer = {};
+      let bindingsObject = {};
+
       if (addShortcuts) {
         const entries = Object.entries(addShortcuts()).map(([shortcut, method]) => {
           return [shortcut, (...args) => method({ editor, keymapArgs: args })];
         });
-        const bindings = Object.fromEntries(entries);
-
-        bindingsContainer = { ...bindings };
+        bindingsObject = { ...Object.fromEntries(entries) };
       }
 
-      const keymapPlugin = keymap(bindingsContainer);
-      plugins.push(keymapPlugin);
-
+      plugins.push(keymap(bindingsObject));
+      
       const addPmPlugins = getExtensionConfigField(extension, 'addPmPlugins', context);
+
       if (addPmPlugins) {
         const pmPlugins = addPmPlugins();
         plugins.push(...pmPlugins);
@@ -135,17 +140,7 @@ export class ExtensionService {
       return plugins;
     }).flat();
 
-    return [
-      ...allPlugins,
-    ];
-  }
-
-/**
-   * Get all attributes defined in the extensions.
-   * @returns Array of attributes.
-   */
-  get attributes() {
-    return Attribute.getAttributesFromExtensions(this.extensions);
+    return [...allPlugins];
   }
 
   /**
@@ -169,9 +164,10 @@ export class ExtensionService {
         };
 
         const addNodeView = getExtensionConfigField(extension, 'addNodeView', context);
+
         if (!addNodeView) return [];
 
-        const nodeview = (node, view, getPos, decorations) => {
+        const nodeview = (node, _view, getPos, decorations) => {
           const htmlAttributes = Attribute.getAttributesToRender(node, extensionAttrs);
           return addNodeView()({
             editor,

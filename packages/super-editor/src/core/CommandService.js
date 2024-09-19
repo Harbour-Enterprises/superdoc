@@ -37,22 +37,22 @@ export class CommandService {
     const { tr } = state;
     const props = this.createProps(tr);
 
-    const commandEntries = Object.entries(this.rawCommands);
-    const transformed = commandEntries.map(([name, command]) => {
-      const method = (...args) => {
-        const fn = command(...args)(props);
-        
-        if (!tr.getMeta('preventDispatch')) {
-          view.dispatch(tr);
-        }
-        
-        return fn;
-      };
+    const entries = Object.entries(this.rawCommands)
+      .map(([name, command]) => {
+        const method = (...args) => {
+          const fn = command(...args)(props);
 
-      return [name, method];
-    });
+          if (!tr.getMeta('preventDispatch')) {
+            view.dispatch(tr);
+          }
+
+          return fn;
+        };
+
+        return [name, method];
+      });
     
-    return Object.fromEntries(transformed);
+    return Object.fromEntries(entries);
   }
 
   /**
@@ -89,6 +89,7 @@ export class CommandService {
       ) {
         view.dispatch(tr);
       }
+      
       return callbacks.every((cb) => cb === true);
     };
 
@@ -96,11 +97,10 @@ export class CommandService {
       const chainedCommand = (...args) => {
         const props = this.createProps(tr, shouldDispatch);
         const callback = command(...args)(props);
-
         callbacks.push(callback);
-        
         return chain;
       };
+
       return [name, chainedCommand];
     });
 
@@ -108,6 +108,7 @@ export class CommandService {
       ...Object.fromEntries(entries),
       run,
     };
+
     return chain;
   }
 
@@ -120,14 +121,14 @@ export class CommandService {
     const dispatch = false;
     const tr = startTr || state.tr;
     const props = this.createProps(tr, dispatch);
-    const formattedCommands = Object.fromEntries(
+    const commands = Object.fromEntries(
       Object.entries(rawCommands).map(([name, command]) => {
         return [name, (...args) => command(...args)({ ...props, dispatch: undefined })];
       }),
     );
 
     return {
-      ...formattedCommands,
+      ...commands,
       chain: () => this.createChain(tr, dispatch),
     };
   }

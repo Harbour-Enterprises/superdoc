@@ -1,4 +1,4 @@
-import { generateRandomId } from './docxIdGenerator.js';
+import { generateDocxRandomId } from './generateDocxRandomId';
 
 export function generateDocxListAttributes(listType) {
 
@@ -11,11 +11,11 @@ export function generateDocxListAttributes(listType) {
   return {
     attributes: {
       "parentAttributes": {
-        "w14:paraId": generateRandomId(),
-        "w14:textId": generateRandomId(),
-        "w:rsidR": generateRandomId(),
-        "w:rsidRDefault": generateRandomId(),
-        "w:rsidP": generateRandomId(),
+        "w14:paraId": generateDocxRandomId(),
+        "w14:textId": generateDocxRandomId(),
+        "w:rsidR": generateDocxRandomId(),
+        "w:rsidRDefault": generateDocxRandomId(),
+        "w:rsidP": generateDocxRandomId(),
         "paragraphProperties": {
           "type": "element",
           "name": "w:pPr",

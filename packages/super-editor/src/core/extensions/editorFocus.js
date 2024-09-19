@@ -1,6 +1,10 @@
 import { Plugin, PluginKey } from 'prosemirror-state';
 import { Extension } from '../Extension.js';
 
+/**
+ * For reference.
+ * https://prosemirror.net/docs/ref/#history.history
+ */
 export const EditorFocus = Extension.create({
   name: 'editorFocus',
 
@@ -16,7 +20,6 @@ export const EditorFocus = Extension.create({
 
             const tr = editor.state.tr
               .setMeta('focus', { event })
-              // https://prosemirror.net/docs/ref/#history.history
               .setMeta('addToHistory', false);
 
             view.dispatch(tr);
