@@ -150,7 +150,7 @@ const onEditorSelectionChange = ({ editor, transaction }) => {
 
   handleSelectionChange(selection);
 
-  // TODO: Figure out why the selection is being undone here andwe need the delay
+  // TODO: Figure out why the selection is being undone here and we need the delay
   setTimeout(() => {
     const { activeThreadId } = transaction.getMeta('commentsPluginState') || {};
     const document = getDocument(documentId);
@@ -268,8 +268,14 @@ const showCommentsSidebar = computed(() => {
         )
 });
 
-const showToolsFloatingMenu = computed(() => toolsMenuPosition.top && !getConfig.value?.readOnly)
-const showActiveSelection = computed(() => !getConfig?.readOnly && selectionPosition.value)
+const showToolsFloatingMenu = computed(() => {
+  if (!isCommentsEnabled.value) return false;
+  return toolsMenuPosition.top && !getConfig.value?.readOnly;
+});
+const showActiveSelection = computed(() => {
+  if (!isCommentsEnabled.value) return false;
+  !getConfig?.readOnly && selectionPosition.value
+});
 
 onMounted(() => {
   if (isCommentsEnabled.value && !modules.comments.readOnly) {
@@ -302,7 +308,7 @@ const getSelectionPosition = computed(() => {
 });
 
 const handleSelectionChange = (selection) => {
-  if (!selection.selectionBounds) return;
+  if (!selection.selectionBounds || !isCommentsEnabled.value) return;
 
   const x = selection.selectionBounds.left;
   const y = selection.selectionBounds.top;
@@ -372,6 +378,7 @@ const handleDragEnd = (e) => {
 }
 
 const handlePdfClick = (e) => {
+  if (!isCommentsEnabled.value) return;
   isDragging.value = true;
   handleSelectionStart(e);
 }
@@ -393,7 +400,12 @@ const handlePdfClick = (e) => {
 
     <div class="document">
 
-      <div class="selection-layer" @mousedown="handleSelectionStart" @mouseup="handleDragEnd" ref="selectionLayer">
+      <div
+          v-if="isCommentsEnabled"
+          class="selection-layer"
+          @mousedown="handleSelectionStart"
+          @mouseup="handleDragEnd"
+          ref="selectionLayer">
         <div :style="getSelectionPosition" class="sd-highlight sd-initial-highlight temp-selection"></div>
       </div>
 
