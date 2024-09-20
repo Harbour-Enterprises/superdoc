@@ -28,7 +28,7 @@ export const FieldAnnotation = Node.create({
       },
       annotationClass,
       annotationContentClass,
-      types: ['text', 'image', 'signature', 'checkbox'], // annotation types
+      types: ['text', 'image', 'signature', 'checkbox', 'html'], // annotation types
       defaultType: 'text',
       borderColor: '#b015b3',
       visibilityOptions: ['visible', 'hidden'],
@@ -66,6 +66,17 @@ export const FieldAnnotation = Node.create({
         parseDOM: (elem) => {
           let img = elem.querySelector('img');
           return img?.getAttribute('src') || null;
+        },
+      },
+
+      rawHtml: {
+        default: null,
+        parseDOM: (elem) => elem.getAttribute('data-raw-html'),
+        renderDOM: (attrs) => {
+          if (!attrs.rawHtml) return {};
+          return {
+            'data-raw-html': attrs.rawHtml,
+          };
         },
       },
 
@@ -142,9 +153,23 @@ export const FieldAnnotation = Node.create({
   },
 
   renderDOM({ node, htmlAttributes }) {
-    let { type, displayLabel, imageSrc } = node.attrs;
+    let { type, displayLabel, imageSrc, rawHtml } = node.attrs;
 
-    if (type === 'image' || type === 'signature') {
+    let textRenderer = () => {
+      return [
+        'span',
+        Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes),
+        [
+          'span',
+          {
+            class: `${this.options.annotationContentClass}`,
+          },
+          displayLabel,
+        ],
+      ];
+    };
+
+    let imageRenderer = () => {
       let contentRenderer = () => {      
         if (!imageSrc) return displayLabel;
         return [
@@ -167,20 +192,20 @@ export const FieldAnnotation = Node.create({
           contentRenderer(),
         ],
       ];
-    }
+    };
 
-    // `text` type
-    return [
-      'span',
-      Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes),
-      [
-        'span',
-        {
-          class: `${this.options.annotationContentClass}`,
-        },
-        displayLabel,
-      ],
-    ];
+    let renderers = {
+      text: () => textRenderer(),
+      image: () => imageRenderer(),
+      signature: () => imageRenderer(),
+      checkbox: () => textRenderer(),
+      html: () => textRenderer(),
+      default: () => textRenderer(),
+    };
+
+    let renderer = renderers[type] ?? type.default;
+    
+    return renderer();
   },
 
   addCommands() {

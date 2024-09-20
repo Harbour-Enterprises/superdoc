@@ -47,6 +47,7 @@ export class FieldAnnotationView {
       image: (...args) => this.buildImageView(...args),
       signature: (...args) => this.buildSignatureView(...args),
       checkbox: (...args) => this.buildCheckboxView(...args),
+      html: (...args) => this.buildHTMLView(...args),
       default: (...args) => this.buildTextView(...args),
     };
 
@@ -59,7 +60,7 @@ export class FieldAnnotationView {
     let { displayLabel } = this.node.attrs;
 
     let { annotation } = this.#createAnnotation({
-      displayLabel
+      displayLabel,
     });
     
     this.dom = annotation;
@@ -82,7 +83,7 @@ export class FieldAnnotationView {
       annotation.style.display = 'inline-block';
       content.style.display = 'inline-block';
     } else {
-      content.innerHTML = displayLabel;
+      content.textContent = displayLabel;
     }
 
     this.dom = annotation;
@@ -108,7 +109,7 @@ export class FieldAnnotationView {
       annotation.style.display = 'inline-block';
       content.style.display = 'inline-block';
     } else {
-      content.innerHTML = displayLabel;
+      content.textContent = displayLabel;
     }
 
     this.dom = annotation;
@@ -118,9 +119,26 @@ export class FieldAnnotationView {
     let { displayLabel } = this.node.attrs;
     
     let { annotation } = this.#createAnnotation({
-      displayLabel
+      displayLabel,
     });
     
+    this.dom = annotation;
+  }
+
+  buildHTMLView() {
+    let { displayLabel, rawHtml } = this.node.attrs;
+
+    let { annotation, content } = this.#createAnnotation();
+
+    if (rawHtml) {
+      content.innerHTML = rawHtml.trim();
+
+      annotation.style.display = 'inline-block';
+      content.style.display = 'inline-block';
+    } else {
+      content.textContent = displayLabel;
+    }
+
     this.dom = annotation;
   }
 
@@ -136,7 +154,7 @@ export class FieldAnnotationView {
     content.contentEditable = 'false';
 
     if (displayLabel) {
-      content.innerHTML = displayLabel;
+      content.textContent = displayLabel;
     }
     
     annotation.append(content);
