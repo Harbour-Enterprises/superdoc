@@ -117,8 +117,9 @@ const onEditorCreate = ({ editor }) => {
 
     let signer = signersListInfo.value.find((signer) => signer.signerindex === activeSigner.value);
     editor.commands.addFieldAnnotation(pos, {
-      displayLabel: 'Enter your info',
+      displayLabel: 'Text field',
       fieldId: `agreementinput-${Date.now()}-${Math.floor(Math.random() * 1000000000000)}`,
+      // fieldId: `111`,
       fieldType: 'TEXTINPUT',
       fieldColor: signer?.signercolor,
     });
@@ -137,6 +138,62 @@ const onEditorCreate = ({ editor }) => {
 onMounted(async () => {
   handleNewFile(await getFileObject(BlankDOCX, 'blank_document.docx', DOCX));
 });
+
+const onTextFieldInput = (event) => {
+  let value = event.target.value || 'Enter your info';
+  let id = event.target.dataset.id;
+
+  activeEditor.value?.commands.updateFieldAnnotations(id, {
+    displayLabel: value,
+  });
+};
+
+const onImageFieldInput = (event) => {
+  let value = event.target.value || null;
+  let id = event.target.dataset.id;
+
+  activeEditor.value?.commands.updateFieldAnnotations(id, {
+    imageSrc: value,
+  });
+};
+
+const onHtmlFieldInput = (event) => {
+  let value = event.target.value || null;
+  let id = event.target.dataset.id;
+
+  activeEditor.value?.commands.updateFieldAnnotations(id, {
+    rawHtml: value,
+  });
+};
+
+const onDropdownFieldInput = (event) => {
+  let value = event.target.value || 'Select option';
+  let id = event.target.dataset.id;
+
+  activeEditor.value?.commands.updateFieldAnnotations(id, {
+    displayLabel: value,
+  });
+};
+
+const onYesNoFieldInput = (event) => {
+  let value = event.target.value;
+  let id = event.target.dataset.id;
+
+  activeEditor.value?.commands.updateFieldAnnotations(id, {
+    displayLabel: value,
+  });
+};
+
+const onCheckboxFieldInput = (event) => {
+  let value = event.target.checked;
+  let id = event.target.dataset.id;
+
+  let label = value ? 'x' : '  ';
+
+  activeEditor.value?.commands.updateFieldAnnotations(id, {
+    displayLabel: label,
+  });
+};
 </script>
 
 <template>
@@ -177,6 +234,68 @@ onMounted(async () => {
               <div id="superdoc"></div>
             </div>
           </div>
+        </div>
+
+        <div>
+          <div>Text fields</div><br>
+          <div>
+            <label for="">Enter your info </label> 
+            <input @input="onTextFieldInput" type="text" data-id="111">
+          </div><br>
+          <div>
+            <label for="">Enter your info </label>
+            <input @input="onTextFieldInput" type="text" data-id="222">
+          </div>
+          <br><br>
+          
+          <div>Image fields</div><br>
+          <div>
+            <label for="">Signature </label> 
+            <input @input="onImageFieldInput" type="text" data-id="333">
+          </div><br>
+          <div>
+            <label for="">Image </label>
+            <input @input="onImageFieldInput" type="text" data-id="444">
+          </div>
+          <br><br>
+
+          <div>Html field</div><br>
+          <div>
+            <label for="">Paragraph </label> 
+            <input @input="onHtmlFieldInput" type="text" data-id="555">
+          </div>
+          <br><br>
+
+          <div>Dropdown field</div><br>
+          <div>
+            <label for="">Options </label> 
+            <select @input="onDropdownFieldInput" data-id="666">
+              <option disabled selected value="">Select option</option>
+              <option>Option 1</option>
+              <option>Option 2</option>
+            </select>
+          </div>
+          <br><br>
+
+          <div>Yes/No field</div><br>
+          <div> 
+            <label for="">Yes</label>
+            <input type="radio" id="yes" name="yesno" value="Yes" @input="onYesNoFieldInput" data-id="777" />
+            <label for="">No</label>
+            <input type="radio" id="no" name="yesno" value="No" @input="onYesNoFieldInput" data-id="777" />
+          </div>
+          <br><br>
+
+          <div>Checkbox fields</div><br>
+          <div> 
+            <label for="">Checkbox 1</label>
+            <input type="checkbox" @input="onCheckboxFieldInput" data-id="888" />
+            <label for="">Checkbox 2</label>
+            <input type="checkbox" @input="onCheckboxFieldInput" data-id="999" />
+          </div>
+          <br><br>
+
+
         </div>
       </div>
 
