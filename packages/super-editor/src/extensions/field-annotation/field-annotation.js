@@ -123,10 +123,17 @@ export const FieldAnnotation = Node.create({
 
       hidden: {
         default: false,
-        parseDOM: (elem) => elem.hasAttribute('hidden') ? true : null,
+        parseDOM: (elem) => {
+          let hasHiddenAttr = elem.hasAttribute('hidden');
+          let hasDisplayNoneStyle = elem.style.display === 'none';
+          let isHidden = hasHiddenAttr || hasDisplayNoneStyle;
+          return isHidden ? true : null;
+        },
         renderDOM: (attrs) => {
           if (!attrs.hidden) return {};
-          return { hidden: '' };
+          return { 
+            style: 'display: none',
+          };
         },
       },
 
@@ -339,6 +346,7 @@ export const FieldAnnotation = Node.create({
        * Set `hidden` for annotations matching predicate.
        * Other annotations become unhidden.
        * @param predicate The predicate function.
+       * @param unsetFromOthers If should unset hidden from other annotations.
        * @example 
        * editor.commands.setFieldAnnotationsHiddenByCondition((node) => {
        *   let ids = ['111', '222', '333'];
@@ -347,6 +355,7 @@ export const FieldAnnotation = Node.create({
        */
       setFieldAnnotationsHiddenByCondition: (
         predicate = () => false,
+        unsetFromOthers = false,
       ) => ({
         dispatch,
         state,
@@ -363,10 +372,16 @@ export const FieldAnnotation = Node.create({
             else otherAnnotations.push(annotation);
           });
 
-          return chain()
-            .updateFieldAnnotationsAttributes(matchedAnnotations, { hidden: true })
-            .updateFieldAnnotationsAttributes(otherAnnotations, { hidden: false })
-            .run();
+          if (unsetFromOthers) {
+            return chain()
+              .updateFieldAnnotationsAttributes(matchedAnnotations, { hidden: true })
+              .updateFieldAnnotationsAttributes(otherAnnotations, { hidden: false })
+              .run();
+          } else {
+            return chain()
+              .updateFieldAnnotationsAttributes(matchedAnnotations, { hidden: true })
+              .run();
+          }
         }
 
         return true;

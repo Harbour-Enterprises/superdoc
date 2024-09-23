@@ -10,6 +10,7 @@ import { fieldAnnotationHelpers } from '@harbour-enterprises/super-editor';
 
 /* For local dev */
 let superdoc = shallowRef(null);
+let activeEditor = shallowRef(null);
 
 const currentFile = ref(null);
 const getFileObject = async (fileUrl, name, type) => {
@@ -54,7 +55,17 @@ const initializeApp = async () => {
   }
   superdoc.value = new Superdoc(config);
   
-  attachEditorEventsHandlers();
+  superdoc.value.on('editorCreate', onEditorCreate);
+};
+
+const exportDocx = async () => {
+  const result = await activeEditor.value?.exportDocx();
+  const blob = new Blob([result], { type: DOCX });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'exported.docx';
+  a.click();
 };
 
 /* Inputs pane and field annotations */
@@ -94,35 +105,32 @@ const updateActiveSigner = (signerIdx) => {
   activeSigner.value = signerIdx;
 };
 
-const attachEditorEventsHandlers = () => {
-  const onEditorCreate = ({ editor }) => {
-    
-    editor.on('fieldAnnotationDropped', ({ 
-      sourceField,
-      editor,
-      pos 
-    }) => {
-      console.log('fieldAnnotationDropped', { sourceField });
+const onEditorCreate = ({ editor }) => {
+  activeEditor.value = editor;
 
-      let signer = signersListInfo.value.find((signer) => signer.signerindex === activeSigner.value);
-      editor.commands.addFieldAnnotation(pos, {
-        displayLabel: 'Enter your info',
-        fieldId: `agreementinput-${Date.now()}-${Math.floor(Math.random() * 1000000000000)}`,
-        fieldType: 'TEXTINPUT',
-        fieldColor: signer?.signercolor,
-      });
+  editor.on('fieldAnnotationDropped', ({ 
+    sourceField,
+    editor,
+    pos 
+  }) => {
+    console.log('fieldAnnotationDropped', { sourceField });
+
+    let signer = signersListInfo.value.find((signer) => signer.signerindex === activeSigner.value);
+    editor.commands.addFieldAnnotation(pos, {
+      displayLabel: 'Enter your info',
+      fieldId: `agreementinput-${Date.now()}-${Math.floor(Math.random() * 1000000000000)}`,
+      fieldType: 'TEXTINPUT',
+      fieldColor: signer?.signercolor,
     });
+  });
 
-    editor.on('fieldAnnotationClicked', (params) => {
-      console.log('fieldAnnotationClicked', { params });
-    });
+  editor.on('fieldAnnotationClicked', (params) => {
+    console.log('fieldAnnotationClicked', { params });
+  });
 
-    editor.on('fieldAnnotationSelected', (params) => {
-      console.log('fieldAnnotationSelected', { params });
-    });
-  };
-
-  superdoc.value?.on('editorCreate', onEditorCreate);
+  editor.on('fieldAnnotationSelected', (params) => {
+    console.log('fieldAnnotationSelected', { params });
+  });
 };
 /* Inputs pane and field annotations */
 
@@ -146,7 +154,7 @@ onMounted(async () => {
           </div>
         </div>
         <div class="dev-app__header-side dev-app__header-side--right">
-          <!-- -->
+          <button class="dev-app__header-export-btn" @click="exportDocx">Export Docx</button>
         </div>
       </div>
 
