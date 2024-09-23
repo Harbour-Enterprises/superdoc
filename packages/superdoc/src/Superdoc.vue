@@ -65,7 +65,7 @@ const toolsMenuPosition = reactive({ top: null, right: '-25px', zIndex: 10 });
 // Hrbr Fields
 const hrbrFieldsLayer = ref(null);
 
-const handlePdfReady = (documentId, container) => {
+const handleDocumentReady = (documentId, container) => {
   const doc = getDocument(documentId);
   doc.isReady = true;
   doc.container = container;
@@ -434,7 +434,10 @@ const handlePdfClick = (e) => {
             v-if="doc.type === PDF"
             :document-data="doc"
             @selection-change="handleSelectionChange"
-            @ready="handlePdfReady" 
+            @selection-drag="handleSelectionDrag"
+            @selection-drag-end="handleSelectionDragEnd"
+            @ready="handleDocumentReady" 
+            @page-loaded="handlePageReady"
             @bypass-selection="handlePdfClick" />
 
         <SuperEditor
@@ -446,6 +449,8 @@ const handlePdfClick = (e) => {
           <!-- omitting field props -->
           <HtmlViewer
               v-if="doc.type === HTML"
+              @ready="(id) => handleDocumentReady(id, null)" 
+              @selection-change="handleSelectionChange"
               :file-source="doc.data"
               :document-id="doc.id" />
       </div>
