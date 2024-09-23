@@ -75,6 +75,9 @@ export class FieldAnnotationView {
       let img = document.createElement('img');
       img.src = imageSrc;
       img.alt = displayLabel;
+
+      img.style.height = 'auto';
+      img.style.maxWidth = '100%';
       img.style.pointerEvents = 'none';
       img.style.verticalAlign = 'middle';
 
@@ -100,9 +103,12 @@ export class FieldAnnotationView {
       let img = document.createElement('img');
       img.src = imageSrc;
       img.alt = displayLabel;
+
+      img.style.height = 'auto';
+      img.style.maxWidth = '100%';
+      img.style.maxHeight = '28px';
       img.style.pointerEvents = 'none';
       img.style.verticalAlign = 'middle';
-      img.style.maxHeight = '30px';
       
       content.append(img);
 
