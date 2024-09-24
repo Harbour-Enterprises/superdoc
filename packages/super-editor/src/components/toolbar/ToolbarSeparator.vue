@@ -18,13 +18,8 @@ const props = defineProps({
 <style scoped>
 .toolbar-separator {
   height: 32px;
-  /* padding-left: 12px;
-  padding-right: 12px; */
   border-radius: 6px;
-  margin-top: 3.5px;
-  margin-bottom: 4px;
   text-overflow: ellipsis;
-  overflow-y: visible;
   display: flex;
   align-items: center;
   justify-content: center;

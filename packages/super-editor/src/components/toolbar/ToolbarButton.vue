@@ -116,17 +116,15 @@ const getStyle = computed(() => {
 .toolbar-item {
   position: relative;
   z-index: 100;
-  margin: 0 1px;
   min-width: 30px;
+  margin: 0 1px;
 }
 
 .toolbar-button {
-  padding: 0;
+  padding: 5px;
   height: 32px;
   max-height: 32px;
   border-radius: 6px;
-  margin-top: 3.5px;
-  margin-bottom: 4px;
 
   overflow-y: visible;
   display: flex;
@@ -137,9 +135,6 @@ const getStyle = computed(() => {
   transition: all 0.2s ease-out;
   user-select: none;
   position: relative;
-}
-.dropdown-caret {
-  margin-right: 5px;
 }
 .toolbar-button:hover {
   background-color: #DBDBDB;
@@ -157,10 +152,9 @@ const getStyle = computed(() => {
   font-weight: 400;
   font-size: 15px;
   margin: 5px;
-  text-align: center;
 }
-.toolbar-icon {
-  margin: 0 5px;
+.toolbar-icon + .dropdown-caret {
+  margin-left: 4px;
 }
 
 .left, .right {

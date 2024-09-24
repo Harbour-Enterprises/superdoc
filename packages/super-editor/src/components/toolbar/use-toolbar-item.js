@@ -134,7 +134,6 @@ export const useToolbarItem = (options) => {
     defaultLabel,
     label,
     hideLabel,
-    disabled,
     inlineTextInputVisible,
     hasInlineTextInput,
     isMobile,

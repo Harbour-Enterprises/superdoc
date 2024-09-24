@@ -22,12 +22,10 @@ const props = defineProps({
 const currentItem = ref(null);
 const styleMap = {
   left: {
-    paddingLeft: '20px',
     minWidth: '150px',
     justifyContent: 'flex-start',
   },
   right: {
-    paddingRight: '20px',
     minWidth: '150px',
     justifyContent: 'flex-end',
   },
@@ -65,9 +63,9 @@ const closeDropdowns = () => {
   currentItem.value = null;
 }
 
-const handleSelect = (item, argument) => {
+const handleSelect = (item, option) => {
   closeDropdowns();
-  emit('command', { item, argument });
+  emit('command', { item, argument: option.label });
 }
 
 const handleClickOutside = (e) => {
@@ -80,7 +78,7 @@ const handleClickOutside = (e) => {
 
   <div :style="getPositionStyle" class="button-group">
     
-    <div v-for="item, index in toolbarItems"
+    <div v-for="(item, index) in toolbarItems"
       :key="index"
       :class="{
         narrow: item.isNarrow.value,
@@ -103,7 +101,7 @@ const handleClickOutside = (e) => {
           size="medium"
           placement="bottom-start"
           class="toolbar-button toolbar-dropdown"
-          @select="handleSelect(item, $event)"
+          @select="(key, option) => handleSelect(item, option)"
           @clickoutside="handleClickOutside">
             <n-tooltip trigger="hover">
               <template #trigger>
