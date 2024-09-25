@@ -165,7 +165,6 @@ export const useCommentsStore = defineStore('comments', () => {
   return {
     COMMENT_EVENTS,
     hasInitializedComments,
-    getConfig,
     activeComment,
     commentDialogs,
     overlappingComments,
