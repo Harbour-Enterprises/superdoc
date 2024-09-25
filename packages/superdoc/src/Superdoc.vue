@@ -293,16 +293,20 @@ const isDragging = ref(false);
 
 const getSelectionPosition = computed(() => {
   if (!selectionPosition.value || selectionPosition.value.source === 'super-editor') {
-    return { top: null, left: null, right: null, bottom: null };
+    return { x: null, y: null };
   };
 
+  const top = selectionPosition.value.top;
+  const left = selectionPosition.value.left;
+  const right = selectionPosition.value.right;
+  const bottom = selectionPosition.value.bottom;
   const style = {
     zIndex: 500,
     borderRadius: '4px',
-    top: selectionPosition.value.top + 'px',
-    left: selectionPosition.value.left + 'px',
-    height: selectionPosition.value.height + 'px',
-    width: selectionPosition.value.width + 'px',
+    top: top + 'px',
+    left: left + 'px',
+    height: Math.abs(top - bottom) + 'px',
+    width: Math.abs(left - right) + 'px',
   }
   return style;
 });
@@ -310,11 +314,22 @@ const getSelectionPosition = computed(() => {
 const handleSelectionChange = (selection) => {
   if (!selection.selectionBounds || !isCommentsEnabled.value) return;
 
-  const x = selection.selectionBounds.left;
-  const y = selection.selectionBounds.top;
-  const x2 = selection.selectionBounds.right;
-  const y2 = selection.selectionBounds.bottom;
-  updateSelection({ x, y, x2, y2, source: selection.source.value });
+
+  updateSelection({
+    startX: selection.selectionBounds.left,
+    startY: selection.selectionBounds.top,
+    x: selection.selectionBounds.right,
+    y: selection.selectionBounds.bottom,
+    source: selection.source,
+  });
+
+  const selectionIsWideEnough = Math.abs(selectionPosition.value.left - selectionPosition.value.right) > 5;
+  const selectionIsTallEnough = Math.abs(selectionPosition.value.top - selectionPosition.value.bottom) > 5;
+  if (!selectionIsWideEnough || !selectionIsTallEnough) {
+    selectionLayer.value.style.pointerEvents = 'none';
+    resetSelection();
+    return;
+  }
 
   activeSelection.value = selection
 
@@ -327,49 +342,82 @@ const handleSelectionChange = (selection) => {
   toolsMenuPosition.top = top - 20 + 'px';
 }
 
-const updateSelection = ({ x, y, x2, y2, source }) => {
+const resetSelection = () => {
+  selectionPosition.value = null;
+};
 
-  if (y != null) {
+const updateSelection = ({ startX, startY, x, y, source }) => {
+  const hasStartCoords = startX || startY;
+  const hasEndCoords = x || y;
+
+  if (!hasStartCoords && !hasEndCoords) {
+    return selectionPosition.value = null;
+  }
+
+  // Initialize the selection position
+  if (!selectionPosition.value) {
+    if (startY <= 0 || startX <= 0) return;
+    selectionPosition.value = {
+      top: startY,
+      left: startX,
+      right: startX,
+      bottom: startY,
+      startX,
+      startY,
+      source
+    };
+  };
+
+  if (startX) selectionPosition.value.startX = startX;
+  if (startY) selectionPosition.value.startY = startY;
+
+  // Reverse the selection if the user drags up or left
+  const selectionTop = selectionPosition.value.startY;
+  if (y < selectionTop) {
     selectionPosition.value.top = y;
-    selectionPosition.value.height = 0;
+  } else {
+    selectionPosition.value.bottom = y;
   }
-  if (x != null) {
-    selectionPosition.value.left = x;
-    selectionPosition.value.width = 0;
-  }
-  if (y2 != null) selectionPosition.value.height = y2 - selectionPosition.value.top;
-  if (x2 != null) selectionPosition.value.width = x2 - selectionPosition.value.left;
 
-  selectionPosition.value.source = source;
+  const selectionLeft = selectionPosition.value.startX;
+  if (x < selectionLeft) {
+    selectionPosition.value.left = x;
+  } else {
+    selectionPosition.value.right = x;
+  }
 };
 
 const handleSelectionStart = (e) => {
+  resetSelection();
   selectionLayer.value.style.pointerEvents = 'auto';
 
-  isDragging.value = true;
-  const y = e.offsetY / activeZoom.value
-  const x = e.offsetX / activeZoom.value
-  updateSelection({ x, y, x2: 0, y2: 0 });
-  selectionLayer.value.addEventListener('mousemove', handleDragMove);
+  nextTick(() => {
+    isDragging.value = true;
+    const y = e.offsetY / activeZoom.value
+    const x = e.offsetX / activeZoom.value
+    updateSelection({ startX: x, startY: y });
+    selectionLayer.value.addEventListener('mousemove', handleDragMove);
+  })
 };
 
 const handleDragMove = (e) => {
   if (!isDragging.value) return;
-  const y2 = e.offsetY / activeZoom.value;
-  const x2 = e.offsetX / activeZoom.value;
-  updateSelection({ x2, y2 })
+  const y = e.offsetY / activeZoom.value;
+  const x = e.offsetX / activeZoom.value;
+  updateSelection({ x, y })
 };
 
 const handleDragEnd = (e) => {
   if (!isDragging.value) return;
   selectionLayer.value.removeEventListener('mousemove', handleDragMove);
 
+  if (!selectionPosition.value) return;
   const selection = useSelection({
     selectionBounds: {
       top: selectionPosition.value.top,
       left: selectionPosition.value.left,
-      right: selectionPosition.value.left + selectionPosition.value.width,
-      bottom: selectionPosition.value.top + selectionPosition.value.height,
+      right: selectionPosition.value.right,
+      bottom: selectionPosition.value.bottom,
     },
     documentId: documents.value[0].id,
   });
@@ -379,6 +427,7 @@ const handleDragEnd = (e) => {
 
 const handlePdfClick = (e) => {
   if (!isCommentsEnabled.value) return;
+  resetSelection();
   isDragging.value = true;
   handleSelectionStart(e);
 }
@@ -406,7 +455,7 @@ const handlePdfClick = (e) => {
           @mousedown="handleSelectionStart"
           @mouseup="handleDragEnd"
           ref="selectionLayer">
-        <div :style="getSelectionPosition" class="sd-highlight sd-initial-highlight temp-selection"></div>
+        <div :style="getSelectionPosition" class="sd-highlight sd-initial-highlight temp-selection" v-if="selectionPosition"></div>
       </div>
 
       <!-- Fields layer -->
@@ -434,8 +483,6 @@ const handlePdfClick = (e) => {
             v-if="doc.type === PDF"
             :document-data="doc"
             @selection-change="handleSelectionChange"
-            @selection-drag="handleSelectionDrag"
-            @selection-drag-end="handleSelectionDragEnd"
             @ready="handleDocumentReady" 
             @page-loaded="handlePageReady"
             @bypass-selection="handlePdfClick" />

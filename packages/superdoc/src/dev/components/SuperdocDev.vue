@@ -199,7 +199,6 @@ onMounted(async () => {
   width: 100%;
 }
 .superdoc .layers {
-  cursor: text;
   background-color: white;
   border-radius: 16px;
   border: 1px solid #d3d3d3 !important;
