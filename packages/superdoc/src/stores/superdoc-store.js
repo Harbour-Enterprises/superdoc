@@ -64,6 +64,10 @@ export const useSuperdocStore = defineStore('superdoc', () => {
       const smartDoc = useDocument(doc, config);
       documents.value.push(smartDoc);
     });
+
+    if ('comments' in modules) {
+      commentsStore.suppressInternalExternal = modules.comments.suppressInternalExternal || false;
+    }
     isReady.value = true;
   };
 

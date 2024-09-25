@@ -76,12 +76,7 @@ export class Superdoc extends EventEmitter {
     // Required editors
     this.readyEditors = 0;
 
-    this.users = [
-      { name: 'Nick Bernal', email: 'nick@harbourshare.com' },
-      { name: 'Artem Nistuley', email: 'nick@harbourshare.com' },
-      { name: 'Matthew Connelly', email: 'matthew@harbourshare.com' },
-      { name: 'Eric Doversberger', email: 'eric@harbourshare.com' }
-    ]
+    this.users = config.users || [];
 
     // If a toolbar element is provided, render a toolbar
     this.addToolbar(this);
