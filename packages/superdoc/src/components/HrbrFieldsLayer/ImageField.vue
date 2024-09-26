@@ -27,8 +27,9 @@ const getStyle = computed(() => {
 </script>
 
 <template>
-  <div class="image-field" v-if="field.value" :style="getStyle">
-    <img :src="field.value" alt="image" :style="getStyle" />
+  <div class="image-field" :style="getStyle">
+    <img v-if="field.value" :src="field.value" alt="image" :style="getStyle" />
+    <span v-else>{{ field.placeholder || field.label }}</span>
   </div> 
 </template>
 

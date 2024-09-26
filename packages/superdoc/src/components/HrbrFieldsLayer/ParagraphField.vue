@@ -28,7 +28,8 @@ const getStyle = computed(() => {
 </script>
 
 <template>
-  <div class="paragraph-field" :style="getStyle" v-html="field.value"></div>
+  <div class="paragraph-field" :style="getStyle" v-if="field.value" v-html="field.value"></div>
+  <span v-else>{{ field.placeholder || field.label }}</span>
 </template>
 
 <style scoped>

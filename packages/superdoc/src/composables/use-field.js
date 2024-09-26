@@ -5,7 +5,7 @@ export function useFieldValueWatcher(field, originalValue) {
   const rawField = field;
 
   const original = originalValue;
-  const valueIsObject = typeof originalValue === 'object';
+  const valueIsObject = originalValue !== null && typeof originalValue === 'object';
   const value = valueIsObject ? reactive({...originalValue}) : ref(originalValue);
   const change = ref(null);
 

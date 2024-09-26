@@ -35,7 +35,7 @@ const handleBlur = (e) => {
 
 <template>
   <div class="text-field" :style="getStyle">
-    {{ field.value }}
+    {{ field.value || field.placeholder }}
   </div>
 </template>
 
