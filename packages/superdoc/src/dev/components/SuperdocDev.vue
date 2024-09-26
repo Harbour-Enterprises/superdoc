@@ -3,22 +3,16 @@ import '@harbour-enterprises/common/styles/common-styles.css';
 import { nextTick, onMounted, ref, shallowRef } from 'vue';
 import { Superdoc } from '@core/index.js';
 import { DOCX, PDF, HTML } from '@harbour-enterprises/common';
-import { BasicUpload } from '@harbour-enterprises/common';
+import { BasicUpload, getFileObject } from '@harbour-enterprises/common';
+import { fieldAnnotationHelpers } from '@harbour-enterprises/super-editor';
 import BlankDOCX from '@harbour-enterprises/common/data/blank.docx?url';
 import EditorInputs from './EditorInputs.vue';
-import { fieldAnnotationHelpers } from '@harbour-enterprises/super-editor';
 
 /* For local dev */
 let superdoc = shallowRef(null);
 let activeEditor = shallowRef(null);
 
 const currentFile = ref(null);
-const getFileObject = async (fileUrl, name, type) => {
-  // Generate a file url
-  const response = await fetch(fileUrl);
-  const blob = await response.blob();
-  return new File([blob], name, { type });
-}
 
 const handleNewFile = async (file) => {
   // Generate a file url

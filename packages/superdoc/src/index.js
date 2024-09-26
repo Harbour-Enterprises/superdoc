@@ -4,12 +4,13 @@ import {
   helpers as superEditorHelpers, 
   fieldAnnotationHelpers 
 } from '@harbour-enterprises/super-editor';
-import { DOCX, PDF, HTML } from '@harbour-enterprises/common';
+import { DOCX, PDF, HTML, getFileObject } from '@harbour-enterprises/common';
 import BlankDOCX from '@harbour-enterprises/common/data/blank.docx?url';
 
 export { 
   Superdoc,
   BlankDOCX,
+  getFileObject,
 
   // Allowed types
   DOCX,
