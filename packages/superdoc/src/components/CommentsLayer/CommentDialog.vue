@@ -13,7 +13,7 @@ import InternalDropdown from './InternalDropdown.vue'
 const superdocStore = useSuperdocStore();
 const commentsStore = useCommentsStore();
 const { COMMENT_EVENTS } = commentsStore;
-const { getConfig, activeComment, pendingComment, floatingCommentsOffset } = storeToRefs(commentsStore);
+const { getConfig, activeComment, pendingComment, floatingCommentsOffset, suppressInternalExternal } = storeToRefs(commentsStore);
 const { areDocumentsReady, getDocument } = superdocStore;
 const { selectionPosition, activeZoom } = storeToRefs(superdocStore);
 const { proxy } = getCurrentInstance();
@@ -315,7 +315,7 @@ onMounted(() => {
       ref="currentElement">
 
     <!-- internal/external dropdown when conversation has comments -->
-    <div v-if="!pendingComment && !data.isTrackedChange" class="existing-internal-input">
+    <div v-if="!pendingComment && !data.isTrackedChange && !suppressInternalExternal" class="existing-internal-input">
       <InternalDropdown
           class="internal-dropdown"
           :state="props.data.isInternal ? 'internal' : 'external'"
@@ -359,12 +359,12 @@ onMounted(() => {
               title="Mark done and hide comment thread">
           </i>
           
-          <n-dropdown
+          <!-- <n-dropdown
               trigger="click"
               :options="overflowOptions"
               @select="handleOverflowSelection(index, item, $event)">
                 <i class="fal fa-ellipsis-v" title="More options"></i>
-          </n-dropdown>
+          </n-dropdown> -->
         </div>
       </div>
 
@@ -384,7 +384,7 @@ onMounted(() => {
       <div class="card-section comment-body" v-else>
         <div class="comment" v-if="item !== isEditing" v-html="item.comment"></div>
 
-        <div class="comment-editing" v-else-if="item === isEditing">
+        <div class="comment-editing" v-else-if="item === isEditing && !getConfig.readOnly">
           <div class="comment-entry" :class="{ 'input-active': isFocused }">
             <SuperInput 
               class="superdoc-field" 
@@ -405,7 +405,7 @@ onMounted(() => {
     </div>
 
     <!-- New comment entry -->
-    <div class="input-section" v-if="showInputSection">
+    <div class="input-section" v-if="showInputSection && !getConfig.readOnly">
       <div class="comment-header">
         <div class="comment-header-left">
           <div class="avatar">
@@ -428,12 +428,12 @@ onMounted(() => {
       </div>
       <InternalDropdown
           class="internal-dropdown initial-internal-dropdown"
-          v-if="pendingComment"
+          v-if="pendingComment && !suppressInternalExternal"
           @select="setConversationInternal($event)" />
     </div>
 
     <!-- footer buttons -->
-    <div class="comment-footer" v-if="showButtons">
+    <div class="comment-footer" v-if="showButtons && !getConfig.readOnly">
       <button class="sd-button" @click.stop.prevent="cancelComment">Cancel</button>
       <button class="sd-button primary" @click.stop.prevent="addComment">Comment</button>
     </div>

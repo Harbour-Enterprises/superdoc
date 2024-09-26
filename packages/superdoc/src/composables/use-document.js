@@ -33,13 +33,14 @@ export default function useDocument(params, superdocConfig) {
   const rawFields = ref(params.fields || []);
   const fields = ref(params.fields?.map((f) => useField(f)) || []);
   const annotations = ref(params.annotations || []);
+  const attachments = ref(params.attachments || []);
   const conversations = ref(initConversations());
   const conversationsBackup = ref(conversations.value);
 
   function initConversations() {
     if (!config.modules.comments) return [];
     return params.conversations?.map((c) => useConversation(c)) || [];
-  };
+  }
 
   const core = ref(null);
 
@@ -66,6 +67,7 @@ export default function useDocument(params, superdocConfig) {
     fields,
     annotations,
     conversations,
+    attachments,
 
     // Actions
     setEditor,

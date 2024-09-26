@@ -21,7 +21,7 @@ export class Extension {
     this.config = {
       ...this.config,
       ...config,
-    }
+    };
 
     this.name = this.config.name;
 

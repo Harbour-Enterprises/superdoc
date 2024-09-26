@@ -19,6 +19,7 @@ export const useCommentsStore = defineStore('comments', () => {
   const commentDialogs = ref([]);
   const overlappingComments = ref([]);
   const overlappedIds = new Set([]);
+  const suppressInternalExternal = ref(false);
 
   // Floating comments
   const floatingCommentsOffset = ref(0);
@@ -165,11 +166,11 @@ export const useCommentsStore = defineStore('comments', () => {
   return {
     COMMENT_EVENTS,
     hasInitializedComments,
-    getConfig,
     activeComment,
     commentDialogs,
     overlappingComments,
     overlappedIds,
+    suppressInternalExternal,
     pendingComment,
 
     // Floating comments

@@ -64,6 +64,10 @@ export const useSuperdocStore = defineStore('superdoc', () => {
       const smartDoc = useDocument(doc, config);
       documents.value.push(smartDoc);
     });
+
+    if ('comments' in modules) {
+      commentsStore.suppressInternalExternal = modules.comments.suppressInternalExternal || false;
+    }
     isReady.value = true;
   };
 
@@ -72,6 +76,10 @@ export const useSuperdocStore = defineStore('superdoc', () => {
       if (!obj.isReady) return false;
     }
     return true;
+  });
+
+  const getAttachments = computed(() => {
+    return documents.value.map((doc) => doc.attachments).flat(1);
   });
 
   const getDocument = (documentId) => documents.value.find((doc) => doc.id === documentId);
@@ -87,7 +95,7 @@ export const useSuperdocStore = defineStore('superdoc', () => {
     return {
       top: totalHeight,
     }
-  }
+  };
 
   const handlePageReady = (documentId, index, containerBounds) => {
     if (!pages[documentId]) pages[documentId] = [];
@@ -122,6 +130,7 @@ export const useSuperdocStore = defineStore('superdoc', () => {
     
     // Getters
     areDocumentsReady,
+    getAttachments,
 
     // Actions
     init,

@@ -15,19 +15,15 @@ export class Schema {
    * @param editor Editor instance.
    * @returns PM schema
    */
-  static createSchemaByExtensions(extensions, editor) {    
-    const { nodeExtensions, markExtensions } = {
-      nodeExtensions: extensions.filter((e) => e.type === 'node'),
-      markExtensions: extensions.filter((e) => e.type === 'mark'),
-    };
+  static createSchemaByExtensions(extensions, editor) {
+    const nodeExtensions = extensions.filter((e) => e.type === 'node');
+    const markExtensions = extensions.filter((e) => e.type === 'mark');
     const topNode = nodeExtensions.find((e) => getExtensionConfigField(e, 'topNode'))?.name;
-
+    
     const attributes = Attribute.getAttributesFromExtensions(extensions);
     const nodes = Schema.#createNodesSchema(nodeExtensions, attributes, editor);
     const marks = Schema.#createMarksSchema(markExtensions, attributes, editor);
-    const schema = { topNode, nodes, marks };
-
-    return new PmSchema(schema);
+    return new PmSchema({ topNode, nodes, marks });
   }
 
   /**
@@ -41,10 +37,17 @@ export class Schema {
     const nodeEntries = nodeExtensions.map((extension) => {
       const extensionAttributes = attributes.filter((a) => a.type === extension.name);
 
-      const context = createExtensionContext(extension, editor);
+      const context = {
+        name: extension.name,
+        options: extension.options,
+        storage: extension.storage,
+        editor,
+      };
+
       const attrs = Object.fromEntries(extensionAttributes.map((attr) => {
         return [attr.name, { default: attr?.attribute?.default }];
       }));
+
       const schema = cleanSchemaItem({
         content: callOrGet(getExtensionConfigField(extension, 'content', context)),
         group: callOrGet(getExtensionConfigField(extension, 'group', context)),
@@ -82,8 +85,7 @@ export class Schema {
       return [extension.name, schema];
     });
 
-    const nodes = Object.fromEntries(nodeEntries);
-    return nodes;
+    return Object.fromEntries(nodeEntries);
   }
 
   /**
@@ -97,10 +99,17 @@ export class Schema {
     const markEntries = markExtensions.map((extension) => {
       const extensionAttributes = attributes.filter((a) => a.type === extension.name);
 
-      const context = createExtensionContext(extension, editor);
+      const context = {
+        name: extension.name,
+        options: extension.options,
+        storage: extension.storage,
+        editor,
+      };
+
       const attrs = Object.fromEntries(extensionAttributes.map((attr) => {
         return [attr.name, { default: attr?.attribute?.default }];
       }));
+
       const schema = cleanSchemaItem({
         group: callOrGet(getExtensionConfigField(extension, 'group', context)),
         inclusive: callOrGet(getExtensionConfigField(extension, 'inclusive', context)),
@@ -127,17 +136,6 @@ export class Schema {
       return [extension.name, schema];
     });
 
-    const marks = Object.fromEntries(markEntries);
-    return marks;
+    return Object.fromEntries(markEntries);
   }
-}
-
-function createExtensionContext(extension, editor) {
-  const context = {
-    name: extension.name,
-    options: extension.options,
-    storage: extension.storage,
-  };
-  if (editor) context.editor = editor;
-  return context;
 }

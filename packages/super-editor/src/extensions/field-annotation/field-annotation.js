@@ -28,7 +28,7 @@ export const FieldAnnotation = Node.create({
       },
       annotationClass,
       annotationContentClass,
-      types: ['text', 'image', 'signature', 'checkbox'], // annotation types
+      types: ['text', 'image', 'signature', 'checkbox', 'html'], // annotation types
       defaultType: 'text',
       borderColor: '#b015b3',
       visibilityOptions: ['visible', 'hidden'],
@@ -66,6 +66,17 @@ export const FieldAnnotation = Node.create({
         parseDOM: (elem) => {
           let img = elem.querySelector('img');
           return img?.getAttribute('src') || null;
+        },
+      },
+
+      rawHtml: {
+        default: null,
+        parseDOM: (elem) => elem.getAttribute('data-raw-html'),
+        renderDOM: (attrs) => {
+          if (!attrs.rawHtml) return {};
+          return {
+            'data-raw-html': attrs.rawHtml,
+          };
         },
       },
 
@@ -112,10 +123,17 @@ export const FieldAnnotation = Node.create({
 
       hidden: {
         default: false,
-        parseDOM: (elem) => elem.hasAttribute('hidden') ? true : null,
+        parseDOM: (elem) => {
+          let hasHiddenAttr = elem.hasAttribute('hidden');
+          let hasDisplayNoneStyle = elem.style.display === 'none';
+          let isHidden = hasHiddenAttr || hasDisplayNoneStyle;
+          return isHidden ? true : null;
+        },
         renderDOM: (attrs) => {
           if (!attrs.hidden) return {};
-          return { hidden: '' };
+          return { 
+            style: 'display: none',
+          };
         },
       },
 
@@ -142,9 +160,23 @@ export const FieldAnnotation = Node.create({
   },
 
   renderDOM({ node, htmlAttributes }) {
-    let { type, displayLabel, imageSrc } = node.attrs;
+    let { type, displayLabel, imageSrc, rawHtml } = node.attrs;
 
-    if (type === 'image' || type === 'signature') {
+    let textRenderer = () => {
+      return [
+        'span',
+        Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes),
+        [
+          'span',
+          {
+            class: `${this.options.annotationContentClass}`,
+          },
+          displayLabel,
+        ],
+      ];
+    };
+
+    let imageRenderer = () => {
       let contentRenderer = () => {      
         if (!imageSrc) return displayLabel;
         return [
@@ -167,20 +199,20 @@ export const FieldAnnotation = Node.create({
           contentRenderer(),
         ],
       ];
-    }
+    };
 
-    // `text` type
-    return [
-      'span',
-      Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes),
-      [
-        'span',
-        {
-          class: `${this.options.annotationContentClass}`,
-        },
-        displayLabel,
-      ],
-    ];
+    let renderers = {
+      text: () => textRenderer(),
+      image: () => imageRenderer(),
+      signature: () => imageRenderer(),
+      checkbox: () => textRenderer(),
+      html: () => textRenderer(),
+      default: () => textRenderer(),
+    };
+
+    let renderer = renderers[type] ?? type.default;
+    
+    return renderer();
   },
 
   addCommands() {
@@ -314,6 +346,7 @@ export const FieldAnnotation = Node.create({
        * Set `hidden` for annotations matching predicate.
        * Other annotations become unhidden.
        * @param predicate The predicate function.
+       * @param unsetFromOthers If should unset hidden from other annotations.
        * @example 
        * editor.commands.setFieldAnnotationsHiddenByCondition((node) => {
        *   let ids = ['111', '222', '333'];
@@ -322,6 +355,7 @@ export const FieldAnnotation = Node.create({
        */
       setFieldAnnotationsHiddenByCondition: (
         predicate = () => false,
+        unsetFromOthers = false,
       ) => ({
         dispatch,
         state,
@@ -338,10 +372,16 @@ export const FieldAnnotation = Node.create({
             else otherAnnotations.push(annotation);
           });
 
-          return chain()
-            .updateFieldAnnotationsAttributes(matchedAnnotations, { hidden: true })
-            .updateFieldAnnotationsAttributes(otherAnnotations, { hidden: false })
-            .run();
+          if (unsetFromOthers) {
+            return chain()
+              .updateFieldAnnotationsAttributes(matchedAnnotations, { hidden: true })
+              .updateFieldAnnotationsAttributes(otherAnnotations, { hidden: false })
+              .run();
+          } else {
+            return chain()
+              .updateFieldAnnotationsAttributes(matchedAnnotations, { hidden: true })
+              .run();
+          }
         }
 
         return true;

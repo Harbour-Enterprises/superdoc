@@ -1,7 +1,7 @@
 import { SuperConverter } from './SuperConverter.js';
 import { toKebabCase } from '@harbour-enterprises/common';
 import { inchesToTwips, pixelsToHalfPoints, pixelsToTwips } from './helpers.js';
-import { generateRandomId } from '@helpers/docxIdGenerator.js';
+import { generateDocxRandomId } from '@helpers/generateDocxRandomId.js';
 import {
   TrackDeleteMarkName,
   TrackInsertMarkName,
@@ -404,7 +404,7 @@ function translateLinkNode(params) {
  * @returns {string} The new relationship ID
  */
 function addNewLinkRelationship(params, link) {
-  const newId = 'rId' + generateRandomId();
+  const newId = 'rId' + generateDocxRandomId();
   params.relationships.push({
     "type": "element",
     "name": "Relationship",

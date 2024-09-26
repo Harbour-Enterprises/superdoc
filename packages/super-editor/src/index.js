@@ -1,6 +1,7 @@
 import './style.css';
 import { SuperConverter } from "@core/super-converter/SuperConverter";
-import { getMarksFromSelection, getActiveFormatting } from '@/core/helpers/getMarksFromSelection.js';
+import { getMarksFromSelection } from '@/core/helpers/getMarksFromSelection.js';
+import { getActiveFormatting } from '@/core/helpers/getActiveFormatting.js';
 import { getStarterExtensions } from '@extensions/index.js';
 import { SuperToolbar } from '@components/toolbar/super-toolbar.js';
 import { DocxZipper, helpers } from '@core/index.js';

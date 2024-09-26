@@ -1,6 +1,5 @@
-import { EditorState, TextSelection } from 'prosemirror-state';
+import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-
 import { DOMParser, DOMSerializer } from "prosemirror-model"
 import { EventEmitter } from './EventEmitter.js';
 import { ExtensionService } from './ExtensionService.js';
@@ -14,7 +13,7 @@ import { createStyleTag } from './utilities/createStyleTag.js';
 import { initComments } from '@features/index.js';
 import { style } from './config/style.js';
 import DocxZipper from '@core/DocxZipper.js';
-import {amendTransaction} from "../extensions/track-changes/track-changes-tr-modifier.js";
+import { amendTransaction } from "@extensions/track-changes/track-changes-tr-modifier.js";
 
 /**
  * Editor main class.
@@ -83,6 +82,7 @@ export class Editor extends EventEmitter {
     };
 
     let initMode = modes[this.options.mode] ?? modes.default;
+
     initMode();
   }
 
@@ -312,9 +312,7 @@ export class Editor extends EventEmitter {
    * @param nameOrPluginKey Plugin name.
    */
   unregisterPlugin(nameOrPluginKey) {
-    if (this.isDestroyed) {
-      return;
-    }
+    if (this.isDestroyed) return;
     
     const name = typeof nameOrPluginKey === 'string'
       ? `${nameOrPluginKey}$`
@@ -323,6 +321,7 @@ export class Editor extends EventEmitter {
     const state = this.state.reconfigure({
       plugins: this.state.plugins.filter((plugin) => !plugin.key.startsWith(name)),
     });
+
     this.view.updateState(state);
   }
 
@@ -340,13 +339,14 @@ export class Editor extends EventEmitter {
    */
   #createExtensionService() {
     const allowedExtensions = ['extension', 'node', 'mark'];
-
+    
     const coreExtensions = [
       Editable,
       Commands,
       EditorFocus,
       Keymap,
     ];
+
     const allExtensions = [
       ...coreExtensions, 
       ...this.options.extensions,
@@ -510,23 +510,22 @@ export class Editor extends EventEmitter {
    * @param {*} transaction State transaction.
    */
   #dispatchTransaction(transaction) {
-    if (this.view.isDestroyed) {
-      return;
-    }
+    if (this.view.isDestroyed) return;
 
     let state;
     try {
-      const trackedTr = amendTransaction(transaction, this.view, this.options.user)
-      const {state: newState} = this.view.state.applyTransaction(trackedTr)
-      state = newState
+      const trackedTr = amendTransaction(transaction, this.view, this.options.user);
+      const { state: newState } = this.view.state.applyTransaction(trackedTr);
+      state = newState;
     } catch (e) {
-      console.log(e)
+      console.log(e);
       //just in case
       state = this.state.apply(transaction);
     }
-    const selectionHasChanged = !this.state.selection.eq(state.selection);
 
+    const selectionHasChanged = !this.state.selection.eq(state.selection);
     this.view.updateState(state);
+
     this.emit('transaction', {
       editor: this,
       transaction,
@@ -545,15 +544,16 @@ export class Editor extends EventEmitter {
         editor: this,
         event: focus.event,
         transaction,
-      })
+      });
     }
+
     const blur = transaction.getMeta('blur');
     if (blur) {
       this.emit('blur', {
         editor: this,
         event: blur.event,
         transaction,
-      })
+      });
     }
   
     if (!transaction.docChanged) {
@@ -616,13 +616,14 @@ export class Editor extends EventEmitter {
    * Get HTML string of the document
    */
   getHTML() {
-    const div = document.createElement('div')
+    const div = document.createElement('div');
     const fragment = DOMSerializer
       .fromSchema(this.schema)
-      .serializeFragment(this.state.doc.content)
+      .serializeFragment(this.state.doc.content);
 
-    div.appendChild(fragment)
-    return div.innerHTML
+    div.appendChild(fragment);
+
+    return div.innerHTML;
   }
   
   /**
