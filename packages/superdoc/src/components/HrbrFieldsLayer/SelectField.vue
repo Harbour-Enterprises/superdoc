@@ -27,7 +27,7 @@ const getStyle = computed(() => {
 
 <template>
   <div :style="getStyle" class="select-container">
-    <div v-if="!props.isEditing">{{ field.value }}</div>
+    <div v-if="!props.isEditing">{{ field.value || field.placeholder }}</div>
   </div>
 </template>
 
