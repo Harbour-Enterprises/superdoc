@@ -434,8 +434,6 @@ const handlePdfClick = (e) => {
             v-if="doc.type === PDF"
             :document-data="doc"
             @selection-change="handleSelectionChange"
-            @selection-drag="handleSelectionDrag"
-            @selection-drag-end="handleSelectionDragEnd"
             @ready="handleDocumentReady" 
             @page-loaded="handlePageReady"
             @bypass-selection="handlePdfClick" />

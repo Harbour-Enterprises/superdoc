@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, defineEmits, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 const props = defineProps({
   fileSource: {
     type: File,
@@ -48,7 +48,7 @@ const initViewer = async () => {
   }
 }
 
-onMounted(async () => {
+onMounted(() => {
   initViewer();
 });
 
