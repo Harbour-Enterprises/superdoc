@@ -53,7 +53,7 @@ const imageValue = computed(() => {
 
 <template>
   <div class="image-field" :style="getStyle">
-    <img v-if="field.value" :src="field.value" alt="image" :style="getStyle" />
+    <img v-if="field.value" :src="imageValue" alt="image" :style="getStyle" />
     <span v-else>{{ field.placeholder || field.label }}</span>
   </div> 
 </template>
