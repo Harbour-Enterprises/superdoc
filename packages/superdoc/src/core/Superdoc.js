@@ -185,7 +185,7 @@ export class Superdoc extends EventEmitter {
       const editor = doc.getEditor();
       if (editor) editor.setDocumentMode('suggesting');
     });
-  }''
+  }
 
   #setModeViewing() {
     this.superdocStore.documents.forEach((doc) => {
