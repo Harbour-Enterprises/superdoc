@@ -23,11 +23,10 @@ export default defineConfig((data) => {
       sourcemap: true,
     },
     optimizeDeps: {
+      include: ['pdfjs-dist'],
       esbuildOptions: {
         target: 'es2020',
       },
-    },
-    rollupOptions: {
     },
     resolve: {
       alias: {

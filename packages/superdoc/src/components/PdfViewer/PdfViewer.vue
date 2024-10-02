@@ -1,14 +1,17 @@
 <script setup>
-import * as pdfjsLib from 'pdfjs-dist';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
 import * as pdfjsViewer from 'pdfjs-dist/web/pdf_viewer';
-import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min?raw';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?worker';
+import workerSrc from './worker.js?raw';
+
 import { storeToRefs } from 'pinia';
 import { onMounted, ref, reactive, computed, getCurrentInstance } from 'vue';
 import { useSuperdocStore } from '@/stores/superdoc-store';
 import useSelection from '@/helpers/use-selection';
 
+window.pdfjsWorker = pdfjsWorker;
 pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(
-  new Blob([pdfjsWorker], {
+  new Blob([workerSrc], {
     type: 'application/javascript'
   }
 ));
