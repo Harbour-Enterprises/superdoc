@@ -28,6 +28,7 @@ const initializeApp = async () => {
   const config = {
     selector: '#superdoc',
     toolbar: 'toolbar',
+    toolbarGroups: ['center'],
     documentMode: 'editing',
     user: {
       name: 'Super Document Jr.',

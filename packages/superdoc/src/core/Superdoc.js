@@ -143,6 +143,7 @@ export class Superdoc extends EventEmitter {
       element: this.toolbarElement || null,
       onToolbarCommand: this.onToolbarCommand.bind(this),
       isDev: false,
+      toolbarGroups: this.config.toolbarGroups,
     }
     this.toolbar = new SuperToolbar(config);
     this.toolbar.on('superdoc-command', this.onToolbarCommand.bind(this));
