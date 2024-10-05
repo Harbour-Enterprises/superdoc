@@ -1,4 +1,5 @@
 import { Node, Attribute } from '@core/index.js';
+import { generateOrderedListIndex } from '@helpers/orderedListUtils.js';
 
 export const ListItem = Node.create({
   name: 'listItem',
@@ -31,6 +32,28 @@ export const ListItem = Node.create({
       // The DOCX character for this list item (ie: ●, ▪)
       lvlText: { 
         default: null,
+        renderDOM: (attrs) => {
+          const { listLevel, listNumberingType, lvlText } = attrs;
+          if (!listLevel) return {};
+        
+          // MS Word has many custom ordered list options. We need to generate the correct index here.
+          const numbering = generateOrderedListIndex({ listLevel, lvlText, listNumberingType });
+          if (!numbering) return {};
+
+          return {
+            'data-bullet-type': numbering,
+            class: 'custom-list-item',
+          }
+        },
+      },
+
+      listNumberingType: {
+        default: 'decimal',
+        rendered: false,
+      },
+
+      listLevel: {
+        default: 0,
         rendered: false,
       },
 

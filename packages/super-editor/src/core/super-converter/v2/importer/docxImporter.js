@@ -1,5 +1,5 @@
 import {getInitialJSON} from "../docxHelper.js";
-import {carbonCopy} from "../../../utilities/cabonCopy.js";
+import {carbonCopy} from "../../../utilities/carbonCopy.js";
 import {twipsToInches} from "../../helpers.js";
 import {tableNodeHandlerEntity} from "./tableImporter.js";
 import {drawingNodeHandlerEntity} from "./imageImporter.js";
@@ -36,16 +36,16 @@ export const createDocumentJson = (docx) => {
     const json = carbonCopy(getInitialJSON(docx));
     if (!json) return null;
 
-    console.debug('\n\n JSON', json,)
     const nodeListHandler = defaultNodeListHandler();
     if(json.elements[0].elements[0].name === 'w:body') {
         const node = json.elements[0].elements[0];
         const ignoreNodes = ['w:sectPr'];
         const content = node.elements?.filter((n) => !ignoreNodes.includes(n.name)) ?? [];
 
+        const parsedContent = nodeListHandler.handler(content, docx, false);    
         const result = {
             type: 'doc',
-            content: nodeListHandler.handler(content, docx, false),
+            content: parsedContent,
             attrs: {
                 attributes: json.elements[0].attributes,
             }
@@ -72,12 +72,12 @@ export const defaultNodeListHandler = () => {
         trackChangeNodeHandlerEntity,
         tableNodeHandlerEntity,
         standardNodeHandlerEntity, //this should be the last one, bcs this parses everything!!!
-    ]
+    ];
     const handler = createNodeListHandler(entities);
     return {
         handler,
         handlerEntities: entities
-    }
+    };
 }
 
 /**
@@ -100,7 +100,13 @@ const createNodeListHandler = (nodeHandlers) => {
                 if(res.consumed > 0) return res;
                 const nodesToHandle = elements.slice(index);
                 if(!nodesToHandle || nodesToHandle.length === 0) return res;
-                return handler.handler(nodesToHandle, docx, {handler: nodeListHandlerFn, handlerEntities: nodeHandlers}, insideTrackChange);
+                const result = handler.handler(
+                    nodesToHandle,
+                    docx,
+                    {handler: nodeListHandlerFn, handlerEntities: nodeHandlers},
+                    insideTrackChange
+                );
+                return result;
             }, {nodes: [], consumed: 0});
             index += consumed-1;
             if(consumed === 0)  {
@@ -109,6 +115,9 @@ const createNodeListHandler = (nodeHandlers) => {
             for(let node of nodes) {
                 if (node?.type) {
                     const ignore = ['runProperties'];
+
+                    // Ignore empty text nodes
+                    if (node.type === 'text' && Array.isArray(node.content) && !node.content.length) continue;
                     if (!ignore.includes(node.type)) processedElements.push(node);
                 }
             }

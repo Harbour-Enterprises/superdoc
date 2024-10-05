@@ -13,15 +13,19 @@ export function parseProperties(node) {
      * What does it mean for a node to have a properties element?
      * It would have a child element that is: w:pPr, w:rPr, w:sectPr
      */
-    let marks = [];
+    const marks = [];
+    const unknownMarks = [];
     const { attributes = {}, elements = [] } = node;
     const { nodes, paragraphProperties = {}, runProperties = {} } = splitElementsAndProperties(elements);
     paragraphProperties.elements = paragraphProperties?.elements?.filter((el) => el.name !== 'w:rPr');
 
     // Get the marks from the run properties
-    if (runProperties && runProperties?.elements?.length) marks = parseMarks(runProperties);
+    if (runProperties && runProperties?.elements?.length) {
+        marks.push(...parseMarks(runProperties, unknownMarks));
+    };
+
     if (paragraphProperties && paragraphProperties.elements?.length) {
-        marks.push(...parseMarks(paragraphProperties));
+        marks.push(...parseMarks(paragraphProperties, unknownMarks));
     }
     //add style change marks
     marks.push(...handleStyleChangeMarks(runProperties, marks));
@@ -38,9 +42,10 @@ export function parseProperties(node) {
             const value = mark.attrs[attrValue];
             attributes[attrValue] = value;
         });
-        marks = [];
+        marks.length = 0;
     }
-    return { elements: nodes, attributes, marks }
+
+    return { elements: nodes, attributes, marks, unknownMarks }
 }
 
 

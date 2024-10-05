@@ -28,10 +28,10 @@ class SuperConverter {
     'w:sectPr': 'sectionProperties',
     'w:rPr': 'runProperties',
 
-    // Comments
-    'w:commentRangeStart': 'commentRangeStart',
-    'w:commentRangeEnd': 'commentRangeEnd',
-    'w:commentReference': 'commentReference',
+    // // Comments
+    // 'w:commentRangeStart': 'commentRangeStart',
+    // 'w:commentRangeEnd': 'commentRangeEnd',
+    // 'w:commentReference': 'commentReference',
 
   });
 

@@ -997,7 +997,7 @@ export class DocxImporter {
       date: attributes['w:date'],
       author: attributes['w:author'],
     }
-    const submarks = this.#parseMarks(styleChangeMark);
+    const { marks: submarks, unknownMarks } = this.#parseMarks(styleChangeMark);
     return [{type: TrackMarksMarkName, attrs: {...mappedAttributes, before: submarks, after: [...currentMarks]}}]
   }
 
@@ -1075,13 +1075,16 @@ export class DocxImporter {
        * What does it mean for a node to have a properties element?
        * It would have a child element that is: w:pPr, w:rPr, w:sectPr
        */
-      let marks = [];
+      const marks = [];
       const { attributes = {}, elements = [] } = node;
       const { nodes, paragraphProperties = {}, runProperties = {} } = this.#splitElementsAndProperties(elements);
       paragraphProperties.elements = paragraphProperties?.elements?.filter((el) => el.name !== 'w:rPr');
 
       // Get the marks from the run properties
-      if (runProperties && runProperties?.elements?.length) marks = this.#parseMarks(runProperties);
+      if (runProperties && runProperties?.elements?.length) {
+        marks = this.#parseMarks(runProperties);
+      };
+
       if (paragraphProperties && paragraphProperties.elements?.length) {
         marks.push(...this.#parseMarks(paragraphProperties));
       }
@@ -1100,9 +1103,9 @@ export class DocxImporter {
           const value = mark.attrs[attrValue];
           attributes[attrValue] = value;
         });
-        marks = [];
+        marks.length = 0;
       }
-      return { elements: nodes, attributes, marks }
+      return { elements: nodes, attributes, marks, unknownMarks }
   }
 
   #splitElementsAndProperties(elements) {

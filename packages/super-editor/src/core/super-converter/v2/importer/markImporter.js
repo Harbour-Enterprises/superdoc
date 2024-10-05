@@ -7,7 +7,7 @@ import {twipsToInches} from "../../helpers.js";
  * @param property
  * @returns {PmMarkJson[]}
  */
-export function parseMarks(property) {
+export function parseMarks(property, unknownMarks = []) {
     const marks = [];
     const seen = new Set();
 
@@ -28,9 +28,10 @@ export function parseMarks(property) {
                 'w:keepNext',
                 'w:tabs',
                 'w:keepLines'
-            ]
-            if (missingMarks.includes(element.name)) console.debug('❗️❗️ATTN: No marks found for element:', element.name);
-            // else throw new Error(`No marks found for element: ${element.name}`);
+            ];
+            if (missingMarks.includes(element.name)) {
+                unknownMarks.push(element.name);
+            };
         }
 
         marksForType.forEach((m) => {
@@ -57,7 +58,7 @@ export function parseMarks(property) {
             marks.push(newMark);
         })
     });
-    return createImportMarks(marks);
+    return createImportMarks(marks)
 }
 
 

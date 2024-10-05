@@ -1,6 +1,6 @@
 import {twipsToPixels} from "../../helpers.js";
 import {testForList} from "./listImporter.js";
-import {carbonCopy} from "../../../utilities/cabonCopy.js";
+import {carbonCopy} from "../../../utilities/carbonCopy.js";
 
 /**
  * Special cases of w:p based on paragraph properties

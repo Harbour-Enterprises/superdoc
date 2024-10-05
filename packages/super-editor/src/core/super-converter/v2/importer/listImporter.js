@@ -1,4 +1,4 @@
-import {carbonCopy} from "../../../utilities/cabonCopy.js";
+import {carbonCopy} from "../../../utilities/carbonCopy.js";
 import {hasTextNode, parseProperties} from "./importerHelpers.js";
 import {preProcessNodesForFldChar} from "./paragraphNodeImporter.js";
 
@@ -36,7 +36,6 @@ export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange) 
             }
         }
 
-        // TODO - Check that this change is OK
         return {
             nodes: [handleListNodes(listItems, docx, nodeListHandler, 0)],
             consumed: listItems.filter(i => i.seen).length
@@ -70,7 +69,7 @@ export const listHandlerEntity = {
  * @param {number} [listLevel=0] - The current indentation level of the list.
  * @returns {Object} The processed list node with structured content.
  */
-function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, listLevel = 0) {
+function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, listLevel = 0, path = '') {
     const parsedListItems = [];
     let overallListType;
     let listStyleType;
@@ -80,6 +79,9 @@ function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, li
         console.error('Standard node handler not found');
         return {nodes: [], consumed: 0};
     }
+
+    let listItemIndices = {};
+    let listItemNumbering = {};
 
     for (let [index, item] of listItems.entries()) {
         // Skip items we've already processed
@@ -122,23 +124,36 @@ function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, li
                 content: nodeListHandler.handler(elements, docx, insideTrackChange)?.filter(n => n)
             });
 
-            console.debug('\n\n LIST ITEM', listpPrs, listrPrs, start, lvlText, lvlJc, '\n\n')
+            if (!(intLevel in listItemIndices)) listItemIndices[intLevel] = parseInt(start)
+            else listItemIndices[intLevel] += 1;
+
+            let thisItemPath = [];
+            if (listStyleType !== 'bullet') {
+                thisItemPath = [...path, listItemIndices[intLevel]];
+            }
 
             if (listpPrs) nodeAttributes['listParagraphProperties'] = listpPrs;
             if (listrPrs) nodeAttributes['listRunProperties'] = listrPrs;
             nodeAttributes['order'] = start;
             nodeAttributes['lvlText'] = lvlText;
             nodeAttributes['lvlJc'] = lvlJc;
+            nodeAttributes['listLevel'] = thisItemPath;
+            nodeAttributes['listNumberingType'] = listOrderingType;
             nodeAttributes['attributes'] = {
                 parentAttributes: item?.attributes || null,
             }
-            parsedListItems.push(createListItem(schemaElements, nodeAttributes, []));
+
+            const newListItem = createListItem(schemaElements, nodeAttributes, []);
+            parsedListItems.push(newListItem);
         }
 
-            // If this item belongs in a deeper list level, we need to process it by calling this function again
+        // If this item belongs in a deeper list level, we need to process it by calling this function again
         // But going one level deeper.
         else if (listLevel < intLevel) {
-            const sublist = handleListNodes(listItems.slice(index), docx, nodeListHandler, insideTrackChange, listLevel + 1);
+            const newPath = [...path, listItemIndices[listLevel]];
+            const sublist = handleListNodes(
+                listItems.slice(index), docx, nodeListHandler, insideTrackChange, listLevel + 1, newPath)
+            ;
             const lastItem = parsedListItems[parsedListItems.length - 1];
             if (!lastItem) {
                 parsedListItems.push(createListItem([sublist], nodeAttributes, []));
@@ -148,7 +163,9 @@ function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, li
         }
 
         // If this item belongs in a higher list level, we need to break out of the loop and return to higher levels
-        else break;
+        else {
+            break;
+        };
     }
 
     return {
@@ -243,7 +260,6 @@ function getNodeNumberingDefinition(attributes, level, docx) {
     const numPr = listStyles.find(style => style.name === 'w:numPr');
     if (!numPr) {
         return {};
-        throw new Error(`No numbering properties found in paragraph: ${JSON.stringify(attributes)}`);
     }
 
     // Get the indent level
@@ -253,7 +269,6 @@ function getNodeNumberingDefinition(attributes, level, docx) {
     // Get the list style id
     const numIdTag = numPr.elements.find(style => style.name === 'w:numId');
     const numId = numIdTag.attributes['w:val'];
-
 
     // Get the list styles
     const numberingElements = listData.elements;

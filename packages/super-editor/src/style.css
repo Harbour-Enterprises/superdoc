@@ -62,3 +62,14 @@
 .input-active {
   border: 1px solid #1355FF !important;
 }
+
+.custom-list-item {
+  list-style-type: none;
+}
+.custom-list-item::before {
+  margin-right: 0.5em;
+  content: attr(data-bullet-type);
+}
+.custom-list-item p {
+  display: inline;
+}
