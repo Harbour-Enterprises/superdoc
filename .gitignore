@@ -38,3 +38,4 @@ docker-compose.local.yaml
 .python-version
 workflows/node_modules/
 dist/
+*.tgz

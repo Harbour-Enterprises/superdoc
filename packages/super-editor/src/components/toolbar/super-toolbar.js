@@ -11,6 +11,7 @@ export class SuperToolbar extends EventEmitter {
 
   config = {
     element: null,
+    toolbarGroups: ['left', 'center', 'right'],
   }
 
   #nonEditorCommands = {
