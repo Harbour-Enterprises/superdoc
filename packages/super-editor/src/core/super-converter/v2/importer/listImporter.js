@@ -17,9 +17,6 @@ export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange) 
   const processedElements = preProcessNodesForFldChar(node.elements);
   node.elements = processedElements;
 
-
-  const pPr = node.elements.find(el => el.name === 'w:pPr');
-
   // Check if this paragraph node is a list
   if (testForList(node)) {
     // Get all siblings that are list items and haven't been processed yet.
