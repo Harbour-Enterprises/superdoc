@@ -26,7 +26,7 @@ export const Table = Node.create({
         renderDOM: ({ tableWidth }) => {
           if (!tableWidth) return {};
           const { width, type = 'auto' } = tableWidth;
-          return { style: `width: ${width}px;` }
+          return { style: `min-width: ${width}px;` }
         }
       },
       gridColumnWidths: { rendered: false, default: [], },
@@ -60,7 +60,7 @@ export const Table = Node.create({
       this.options.htmlAttributes, 
       htmlAttributes,
     );
-    return ['table', attributes, ['tbody', 0]];
+    return ['table', attributes, 0];
   },
 
 });
