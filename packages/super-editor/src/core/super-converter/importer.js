@@ -1075,7 +1075,7 @@ export class DocxImporter {
        * What does it mean for a node to have a properties element?
        * It would have a child element that is: w:pPr, w:rPr, w:sectPr
        */
-      const marks = [];
+      let marks = [];
       const { attributes = {}, elements = [] } = node;
       const { nodes, paragraphProperties = {}, runProperties = {} } = this.#splitElementsAndProperties(elements);
       paragraphProperties.elements = paragraphProperties?.elements?.filter((el) => el.name !== 'w:rPr');
