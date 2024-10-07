@@ -626,6 +626,7 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth) => {
   const itemsToHide = ['zoom', 'fontFamily', 'fontSize', 'redo'];
   const mobileWidth = 600;
   const toolbarPadding = 32;
+  const stickyItemsWidth = 120;
   
   let toolbarItems = [
     undo,
@@ -677,7 +678,7 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth) => {
   const visibleItems = [];
   // initial width with padding
   
-  let totalWidth = toolbarPadding + 120;
+  let totalWidth = toolbarPadding + stickyItemsWidth;
   toolbarItems.forEach((item) => {
     const itemWidth = controlSizes.get(item.name.value) || controlSizes.get('default');
 

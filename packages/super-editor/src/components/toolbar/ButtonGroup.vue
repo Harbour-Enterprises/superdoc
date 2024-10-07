@@ -29,16 +29,10 @@ const styleMap = {
   left: {
     minWidth: '150px',
     justifyContent: 'flex-start',
-    isTablet: {
-      minWidth: '100px',
-    }
   },
   right: {
     minWidth: '150px',
     justifyContent: 'flex-end',
-    isTablet: {
-      minWidth: '100px',
-    }
   },
   default: {
     flexGrow: 1,
@@ -172,10 +166,5 @@ const handleClickOutside = (e) => {
 <style lang="postcss" scoped>
 .button-group {
   display: flex;
-}
-@media (max-width: 1119px) {
-  .button-group {
-    padding: 0 !important;
-  }
 }
 </style>
