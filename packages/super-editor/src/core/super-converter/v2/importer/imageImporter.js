@@ -1,77 +1,95 @@
-import {emuToPixels} from "../../helpers.js";
+import { emuToPixels } from "../../helpers.js";
 
 /**
  * @type {import("docxImporter").NodeHandler}
  */
-export const handleDrawingNode= (nodes, docx, nodeListHandler, insideTrackChange)  => {
-    if(nodes.length === 0 || nodes[0].name !== 'w:drawing') {
-        return {nodes: [], consumed: 0};
-    }
-    const node = nodes[0];
+export const handleDrawingNode = (nodes, docx, nodeListHandler, insideTrackChange) => {
+  if (nodes.length === 0 || nodes[0].name !== 'w:drawing') {
+    return { nodes: [], consumed: 0 };
+  }
+  const node = nodes[0];
 
-    let result;
-    const { elements } = node;
+  let result;
+  const { elements } = node;
 
-    // Inline images
-    const inlineImage = elements.find((el) => el.name === 'wp:inline');
-    if (inlineImage) result = handleInlineImageNode(inlineImage, docx);
-    return {nodes: result ? [result] : [], consumed: 1};
+  const currentFileName = null;
+
+  // Some images are identified by wp:anchor
+  const isAnchor = elements.find((el) => el.name === 'wp:anchor');
+  if (isAnchor) result = handleImageImport(elements[0], currentFileName, docx);
+
+  // Others, wp:inline
+  const inlineImage = elements.find((el) => el.name === 'wp:inline');
+  if (inlineImage) result = handleImageImport(inlineImage, currentFileName, docx);
+  return { nodes: result ? [result] : [], consumed: 1 };
 }
 
-export function handleInlineImageNode(node, docx) {
-    const { attributes } = node;
-    const padding = {
-        top: emuToPixels(attributes['distT']),
-        bottom: emuToPixels(attributes['distB']),
-        left: emuToPixels(attributes['distL']),
-        right: emuToPixels(attributes['distR']),
-    };
+export function handleImageImport(node, currentFileName, docx) {
+  const { attributes } = node;
+  const padding = {
+    top: emuToPixels(attributes['distT']),
+    bottom: emuToPixels(attributes['distB']),
+    left: emuToPixels(attributes['distL']),
+    right: emuToPixels(attributes['distR']),
+  };
 
-    const extent = node.elements.find((el) => el.name === 'wp:extent');
-    const size = {
-        width: emuToPixels(extent.attributes['cx']),
-        height: emuToPixels(extent.attributes['cy'])
+  const extent = node.elements.find((el) => el.name === 'wp:extent');
+  const size = {
+    width: emuToPixels(extent.attributes['cx']),
+    height: emuToPixels(extent.attributes['cy'])
+  }
+
+  const graphic = node.elements.find((el) => el.name === 'a:graphic');
+  const graphicData = graphic.elements.find((el) => el.name === 'a:graphicData');
+
+  const picture = graphicData.elements.find((el) => el.name === 'pic:pic');
+  const blipFill = picture.elements.find((el) => el.name === 'pic:blipFill');
+  const blip = blipFill.elements.find((el) => el.name === 'a:blip');
+
+  const positionHTag = node.elements.find((el) => el.name === 'wp:positionH');
+  const positionH = positionHTag?.elements.find((el) => el.name === 'wp:posOffset')
+  const positionHValue = emuToPixels(positionH?.elements[0]?.text);
+
+  const positionVTag = node.elements.find((el) => el.name === 'wp:positionV');
+  const positionV = positionVTag?.elements.find((el) => el.name === 'wp:posOffset')
+  const positionVValue = emuToPixels(positionV?.elements[0]?.text);
+
+  const marginOffset = {
+    left: positionHValue,
+    top: positionVValue,
+  }
+
+  const { attributes: blipAttributes } = blip;
+  const rEmbed = blipAttributes['r:embed'];
+  const currentFile = currentFileName || 'document.xml';
+  let rels = docx[`word/_rels/${currentFile}.rels`];
+  if (!rels) rels = docx[`word/_rels/document.xml.rels`];
+
+  const relationships = rels.elements.find((el) => el.name === 'Relationships');
+  const { elements } = relationships;
+
+  const rel = elements.find((el) => el.attributes['Id'] === rEmbed);
+  const { attributes: relAttributes } = rel;
+
+  const path = `word/${relAttributes['Target']}`;
+
+  return {
+    type: 'image',
+    attrs: {
+      src: path,
+      alt: 'Image',
+      inline: true,
+      padding,
+      marginOffset,
+      size,
     }
-
-    // TODO: Do we need this?
-    const effectExtent = node.elements.find((el) => el.name === 'wp:effectExtent');
-
-    const graphic = node.elements.find((el) => el.name === 'a:graphic');
-    const graphicData = graphic.elements.find((el) => el.name === 'a:graphicData');
-
-    const picture = graphicData.elements.find((el) => el.name === 'pic:pic');
-    const blipFill = picture.elements.find((el) => el.name === 'pic:blipFill');
-    const blip = blipFill.elements.find((el) => el.name === 'a:blip');
-    const { attributes: blipAttributes } = blip;
-    const rEmbed = blipAttributes['r:embed'];
-    const print = blipAttributes['r:print'];
-
-    const rels = docx['word/_rels/document.xml.rels'];
-    const relationships = rels.elements.find((el) => el.name === 'Relationships');
-    const { elements } = relationships;
-
-    const rel = elements.find((el) => el.attributes['Id'] === rEmbed);
-    const { attributes: relAttributes } = rel;
-    const media = docx.media;
-    const path = `word/${relAttributes['Target']}`;
-
-    return {
-        type: 'image',
-        attrs: {
-            src: media[path],
-            alt: 'Image',
-            title: 'Image',
-            inline: true,
-            padding,
-            size,
-        }
-    }
+  }
 }
 
 /**
  * @type {import("docxImporter").NodeHandlerEntry}
  */
 export const drawingNodeHandlerEntity = {
-    handlerName: 'drawingNodeHandler',
-    handler: handleDrawingNode
+  handlerName: 'drawingNodeHandler',
+  handler: handleDrawingNode
 };
