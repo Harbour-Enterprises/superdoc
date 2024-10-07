@@ -15,7 +15,8 @@
   "module": "./dist/superdoc.es.js",
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "@harbour-enterprises/super-editor": "0.0.1-alpha.0",

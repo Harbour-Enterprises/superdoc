@@ -6,8 +6,11 @@
     "shared/*"
   ],
   "scripts": {
-    "reinstall": "rm -rf node_modules package-lock.json; npm install;",
-    "dev:superdoc": "cd packages/superdoc && npm run dev",
-    "dev:super-editor": "cd packages/super-editor && npm run dev"
+    "dev:superdoc": "npm run dev --workspace=packages/superdoc",
+    "dev:super-editor": "npm run dev --workspace=packages/super-editor",
+    "build:superdoc": "npm run build --workspace=packages/superdoc",
+    "build:super-editor": "npm run build --workspace=packages/super-editor",
+    "clean:packages": "rm -rf ./packages/*/dist",
+    "reset": "npm run clean:packages && rm -rf ./node_modules && rm -rf ./packages/*/node_modules && rm -rf ./package-lock.json && npm install"
   }
 }
