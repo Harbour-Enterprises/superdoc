@@ -26,12 +26,15 @@ export const TableCell = Node.create({
   addAttributes() {
     return {
       width: {
-        renderDOM: ({ width }) => {
+        renderDOM: ({ width, widthType }) => {
           if (!width) return {};
-          const style = `width: ${width}in`;
+          let unit = 'in';
+          if (widthType === 'pct') unit = '%';
+          const style = `width: ${width}${unit}`;
           return { style };
         },
       },
+      widthType: { default: 'auto', rendered: false, },
       colspan: { default: 1, },
       rowspan: { default: 1, },
       background: {
@@ -52,12 +55,26 @@ export const TableCell = Node.create({
       cellMargins: {
         renderDOM({ cellMargins }) {
           if (!cellMargins) return {};
-          let style = '';
-          const { top, right, bottom, left } = cellMargins || {};
-          if (top) style += `padding-top: ${top}px;`;
-          if (right) style += `padding-right: ${right}px;`;
-          if (bottom) style += `padding-bottom: ${bottom}px;`;
-          if (left) style += `padding-left: ${left}px;`;
+          const sides = ['top', 'right', 'bottom', 'left'];
+          const style = sides
+            .map((side) => {
+              const margin = cellMargins?.[side];
+              if (margin) return `padding-${side}: ${margin}px;`;
+              return '';
+            }).join(' ');
+          return { style };
+        }        
+      },
+      borders: {
+        renderDOM({ borders }) {
+          if (!borders) return {};
+          const sides = ['top', 'right', 'bottom', 'left'];
+          const style = sides
+            .map((side) => {
+              const border = borders?.[side];
+              if (border) return `border-${side}: ${border.size}px solid ${border.color};`;
+              return '';
+            }).join(' ');
           return { style };
         }
       }
