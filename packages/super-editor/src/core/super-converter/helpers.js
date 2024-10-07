@@ -44,7 +44,12 @@ function pixelsToHalfPoints(pixels) {
   return Math.round(pixels * 72 / 96);
 }
 
-
+function eigthPointsToPixels(eigthPoints) {
+  if (eigthPoints == null) return;
+  const points = parseFloat(eigthPoints) / 8;
+  const pixels = points * 1.3333;
+    return pixels;
+}
 export {
   inchesToTwips,
   twipsToInches,
@@ -53,5 +58,6 @@ export {
   halfPointToPixels,
   emuToPixels,
   pixelsToHalfPoints,
-  halfPointToPoints
+  halfPointToPoints,
+  eigthPointsToPixels
 }
