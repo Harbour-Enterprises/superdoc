@@ -14,7 +14,7 @@ export class SuperToolbar extends EventEmitter {
     toolbarGroups: ['left', 'center', 'right'],
   }
 
-  #nonEditorCommands = {
+  #interceptedCommands = {
     setZoom: ({ item, argument }) => {
       // Currently only set up to work with full SuperDoc
       if (!argument) return;
@@ -25,13 +25,24 @@ export class SuperToolbar extends EventEmitter {
       if (!layers) return;
       layers.style.zoom = argument;
     },
+
     setDocumentMode: ({ item, argument }) => {
       if (!argument) return;
       this.emit('superdoc-command', { item, argument });
 
       if (argument) this.documentMode = argument.toLowerCase();
       if (this.documentMode === 'viewing') this.#deactivateAll();
-    }
+    },
+
+    setFontSize: ({ item, argument }) => {
+      if (!argument || !this.activeEditor) return;
+      
+      let command = item.command;
+      if (command in this.activeEditor.commands) {
+        this.activeEditor.commands[command](argument);
+        this.#updateToolbarState();
+      }
+    },
   }
 
   constructor(config) {
@@ -64,7 +75,7 @@ export class SuperToolbar extends EventEmitter {
   setZoom(percent_int) {
     const percent = percent_int / 100;
     const item = this.toolbarItems.find(item => item.name.value === 'zoom');
-    this.#nonEditorCommands.setZoom({ item, argument: percent });
+    this.#interceptedCommands.setZoom({ item, argument: percent });
   }
 
   /**
@@ -138,26 +149,29 @@ export class SuperToolbar extends EventEmitter {
    */
   emitCommand({ item, argument }) {
     const { command } = item;
-    if (!command) return;
+
+    if (!command) {
+      return;
+    }
+
     this.log('(emmitCommand) Command:', command, item, argument);
 
-    // Some commands don't affect the editor, check if we have a custom command defined
-    if (command in this.#nonEditorCommands) return this.#nonEditorCommands[command]({ item, argument });
+    // Check if we have a custom or overloaded command defined
+    if (command in this.#interceptedCommands) {
+      return this.#interceptedCommands[command]({ item, argument });
+    }
   
     // Attempt to run the command on the active editor.
-    if (this.activeEditor) {
-
-      if (command in this.activeEditor.commands) {
-        this.activeEditor.commands[command](argument);
-        this.#updateToolbarState();
-      }
-
-      else throw new Error(`[super-toolbar 🎨] Command not found: ${command}`);
-    }
-    
-    else {
+    if (!this.activeEditor) {
       this.log('(emmitCommand) No active editor');
+      return;
     }
 
+    if (command in this.activeEditor.commands) {
+      this.activeEditor.commands[command](argument);
+      this.#updateToolbarState();
+    } else {
+      throw new Error(`[super-toolbar 🎨] Command not found: ${command}`);
+    }
   }
 }
