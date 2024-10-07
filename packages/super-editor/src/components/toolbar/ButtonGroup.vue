@@ -1,7 +1,8 @@
 <script setup>
-import { computed, ref } from 'vue';
+import {computed, ref} from 'vue';
 import ToolbarButton from './ToolbarButton.vue';
 import ToolbarSeparator from './ToolbarSeparator.vue';
+import OverflowMenu from './OverflowMenu.vue';
 import { NDropdown, NTooltip, NSelect } from 'naive-ui';
 
 const emit = defineEmits([
@@ -10,8 +11,12 @@ const emit = defineEmits([
 
 const props = defineProps({
   toolbarItems: {
-      type: Array,
-      required: true,
+    type: Array,
+    required: true,
+  },
+  overflowItems: {
+    type: Array,
+    default: () => []
   },
   position: {
     type: String,
@@ -24,15 +29,19 @@ const styleMap = {
   left: {
     minWidth: '150px',
     justifyContent: 'flex-start',
+    isTablet: {
+      minWidth: '100px',
+    }
   },
   right: {
     minWidth: '150px',
     justifyContent: 'flex-end',
+    isTablet: {
+      minWidth: '100px',
+    }
   },
   default: {
     flexGrow: 1,
-    paddingLeft: '20px',
-    paddingRight: '20px',
     justifyContent: 'center',
   },
 };
@@ -44,6 +53,7 @@ const getPositionStyle = computed(() => {
 const isButton = (item) => item.type === 'button';
 const isDropdown = (item) => item.type === 'dropdown';
 const isSeparator = (item) => item.type === 'separator';
+const isOverflow = (item) => item.type === 'overflow';
 const handleToolbarButtonClick = (item, argument = null) => {
   currentItem.value = item;
   currentItem.value.expand = true;
@@ -78,14 +88,11 @@ const handleClickOutside = (e) => {
 
   <div :style="getPositionStyle" class="button-group">
     
-    <div v-for="(item, index) in toolbarItems"
-      :key="index"
+    <div v-for="item in toolbarItems"
+      :key="item.id.value"
       :class="{
         narrow: item.isNarrow.value,
         wide: item.isWide.value,
-        mobile: item.isMobile.value,
-        tablet: item.isTablet.value,
-        desktop: item.isDesktop.value,
       }"
       class="toolbar-item-ctn">
 
@@ -129,11 +136,18 @@ const handleClickOutside = (e) => {
           <span v-if="item.disabled.value">(disabled)</span>
         </div>
       </n-tooltip>
+
+      <!-- Overflow menu -->
+      <OverflowMenu
+          v-if="isOverflow(item) && overflowItems.length"
+          :toolbar-item="item"
+          :overflow-items="overflowItems"
+      />
     </div>
   </div>
 </template>
 
-<style>
+<style lang="postcss">
 .n-dropdown {
   border-radius: 8px;
   min-width: 80px;
@@ -143,44 +157,25 @@ const handleClickOutside = (e) => {
   font-size: 14px;
   border-radius: 8px !important;
 }
-.n-dropdown-option-body:hover::before,
-.n-dropdown-option-body:hover::after {
-  background-color: #d8dee5 !important;
+.n-dropdown-option-body {
+  &:hover {
+    &::before, &::after {
+      background-color: #d8dee5 !important;
+    }
+  }
 }
 .toolbar-dropdown {
   cursor: pointer;
 }
 </style>
 
-<style scoped>
+<style lang="postcss" scoped>
 .button-group {
   display: flex;
 }
-
-@media (max-width: 700px) {
-  .mobile {
-    display: initial;
-  }
-}
-
-@media (min-width: 700px) and (max-width: 800px) {
-  .mobile {
-    display: none;
-  }
-  .tablet {
-    display: initial;
-  }
-}
-
-@media (min-width: 800px) {
-  .mobile {
-    display: none;
-  }
-  .tablet {
-    display: none;
-  }
-  .desktop {
-    display: initial;
+@media (max-width: 1119px) {
+  .button-group {
+    padding: 0 !important;
   }
 }
 </style>

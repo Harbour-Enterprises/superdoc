@@ -9,7 +9,7 @@ import LinkInput from './LinkInput.vue';
 import DocumentMode from './DocumentMode.vue';
 
 
-export const makeDefaultItems = (superToolbar, isDev = false) => {
+export const makeDefaultItems = (superToolbar, isDev = false, windowWidth) => {
   // bold
   const bold = useToolbarItem({
     type: 'button',
@@ -458,12 +458,12 @@ export const makeDefaultItems = (superToolbar, isDev = false) => {
 
   // overflow
   const overflow = useToolbarItem({
-    type: 'dropdown',
+    type: 'overflow',
     name: 'overflow',
     command: 'toggleOverflow',
     icon: 'fas fa-ellipsis-vertical',
     active: false,
-    disabled: true,
+    disabled: false,
   });
 
   const overflowOptions = useToolbarItem({
@@ -502,8 +502,7 @@ export const makeDefaultItems = (superToolbar, isDev = false) => {
       zoom.label.value = String(value * 100) + '%';
     },
   });
-
-
+  
   // undo
   const undo = useToolbarItem({
     type: 'button',
@@ -551,71 +550,6 @@ export const makeDefaultItems = (superToolbar, isDev = false) => {
     icon: 'fas fa-text-slash',
   });
 
-  const toolbarItemsMobile = [
-    bold,
-    italic,
-    underline,
-    indentRight,
-    indentLeft,
-    search,
-    overflow,
-  ].map((item) => item.name);
-
-  const toolbarItemsTablet = [
-    ...toolbarItemsMobile,
-    ...[
-      fontButton,
-      fontSize,
-      alignment,
-      bulletedList,
-      numberedList,
-      overflow,
-    ].map((item) => item.name),
-  ];
-
-  let overflowItems = [];
-
-  let windowResizeTimeout = null;
-
-  const debounceSetOverflowItems = () => {
-    clearTimeout(windowResizeTimeout);
-    windowResizeTimeout = setTimeout(() => {
-      setOverflowItems();
-    }, 500);
-  };
-
-  const setOverflowItems = () => {
-    const windowWidth = window.innerWidth;
-    const mobileBreakpoint = 700;
-    const tabletBreakpoint = 800;
-
-    overflowItems = [];
-    const items = [];
-    const toolbarItemsBreakpoint = [];
-
-    // mobile
-    if (windowWidth < mobileBreakpoint)
-      toolbarItemsBreakpoint.push(...toolbarItemsMobile);
-    // tablet
-    if (windowWidth >= mobileBreakpoint && windowWidth < tabletBreakpoint)
-      toolbarItemsBreakpoint.push(...toolbarItemsTablet);
-    // desktop
-    if (windowWidth >= tabletBreakpoint)
-      toolbarItemsBreakpoint.push(...toolbarItemsDesktop);
-
-    // get intersection of mobile and toolbar items
-    toolbarItems.forEach((item) => {
-      if (
-        !toolbarItemsBreakpoint.includes(item.name) &&
-        item.type !== 'separator'
-      ) {
-        items.push(item);
-      }
-    });
-
-    overflowItems = items;
-  };
-
   const copyFormat = useToolbarItem({
     type: 'button',
     name: 'copyFormat',
@@ -641,7 +575,8 @@ export const makeDefaultItems = (superToolbar, isDev = false) => {
     hasInlineTextInput: true,
     group: 'right',
     attributes: {
-      dropdownPostion: 'right',
+      dropdownPosition: 'right',
+      className: 'doc-mode'
     },
     options: [
       {
@@ -676,7 +611,22 @@ export const makeDefaultItems = (superToolbar, isDev = false) => {
     };
   }
 
+  // define sizes to calculate toolbar overflow items
+  const controlSizes = new Map([
+    ['separator', 20],
+    ['textAlign', 37],
+    ['documentMode', 45],
+    ['zoom', 70],
+    ['fontSize', 56],
+    ['fontFamily', 72],
+    ['default', 32]
+  ]);
 
+  // Responsive toolbar calculations
+  const itemsToHide = ['zoom', 'fontFamily', 'fontSize', 'redo'];
+  const mobileWidth = 600;
+  const toolbarPadding = 32;
+  
   let toolbarItems = [
     undo,
     redo,
@@ -707,26 +657,52 @@ export const makeDefaultItems = (superToolbar, isDev = false) => {
     separatorRight,
     search,
   ];
+  
+  // Hide separators on small screens
+  if (windowWidth <= mobileWidth) {
+    toolbarItems = toolbarItems.filter(item => item.type !== 'separator');
+  }
 
-  const devItems = [];
-  if (!isDev) toolbarItems = toolbarItems.filter((item) => !devItems.includes(item));
-
-  const desktopExclude = ['overflow'];
-  const toolbarItemsDesktop = toolbarItems
-    .map((item) => item.name)
-    .filter((name) => !desktopExclude.includes(name));
-
-  const mobileBreakpoint = (item) => toolbarItemsMobile.includes(item.name);
-  const tabletBreakpoint = (item) => toolbarItemsTablet.includes(item.name);
-  const desktopBreakpoint = (item) => toolbarItemsDesktop.includes(item.name);
-
+  // always visible items
+  const toolbarItemsSticky = [
+    undo,
+    overflow,
+    documentMode,
+    search,
+  ].map((item) => item.name);
+  
+  const isStickyItem = (item) => toolbarItemsSticky.includes(item.name);
+  
+  const overflowItems = [];
+  const visibleItems = [];
+  // initial width with padding
+  
+  let totalWidth = toolbarPadding + 120;
   toolbarItems.forEach((item) => {
-    item.isMobile = mobileBreakpoint(item);
-    item.isTablet = tabletBreakpoint(item);
-    item.isDesktop = desktopBreakpoint(item);
-  });
+    const itemWidth = controlSizes.get(item.name.value) || controlSizes.get('default');
 
-  return toolbarItems;
+    if (windowWidth < mobileWidth && itemsToHide.includes(item.name.value)) {
+      overflowItems.push(item);
+      return;
+    }
+    if (isStickyItem(item)) {
+      visibleItems.push(item);
+      totalWidth += itemWidth;
+      return;
+    }
+    
+    if (totalWidth < windowWidth) {
+      visibleItems.push(item);
+      totalWidth += itemWidth;
+    } else {
+      overflowItems.push(item);
+    }
+  });
+  
+  return {
+    defaultItems: visibleItems,
+    overflowItems: overflowItems.filter(item => item.type !== 'separator'),
+  };
 };
 
 export const setHistoryButtonStateOnUpdate = (toolbarItemsRef) => ({ editor, transaction }) => {

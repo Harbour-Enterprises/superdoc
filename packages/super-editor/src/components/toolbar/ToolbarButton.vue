@@ -25,7 +25,7 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  label: {
+  defaultLabel: {
     type: String,
     default: null,
   },
@@ -44,10 +44,10 @@ const {
   hasInlineTextInput,
   minWidth,
   style,
+  attributes
 } = props.toolbarItem;
 
-
-const inlineTextInput = ref(props.label);
+const inlineTextInput = ref(props.defaultLabel);
 const inlineInput = ref(null);
 
 const handleClick = () => {
@@ -73,8 +73,10 @@ const getStyle = computed(() => {
 </script>
 
 <template>
-  <div class="toolbar-item" :style="getStyle">
-
+  <div 
+      :class="['toolbar-item', attributes.className]" 
+      :style="getStyle"
+  >
       <div @click="handleClick"
           class="toolbar-button"
           :class="{ active, disabled, narrow: isNarrow, wide: isWide, 'has-inline-text-input': hasInlineTextInput}">
@@ -91,7 +93,7 @@ const getStyle = computed(() => {
           {{label}}
         </div>
 
-        <span v-if=inlineTextInputVisible>
+        <span v-if="inlineTextInputVisible">
           <input
               v-model="inlineTextInput"
               :placeholder="label"
@@ -107,7 +109,6 @@ const getStyle = computed(() => {
             class="dropdown-caret fas"
             :class="active ? 'fa-caret-up' : 'fa-caret-down'"
             :style="{opacity: disabled ? 0.6 : 1}"></i>
-
       </div>
   </div>
 </template>
@@ -184,8 +185,6 @@ const getStyle = computed(() => {
   padding-right: 2px;
 }
 .button-text-input {
-  border: none;
-  outline: none;
   border-radius: 4px;
   text-align: center;
   width: 30px;
@@ -196,5 +195,15 @@ const getStyle = computed(() => {
   padding: 2px 0;
   outline: none;
   border: 1px solid #d8dee5;
+}
+@media (max-width: 1120px) {
+  .doc-mode {
+    .button-label {
+      display: none;
+    }
+    .toolbar-icon {
+      margin-right: 5px;
+    }
+  }
 }
 </style>

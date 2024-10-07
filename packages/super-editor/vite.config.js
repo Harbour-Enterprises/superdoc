@@ -52,5 +52,8 @@ export default defineConfig(({ mode }) => {
       },
       extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json'],
     },
+    css: {
+      postcss: './postcss.config.cjs',
+    },
   }
 })

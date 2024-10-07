@@ -38,9 +38,10 @@ export class SuperToolbar extends EventEmitter {
     super();
     this.config = { ...this.config, ...config };
     this.toolbarItems = [];
+    this.overflowItems = [];
     this.documentMode = 'editing';
     this.isDev = config.isDev || false;
-
+    
     this.#makeToolbarItems(this, config.isDev);
 
     let el = null;
@@ -76,10 +77,15 @@ export class SuperToolbar extends EventEmitter {
     this.activeEditor.on('transaction', this.onEditorTransaction.bind(this));
     this.#updateToolbarState();
   }
+  
+  getToolbarItemByGroup(groupName) {
+    return this.toolbarItems.filter(item => item.group.value === groupName);
+  }
 
   #makeToolbarItems(superToolbar, isDev = false) {
-    const defaultItems = makeDefaultItems(superToolbar, isDev);
+    const { defaultItems, overflowItems } = makeDefaultItems(superToolbar, isDev, window.innerWidth);
     this.toolbarItems = defaultItems;
+    this.overflowItems = overflowItems;
     this.#updateToolbarState();
   }
 
@@ -104,8 +110,15 @@ export class SuperToolbar extends EventEmitter {
       } else {
         item.deactivate();
       }
-
     });
+  }
+  
+  onToolbarResize = async () => {
+    const timeout = (ms) => {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    };
+    await timeout(100);
+    this.#makeToolbarItems(this, this.isDev);
   }
 
   #deactivateAll() {
@@ -119,7 +132,7 @@ export class SuperToolbar extends EventEmitter {
 
   #updateToolbarHistory() {
     if (!this.activeEditor) return;
-    this.undoDepth =  undoDepth(this.activeEditor.state)
+    this.undoDepth = undoDepth(this.activeEditor.state)
     this.redoDepth = redoDepth(this.activeEditor.state)
   }
 

@@ -236,6 +236,7 @@ onMounted(async () => {
 .dev-app__header {
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
   background-color: rgb(222, 237, 243);
   padding: 20px;
 }
