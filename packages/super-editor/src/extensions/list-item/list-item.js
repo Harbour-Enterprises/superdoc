@@ -29,22 +29,22 @@ export const ListItem = Node.create({
   addAttributes() {
     return {
 
-      // lvlText: { 
-      //   default: null,
-      //   renderDOM: (attrs) => {
-      //     const { listLevel, listNumberingType, lvlText } = attrs;
-      //     if (!listLevel) return {};
+      lvlText: { 
+        default: null,
+        renderDOM: (attrs) => {
+          const { listLevel, listNumberingType, lvlText } = attrs;
+          if (!listLevel) return {};
         
-      //     // MS Word has many custom ordered list options. We need to generate the correct index here.
-      //     const numbering = generateOrderedListIndex({ listLevel, lvlText, listNumberingType });
-      //     if (!numbering) return {};
+          // MS Word has many custom ordered list options. We need to generate the correct index here.
+          const numbering = generateOrderedListIndex({ listLevel, lvlText, listNumberingType });
+          if (!numbering) return {};
 
-      //     return {
-      //       'data-bullet-type': numbering,
-      //       class: 'custom-list-item',
-      //     }
-      //   },
-      // },
+          return {
+            'data-bullet-type': numbering,
+            class: 'custom-list-item',
+          }
+        },
+      },
 
       listNumberingType: {
         default: 'decimal',

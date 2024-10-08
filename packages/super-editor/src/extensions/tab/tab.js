@@ -17,13 +17,13 @@ export const TabNode = Node.create({
 
   addAttributes() {
     return {
-      tabSize: {
-        renderDOM: ({ tabSize }) => {
-          if (!tabSize) return {};
-          const style = `width: ${tabSize}px; display: inline-block;`;
-          return { style };
-        },
-      },
+      // tabSize: {
+      //   renderDOM: ({ tabSize }) => {
+      //     if (!tabSize) return {};
+      //     const style = `width: ${tabSize}px; display: inline-block;`;
+      //     return { style };
+      //   },
+      // },
     };
   },
 
