@@ -1,12 +1,16 @@
 <script setup>
 import '@harbour-enterprises/common/styles/common-styles.css';
-import { nextTick, onMounted, ref, shallowRef } from 'vue';
+import { nextTick, onMounted, provide, ref, shallowRef } from 'vue';
+import { HocuspocusProvider, HocuspocusProviderWebsocket } from "@hocuspocus/provider";
+import { Doc as YDoc } from 'yjs';
+
 import { Superdoc } from '@core/index.js';
 import { DOCX, PDF, HTML } from '@harbour-enterprises/common';
 import { BasicUpload, getFileObject } from '@harbour-enterprises/common';
 import { fieldAnnotationHelpers } from '@harbour-enterprises/super-editor';
 import BlankDOCX from '@harbour-enterprises/common/data/blank.docx?url';
 import EditorInputs from './EditorInputs.vue';
+
 
 /* For local dev */
 let superdoc = shallowRef(null);
@@ -20,12 +24,25 @@ const handleNewFile = async (file) => {
   currentFile.value = await getFileObject(url, file.name, file.type);
 
   nextTick(() => {
-    initializeApp();
+    init();
   });
-}
+};
 
-const initializeApp = async () => {
+const init = async () => {
+
+  const user = {
+    name: 'Super Document Jr.',
+    email: 'user@harbourshare.com',
+  };
+
+  // const socket = new HocuspocusProviderWebsocket({
+  //   url: 'ws://localhost:3050/docs',
+  // });
+  
+  let testId = 'document-123';
+  // const testId = "document_6a9fb1e0725d46989bdbb3f9879e9e1b";
   const config = {
+    superdocId: 'superdoc-dev',
     selector: '#superdoc',
     toolbar: 'toolbar',
     toolbarGroups: ['center'],
@@ -37,15 +54,22 @@ const initializeApp = async () => {
     documents: [
       {
         data: currentFile.value,
-        id: '123',
+        id: testId,
+        // isNewFile: true,
       },
     ],
     modules: {
-      'comments': {
-        // readOnly: true,
-        // allowResolve: false,
-      },
+      // 'comments': {
+      //   // readOnly: true,
+      //   // allowResolve: false,
+      // },
       'hrbr-fields': {},
+      // collaboration: {
+      //   providerType: 'hocuspocus',
+      //   server: 'ws://localhost:3050/docs',
+      //   socket,
+      //   token: 'token',
+      // }
     },
   }
   superdoc.value = new Superdoc(config);
@@ -132,6 +156,7 @@ const onEditorCreate = ({ editor }) => {
 onMounted(async () => {
   handleNewFile(await getFileObject(BlankDOCX, 'blank_document.docx', DOCX));
 });
+
 </script>
 
 <template>

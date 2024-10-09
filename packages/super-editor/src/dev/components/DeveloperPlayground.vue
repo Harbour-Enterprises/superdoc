@@ -1,33 +1,27 @@
 <script setup>
 import '@harbour-enterprises/common/styles/common-styles.css';
 import '@harbour-enterprises/common/icons/icons.css';
-import { ref, reactive, onMounted } from 'vue';
-import BasicUpload from './BasicUpload.vue';
-import BlankDOCX from '@harbour-enterprises/common/data/blank.docx?url';
-import EditorInputs from './EditorInputs/EditorInputs.vue';
+import { ref, computed, onMounted } from 'vue';
+
+import { SuperEditor } from '@/index';
+import { getFileObject } from '@harbour-enterprises/common/helpers/get-file-object';
 import { DOCX } from '@harbour-enterprises/common';
 import { INPUTS } from '../config/agreement-editor.js';
 import { SuperToolbar } from '@components/toolbar/super-toolbar';
 import { fieldAnnotationHelpers } from '@extensions/index.js';
+import BasicUpload from './BasicUpload.vue';
+import BlankDOCX from '@harbour-enterprises/common/data/blank.docx?url';
+import EditorInputs from './EditorInputs/EditorInputs.vue';
 
 // Import the component the same you would in your app
-import { SuperEditor } from '@/index';
-
 let activeEditor;
 const currentFile = ref(null);
 
 const handleNewFile = async (file) => {
   currentFile.value = null;
   const fileUrl = URL.createObjectURL(file);
-  currentFile.value = await getFileObject(fileUrl);
-}
-
-const getFileObject = async (fileUrl) => {
-  // Generate a file url
-  const response = await fetch(fileUrl);
-  const blob = await response.blob();
-  return new File([blob], 'docx-file.docx', { type: DOCX });
-}
+  currentFile.value = await getFileObject(fileUrl, file.name, file.type);
+};
 
 const onCreate = ({ editor }) => {
   console.debug('[Dev] Editor created', editor);
@@ -45,20 +39,31 @@ const onCreate = ({ editor }) => {
     }
   });
   attachAnnotationEventHandlers();
-}
+};
 
 const onCommentClicked = ({ conversation }) => {
   console.debug('💬 [Dev] Comment active', conversation);
 };
 
-const editorOptions = {
-    user: {
-      name: 'Developer playground',
-      email: 'devs@harbourshare.com',
-    },
+const user = {
+  name: 'Developer playground',
+  email: 'devs@harbourshare.com',
+};
+
+const editorOptions = computed(() => {
+  return {
+    documentId: 'dev-123',
+    user,
     onCreate,
     onCommentClicked,
-}
+    users: [
+      { name: 'Nick Bernal', email: 'nick@harbourshare.com' },
+      { name: 'Artem Nistuley', email: 'nick@harbourshare.com' },
+      { name: 'Matthew Connelly', email: 'matthew@harbourshare.com' },
+      { name: 'Eric Doversberger', email: 'eric@harbourshare.com'} 
+    ],
+  }
+});
 
 const exportDocx = async () => {
   const result = await activeEditor?.exportDocx();
@@ -68,7 +73,7 @@ const exportDocx = async () => {
   a.href = url;
   a.download = 'exported.docx';
   a.click();
-}
+};
 
 /* Inputs pane and field annotations */
 const draggedInputId = ref(null)
@@ -140,12 +145,12 @@ const attachAnnotationEventHandlers = () => {
 /* Inputs pane and field annotations */
 
 const initToolbar = () => {
-  return new SuperToolbar({ element: 'toolbar', editor: activeEditor, isDev: true });
-}
+  return new SuperToolbar({ element: 'toolbar', editor: activeEditor });
+};
 
 onMounted(async () => {
   // set document to blank
-  currentFile.value = await getFileObject(BlankDOCX);
+  currentFile.value = await getFileObject(BlankDOCX, 'blank_document.docx', DOCX);
 });
 </script>
 
@@ -185,7 +190,6 @@ onMounted(async () => {
             <div class="dev-app__content" v-if="currentFile">
               <div class="dev-app__content-container">
                 <SuperEditor
-                  documentId="ID-122"
                   :file-source="currentFile" 
                   :options="editorOptions"
                 />

@@ -10,7 +10,7 @@ const props = defineProps({
   activeColor: {
     type: Object,
     required: false,
-  }
+  },
 });
 
 const handleClick = (option) => {

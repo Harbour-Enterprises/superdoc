@@ -55,14 +55,14 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="super-editor">
+  <div class="super-editor-in-viewer">
     <div class="super-editor__content" v-html="documentContent" @mouseup="handleSelectionChange"></div>
   </div>
 </template>
 
 
 <style lang="postcss">
-.super-editor {
+.super-editor-in-viewer {
   --header-height: 36px;
 
   font-family: sans-serif;

@@ -8,6 +8,9 @@ import AlignmentButtons from "./AlignmentButtons.vue";
 import LinkInput from "./LinkInput.vue";
 import DocumentMode from "./DocumentMode.vue";
 
+const closeDropdown = (dropdown) => {
+  dropdown.expand.value = false;
+};
 
 export const makeDefaultItems = (superToolbar, isDev = false) => {
   // bold
@@ -281,6 +284,7 @@ export const makeDefaultItems = (superToolbar, isDev = false) => {
     const handleSelect = (e) => {
       colorButton.iconColor.value = e;
       superToolbar.emitCommand({ item: colorButton, argument: e });
+      closeDropdown(colorButton);
     };
   
     return h('div', {}, [
@@ -320,9 +324,10 @@ export const makeDefaultItems = (superToolbar, isDev = false) => {
 
   function renderLinkDropdown(link) {
     const handleSubmit = ({ href }) => {
+      closeDropdown(link);
       link.attributes.value.link = { href };
       const itemWithCommand = { ...link, command: "toggleLink", };
-      superToolbar.emitCommand({ item: itemWithCommand, argument: { href, text: "test" } });
+      superToolbar.emitCommand({ item: itemWithCommand, argument: { href, text: "" } });
       if (!href) link.active.value = false
     };
 
@@ -331,6 +336,7 @@ export const makeDefaultItems = (superToolbar, isDev = false) => {
         onSubmit: handleSubmit,
         href: link.attributes.value.href,
         goToAnchor: () => {
+          closeDropdown(link);
           if (!superToolbar.activeEditor || !link.attributes.value?.href) return;
           const anchorName = link.attributes.value?.href?.slice(1);
           const container = superToolbar.activeEditor.element;
@@ -369,6 +375,7 @@ export const makeDefaultItems = (superToolbar, isDev = false) => {
     icon: "fas fa-image",
     active: false,
     tooltip: "Image",
+    disabled: true,
   });
 
   // alignment
@@ -387,6 +394,7 @@ export const makeDefaultItems = (superToolbar, isDev = false) => {
         type: "render",
         render: () => {
           const handleSelect = (e) => {
+            closeDropdown(alignment);
             const buttonWithCommand = { ...alignment, command: "setTextAlign" };
             buttonWithCommand.command = "setTextAlign";
             superToolbar.emitCommand({ item: buttonWithCommand, argument: e });
@@ -596,15 +604,15 @@ export const makeDefaultItems = (superToolbar, isDev = false) => {
   });
 
   // search
-  const search = useToolbarItem({
-    type: "button",
-    allowWithoutEditor: true,
-    name: "search",
-    tooltip: "Search",
-    disabled: true,
-    icon: "fas fa-magnifying-glass",
-    group: "right",
-  });
+  // const search = useToolbarItem({
+  //   type: "button",
+  //   allowWithoutEditor: true,
+  //   name: "search",
+  //   tooltip: "Search",
+  //   disabled: true,
+  //   icon: "fas fa-magnifying-glass",
+  //   group: "right",
+  // });
 
   const clearFormatting = useToolbarItem({
     type: "button",
@@ -620,7 +628,7 @@ export const makeDefaultItems = (superToolbar, isDev = false) => {
     underline,
     indentRight,
     indentLeft,
-    search,
+    // search,
     overflow,
   ].map((item) => item.name);
 
@@ -716,29 +724,24 @@ export const makeDefaultItems = (superToolbar, isDev = false) => {
 
   const documentOptions = [
     { label: "Editing", value: "editing", icon: 'fal fa-user-edit', description: "Edit document directly", },
-    { label: "Suggesting", value: "suggesting", icon: 'fal fa-comment-edit', description: "Edits become suggestions" },
+    // { label: "Suggesting", value: "suggesting", icon: 'fal fa-comment-edit', description: "Edits become suggestions" },
     { label: "Viewing", value: "viewing", icon: 'fal fa-eye', description: "View clean version of document only" },
   ];
 
-  function renderDocumentMode() {
+  function renderDocumentMode(renderDocumentButton) {
     return h(DocumentMode, 
       {
         options: documentOptions,
-        onSelect: ({ label, icon }) => {
+        onSelect: (item) => {
+          closeDropdown(renderDocumentButton);
+          const { label, icon } = item;
           documentMode.label.value = label;
           documentMode.icon.value = icon;
           superToolbar.emitCommand({ item: documentMode, argument: label });
-        }
+        },
       }
     );
   }
-
-  function renderIcon(icon) {
-    return () => {
-      return h('i', { class: icon });
-    };
-  }
-
 
   let toolbarItems = [
     undo,
@@ -773,8 +776,8 @@ export const makeDefaultItems = (superToolbar, isDev = false) => {
     clearFormatting,
     overflow,
     documentMode,
-    separatorRight,
-    search,
+    // separatorRight,
+    // search,
   ];
 
   const devItems = [test, trackChanges, acceptChangesOnCursorPositions, revertChangesOnCursorPositions, toggleTrackChangesOriginal, toggleTrackChangesFinal];
