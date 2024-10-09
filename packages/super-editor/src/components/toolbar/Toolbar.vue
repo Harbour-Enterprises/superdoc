@@ -1,39 +1,29 @@
 <script setup>
-import {ref, getCurrentInstance, onMounted, onDeactivated, toRaw, computed} from 'vue';
+import {ref, getCurrentInstance, onMounted, onDeactivated} from 'vue';
+import {throttle} from './helpers.js';
 import ButtonGroup from './ButtonGroup.vue';
 
 const { proxy } = getCurrentInstance();
 const emit = defineEmits(['command', 'toggle', 'select']);
 
-const leftItems = ref([]);
-const centerItems = ref([]);
-const rightItems = ref([]);
-const overflowItems = ref([]);
+let toolbarKey = ref(1);
 
-const showLeftSide = computed(() => proxy.$toolbar.config?.toolbarGroups?.includes('left'));
-const showRightSide = computed(() => proxy.$toolbar.config?.toolbarGroups?.includes('right'));
-
+const showLeftSide = proxy.$toolbar.config?.toolbarGroups?.includes('left');
+const showRightSide = proxy.$toolbar.config?.toolbarGroups?.includes('right');
 
 onMounted(() => {
-  window.addEventListener('resize', onWindowResized);
-  getToolbarItems();
+  window.addEventListener('resize', onResizeThrottled);
 });
 
 onDeactivated(() => {
-  window.removeEventListener('resize', onWindowResized);
+  window.removeEventListener('resize', onResizeThrottled);
 });
 
 const onWindowResized = async () => {
   await proxy.$toolbar.onToolbarResize();
-  getToolbarItems();
+  toolbarKey.value += 1;
 };
-
-const getToolbarItems = () => {
-  leftItems.value = proxy.$toolbar.getToolbarItemByGroup('left');
-  centerItems.value = proxy.$toolbar.getToolbarItemByGroup('center');
-  rightItems.value = proxy.$toolbar.getToolbarItemByGroup('right');
-  overflowItems.value = proxy.$toolbar.overflowItems;
-};
+const onResizeThrottled = throttle(onWindowResized, 300);
 
 const handleCommand = ({ item, argument }) => {
   proxy.$toolbar.emitCommand({ item, argument });
@@ -43,23 +33,24 @@ const handleCommand = ({ item, argument }) => {
 <template>
   <div 
       class="superdoc-toolbar"
+      :key="toolbarKey"
   >
     <ButtonGroup 
       v-if="showLeftSide"
-      :toolbar-items="toRaw(leftItems)" 
+      :toolbar-items="proxy.$toolbar.getToolbarItemByGroup('left')" 
       position="left" 
       @command="handleCommand" 
       class="superdoc-toolbar-group-side" 
     />
     <ButtonGroup 
-      :toolbar-items="toRaw(centerItems)" 
-      :overflow-items="toRaw(overflowItems)"
+      :toolbar-items="proxy.$toolbar.getToolbarItemByGroup('center')" 
+      :overflow-items="proxy.$toolbar.overflowItems"
       position="center" 
       @command="handleCommand" 
     />
     <ButtonGroup 
       v-if="showRightSide"
-      :toolbar-items="toRaw(rightItems)" 
+      :toolbar-items="proxy.$toolbar.getToolbarItemByGroup('right')" 
       position="right" 
       @command="handleCommand" 
       class="superdoc-toolbar-group-side"
@@ -79,7 +70,7 @@ const handleCommand = ({ item, argument }) => {
     min-width: auto !important;
   }
 }
-@media (max-width: 600px)  {
+@media (max-width: 768px)  {
   .superdoc-toolbar {
     padding: 4px 10px;
   }

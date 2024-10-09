@@ -113,11 +113,7 @@ export class SuperToolbar extends EventEmitter {
     });
   }
   
-  onToolbarResize = async () => {
-    const timeout = (ms) => {
-      return new Promise(resolve => setTimeout(resolve, ms));
-    };
-    await timeout(100);
+  onToolbarResize = () => {
     this.#makeToolbarItems(this, this.isDev);
   }
 

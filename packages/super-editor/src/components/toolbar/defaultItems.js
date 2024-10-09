@@ -624,7 +624,7 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth) => {
 
   // Responsive toolbar calculations
   const itemsToHide = ['zoom', 'fontFamily', 'fontSize', 'redo'];
-  const mobileWidth = 600;
+  const hideWideItemsEndpoint = 600;
   const toolbarPadding = 32;
   const stickyItemsWidth = 120;
   
@@ -660,7 +660,7 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth) => {
   ];
   
   // Hide separators on small screens
-  if (windowWidth <= mobileWidth) {
+  if (windowWidth <= hideWideItemsEndpoint) {
     toolbarItems = toolbarItems.filter(item => item.type !== 'separator');
   }
 
@@ -682,7 +682,7 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth) => {
   toolbarItems.forEach((item) => {
     const itemWidth = controlSizes.get(item.name.value) || controlSizes.get('default');
 
-    if (windowWidth < mobileWidth && itemsToHide.includes(item.name.value)) {
+    if (windowWidth < hideWideItemsEndpoint && itemsToHide.includes(item.name.value)) {
       overflowItems.push(item);
       return;
     }
