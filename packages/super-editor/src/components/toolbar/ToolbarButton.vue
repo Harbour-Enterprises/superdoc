@@ -25,7 +25,7 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  label: {
+  defaultLabel: {
     type: String,
     default: null,
   },
@@ -44,10 +44,10 @@ const {
   hasInlineTextInput,
   minWidth,
   style,
+  attributes
 } = props.toolbarItem;
 
-
-const inlineTextInput = ref(props.label);
+const inlineTextInput = ref(props.defaultLabel);
 const inlineInput = ref(null);
 
 const handleClick = () => {
@@ -73,8 +73,10 @@ const getStyle = computed(() => {
 </script>
 
 <template>
-  <div class="toolbar-item" :style="getStyle">
-
+  <div 
+      :class="['toolbar-item', attributes.className]" 
+      :style="getStyle"
+  >
       <div @click="handleClick"
           class="toolbar-button"
           :class="{ active, disabled, narrow: isNarrow, wide: isWide, 'has-inline-text-input': hasInlineTextInput}">
@@ -91,7 +93,7 @@ const getStyle = computed(() => {
           {{label}}
         </div>
 
-        <span v-if=inlineTextInputVisible>
+        <span v-if="inlineTextInputVisible">
           <input
               v-model="inlineTextInput"
               :placeholder="label"
@@ -107,7 +109,6 @@ const getStyle = computed(() => {
             class="dropdown-caret fas"
             :class="active ? 'fa-caret-up' : 'fa-caret-down'"
             :style="{opacity: disabled ? 0.6 : 1}"></i>
-
       </div>
   </div>
 </template>
@@ -116,17 +117,15 @@ const getStyle = computed(() => {
 .toolbar-item {
   position: relative;
   z-index: 100;
-  margin: 0 1px;
   min-width: 30px;
+  margin: 0 1px;
 }
 
 .toolbar-button {
-  padding: 0;
+  padding: 5px;
   height: 32px;
   max-height: 32px;
   border-radius: 6px;
-  margin-top: 3.5px;
-  margin-bottom: 4px;
 
   overflow-y: visible;
   display: flex;
@@ -137,9 +136,6 @@ const getStyle = computed(() => {
   transition: all 0.2s ease-out;
   user-select: none;
   position: relative;
-}
-.dropdown-caret {
-  margin-right: 5px;
 }
 .toolbar-button:hover {
   background-color: #DBDBDB;
@@ -157,10 +153,9 @@ const getStyle = computed(() => {
   font-weight: 400;
   font-size: 15px;
   margin: 5px;
-  text-align: center;
 }
-.toolbar-icon {
-  margin: 0 5px;
+.toolbar-icon + .dropdown-caret {
+  margin-left: 4px;
 }
 
 .left, .right {
@@ -190,8 +185,6 @@ const getStyle = computed(() => {
   padding-right: 2px;
 }
 .button-text-input {
-  border: none;
-  outline: none;
   border-radius: 4px;
   text-align: center;
   width: 30px;
@@ -202,5 +195,15 @@ const getStyle = computed(() => {
   padding: 2px 0;
   outline: none;
   border: 1px solid #d8dee5;
+}
+@media (max-width: 1120px) {
+  .doc-mode {
+    .button-label {
+      display: none;
+    }
+    .toolbar-icon {
+      margin-right: 5px;
+    }
+  }
 }
 </style>

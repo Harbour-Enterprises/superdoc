@@ -1,8 +1,9 @@
 import { ref } from 'vue';
+import { v4 as uuidv4 } from 'uuid';
 
 export const useToolbarItem = (options) => {
 
-  const types = ['button', 'options', 'separator', 'dropdown'];
+  const types = ['button', 'options', 'separator', 'dropdown', 'overflow'];
   if (!types.includes(options.type)) {
     throw new Error('Invalid toolbar item type - ' + options.type);
   }
@@ -19,6 +20,7 @@ export const useToolbarItem = (options) => {
     throw new Error('Invalid toolbar item name - ' + options.name);
   }
 
+  const id = ref(uuidv4());
   const type = options.type;
   const name = ref(options.name);
   const command = options.command;
@@ -59,9 +61,6 @@ export const useToolbarItem = (options) => {
   const hideLabel = ref(options.hideLabel);
   const inlineTextInputVisible = ref(options.inlineTextInputVisible)
   const hasInlineTextInput = ref(options.hasInlineTextInput)
-  const isMobile = ref(true)
-  const isTablet = ref(true)
-  const isDesktop = ref(true)
 
   const markName = ref(options.markName);
   const labelAttr = ref(options.labelAttr);
@@ -108,6 +107,7 @@ export const useToolbarItem = (options) => {
   }
 
   const refs = {
+    id,
     name,
     type,
     command,
@@ -134,12 +134,8 @@ export const useToolbarItem = (options) => {
     defaultLabel,
     label,
     hideLabel,
-    disabled,
     inlineTextInputVisible,
     hasInlineTextInput,
-    isMobile,
-    isTablet,
-    isDesktop,
     markName,
     labelAttr,
     childItem,
