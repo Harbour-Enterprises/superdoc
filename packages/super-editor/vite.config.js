@@ -27,7 +27,15 @@ export default defineConfig(({ mode }) => {
         fileName: (format) => `super-editor.${format}.js`
       },
       rollupOptions: {
-        external: ['vue', 'tippy.js'],
+        external: [
+          'vue',
+          'yjs',
+          'tippy.js',
+          'y-protocols',
+          '@fortawesome/fontawesome-free',
+          '@fortawesome/free-solid-svg-icons',
+          '@fortawesome/vue-fontawesome',
+        ],
         output: {
           globals: {
             vue: 'Vue',
@@ -64,9 +72,6 @@ export default defineConfig(({ mode }) => {
         '@vue-3': fileURLToPath(new URL('./src/vue-3', import.meta.url)),
       },
       extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json'],
-    },
-    css: {
-      postcss: './postcss.config.cjs',
     },
   }
 })

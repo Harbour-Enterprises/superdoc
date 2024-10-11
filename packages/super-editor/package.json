@@ -19,9 +19,6 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-free": "^6.5.2",
-    "@fortawesome/free-solid-svg-icons": "^6.5.2",
-    "@fortawesome/vue-fontawesome": "^3.0.8",
     "color2k": "^2.0.3",
     "eventemitter3": "^5.0.1",
     "jszip": "^3.10.1",
@@ -36,7 +33,6 @@
     "prosemirror-tables": "^1.4.0",
     "prosemirror-transform": "^1.9.0",
     "prosemirror-view": "^1.33.8",
-    "tippy.js": "^6.3.7",
     "uuidv4": "^6.2.13",
     "vue": "^3.4.21",
     "xml-js": "^1.6.11"
@@ -51,6 +47,10 @@
     "yjs": "13.6.19"
   },
   "devDependencies": {
+    "tippy.js": "^6.3.7",
+    "@fortawesome/fontawesome-free": "^6.5.2",
+    "@fortawesome/free-solid-svg-icons": "^6.5.2",
+    "@fortawesome/vue-fontawesome": "^3.0.8",
     "@vitejs/plugin-vue": "^5.0.4",
     "@vue/test-utils": "^2.4.6",
     "jsdom": "^24.1.0",

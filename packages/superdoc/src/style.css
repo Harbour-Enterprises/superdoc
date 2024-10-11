@@ -3,35 +3,16 @@
   --page-border: 1px solid #DFDFDF;
 }
 
-*,
-div,
+.super-editor > *,
+.super-editor > div,
 ::before,
 ::after {
   box-sizing: border-box;
 }
 
-
-html {
-  text-size-adjust: 100%;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+.super-editor p {
   padding: 0;
   margin: 0;
-}
-
-body {
-  font-family: 'Inter', sans-serif;
-  font-weight: 400;
-  color: #4a4a4a;
-  min-width: 320px;
-  padding: 0;
-  margin: 0;
-}
-
-#app {
-  min-height: 100vh;
-  position: relative;
 }
 
 .drawer {
