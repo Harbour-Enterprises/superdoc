@@ -28,31 +28,45 @@ export const ListItem = Node.create({
   
   addAttributes() {
     return {
+      // Virtual attribute.
+      markerType: {
+        default: null,
+        renderDOM: (attrs) => {
+          let { listLevel, listNumberingType, lvlText } = attrs;
+          let hasListLevel = !!listLevel?.length;
+          
+          if (!hasListLevel || !lvlText) {
+            return {};
+          }
 
-      // lvlText: { 
-      //   default: null,
-      //   renderDOM: (attrs) => {
-      //     const { listLevel, listNumberingType, lvlText } = attrs;
-      //     if (!listLevel) return {};
-        
-      //     // MS Word has many custom ordered list options. We need to generate the correct index here.
-      //     const numbering = generateOrderedListIndex({ listLevel, lvlText, listNumberingType });
-      //     if (!numbering) return {};
+          // MS Word has many custom ordered list options. 
+          // We need to generate the correct index here.
+          let orderMarker = generateOrderedListIndex({ 
+            listLevel, 
+            lvlText, 
+            listNumberingType, 
+          });
+          
+          if (!orderMarker) return {};
 
-      //     return {
-      //       'data-bullet-type': numbering,
-      //       class: 'custom-list-item',
-      //     }
-      //   },
-      // },
+          return {
+            'data-marker-type': orderMarker,
+          };
+        },
+      },
+
+      lvlText: { 
+        default: null,
+        rendered: false,
+      },
 
       listNumberingType: {
-        default: 'decimal',
+        default: null,
         rendered: false,
       },
 
       listLevel: {
-        default: 0,
+        default: null,
         rendered: false,
       },
 

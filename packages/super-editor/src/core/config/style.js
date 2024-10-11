@@ -32,6 +32,9 @@ export const style = `.ProseMirror {
 .ProseMirror li:has(> ul:first-child, > ol:first-child):not(:has(> p)) {
   list-style-type: none;
 }
+.ProseMirror li:has(> ul:first-child, > ol:first-child):not(:has(> p))::marker {
+  content: '';
+}
 
 .ProseMirror-hideselection *::selection {
   background: transparent;
@@ -103,4 +106,13 @@ img.ProseMirror-separator {
   display: inline !important;
   border: none !important;
   margin: 0 !important;
-}`;
+}
+  
+.ProseMirror li[data-marker-type] {
+  list-style-type: none;
+}
+
+.ProseMirror li[data-marker-type]::marker {
+  content: attr(data-marker-type) ' ';
+}
+`;

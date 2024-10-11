@@ -1,6 +1,7 @@
 export * from './first.js';
 export * from './command.js';
 export * from './insertTabChar.js';
+export * from './setMeta.js';
 
 export * from './splitBlock.js';
 export * from './liftEmptyBlock.js';
