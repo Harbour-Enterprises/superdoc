@@ -1,7 +1,7 @@
 <script setup>
 import '@harbour-enterprises/common/styles/common-styles.css';
 import { nextTick, onMounted, provide, ref, shallowRef } from 'vue';
-import { HocuspocusProvider, HocuspocusProviderWebsocket } from "@hocuspocus/provider";
+// import { HocuspocusProvider, HocuspocusProviderWebsocket } from "@hocuspocus/provider";
 import { Doc as YDoc } from 'yjs';
 
 import { Superdoc } from '@core/index.js';

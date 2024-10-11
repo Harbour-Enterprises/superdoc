@@ -74,6 +74,7 @@ const handleDocumentReady = (documentId, container) => {
     isReady.value = true;
     nextTick(() => initialCheck());
   }
+  proxy.$superdoc.broadcastDocumentReady();
 }
 
 const handleToolClick = (tool) => {

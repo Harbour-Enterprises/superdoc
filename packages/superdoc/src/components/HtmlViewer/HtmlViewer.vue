@@ -56,7 +56,7 @@ onMounted(() => {
 
 <template>
   <div class="super-editor-in-viewer">
-    <div class="super-editor__content" v-html="documentContent" @mouseup="handleSelectionChange"></div>
+    <div class="super-editor-in-viewer__content" v-html="documentContent" @mouseup="handleSelectionChange"></div>
   </div>
 </template>
 

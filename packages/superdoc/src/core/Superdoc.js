@@ -107,6 +107,10 @@ export class Superdoc extends EventEmitter {
       return { ...doc, type: documentType };
     });
   }
+  
+  broadcastDocumentReady() {
+    this.emit('document-ready');
+  }
 
   broadcastReady() {
     if (this.readyEditors === this.requiredNumberOfEditors) {
