@@ -1,6 +1,7 @@
 import { carbonCopy } from "../../../utilities/carbonCopy.js";
 import { hasTextNode, parseProperties } from "./importerHelpers.js";
 import { preProcessNodesForFldChar } from "./paragraphNodeImporter.js";
+import { twipsToPixels } from "../../helpers.js";
 
 /**
  * @type {import("docxImporter").NodeHandler}
@@ -17,35 +18,83 @@ export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange) 
   const processedElements = preProcessNodesForFldChar(node.elements);
   node.elements = processedElements;
 
-
-  const pPr = node.elements.find(el => el.name === 'w:pPr');
-
   // Check if this paragraph node is a list
   if (testForList(node)) {
-    // Get all siblings that are list items and haven't been processed yet.
-    const siblings = carbonCopy(nodes);
-    const listItems = [];
-    let consumed = 0;
-
-    // Iterate each item until we find the end of the list (a non-list item),
-    // then send to the list handler for processing.
-    let possibleList = siblings.shift();
-    while (possibleList && testForList(possibleList, true)) {
-      listItems.push(possibleList);
-      possibleList = siblings.shift();
-      if (possibleList?.elements && !hasTextNode(possibleList.elements)) {
-        listItems.push(possibleList);
-        possibleList = siblings.shift();
-      }
-    }
-
-    return {
-      nodes: [handleListNodes(listItems, docx, nodeListHandler, 0)],
-      consumed: listItems.filter(i => i.seen).length
+    const convertedNode = convertListNode(node, docx, nodeListHandler);
+    if (!convertedNode) {
+      return { nodes: [], consumed: 0 };
     };
+
+    return { nodes: [convertedNode], consumed: 1 };
   } else {
     return { nodes: [], consumed: 0 };
   }
+}
+
+const convertListNode = (node, docx, nodeListHandler, insideTrackChange) => {
+  const pPr = node.elements.find(el => el.name === 'w:pPr');
+  const numPr = pPr.elements.find(el => el.name === 'w:numPr');
+  if (!numPr) return;
+
+  const styleTag = pPr.elements.find(el => el.name === 'w:pStyle');
+  if (styleTag) {
+    const referencedListStyleName = styleTag?.attributes['w:val'];
+    const referencedStyles = docx['word/styles.xml'].elements[0].elements;
+    const referencedStyle = referencedStyles.find((style) => style.attributes?.['w:styleId'] === referencedListStyleName);
+    console.debug('** Referenced list style:', referencedStyle);
+  }
+
+  const ilvl = numPr?.elements?.find(el => el.name === 'w:ilvl')?.attributes['w:val'];
+  const content = nodeListHandler.handler(node.elements, docx, insideTrackChange)?.filter(n => n)
+  const { attributes, elements, marks = [] } = parseProperties(node, docx);
+
+  const {
+    listType,
+    listOrderingType,
+    listrPrs,
+    listpPrs,
+    start,
+    lvlText,
+    lvlJc,
+  } = getNodeNumberingDefinition(attributes, parseInt(ilvl), docx);
+
+  const listNode = {
+    type: 'listItem',
+    content,
+    attrs: {
+      listLevel: [1, 2], // This is placeholder only - we likely need to calculate this dynamically
+      listType,
+      start,
+      lvlText,
+      listOrderingType,
+    }
+  };
+
+  // Paragraph properties from the main node, not from inside the list definition
+  const pPrwind = pPr.elements.find(style => style.name === 'w:ind');
+  if (pPrwind && pPrwind.attributes) {
+    const values = {};
+    Object.keys(pPrwind.attributes).forEach((key) => {
+      values[key] = twipsToPixels(pPrwind.attributes[key]);
+    })
+    listNode.attrs['paragraphIndent'] = values;
+  };
+
+  const pPrwspacing = pPr.elements.find(style => style.name === 'w:spacing');
+  if (pPrwspacing) {
+    const values = {};
+    Object.keys(pPrwspacing.attributes).forEach((key) => {
+      values[key] = twipsToPixels(pPrwspacing.attributes[key]);
+    })
+    listNode.attrs['paragraphSpacing'] = values;
+  };
+
+  if (listpPrs?.['listIndent']) listNode.attrs['listIndent'] = listpPrs['w:ind'];
+  // if (listpPrs?.['w:jc']) listNode.attrs['textAlign'] = listpPrs['w:jc'];
+  // if (listpPrs?.['w:spacing']) listNode.attrs['spacing'] = listpPrs['w:spacing'];
+
+  console.debug('List node:', listNode);
+  return listNode;
 }
 
 /**
@@ -312,7 +361,7 @@ function getNodeNumberingDefinition(attributes, level, docx) {
     throw new Error(`Unknown list type found during import: ${listTypeDef}`);
   }
 
-  return { listType, listOrderingType: listTypeDef, ilvl, numId, listrPrs, listpPrs, start, lvlText, lvlJc };
+  return {listType, listOrderingType: listTypeDef, ilvl, numId, listrPrs, listpPrs, start, lvlText, lvlJc};
 }
 
 function getDefinitionForLevel(data, level) {
@@ -325,13 +374,15 @@ function _processListParagraphProperties(data) {
   const paragraphProperties = {};
   if (!elements) return paragraphProperties;
 
-  elements.forEach((item) => {
-    if (!expectedTypes.includes(item.name)) throw new Error(`[numbering.xml] Unexpected list paragraph prop found: ${item.name}`);
-    const { attributes = {} } = item;
-    Object.keys(attributes).forEach(key => {
-      paragraphProperties[key] = attributes[key];
-    });
-  });
+  const wind = elements.find((item) => item.name === 'w:ind');
+  if (wind) paragraphProperties['w:ind'] = wind.attributes;
+
+  const wjc = elements.find((item) => item.name === 'w:jc');
+  if (wjc) paragraphProperties['w:jc'] = wjc.attributes;
+
+  const wtabs = elements.find((item) => item.name === 'w:tabs');
+  if (wtabs) paragraphProperties['w:tabs'] = wtabs.attributes;
+
   return paragraphProperties;
 }
 

@@ -19,32 +19,55 @@ export const ListItem = Node.create({
   },
 
   parseDOM() {
-    return [{ tag: 'li' }];
+    return [{ tag: 'p' }];
   },
 
   renderDOM({ htmlAttributes }) {
-    return ['li', Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes), 0];
+    return ['p', Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes), 0];
   },
   
   addAttributes() {
     return {
 
-      // lvlText: { 
-      //   default: null,
-      //   renderDOM: (attrs) => {
-      //     const { listLevel, listNumberingType, lvlText } = attrs;
-      //     if (!listLevel) return {};
+      lvlText: {
+        default: null,
+        renderDOM: (attrs) => {
+          const { listLevel, listNumberingType, lvlText, indent } = attrs;
+          if (!listLevel) return {};
         
-      //     // MS Word has many custom ordered list options. We need to generate the correct index here.
-      //     const numbering = generateOrderedListIndex({ listLevel, lvlText, listNumberingType });
-      //     if (!numbering) return {};
+          // MS Word has many custom ordered list options. We need to generate the correct index here.
+          const numbering = generateOrderedListIndex({ listLevel, lvlText, listNumberingType });
+          if (!numbering) return {};
 
-      //     return {
-      //       'data-bullet-type': numbering,
-      //       class: 'custom-list-item',
-      //     }
-      //   },
-      // },
+          return {
+            'data-bullet-type': numbering,
+            class: 'custom-list-item',
+          }
+        },
+      },
+
+      // List indent occurs after the bullet/number
+      listIndent: {
+        default: null,
+      },
+
+      // Paragraph indent includes the bullet/number
+      paragraphIndent: {
+        renderDOM: ({ paragraphIndent }) => {
+          if (!paragraphIndent) return {};
+
+          let style = '';
+          const left = paragraphIndent['w:left'];
+          if (left) style += `margin-left: ${left}px;`;
+          return { style };
+        },
+      },
+
+      paragraphSpacing: {
+        renderDOM: (attrs) => {
+          return {};
+        }
+      },
 
       listNumberingType: {
         default: 'decimal',
