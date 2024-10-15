@@ -121,7 +121,20 @@ const createNodeListHandler = (nodeHandlers) => {
 
           // Ignore empty text nodes
           if (node.type === 'text' && Array.isArray(node.content) && !node.content.length) continue;
-          if (!ignore.includes(node.type)) processedElements.push(node);
+          if (!ignore.includes(node.type)) {
+            const textMarks = node.marks?.filter((m) => m.type === 'textStyle');
+            const nonTextMarks = node.marks?.filter((m) => m.type !== 'textStyle');
+            if (textMarks?.length) {
+              const combinedTextMarks = textMarks.reduce((acc, mark) => {
+                const existing = acc.find((m) => m.type === mark.type);
+                if (existing) existing.attrs = { ...existing.attrs, ...mark.attrs };
+                else acc.push(mark);
+                return acc;
+              }, []);
+              node.marks = [...nonTextMarks, ...combinedTextMarks];
+            };
+            processedElements.push(node);
+          }
         }
       }
     }

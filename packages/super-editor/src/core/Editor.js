@@ -117,7 +117,7 @@ export class Editor extends EventEmitter {
     this.on('commentsUpdate', this.options.onCommentsUpdate);
     this.on('locked', this.options.onDocumentLocked);
 
-    this.#loadComments();
+    // this.#loadComments();
     this.#initializeCollaborationData();
 
     window.setTimeout(() => {
@@ -457,7 +457,7 @@ export class Editor extends EventEmitter {
           this.converter,
           this.schema,
         );
-
+        
         // Use user-provided static state
         if (this.options.initialState) {
           doc = DOMParser.fromSchema(this.schema).parse(this.options.initialState);
@@ -546,8 +546,8 @@ export class Editor extends EventEmitter {
 
     const { typeface, fontSizePt } = this.converter.getDocumentDefaultStyles() ?? {};
 
-    this.element.style.fontFamily = typeface || 'Arial';
-    this.element.style.fontSize = fontSizePt || '10' + 'pt';
+    typeface && (this.element.style.fontFamily = typeface);
+    fontSizePt && (this.element.style.fontSize = fontSizePt);
 
   }
 
