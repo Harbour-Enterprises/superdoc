@@ -13,13 +13,12 @@ import {TrackChangesBasePluginKey} from "./track-changes-base.js";
  * @returns {Transaction} a modified transaction
  */
 export const amendTransaction = (tr, view, user) => {
+    const hasHistoryMeta =  ["historyUndo", "historyRedo"].includes(tr.getMeta("inputType"));
 
-    //we keep history changes as-is above everything else, also reserve simple meta changes without steps
-    if (
-        !tr.steps.length ||
-        ["historyUndo", "historyRedo"].includes(tr.getMeta("inputType"))
-    ) {
-        return tr
+    // we keep history changes as-is above everything else, 
+    // also reserve simple meta changes without steps
+    if (!tr.steps.length || hasHistoryMeta) {
+        return tr;
     }
 
     const trackChangeState = TrackChangesBasePluginKey.getState(view.state);
@@ -49,33 +48,34 @@ const whitelistedMetaKeys = ["inputType", "uiEvent"]
  */
 const keepTransactionNavigationParts = (tr, newTr, map, state) => {
     // we copy all the meta keys that are whitelisted
-    whitelistedMetaKeys.forEach(key => {
+    whitelistedMetaKeys.forEach((key) => {
         if (tr.getMeta(key)) {
-            newTr.setMeta(key, tr.getMeta(key))
+            newTr.setMeta(key, tr.getMeta(key));
         }
-    })
+    });
 
     if (tr.selectionSet && map) {
         if (tr.selection instanceof TextSelection && (
             tr.selection.from < state.selection.from || tr.getMeta("inputType") === "deleteContentBackward"
         )) {
-            const caretPos = map.map(tr.selection.from, -1)
-            newTr.setSelection(
-                new TextSelection(
-                    newTr.doc.resolve(
-                        caretPos
-                    )
-                )
-            )
+            const caretPos = map.map(tr.selection.from, -1);
+            const selection = new TextSelection(newTr.doc.resolve(caretPos));
+            newTr.setSelection(selection);
         } else {
-            newTr.setSelection(tr.selection.map(newTr.doc, map))
+            newTr.setSelection(tr.selection.map(newTr.doc, map));
         }
+    } else if (tr.selectionSet && !map) {
+        // Use empty mapping to apply the selection
+        // from the original tr to the newTr (without pos recalculation).
+        newTr.setSelection(tr.selection.map(newTr.doc, new Mapping()));
     }
+
     if (tr.storedMarksSet) {
-        newTr.setStoredMarks(tr.storedMarks)
+        newTr.setStoredMarks(tr.storedMarks);
     }
+
     if (tr.scrolledIntoView) {
-        newTr.scrollIntoView()
+        newTr.scrollIntoView();
     }
 }
 
@@ -131,7 +131,10 @@ const removeTrackChangesFromTransaction = (tr, state) => {
             newTr.step(step)
         }
     });
-    keepTransactionNavigationParts(tr, newTr, null, state); //we don't want to map the selection here
+
+    // we don't want to map the selection here
+    keepTransactionNavigationParts(tr, newTr, null, state);
+
     //we copy all meta just in case
     Object.keys(tr.meta).forEach(key => {
         newTr.setMeta(key, tr.getMeta(key))
