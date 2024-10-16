@@ -66,7 +66,7 @@ const initializeData = async () => {
   if (props.fileSource) {
     [docx, media] = await Editor.loadXmlData(props.fileSource);
     return initEditor(docx, media);
-  } else {
+  } else if (props.options.ydoc && props.options.collaborationProvider) {
     delete props.options.content;
     const ydoc = props.options.ydoc;
     const provider = props.options.collaborationProvider;

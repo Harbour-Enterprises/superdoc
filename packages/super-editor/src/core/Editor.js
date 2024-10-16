@@ -485,13 +485,16 @@ export class Editor extends EventEmitter {
    */
   #createView() {  
     let doc = this.#generatePmData();
+    
+    const state = { schema: this.schema };
+    if (!this.options.ydoc) {
+      state.doc = doc;
+    }
+  
     this.view = new EditorView(this.options.element, {
       ...this.options.editorProps,
       dispatchTransaction: this.#dispatchTransaction.bind(this),
-      state: EditorState.create({
-        schema: this.schema,
-        doc,
-      })
+      state: EditorState.create(state),
     });
 
     const newState = this.state.reconfigure({
