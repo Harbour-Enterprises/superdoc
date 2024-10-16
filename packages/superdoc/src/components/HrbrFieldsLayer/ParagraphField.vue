@@ -20,8 +20,10 @@ const props = defineProps({
 
 const getStyle = computed(() => {
   return {
-    maxHeight: props.styleOverride.coordinates?.minHeight,
-    maxWidth: props.styleOverride.coordinates?.minWidth,
+    /* commented out to allow paragraph to grow with content */
+
+    // maxHeight: props.styleOverride.coordinates?.minHeight,
+    // maxWidth: props.styleOverride.coordinates?.minWidth,
   }
 });
 
