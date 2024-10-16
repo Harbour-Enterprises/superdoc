@@ -1,5 +1,4 @@
 import { Plugin, PluginKey } from 'prosemirror-state';
-import { findChildren, findParentNodeClosestToPos } from '@core/helpers/index.js';
 
 export function orderedListMarker(options = {}) {
   return new Plugin({
