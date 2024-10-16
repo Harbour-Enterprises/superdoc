@@ -93,6 +93,9 @@ export class Superdoc extends EventEmitter {
 
     // If a toolbar element is provided, render a toolbar
     this.addToolbar(this);
+
+    // TODO: Remove this - debugging only
+    window.superdoc = this;
   }
   get requiredNumberOfEditors() {
     return this.superdocStore.documents.filter((d) => d.type === DOCX).length;
@@ -297,6 +300,49 @@ export class Superdoc extends EventEmitter {
     console.debug('🦋 [superdoc] Locking superdoc:', isLocked, lockedBy, '\n\n\n');
     this.emit('locked', { isLocked, lockedBy });
   }
+
+  async #exportEditorsToDOCX() {
+    console.debug('🦋 [superdoc] Exporting editors to DOCX');
+    const docxPromises = [];
+    this.superdocStore.documents.forEach((doc) => {
+      const editor = doc.getEditor();
+      if (editor) {
+        docxPromises.push(editor.exportDocx());
+      }
+    });
+    return await Promise.all(docxPromises);
+  }
+
+  async #triggerCollaborationSaves() {
+    console.debug('🦋 [superdoc] Triggering collaboration saves');
+    return new Promise((resolve, reject) => {
+      this.superdocStore.documents.forEach((doc) => {
+        this.pendingCollaborationSaves = 0;
+        if (doc.ydoc) {
+          this.pendingCollaborationSaves++;
+          const metaMap = doc.ydoc.getMap('meta');
+          metaMap.observe((event) => {
+            if (event.changes.keys.has('immediate-save-finished')) {
+              this.pendingCollaborationSaves--;
+              if (this.pendingCollaborationSaves <= 0) {
+                resolve();
+              }
+            }
+          });
+          metaMap.set('immediate-save', true);
+        };
+      });
+    });
+  }
+
+  async save() {
+    const savePromises = [
+      this.#triggerCollaborationSaves(),
+      // this.#exportEditorsToDOCX(),
+    ];
+    const result = await Promise.all(savePromises);
+    return result;
+  };
   
   // saveAll() {
   //   this.log('[superdoc] Saving all');

@@ -118,7 +118,7 @@ export class Editor extends EventEmitter {
     this.on('locked', this.options.onDocumentLocked);
 
     // this.#loadComments();
-    this.#initializeCollaborationData();
+    this.initializeCollaborationData();
 
     window.setTimeout(() => {
       if (this.isDestroyed) return;
@@ -262,16 +262,17 @@ export class Editor extends EventEmitter {
    * If we are replacing data and have a valid provider, listen for synced event
    * so that we can initialize the data
    */
-  #initializeCollaborationData() {
+  initializeCollaborationData(doc = null) {
     if (!this.options.isNewFile || !this.options.collaborationProvider) return;
     const { collaborationProvider: provider } = this.options;
 
+    this.options.isNewFile = false;
     const postSyncInit = () => {
       provider.off('synced', postSyncInit);
-      this.#insertNewFileData();
+      this.#insertNewFileData(doc);
     };
   
-    if (provider.synced) this.#insertNewFileData();
+    if (provider.synced) this.#insertNewFileData(doc);
 
     // If we are not sync'd yet, wait for the event then insert the data
     else provider.on('synced', postSyncInit);
@@ -280,8 +281,8 @@ export class Editor extends EventEmitter {
   /**
    * Replace the current document with new data.
    */
-  #insertNewFileData() {
-    const doc = this.#generatePmData();
+  #insertNewFileData(doc = null) {
+    if (!doc) doc = this.#generatePmData();
     const tr = this.state.tr.replaceWith(0, this.state.doc.content.size, doc);
     this.view.dispatch(tr);
   }
