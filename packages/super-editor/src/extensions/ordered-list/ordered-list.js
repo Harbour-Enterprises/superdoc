@@ -109,7 +109,7 @@ export const OrderedList = Node.create({
         let list = findParentNode((node) => node.type.name === this.name)(state.selection);
 
         if (!list) {
-          return false;
+          return true; 
         }
 
         if (dispatch) {
