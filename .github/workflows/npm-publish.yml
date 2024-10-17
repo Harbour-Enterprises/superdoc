@@ -15,7 +15,7 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org/
       
-      - run: npm ci --workspaces && npm run build
+      - run: npm ci --workspaces && cd packages/super-editor && npm install && cd ../superdoc && npm install && cd ../.. && npm run build
       
       - run: cd packages/superdoc && npm publish --access public 
         env:
