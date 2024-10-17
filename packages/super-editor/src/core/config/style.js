@@ -36,6 +36,19 @@ export const style = `.ProseMirror {
   content: '';
 }
 
+.ProseMirror li::marker {
+  font-size: var(--marker-font-size);
+  font-family: var(--marker-font-family);
+}
+
+.ProseMirror li[data-marker-type] {
+  list-style-type: none;
+}
+
+.ProseMirror li[data-marker-type]::marker {
+  content: attr(data-marker-type) ' ';
+}
+
 .ProseMirror-hideselection *::selection {
   background: transparent;
 }
@@ -106,13 +119,5 @@ img.ProseMirror-separator {
   display: inline !important;
   border: none !important;
   margin: 0 !important;
-}
-  
-.ProseMirror li[data-marker-type] {
-  list-style-type: none;
-}
-
-.ProseMirror li[data-marker-type]::marker {
-  content: attr(data-marker-type) ' ';
 }
 `;

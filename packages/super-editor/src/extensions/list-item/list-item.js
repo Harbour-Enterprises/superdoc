@@ -1,5 +1,6 @@
 import { Node, Attribute } from '@core/index.js';
 import { generateOrderedListIndex } from '@helpers/orderedListUtils.js';
+import { styledListMarker as styledListMarkerPlugin } from './helpers/styledListMarkerPlugin.js';
 
 export const ListItem = Node.create({
   name: 'listItem',
@@ -119,5 +120,11 @@ export const ListItem = Node.create({
           .run();
       },
     };
+  },
+
+  addPmPlugins() {
+    return [
+      styledListMarkerPlugin(),
+    ];
   },
 });
