@@ -83,12 +83,20 @@ export function orderedListMarker(options = {}) {
             compare(listLevel, newListLevel);
 
           if (!equalMarkerAttrs) {
+            let { selection, storedMarks } = newState;
+            let marks = storedMarks || (selection.$to.parentOffset && selection.$from.marks());
+            
             tr.setNodeMarkup(pos, undefined, {
               ...node.attrs,
               listLevel: newListLevel,
               lvlText: currentAttrs.lvlText,
               listNumberingType: currentAttrs.listNumberingType,
             });
+
+            if (marks) {
+              tr.ensureMarks(marks);
+            }
+            
             changed = true;
           }
           
