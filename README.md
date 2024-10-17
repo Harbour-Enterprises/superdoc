@@ -11,9 +11,6 @@
 * ✅ Fully available under both an [Open Source license (AGPLv3) for community use](https://www.gnu.org/licenses/agpl-3.0.html) and a [Commercial license for enterprise use](https://www.harbourshare.com/request-a-license)
 * ✅ Created and actively-developed by [⛵️ Harbour - Superpowered contract management](https://www.harbourshare.com) and the SuperDoc community
 
-## Website
-[Superdoc.dev](http://superdoc.dev)
-
 ## Demo
 -- coming soon --
 
