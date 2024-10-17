@@ -3,7 +3,7 @@ name: Publish Superdoc Package to npm on Tag
 on:
   push:
     branches:
-      - publish-github-action
+      - main
   workflow_dispatch:
 
 jobs:
