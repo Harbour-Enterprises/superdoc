@@ -33,7 +33,7 @@ jobs:
         with:
           createGithubReleases: false
           publish: npm run publish
-          version: npm run version --prerelease
+          version: npm run version
           title: "New Superdoc pre-release version"
           commit: "Publish a new pre-release version"
         env:

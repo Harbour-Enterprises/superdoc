@@ -14,8 +14,8 @@
     "clean:packages": "rm -rf ./packages/*/dist",
     "reset": "npm run clean:packages && rm -rf ./node_modules && rm -rf ./packages/*/node_modules && rm -rf ./package-lock.json && npm install",
     "changeset": "changeset",
-    "version": "changeset version",
-    "publish": "changeset publish"
+    "version": "changeset version && npm i",
+    "publish": "npm run build && npm run changeset publish"
   },
   "dependencies": {
     "@changesets/cli": "^2.27.9"
