@@ -1,0 +1,10 @@
+{
+  "mode": "pre",
+  "tag": "next",
+  "initialVersions": {
+    "@harbour-enterprises/super-editor": "0.0.1-alpha.0",
+    "@harbour-enterprises/superdoc": "1.0.0-alpha.73",
+    "@harbour-enterprises/superdoc-vue2": "1.0.0.alpha.0"
+  },
+  "changesets": []
+}
