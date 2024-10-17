@@ -16,13 +16,11 @@ export default defineConfig((data) => {
         name: "SuperDoc",
         fileName: (format) => `superdoc.${format}.js`
       },
-      rollupOptions: {
-        external: ['vite-plugin-node-polyfills/shims/global']
-      },
       minify: true,
       sourcemap: false,
       rollupOptions: {
         external: [
+          'vite-plugin-node-polyfills/shims/global',
           'yjs',
           '@hocuspocus/provider',
           'pdfjs-dist',

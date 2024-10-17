@@ -42,7 +42,7 @@ export default defineConfig(({ mode }) => {
           }
         }
       },
-      minify: false,
+      minify: true,
       sourcemap: false,
       esbuild: {
         drop: [],
