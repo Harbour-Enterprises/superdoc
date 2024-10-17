@@ -25,7 +25,6 @@
     "color2k": "^2.0.3",
     "eventemitter3": "^5.0.1",
     "jszip": "^3.10.1",
-    "patch": "^0.0.1",
     "prosemirror-commands": "^1.5.2",
     "prosemirror-dropcursor": "^1.8.1",
     "prosemirror-history": "^1.4.0",
