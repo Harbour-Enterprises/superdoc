@@ -14,6 +14,9 @@ export default defineConfig(({ mode }) => {
       globals: true,
       environment: 'jsdom',
     },
+    optimizeDeps: {
+      exclude: ['yjs', 'tippy.js']
+    },
     build: {
       target: 'es2020',
       lib: {
@@ -26,11 +29,20 @@ export default defineConfig(({ mode }) => {
         external: ['vue', 'tippy.js'],
         output: {
           globals: {
-            vue: 'Vue'
+            vue: 'Vue',
+            yjs: 'Y',
+            'tippy.js': 'tippy',
+            'y-protocols': 'y-protocols'
+          },
+          manualChunks: {
+            SuperConverter: ['@core/super-converter/SuperConverter'],
+            Editor: ['@core/Editor'],
+            DocxZipper: ['@core/DocxZipper'],
+            Toolbar: ['@components/toolbar/Toolbar.vue'],
           }
         }
       },
-      minify: true,
+      minify: false,
       sourcemap: false,
       esbuild: {
         drop: [],
