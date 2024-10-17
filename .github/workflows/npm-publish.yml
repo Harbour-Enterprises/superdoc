@@ -1,0 +1,22 @@
+name: Publish Superdoc Package to npm on Tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org/
+      
+      - run: npm ci --workspaces && npm run build
+      
+      - run: cd packages/superdoc && npm publish --access public 
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
