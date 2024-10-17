@@ -35,7 +35,6 @@ jobs:
       - name: Publish
         uses: changesets/action@v1
         with:
-          createGithubReleases: false
           publish: npm run publish
           version: npm run version
           title: "New Superdoc pre-release version"
