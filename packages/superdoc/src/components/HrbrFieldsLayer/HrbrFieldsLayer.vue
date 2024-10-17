@@ -27,6 +27,14 @@ const getStyle = computed(() => (entry) => {
     coordinates.top = `${newTop}px`;
   }
 
+  const widthAdjustTypes = ['HTMLINPUT']
+  if (widthAdjustTypes.includes(field.fieldType)) {
+    const scaleFactor = 1.3362445414847162;
+    const minWidthNum = coordinates.minWidth.split('px')[0];
+    const newWidth = minWidthNum / scaleFactor;
+    coordinates.width = `${newWidth}px`;
+  }
+
   return {
     position: 'absolute',
     //field,
