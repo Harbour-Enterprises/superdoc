@@ -13,5 +13,8 @@
     "build": "npm run build:super-editor && npm run build:superdoc",
     "clean:packages": "rm -rf ./packages/*/dist",
     "reset": "npm run clean:packages && rm -rf ./node_modules && rm -rf ./packages/*/node_modules && rm -rf ./package-lock.json && npm install"
+  },
+  "dependencies": {
+    "@changesets/cli": "^2.27.9"
   }
 }
