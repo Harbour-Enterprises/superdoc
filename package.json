@@ -14,7 +14,7 @@
     "clean:packages": "rm -rf ./packages/*/dist",
     "reset": "npm run clean:packages && rm -rf ./node_modules && rm -rf ./packages/*/node_modules && rm -rf ./package-lock.json && npm install",
     "changeset": "changeset",
-    "version": "changeset version && npm i",
+    "version": "changeset version && npm i && cd packages/superdoc && npm i && cd ../super-editor && npm i",
     "publish": "npm run build && changeset publish"
   },
   "dependencies": {
