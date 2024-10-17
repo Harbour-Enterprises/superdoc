@@ -36,7 +36,6 @@ jobs:
           version: npm run version --prerelease
           title: "New Superdoc pre-release version"
           commit: "Publish a new pre-release version"
-          cwd: packages/superdoc
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
