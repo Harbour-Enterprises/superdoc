@@ -92,8 +92,6 @@ export class Superdoc extends EventEmitter {
     }
   }
 
-  
-
   #preprocessDocuments(documents) {
     return documents.map((doc) => {
       const { data } = doc;
