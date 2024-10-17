@@ -21,11 +21,11 @@ jobs:
       
       - name: Install deps
         run: |
-          npm ci
+          npm i
           cd packages/super-editor
-          npm ci
+          npm i
           cd ../superdoc
-          npm ci
+          npm i
           cd ../..
 
       - name: Publish
