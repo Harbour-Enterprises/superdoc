@@ -1,6 +1,6 @@
 {
-  "mode": "pre",
-  "tag": "next",
+  "mode": "exit",
+  "tag": "alpha",
   "initialVersions": {
     "@harbour-enterprises/super-editor": "0.0.1-alpha.0",
     "@harbour-enterprises/superdoc": "1.0.0-alpha.73",
