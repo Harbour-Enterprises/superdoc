@@ -1,22 +1,39 @@
 name: Publish Superdoc Package to npm on Tag
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup node
+        uses: actions/setup-node@v3
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org/
       
-      - run: npm ci --workspaces && cd packages/super-editor && npm install && cd ../superdoc && npm install && cd ../.. && npm run build
-      
-      - run: cd packages/superdoc && npm publish --access public 
+      - name: Install deps
+        run: |
+          npm ci --workspaces
+          cd packages/super-editor
+          npm install
+          cd ../superdoc
+          npm install
+          cd ../..
+
+      - name: Publish
+        uses: changesets/action@v1
+        with:
+          createGithubReleases: false
+          publish: npm run publish
+          version: npm run version --prerelease
+          title: "New Superdoc pre-release version"
+          commit: "Publish a new pre-release version"
+          cwd: packages/superdoc
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
