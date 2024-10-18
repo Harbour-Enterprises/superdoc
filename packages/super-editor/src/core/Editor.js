@@ -1,7 +1,7 @@
 import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { DOMParser, DOMSerializer } from "prosemirror-model"
-import { yXmlFragmentToProseMirrorRootNode } from 'y-prosemirror';
+import { yXmlFragmentToProseMirrorRootNode, prosemirrorJSONToYDoc } from 'y-prosemirror';
 import { EventEmitter } from './EventEmitter.js';
 import { ExtensionService } from './ExtensionService.js';
 import { CommandService } from './CommandService.js';
@@ -16,14 +16,6 @@ import { style } from './config/style.js';
 import DocxZipper from '@core/DocxZipper.js';
 import { amendTransaction } from "@extensions/track-changes/track-changes-tr-modifier.js";
 
-
-import {
-  ySyncPlugin,
-  yUndoPlugin,
-  yUndoPluginKey,
-  undo,
-  redo,
-} from 'y-prosemirror'
 
 if (typeof navigator === 'undefined') {
   global.navigator = {
@@ -289,18 +281,17 @@ export class Editor extends EventEmitter {
    * If we are replacing data and have a valid provider, listen for synced event
    * so that we can initialize the data
    */
-  initializeCollaborationData(doc = null) {
-    console.debug('\n\n COLAB DATA \n\n')
+  initializeCollaborationData() {
     if (!this.options.isNewFile || !this.options.collaborationProvider) return;
     const { collaborationProvider: provider } = this.options;
 
     this.options.isNewFile = false;
     const postSyncInit = () => {
       provider.off('synced', postSyncInit);
-      this.#insertNewFileData(doc);
+      this.#insertNewFileData();
     };
   
-    if (provider.synced) this.#insertNewFileData(doc);
+    if (provider.synced) this.#insertNewFileData();
 
     // If we are not sync'd yet, wait for the event then insert the data
     else provider.on('synced', postSyncInit);
@@ -309,8 +300,9 @@ export class Editor extends EventEmitter {
   /**
    * Replace the current document with new data.
    */
-  #insertNewFileData(doc = null) {
-    if (!doc) doc = this.#generatePmData();
+  #insertNewFileData() {
+    const doc = this.#generatePmData();
+    console.debug('\n\n PM DATA', doc, '\n\n')
     const tr = this.state.tr.replaceWith(0, this.state.doc.content.size, doc);
     this.view.dispatch(tr);
   }
@@ -637,7 +629,6 @@ export class Editor extends EventEmitter {
       return;
     };
 
-    this.options.ydoc?.getMap('meta').set('json-data', this.getJSON());  
     this.emit('update', {
       editor: this,
       transaction,
@@ -686,8 +677,8 @@ export class Editor extends EventEmitter {
   /**
    * Get the document as JSON.
    */
-  getJSON(state = null) {
-    return this.state?.doc?.toJSON() || state.doc.toJSON();
+  getJSON() {
+    return this.state.doc.toJSON();
   }
 
   /**
@@ -730,6 +721,11 @@ export class Editor extends EventEmitter {
       originalDocxFile: this.options.fileSource
     });
     return result
+  }
+
+  convertSchemaToYdoc() {
+    const ydoc = prosemirrorJSONToYDoc(this.schema, this.state.doc.toJSON(), "supereditor");
+    return ydoc;
   }
 
   /**
