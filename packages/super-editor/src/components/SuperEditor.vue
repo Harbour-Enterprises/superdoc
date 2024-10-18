@@ -92,17 +92,14 @@ const initEditor = async (content, media = {}) => {
       { name: 'Eric Doversberger', email: 'eric@harbourshare.com'} 
     ],
     ...props.options,
-    onCreate,
+    onCollaborationReady,
   });
 };
 
-const onCreate = (data) => {
-  console.debug('Editor created:', data);
+const onCollaborationReady = (data) => {
   editorReady.value = true; 
-  if (props.options.onCreate) {
-    props.options.onCreate(data);
-  }
-}
+  console.debug('Collaboration ready', editorReady.value);
+};
 
 onMounted(() => {
   initializeData();

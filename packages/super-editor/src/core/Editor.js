@@ -80,6 +80,7 @@ export class Editor extends EventEmitter {
     onCommentClicked: () => null,
     onDocumentLocked: () => null,
     onFirstRender: () => null,
+    onCollaborationReady: () => null,
   }
 
   constructor(options) {
@@ -135,6 +136,7 @@ export class Editor extends EventEmitter {
     this.on('commentClick', this.options.onCommentClicked);
     this.on('commentsUpdate', this.options.onCommentsUpdate);
     this.on('locked', this.options.onDocumentLocked);
+    this.on('collaborationUpdate', this.options.onCollaborationReady);
 
     // this.#loadComments();
     this.initializeCollaborationData();
@@ -302,7 +304,6 @@ export class Editor extends EventEmitter {
    */
   #insertNewFileData() {
     const doc = this.#generatePmData();
-    console.debug('\n\n PM DATA', doc, '\n\n')
     const tr = this.state.tr.replaceWith(0, this.state.doc.content.size, doc);
     this.view.dispatch(tr);
   }
@@ -729,11 +730,15 @@ export class Editor extends EventEmitter {
   }
 
   /**
-   * Destroy collaboration providers.
+   * Destroy collaboration provider and ydoc
    */
   #endCollaboration() {
     if (this.options.collaborationProvider) {
-      this.options.collaborationProvider.destroy();
+      this.options.collaborationProvider.disconnect();
+    }
+
+    if (this.options.ydoc) {
+      this.options.ydoc.destroy();
     }
   }
 
