@@ -81,7 +81,6 @@ const initEditor = async (content, media = {}) => {
     mode: 'docx',
     element: editorElem.value,
     fileSource: props.fileSource,
-    initialState: props.state,
     extensions: getStarterExtensions(),
     documentId: props.documentId,
     content,

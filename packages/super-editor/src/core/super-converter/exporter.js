@@ -169,16 +169,18 @@ function generateParagraphProperties(node) {
  * @returns {XmlReadyNode} JSON of the XML-ready document node
  */
 function translateDocumentNode(params) {
+  const documentAttributesNode = params.node.content.find((n) => n.type === 'documentAttributes');
+  const content = params.node.content.filter((n) => n.type !== 'documentAttributes');
   const bodyNode = {
     type: 'body',
-    content: params.node.content,
+    content,
   }
 
   const translatedBodyNode = exportSchemaToJson({ ...params, node: bodyNode });
   const node = {
     name: 'w:document',
     elements: [translatedBodyNode],
-    attributes: params.node.attrs.attributes,
+    attributes: documentAttributesNode.attrs?.attributes,
   }
   return [node, params];
 };
@@ -954,6 +956,7 @@ export class DocxExporter {
     const json = JSON.parse(JSON.stringify(data));
     const declaration = this.converter.declaration.attributes;    
     const xmlTag = `<?xml${Object.entries(declaration).map(([key, value]) => ` ${key}="${value}"`).join('')}?>`;
+
     const result = this.#generateXml(json);
     const final = [xmlTag, ...result];
     return final;
@@ -970,8 +973,13 @@ export class DocxExporter {
   #generateXml(node) {
     const { name, elements, attributes } = node;
     if (!name)  {
-      console.debug('NO NAME', node);
+      return '';
     }
+
+    if (name === 'w:pPr') {
+      if (!attributes) return '';
+    }
+
     let tag = `<${name}`;
 
     for (let attr in attributes) {

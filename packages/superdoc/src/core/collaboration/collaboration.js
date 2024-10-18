@@ -50,7 +50,7 @@ function createHocuspocusProvider({ config, user, documentId }) {
     websocketProvider: config.socket,
     name: documentId,
     document: ydoc,
-    token: config.token,
+    token: config.token || 'token',
   });
 
   provider.setAwarenessField('user', user);

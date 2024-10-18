@@ -24,7 +24,6 @@ export default defineConfig(({ mode }) => {
         entry: "src/index.js",
         formats: ['es'],
         name: "super-editor",
-        fileName: (format) => `super-editor.${format}.js`
       },
       rollupOptions: {
         external: [
@@ -36,23 +35,33 @@ export default defineConfig(({ mode }) => {
           '@fortawesome/free-solid-svg-icons',
           '@fortawesome/vue-fontawesome',
         ],
+        input: {
+          'super-editor': 'src/index.js',
+          'super-converter': '@core/super-converter/SuperConverter',
+          'docx-zipper': '@core/DocxZipper',
+          'toolbar': '@components/toolbar/Toolbar.vue',
+          'super-input': '@components/SuperInput.vue',
+        },
         output: {
           globals: {
-            vue: 'Vue',
-            yjs: 'Y',
+            'vue': 'Vue',
+            'yjs': 'Y',
             'tippy.js': 'tippy',
             'y-protocols': 'y-protocols'
           },
           manualChunks: {
-            SuperConverter: ['@core/super-converter/SuperConverter'],
-            Editor: ['@core/Editor'],
-            DocxZipper: ['@core/DocxZipper'],
-            Toolbar: ['@components/toolbar/Toolbar.vue'],
-          }
+            'super-converter': ['@core/super-converter/SuperConverter'],
+            'editor': ['@core/Editor'],
+            'docx-zipper': ['@core/DocxZipper'],
+            'toolbar': ['@components/toolbar/Toolbar.vue'],
+            'super-input': ['@components/SuperInput.vue'],
+          },
+          entryFileNames: '[name].es.js',
+          chunkFileNames: 'chunks/[name]-[hash].js'
         }
       },
-      minify: true,
-      sourcemap: false,
+      minify: false,
+      sourcemap: true,
       esbuild: {
         drop: [],
       },

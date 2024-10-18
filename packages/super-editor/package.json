@@ -9,8 +9,24 @@
     ".": {
       "import": "./dist/super-editor.es.js"
     },
+    "./super-converter": {
+      "import": "./dist/super-converter.es.js"
+    },
+    "./docx-zipper": {
+      "import": "./dist/docx-zipper.es.js"
+    },
+    "./toolbar": {
+      "import": "./dist/toolbar.es.js"
+    },
+    "./super-input": {
+      "import": "./dist/super-input.es.js"
+    },
+    "./super-editor": {
+      "import": "./dist/super-editor.es.js"
+    },
     "./style.css": "./dist/style.css"
   },
+  "main": "./dist/super-editor.es.js",
   "module": "./dist/super-editor.es.js",
   "scripts": {
     "dev": "vite",
@@ -35,7 +51,8 @@
     "prosemirror-view": "^1.33.8",
     "uuidv4": "^6.2.13",
     "vue": "^3.4.21",
-    "xml-js": "^1.6.11"
+    "xml-js": "^1.6.11",
+    "y-prosemirror": "^1.2.12"
   },
   "peerDependencies": {
     "@fortawesome/fontawesome-free": "^6.5.2",
@@ -47,15 +64,14 @@
     "yjs": "13.6.19"
   },
   "devDependencies": {
-    "tippy.js": "^6.3.7",
     "@fortawesome/fontawesome-free": "^6.5.2",
     "@fortawesome/free-solid-svg-icons": "^6.5.2",
     "@fortawesome/vue-fontawesome": "^3.0.8",
     "@vitejs/plugin-vue": "^5.0.4",
     "@vue/test-utils": "^2.4.6",
-    "jsdom": "^24.1.0",
     "postcss-nested": "^6.0.1",
     "postcss-nested-import": "^1.3.0",
+    "tippy.js": "^6.3.7",
     "vite": "^5.3.6",
     "vitest": "^1.6.0",
     "vue-draggable-next": "^2.2.1"

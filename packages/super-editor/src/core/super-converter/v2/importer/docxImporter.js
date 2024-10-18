@@ -45,10 +45,15 @@ export const createDocumentJson = (docx) => {
     const parsedContent = nodeListHandler.handler(content, docx, false);
     const result = {
       type: 'doc',
-      content: parsedContent,
-      attrs: {
-        attributes: json.elements[0].attributes,
-      }
+      content: [
+        {
+          type: 'documentAttributes',
+          attrs: {
+            attributes: json.elements[0].attributes,
+          },
+        },
+        ...parsedContent,
+      ],
     }
     return {
       pmDoc: result,
@@ -133,6 +138,7 @@ const createNodeListHandler = (nodeHandlers) => {
               }, []);
               node.marks = [...nonTextMarks, ...combinedTextMarks];
             };
+
             processedElements.push(node);
           }
         }

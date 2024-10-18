@@ -1,6 +1,7 @@
 import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { DOMParser, DOMSerializer } from "prosemirror-model"
+import { yXmlFragmentToProseMirrorRootNode } from 'y-prosemirror';
 import { EventEmitter } from './EventEmitter.js';
 import { ExtensionService } from './ExtensionService.js';
 import { CommandService } from './CommandService.js';
@@ -14,6 +15,21 @@ import { initComments } from '@features/index.js';
 import { style } from './config/style.js';
 import DocxZipper from '@core/DocxZipper.js';
 import { amendTransaction } from "@extensions/track-changes/track-changes-tr-modifier.js";
+
+
+import {
+  ySyncPlugin,
+  yUndoPlugin,
+  yUndoPluginKey,
+  undo,
+  redo,
+} from 'y-prosemirror'
+
+if (typeof navigator === 'undefined') {
+  global.navigator = {
+    isHeadless: true,
+  };
+}
 
 /**
  * Editor main class.
@@ -38,7 +54,10 @@ export class Editor extends EventEmitter {
   #comments;
 
   options = {
-    element: document.createElement('div'),
+    element: null,
+    isHeadless: false,
+    mockDocument: null,
+    mockWindow: null,
     content: '', // XML content
     user: null,
     media: {},
@@ -74,6 +93,10 @@ export class Editor extends EventEmitter {
   constructor(options) {
     super();
 
+    if (options.mockDocument) {
+      global.document = options.mockDocument;
+      global.window = options.mockWindow;
+    }
     this.setOptions(options);
     this.setDocumentMode(options.documentMode);
 
@@ -101,9 +124,13 @@ export class Editor extends EventEmitter {
     this.emit('beforeCreate', { editor: this });
     this.on('contentError', this.options.onContentError);
 
-    this.#createView();
+    this.#createView();    
+
+    // If we are running headless, we can stop here
+    if (this.options.isHeadless) return;
+
     this.#injectCSS()
-    
+
     this.on('create', this.options.onCreate);
     this.on('update', this.options.onUpdate);
     this.on('selectionUpdate', this.options.onSelectionUpdate);
@@ -263,6 +290,7 @@ export class Editor extends EventEmitter {
    * so that we can initialize the data
    */
   initializeCollaborationData(doc = null) {
+    console.debug('\n\n COLAB DATA \n\n')
     if (!this.options.isNewFile || !this.options.collaborationProvider) return;
     const { collaborationProvider: provider } = this.options;
 
@@ -407,7 +435,7 @@ export class Editor extends EventEmitter {
       this.converter = this.options.converter;
     } else {
       this.converter = new SuperConverter({ 
-        docx: this.options.content, 
+        docx: this.options.content,
         media: this.options.media,
         debug: true,
       });
@@ -428,15 +456,11 @@ export class Editor extends EventEmitter {
   static async loadXmlData(fileSource) {
     if (!fileSource) return;
 
-    const isFile = fileSource instanceof File;
-    if (!isFile) {
-      throw new Error('Content source must be a File object.');
-    };
-
     const zipper = new DocxZipper();
     const xmlFiles = await zipper.getDocxData(fileSource);
     const mediaFiles = zipper.media;
 
+    const documentXml = xmlFiles.find((f) => f.name === 'word/document.xml');
     return [xmlFiles, mediaFiles];
   }
 
@@ -459,10 +483,12 @@ export class Editor extends EventEmitter {
           this.schema,
         );
         
-        // Use user-provided static state
-        if (this.options.initialState) {
-          doc = DOMParser.fromSchema(this.schema).parse(this.options.initialState);
-        };
+        // For headless mode, generate JSON from a fragment
+        if (this.options.fragment) {
+          doc = yXmlFragmentToProseMirrorRootNode(this.options.fragment, this.schema);
+          console.debug('🦋 [super-editor] Generated JSON from fragment:', doc);
+        }
+  
       } else if (this.options.mode === 'text') {
         if (this.options.content) {
           doc = DOMParser.fromSchema(this.schema).parse(this.options.content);
@@ -478,6 +504,7 @@ export class Editor extends EventEmitter {
         error: err,
       });
     }
+
     return doc;
   }
 
@@ -486,11 +513,10 @@ export class Editor extends EventEmitter {
    */
   #createView() {  
     let doc = this.#generatePmData();
-    
+
+    // Only initialize the doc if we are not using Yjs
     const state = { schema: this.schema };
-    if (!this.options.ydoc) {
-      state.doc = doc;
-    }
+    if (!this.options.ydoc) state.doc = doc;
   
     this.view = new EditorView(this.options.element, {
       ...this.options.editorProps,
@@ -525,7 +551,7 @@ export class Editor extends EventEmitter {
    * Set document default font and font size.
    */
   #initDefaultStyles() {
-    const proseMirror = this.element.querySelector('.ProseMirror');
+    const proseMirror = this.element?.querySelector('.ProseMirror');
     if (!proseMirror) return;
 
     const { pageSize, pageMargins } = this.converter.pageStyles ?? {};
@@ -563,16 +589,17 @@ export class Editor extends EventEmitter {
     if (this.view.isDestroyed) return;
 
     let state;
-    try {
-      const trackedTr = amendTransaction(transaction, this.view, this.options.user);
-      const { state: newState } = this.view.state.applyTransaction(trackedTr);
-      state = newState;
-    } catch (e) {
-      console.log(e);
-      //just in case
-      state = this.state.apply(transaction);
-    }
+    // try {
+    //   const trackedTr = amendTransaction(transaction, this.view, this.options.user);
+    //   const { state: newState } = this.view.state.applyTransaction(trackedTr);
+    //   state = newState;
+    // } catch (e) {
+    //   console.log(e);
+    //   //just in case
+    //   state = this.state.apply(transaction);
+    // }
 
+    state = this.state.apply(transaction);
     const selectionHasChanged = !this.state.selection.eq(state.selection);
     this.view.updateState(state);
 
@@ -659,8 +686,8 @@ export class Editor extends EventEmitter {
   /**
    * Get the document as JSON.
    */
-  getJSON() {
-    return this.state.doc.toJSON();
+  getJSON(state = null) {
+    return this.state?.doc?.toJSON() || state.doc.toJSON();
   }
 
   /**
@@ -687,16 +714,22 @@ export class Editor extends EventEmitter {
    * Export the editor document to DOCX.
    */
   async exportDocx() {
-    const docx = this.converter.exportToDocx(this.getJSON());
+    const json = this.getJSON();
+    const documentXml = this.converter.exportToDocx(json);
     const relsData = this.converter.convertedXml['word/_rels/document.xml.rels'];
     const rels = this.converter.schemaToXml(relsData.elements[0]);
-    const docs = {
-      'word/document.xml': String(docx),
+    const updatedDocs = {
+      'word/document.xml': String(documentXml),
       'word/_rels/document.xml.rels': String(rels),
     };
 
     const zipper = new DocxZipper();
-    return await zipper.updateZip(this.options.fileSource, docs);
+    const result = await zipper.updateZip({
+      docx: this.options.content,
+      updatedDocs: updatedDocs,
+      originalDocxFile: this.options.fileSource
+    });
+    return result
   }
 
   /**

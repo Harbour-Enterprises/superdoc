@@ -1,5 +1,6 @@
 import { Superdoc } from './core/index.js';
-import { Editor } from '@harbour-enterprises/super-editor';
+import { SuperConverter } from '@harbour-enterprises/super-editor';
+
 import { 
   SuperInput, 
   helpers as superEditorHelpers, 
@@ -12,7 +13,6 @@ export {
   Superdoc,
   BlankDOCX,
   getFileObject,
-  Editor,
 
   // Allowed types
   DOCX,
@@ -25,4 +25,7 @@ export {
   // Helpers
   superEditorHelpers,
   fieldAnnotationHelpers,
+
+  // Super Editor
+  SuperConverter,
 }

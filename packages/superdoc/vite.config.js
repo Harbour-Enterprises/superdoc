@@ -19,11 +19,18 @@ export default defineConfig(({ mode, command}) => {
         name: "SuperDoc",
         fileName: (format) => `superdoc.${format}.js`
       },
-      minify: true,
+      minify: false,
       sourcemap: false,
       rollupOptions: {
+        input: {
+          'superdoc': 'src/index.js',
+          'super-editor': '@harbour-enterprises/super-editor',
+          'super-converter': '@harbour-enterprises/super-editor/super-converter',
+          'docx-zipper': '@harbour-enterprises/super-editor/docx-zipper',
+          'toolbar': '@harbour-enterprises/super-editor/toolbar',
+          'super-input': '@harbour-enterprises/super-editor/super-input',
+        },
         external: [
-          'vite-plugin-node-polyfills/shims/global',
           'yjs',
           '@hocuspocus/provider',
           'pdfjs-dist',
@@ -31,11 +38,18 @@ export default defineConfig(({ mode, command}) => {
         ],
         output: {
           manualChunks: {
-            vue: ['vue'],
-            BlankDOCX: ['@harbour-enterprises/common/data/blank.docx?url'],
-            SuperEditor: ['@harbour-enterprises/super-editor'],
-          }
-        }
+            'vue': ['vue'],
+            'blank-docx': ['@harbour-enterprises/common/data/blank.docx?url'],
+            'super-editor': ['@harbour-enterprises/super-editor'],
+            'jszip': ['jszip'],
+            'eventemitter3': ['eventemitter3'],
+            'uuid': ['uuid'],
+            'xml-js': ['xml-js'],
+            'super-input': ['@harbour-enterprises/super-editor/super-input'],
+          },
+          entryFileNames: '[name].es.js',
+          chunkFileNames: 'chunks/[name]-[hash].js'
+        },
       }
     },
     optimizeDeps: {

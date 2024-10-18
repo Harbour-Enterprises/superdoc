@@ -1,4 +1,4 @@
-import JSZip, { file } from 'jszip';
+import JSZip from 'jszip';
 
 /**
  * Class to handle unzipping and zipping of docx files
@@ -66,30 +66,67 @@ class DocxZipper {
     return zip;
   }
 
-  async updateZip(originalDocx, updatedDocs) {
-    const updatedZip = new JSZip();
-    const unzippedOriginalDocx = await this.unzip(originalDocx);
+  async updateZip({ docx, updatedDocs, originalDocxFile }) {
+    const isHeadless = navigator?.isHeadless;
 
-    // Create an array of promises to read all files
+    // We use a different re-zip process if we have the original docx vs the docx xml metadata
+    let zip;
+    if (originalDocxFile) {
+      zip = await this.exportFromOriginalFile(originalDocxFile, updatedDocs);
+    } else {
+      zip = await this.exportFromCollaborativeDocx(docx, updatedDocs);
+    }
+
+    // If we are headless we don't have 'blob' support, so export as 'nodebuffer'
+    const exportType = isHeadless ? 'nodebuffer' : 'blob';
+    return await zip.generateAsync({ type: exportType });
+  }
+
+  /**
+   * Export the Editor content to a docx file, updating changed docs
+   * @param {Object} docx An object containing the unzipped docx files (keys are relative file names)
+   * @param {Object} updatedDocs An object containing the updated docs (keys are relative file names)
+   * @returns {Promise<JSZip>} The unzipped but updated docx file ready for zipping
+   */
+  async exportFromCollaborativeDocx(docx, updatedDocs) {
+    const zip = new JSZip();
+    for (const file of docx) {
+      let content = file.content;
+      if (file.name in updatedDocs) {
+        content = updatedDocs[file.name];
+      }
+      zip.file(file.name, content);
+    };
+    return zip;
+  };
+
+  /**
+   * Export the Editor content to a docx file, updating changed docs
+   * Requires the original docx file
+   * @param {File} originalDocxFile The original docx file
+   * @param {Object} updatedDocs An object containing the updated docs (keys are relative file names)
+   * @returns {Promise<JSZip>} The unzipped but updated docx file ready for zipping
+   */
+  async exportFromOriginalFile(originalDocxFile, updatedDocs) {
+    const unzippedOriginalDocx = await this.unzip(originalDocxFile);
     const filePromises = [];
-
-    // Iterate through all files from the original docx, and copy them to a new docx
     unzippedOriginalDocx.forEach((relativePath, zipEntry) => {
       const promise = zipEntry.async("string").then((content) => {
-        updatedZip.file(zipEntry.name, content);
+        unzippedOriginalDocx.file(zipEntry.name, content);
       });
       filePromises.push(promise);
     });
-    // Wait for all promises to resolve
     await Promise.all(filePromises);
-  
+
+    // Make replacements of updated docs
     Object.keys(updatedDocs).forEach((key) => {
-      unzippedOriginalDocx.file(key, updatedDocs[key]);
+      if (key === 'word/document.xml') {
+        unzippedOriginalDocx.file(key, updatedDocs[key]);
+      };
     });
 
-    // Zip it up again and return
-    return await unzippedOriginalDocx.generateAsync({ type: "blob" })
-  }
+    return unzippedOriginalDocx;
+  };
 }
 
 export default DocxZipper;

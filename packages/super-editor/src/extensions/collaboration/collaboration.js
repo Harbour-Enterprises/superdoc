@@ -6,7 +6,6 @@ import {
   undo,
   redo,
 } from 'y-prosemirror'
-import { yXmlFragmentToProseMirrorRootNode } from 'y-prosemirror'
 
 export const Collaboration = Extension.create({
   name: 'collaboration',

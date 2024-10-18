@@ -72,6 +72,10 @@ class SuperConverter {
     // Suppress logging when true
     this.debug = params?.debug || false;
 
+    // Important docx pieces
+    this.declaration = null;
+    this.documentAttributes = null;
+  
     // The docx as a list of files
     this.convertedXml = {};
     this.docx = params?.docx || [];
@@ -101,6 +105,10 @@ class SuperConverter {
   parseFromXml() {
     this.docx?.forEach(file => {
       this.convertedXml[file.name] = this.parseXmlToJson(file.content);
+
+      if (file.name === 'word/document.xml') {
+        this.documentAttributes = this.convertedXml[file.name].elements[0]?.attributes;
+      }
     });
     this.initialJSON = this.convertedXml['word/document.xml'];
 

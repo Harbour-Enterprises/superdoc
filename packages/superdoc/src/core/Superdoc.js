@@ -301,7 +301,7 @@ export class Superdoc extends EventEmitter {
     this.emit('locked', { isLocked, lockedBy });
   }
 
-  async #exportEditorsToDOCX() {
+  async exportEditorsToDOCX() {
     console.debug('🦋 [superdoc] Exporting editors to DOCX');
     const docxPromises = [];
     this.superdocStore.documents.forEach((doc) => {
@@ -338,20 +338,11 @@ export class Superdoc extends EventEmitter {
   async save() {
     const savePromises = [
       this.#triggerCollaborationSaves(),
-      // this.#exportEditorsToDOCX(),
+      this.exportEditorsToDOCX(),
     ];
     const result = await Promise.all(savePromises);
     return result;
   };
-  
-  // saveAll() {
-  //   this.log('[superdoc] Saving all');
-  //   const documents = this.superdocStore.documents;
-  //   documents.forEach((doc) => {
-  //     this.log('[superdoc] Saving:', doc.id, doc.core);
-  //     doc.core.save();
-  //   })
-  // }
 
   destroy() {
     if (!this.app) return;
