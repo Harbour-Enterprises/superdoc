@@ -35,13 +35,15 @@ export class SuperToolbar extends EventEmitter {
     },
 
     setFontSize: ({ item, argument }) => {
-      if (!argument || !this.activeEditor) return;
-      
-      let command = item.command;
-      if (command in this.activeEditor.commands) {
-        this.activeEditor.commands[command](argument);
-        this.#updateToolbarState();
-      }
+      this.#runCommandWithArgumentOnly({ item, argument });
+    },
+
+    setFontFamily: ({ item, argument }) => {
+      this.#runCommandWithArgumentOnly({ item, argument });
+    },
+
+    setColor: ({ item, argument }) => {
+      this.#runCommandWithArgumentOnly({ item, argument });
     },
   }
 
@@ -182,6 +184,16 @@ export class SuperToolbar extends EventEmitter {
       this.#updateToolbarState();
     } else {
       throw new Error(`[super-toolbar 🎨] Command not found: ${command}`);
+    }
+  }
+
+  #runCommandWithArgumentOnly({ item, argument }) {
+    if (!argument || !this.activeEditor) return;
+      
+    let command = item.command;
+    if (command in this.activeEditor.commands) {
+      this.activeEditor.commands[command](argument);
+      this.#updateToolbarState();
     }
   }
 }
