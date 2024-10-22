@@ -58,7 +58,11 @@ const getAnnotationWithField = computed(() => {
 
 <template>
   <div class="main-container">
-    <div v-for="entry in getAnnotationWithField" :style="getStyle(entry)" class="field-container">
+    <div 
+      v-for="entry in getAnnotationWithField" 
+      :style="getStyle(entry)" 
+      class="field-container"
+      :class="{'field-container--no-style': entry.nostyle}">
       <component
           class="field-component"
           :is="fieldComponentsMap[entry.field.fieldType]"
@@ -75,5 +79,10 @@ const getAnnotationWithField = computed(() => {
   border-radius: 2px;
   background-color: #EFD0F0 !important;
   border: 2px solid #B015B3;
+}
+
+.field-container--no-style {
+  background: none !important;
+  border-color: transparent;
 }
 </style>

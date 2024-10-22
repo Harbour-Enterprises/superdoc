@@ -45,7 +45,12 @@ export const useHrbrFieldsStore = defineStore('hrbr-fields', () => {
       if (!bounds || !pageBoundsMap) return;
 
       annotations.forEach((annotation) => {
-        const { itemid: fieldId, page } = annotation
+        const { 
+          itemid: fieldId, 
+          page,
+          nostyle,
+        } = annotation;
+
         let annotationId = annotation.pageannotation;
 
         if (annotation.itemfieldtype === 'CHECKBOXINPUT') {
@@ -79,6 +84,7 @@ export const useHrbrFieldsStore = defineStore('hrbr-fields', () => {
           originalAnnotationId: annotation.originalannotationid,
           coordinates: mappedCoordinates,
           style: annotationStyle,
+          nostyle: nostyle ?? false,
         };
 
         mappedAnnotations.push(field);
