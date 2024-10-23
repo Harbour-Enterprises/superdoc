@@ -33,6 +33,8 @@ jobs:
 
       - name: Update version
         run: |
+          git config user.email "nick@harbourshare.com"
+          git config user.name "Nick Bernal"
           npm version patch
           cat package.json
 
