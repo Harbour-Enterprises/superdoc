@@ -40,6 +40,7 @@ jobs:
           cat package.json
           git add .
           git commit -m "Bump version"
+          git push
 
       # - name: Publish
       #   uses: changesets/action@v1
