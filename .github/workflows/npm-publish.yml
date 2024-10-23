@@ -3,12 +3,11 @@ name: Publish Superdoc Package to npm on Tag
 on:
   push:
     branches:
-      - main
+      - nick/cicd
   workflow_dispatch:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   publish:
@@ -32,12 +31,17 @@ jobs:
           npm i
           cd ../..
 
-      - name: Publish
-        uses: changesets/action@v1
-        with:
-          createGithubReleases: false
-          publish: npm run publish
-          title: "New Superdoc pre-release version"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Update version
+        run: |
+          npm version patch
+          cat package.json
+
+      # - name: Publish
+      #   uses: changesets/action@v1
+      #   with:
+      #     createGithubReleases: false
+      #     publish: npm run publish
+      #     title: "New Superdoc pre-release version"
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
