@@ -3,7 +3,7 @@ name: Publish Superdoc Package to npm on Tag
 on:
   push:
     branches:
-      - nick/cicd
+      - main
   workflow_dispatch:
 
 permissions:
@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org/
-      
+
       - name: Install deps
         run: |
           npm i
@@ -33,8 +33,8 @@ jobs:
 
       - name: Update version
         run: |
-          git config user.email "nick@harbourshare.com"
-          git config user.name "Nick Bernal"
+          git config user.email "superdoc@harbourshare.com"
+          git config user.name "SuperDoc"
           cd packages/superdoc
           npm version patch
           cat package.json
@@ -49,12 +49,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      # - name: Publish
-      #   with:
-      #     createGithubReleases: false
-      #     publish: npm run publish
-      #     title: "New Superdoc pre-release version"
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
