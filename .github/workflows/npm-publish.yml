@@ -44,6 +44,7 @@ jobs:
 
       - name: Publish
         run: |
+          cd packages/superdoc
           npm publish --access public
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
