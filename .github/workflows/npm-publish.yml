@@ -33,8 +33,8 @@ jobs:
 
       - name: Update version
         run: |
-          git config user.email "superdoc@harbourshare.com"
-          git config user.name "SuperDoc"
+          git config user.email "nick@harbourshare.com"
+          git config user.name "Nick Bernal"
           cd packages/superdoc
           npm version patch
           cat package.json
