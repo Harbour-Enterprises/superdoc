@@ -477,10 +477,10 @@ export class Editor extends EventEmitter {
         );
         
         // For headless mode, generate JSON from a fragment
-        if (this.options.fragment) {
-          doc = yXmlFragmentToProseMirrorRootNode(this.options.fragment, this.schema);
-          console.debug('🦋 [super-editor] Generated JSON from fragment:', doc);
-        }
+        // if (this.options.fragment) {
+        //   doc = yXmlFragmentToProseMirrorRootNode(this.options.fragment, this.schema);
+        //   console.debug('🦋 [super-editor] Generated JSON from fragment:', doc);
+        // }
   
       } else if (this.options.mode === 'text') {
         if (this.options.content) {
@@ -724,10 +724,10 @@ export class Editor extends EventEmitter {
     return result
   }
 
-  convertSchemaToYdoc() {
-    const ydoc = prosemirrorJSONToYDoc(this.schema, this.state.doc.toJSON(), "supereditor");
-    return ydoc;
-  }
+  // convertSchemaToYdoc() {
+  //   const ydoc = prosemirrorJSONToYDoc(this.schema, this.state.doc.toJSON(), "supereditor");
+  //   return ydoc;
+  // }
 
   /**
    * Destroy collaboration provider and ydoc

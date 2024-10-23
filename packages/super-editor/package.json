@@ -51,8 +51,7 @@
     "prosemirror-view": "^1.33.8",
     "uuidv4": "^6.2.13",
     "vue": "^3.4.21",
-    "xml-js": "^1.6.11",
-    "y-prosemirror": "^1.2.12"
+    "xml-js": "^1.6.11"
   },
   "peerDependencies": {
     "@fortawesome/fontawesome-free": "^6.5.2",
@@ -61,6 +60,7 @@
     "naive-ui": "^2.38.2",
     "tippy.js": "^6.3.7",
     "vite-plugin-node-polyfills": "^0.22.0",
+    "y-prosemirror": "^1.2.12",
     "yjs": "13.6.19"
   },
   "devDependencies": {
