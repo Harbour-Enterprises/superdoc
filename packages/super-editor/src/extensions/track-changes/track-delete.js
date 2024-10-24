@@ -39,7 +39,7 @@ export const TrackDelete = Mark.create({
                 },
             },
             date: {
-                default: (new Date()).toISOString(),
+                default: () => (new Date()).toISOString(),
                 parseHTML: element => element.getAttribute('date'),
                 renderHTML: attributes => {
                     return {

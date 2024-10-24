@@ -29,7 +29,10 @@ export const Table = Node.create({
           return { style: `min-width: ${width}px;` }
         }
       },
-      gridColumnWidths: { rendered: false, default: [], },
+      gridColumnWidths: { 
+        rendered: false, 
+        default: () => [], 
+      },
       tableStyleId: { rendered: false, },
       tableIndent: {
         renderDOM: ({ tableIndent }) => {
@@ -43,7 +46,7 @@ export const Table = Node.create({
       },
       tableLayout: { rendered: false, },
       borders: {
-        default: {},
+        default: () => ({}),
         renderDOM({ borders = {} }) {
           if (!borders) return {};
           const style = Object.entries(borders).reduce((acc, [key, { size, color }]) => {

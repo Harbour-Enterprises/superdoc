@@ -37,7 +37,7 @@ export const TrackMarks = Mark.create({
                 },
             },
             date: {
-                default: (new Date()).toISOString(),
+                default: () => (new Date()).toISOString(),
                 parseHTML: element => element.getAttribute('date'),
                 renderHTML: attributes => {
                     return {
@@ -46,7 +46,7 @@ export const TrackMarks = Mark.create({
                 },
             },
             before: {
-                default: [],
+                default: () => [],
                 parseHTML: element => {
                     try {
                         return JSON.parse(element.getAttribute('before'))
@@ -62,7 +62,7 @@ export const TrackMarks = Mark.create({
                 },
             },
             after: {
-                default: [],
+                default: () => [],
                 parseHTML: element => {
                     try {
                         return JSON.parse(element.getAttribute('after'))
