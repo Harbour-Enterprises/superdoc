@@ -96,7 +96,7 @@ const getStarterExtensions = () => {
     Underline,
     FormatCommands,
     DecorationClick,
-    // CommentsPlugin,
+    CommentsPlugin,
     Table,
     TableRow,
     TableCell,

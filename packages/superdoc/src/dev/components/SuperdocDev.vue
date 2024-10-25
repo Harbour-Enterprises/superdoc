@@ -58,10 +58,10 @@ const init = async () => {
       },
     ],
     modules: {
-      // 'comments': {
-      //   // readOnly: true,
-      //   // allowResolve: false,
-      // },
+      'comments': {
+        // readOnly: true,
+        // allowResolve: false,
+      },
       'hrbr-fields': {},
       // collaboration: {
       //   providerType: 'hocuspocus',
@@ -72,7 +72,7 @@ const init = async () => {
     },
   }
   superdoc.value = new Superdoc(config);
-  
+
   superdoc.value.on('editorCreate', onEditorCreate);
 };
 
