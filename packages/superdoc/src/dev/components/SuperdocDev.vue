@@ -43,8 +43,9 @@ const init = async () => {
     superdocId: 'superdoc-dev',
     selector: '#superdoc',
     toolbar: 'toolbar',
-    toolbarGroups: ['center'],
+    toolbarGroups: ['left', 'center', 'right'],
     documentMode: 'editing',
+    isDev: true,
     user: {
       name: 'Super Document Jr.',
       email: 'user@harbourshare.com',

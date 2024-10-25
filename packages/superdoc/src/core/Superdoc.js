@@ -66,6 +66,7 @@ export class Superdoc extends EventEmitter {
     // Toolbar
     this.toolbarElement = config.toolbar;
     this.toolbar = null;
+    this.isDev = config.isDev || false;
 
     this.superdocStore.init(config);
     this.activeEditor = null;
@@ -149,7 +150,7 @@ export class Superdoc extends EventEmitter {
     const config = {
       element: this.toolbarElement || null,
       onToolbarCommand: this.onToolbarCommand.bind(this),
-      isDev: false,
+      isDev: this.isDev || false,
       toolbarGroups: this.config.toolbarGroups,
     }
     this.toolbar = new SuperToolbar(config);

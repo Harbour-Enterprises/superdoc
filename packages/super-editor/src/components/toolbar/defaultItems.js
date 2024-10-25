@@ -539,6 +539,67 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth) => {
     }
   });
 
+
+  const test = useToolbarItem({
+    type: "button",
+    disabled: false,
+    name: "test",
+    tooltip: "Test",
+    command: "insertTestNodes",
+    icon: "fas fa-vial",
+    group: "left",
+  });
+
+  const trackChanges = useToolbarItem({
+    type: "button",
+    disabled: false,
+    name: "trackChanges",
+    tooltip: "Track Changes",
+    command: "toggleTrackChanges",
+    icon: "fa-solid fa-list-check",
+    group: "left",
+  });
+
+  const acceptChangesOnCursorPositions = useToolbarItem({
+    type: "button",
+    disabled: false,
+    name: "acceptChangesOnCursorPositions",
+    tooltip: "Accept Changes under selection",
+    command: "acceptChangesOnCursorPositions",
+    icon: "fa fa-calendar-check",
+    group: "left",
+  });
+
+  const revertChangesOnCursorPositions = useToolbarItem({
+    type: "button",
+    disabled: false,
+    name: "revertChangesOnCursorPositions",
+    tooltip: "Revert Changes under selection",
+    command: "revertChangesOnCursorPositions",
+    icon: "fa fa-calendar-xmark",
+    group: "left",
+  });
+
+  const toggleTrackChangesOriginal = useToolbarItem({
+    type: "button",
+    disabled: false,
+    name: "toggleTrackChangesShowOriginal",
+    tooltip: "Toggle Show Original",
+    command: "toggleTrackChangesShowOriginal",
+    icon: "fa fa-eye",
+    group: "left",
+  });
+
+  const toggleTrackChangesFinal = useToolbarItem({
+    type: "button",
+    disabled: false,
+    name: "toggleTrackChangesShowFinal",
+    tooltip: "Toggle Show Final",
+    command: "toggleTrackChangesShowFinal",
+    icon: "fa-solid fa-file",
+    group: "left",
+  });
+
   // search
   // const search = useToolbarItem({
   //   type: "button",
@@ -619,7 +680,7 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth) => {
 
   const documentOptions = [
     { label: "Editing", value: "editing", icon: 'fal fa-user-edit', description: "Edit document directly", },
-    // { label: "Suggesting", value: "suggesting", icon: 'fal fa-comment-edit', description: "Edits become suggestions" },
+    { label: "Suggesting", value: "suggesting", icon: 'fal fa-comment-edit', description: "Edits become suggestions" },
     { label: "Viewing", value: "viewing", icon: 'fal fa-eye', description: "View clean version of document only" },
   ];
 
@@ -657,6 +718,16 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth) => {
   let toolbarItems = [
     undo,
     redo,
+
+    // Dev - tracked changes
+    test,
+    trackChanges,
+    acceptChangesOnCursorPositions,
+    revertChangesOnCursorPositions,
+    toggleTrackChangesOriginal,
+    toggleTrackChangesFinal,
+
+    // non dev
     zoom,
     separator,
     fontButton,
@@ -689,6 +760,9 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth) => {
   if (windowWidth <= hideWideItemsEndpoint) {
     toolbarItems = toolbarItems.filter(item => item.type !== 'separator');
   }
+
+  const devItems = [test, trackChanges, acceptChangesOnCursorPositions, revertChangesOnCursorPositions, toggleTrackChangesOriginal, toggleTrackChangesFinal];
+  if (!isDev) toolbarItems = toolbarItems.filter((item) => !devItems.includes(item));
 
   // always visible items
   const toolbarItemsSticky = [
