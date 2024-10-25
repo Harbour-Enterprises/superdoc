@@ -12,7 +12,7 @@ const handleTabNode = (nodes, docx, nodeListHandler, insideTrackChange = false) 
   const processedNode = {
     type: 'tab',
     attrs: {
-      tabSize: attributes['w:val'] || 36,
+      tabSize: attributes['w:val'] || 48,
     },
     content: [],
   }

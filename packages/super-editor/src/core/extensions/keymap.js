@@ -38,6 +38,7 @@ export const Keymap = Extension.create({
       'Delete': handleDelete,
       'Mod-Delete': handleDelete,
       'Mod-a': () => this.editor.commands.selectAll(),
+      'Tab': () => this.editor.commands.insertTabNode(),
     };
 
     const pcBaseKeymap = {

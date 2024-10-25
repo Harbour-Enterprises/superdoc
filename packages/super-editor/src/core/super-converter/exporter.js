@@ -71,6 +71,7 @@ export function exportSchemaToJson(params) {
     tableCell: translateTableCell,
     bookmarkStart: translateBookmarkStart,
     fieldAnnotation: translateFieldAnnotation,
+    tab: translateTab,
   }
 
   if (!router[type]) {
@@ -180,6 +181,7 @@ function translateDocumentNode(params) {
     elements: [translatedBodyNode],
     attributes: params.node.attrs.attributes,
   }
+
   return [node, params];
 };
 
@@ -543,6 +545,22 @@ function translateTable(params) {
     name: 'w:tbl',
     elements,
   }
+}
+
+function translateTab(params) {
+  const attributes = {}
+  
+  const { marks = [] } = params.node;
+  // if (tab) {
+  //   attributes['w:type'] = tab;
+  // }
+
+  const outputMarks = processOutputMarks(marks);
+  const tabNode =  {
+    name: 'w:tab',
+  }
+
+  return wrapTextInRun(tabNode, outputMarks);
 }
 
 /**

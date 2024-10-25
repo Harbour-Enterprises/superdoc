@@ -1,4 +1,5 @@
 import { parseProperties } from "./importerHelpers.js";
+import {createImportMarks} from './markImporter.js';
 
 /**
  * @type {import("docxImporter").NodeHandler}
@@ -13,7 +14,7 @@ const handleRunNode = (nodes, docx, nodeListHandler, insideTrackChange = false) 
   if (hasRunProperties) {
     const { marks = [], attributes = {} } = parseProperties(node);
     if (node.marks) marks.push(...node.marks);
-    processedRun = processedRun.map(n => ({ ...n, marks, attributes }));
+    processedRun = processedRun.map(n => ({ ...n, marks: createImportMarks(marks), attributes }));
   }
   return { nodes: processedRun, consumed: 1 };
 }

@@ -64,6 +64,7 @@ const handleCommand = ({ item, argument }) => {
   width: 100%;
   justify-content: space-between;
   padding: 4px 16px;
+  box-sizing: border-box;
 }
 @media (max-width: 1120px) {
   .superdoc-toolbar-group-side {
