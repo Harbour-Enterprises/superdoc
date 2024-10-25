@@ -1,5 +1,6 @@
 {
   "name": "harbour-enterprises",
+  "version": "0.0.2",
   "private": true,
   "workspaces": [
     "packages/*",
@@ -15,10 +16,14 @@
     "reset": "npm run clean:packages && rm -rf ./node_modules && rm -rf ./packages/*/node_modules && rm -rf ./package-lock.json && npm install",
     "changeset": "changeset",
     "version": "changeset version && npm i && cd packages/superdoc && npm i && cd ../super-editor && npm i",
-    "publish": "npm run build && changeset publish"
+    "publish": "npm run build && changeset publish",
+    "fix:prettier": "prettier --write \"**/*.{js,css,vue}\"",
+    "lint:prettier": "prettier --check \"**/*.{js,css,vue}\""
   },
   "dependencies": {
     "@changesets/cli": "^2.27.9"
   },
-  "version": "0.0.2"
+  "devDependencies": {
+    "prettier": "3.3.3"
+  }
 }
