@@ -16,8 +16,12 @@ export const Keymap = Extension.create({
       () => commands.liftEmptyBlock(),
       () => commands.splitBlock(),
     ]);
-
-    const handleBackspace = () => this.editor.commands.first(({ commands }) => [
+    
+    const handleBackspace = () => this.editor.commands.first(({ commands, tr }) => [
+      () => {
+        tr.setMeta('inputType', 'deleteContentBackward');
+        return false;
+      },
       () => commands.deleteSelection(),
       () => commands.joinBackward(),
       () => commands.selectNodeBackward(),

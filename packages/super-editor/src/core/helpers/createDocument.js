@@ -1,3 +1,5 @@
+import { normalizeDocument } from './normalizeDocument.js';
+
 /**
  * Creates the document to pass to EditorState.
  * @param converter SuperConverter instance.
@@ -6,8 +8,18 @@
  */
 export function createDocument(converter, schema) {
   const documentData = converter.getSchema();
-  if (documentData) {
-    return schema.nodeFromJSON(documentData);
+
+  // Experimental.
+  let normalizedData;
+  try {
+    normalizedData = normalizeDocument(documentData);
+  } catch (err) {
+    normalizedData = documentData;
+    console.error(err);
+  }
+
+  if (normalizedData) {
+    return schema.nodeFromJSON(normalizedData);
   }
   return schema.topNodeType.createAndFill();
 }

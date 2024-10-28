@@ -5,7 +5,7 @@ import { generateDocxRandomId } from '@helpers/generateDocxRandomId.js';
 import {
   TrackDeleteMarkName,
   TrackInsertMarkName,
-  TrackMarksMarkName
+  TrackFormatMarkName
 } from "@extensions/track-changes/constants.js";
 
 /**
@@ -279,13 +279,14 @@ function translateTextNode(params) {
 }
 
 function createTrackStyleMark(marks) {
-  const trackStyleMark = marks.find(mark => mark.type === TrackMarksMarkName);
+  const trackStyleMark = marks.find(mark => mark.type === TrackFormatMarkName);
   if (trackStyleMark) {
     const markElement = {
       type: 'element',
       name: 'w:rPrChange', attributes: {
-        'w:id': trackStyleMark.attrs.wid,
+        'w:id': trackStyleMark.attrs.id,
         'w:author': trackStyleMark.attrs.author,
+        'w:authorEmail': trackStyleMark.attrs.authorEmail,
         'w:date': trackStyleMark.attrs.date,
       },
       elements: trackStyleMark.attrs.before
@@ -300,7 +301,7 @@ function createTrackStyleMark(marks) {
 function translateTrackedNode(params) {
   const { node } = params;
   const marks = node.marks;
-  const trackingMarks = [TrackInsertMarkName, TrackDeleteMarkName, TrackMarksMarkName];
+  const trackingMarks = [TrackInsertMarkName, TrackDeleteMarkName, TrackFormatMarkName];
   const trackedMark = marks.find((m) => trackingMarks.includes(m.type));
   const isInsert = trackedMark.type === TrackInsertMarkName;
 
@@ -323,8 +324,9 @@ function translateTrackedNode(params) {
     name: isInsert ? 'w:ins' : 'w:del',
     type: 'element',
     attributes: {
-      'w:id': trackedMark.attrs.wid,
+      'w:id': trackedMark.attrs.id,
       'w:author': trackedMark.attrs.author,
+      'w:authorEmail': trackedMark.attrs.authorEmail,
       'w:date': trackedMark.attrs.date,
     },
     elements: [

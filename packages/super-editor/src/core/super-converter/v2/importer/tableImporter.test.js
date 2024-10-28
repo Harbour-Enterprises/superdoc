@@ -1,7 +1,7 @@
 import { parseXmlToJson } from "../docxHelper.js";
 import { handleTrackChangeNode } from "./trackChangesImporter.js";
 import { defaultNodeListHandler } from "./docxImporter.js";
-import { TrackInsertMarkName } from "../../../../extensions/track-changes/constants.js";
+import { TrackInsertMarkName } from "@extensions/track-changes/constants.js";
 import { handleAllTableNodes } from "./tableImporter.js";
 
 

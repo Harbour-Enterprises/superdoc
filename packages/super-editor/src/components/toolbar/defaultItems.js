@@ -539,6 +539,59 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth) => {
     }
   });
 
+
+  // Track changes test buttons
+  const toggleTrackChanges = useToolbarItem({
+    type: "button",
+    disabled: false,
+    name: "toggleTrackChanges",
+    tooltip: "Track Changes",
+    command: "toggleTrackChanges",
+    icon: "fa-solid fa-list-check",
+    group: "left",
+  });
+
+  const acceptTrackedChangeBySelection = useToolbarItem({
+    type: "button",
+    disabled: false,
+    name: "acceptTrackedChangeBySelection",
+    tooltip: "Accept Changes under selection",
+    command: "acceptTrackedChangeBySelection",
+    icon: "fa fa-calendar-check",
+    group: "left",
+  });
+
+  const rejectTrackedChangeOnSelection = useToolbarItem({
+    type: "button",
+    disabled: false,
+    name: "rejectTrackedChangeOnSelection",
+    tooltip: "Reject Changes under selection",
+    command: "rejectTrackedChangeOnSelection",
+    icon: "fa fa-calendar-xmark",
+    group: "left",
+  });
+
+  const toggleTrackChangesOriginal = useToolbarItem({
+    type: "button",
+    disabled: false,
+    name: "toggleTrackChangesShowOriginal",
+    tooltip: "Toggle Show Original",
+    command: "toggleTrackChangesShowOriginal",
+    icon: "fa fa-eye",
+    group: "left",
+  });
+
+  const toggleTrackChangesFinal = useToolbarItem({
+    type: "button",
+    disabled: false,
+    name: "toggleTrackChangesShowFinal",
+    tooltip: "Toggle Show Final",
+    command: "toggleTrackChangesShowFinal",
+    icon: "fa-solid fa-file",
+    group: "left",
+  });
+  //
+
   // search
   // const search = useToolbarItem({
   //   type: "button",
@@ -619,7 +672,7 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth) => {
 
   const documentOptions = [
     { label: "Editing", value: "editing", icon: 'fal fa-user-edit', description: "Edit document directly", },
-    // { label: "Suggesting", value: "suggesting", icon: 'fal fa-comment-edit', description: "Edits become suggestions" },
+    { label: "Suggesting", value: "suggesting", icon: 'fal fa-comment-edit', description: "Edits become suggestions" },
     { label: "Viewing", value: "viewing", icon: 'fal fa-eye', description: "View clean version of document only" },
   ];
 
@@ -657,6 +710,14 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth) => {
   let toolbarItems = [
     undo,
     redo,
+
+    // Dev - tracked changes
+    toggleTrackChanges,
+    acceptTrackedChangeBySelection,
+    rejectTrackedChangeOnSelection,
+    toggleTrackChangesOriginal,
+    toggleTrackChangesFinal,
+
     zoom,
     separator,
     fontButton,
@@ -688,6 +749,19 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth) => {
   // Hide separators on small screens
   if (windowWidth <= hideWideItemsEndpoint) {
     toolbarItems = toolbarItems.filter(item => item.type !== 'separator');
+  }
+
+  // Track changes test buttons
+  const devItems = [
+    toggleTrackChanges, 
+    acceptTrackedChangeBySelection, 
+    rejectTrackedChangeOnSelection, 
+    toggleTrackChangesOriginal, 
+    toggleTrackChangesFinal
+  ];
+
+  if (!isDev) {
+    toolbarItems = toolbarItems.filter((item) => !devItems.includes(item));
   }
 
   // always visible items

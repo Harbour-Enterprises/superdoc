@@ -79,17 +79,4 @@ export const Image = Node.create({
     }
   },
 
-  addInputRules() {
-    return [
-      nodeInputRule({
-        find: inputRegex,
-        type: this.type,
-        getAttributes: match => {
-          const [,, alt, src, title] = match
-          return { src, alt, title }
-        },
-      }),
-    ]
-  },
-
 });

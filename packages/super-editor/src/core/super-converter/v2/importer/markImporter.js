@@ -1,5 +1,5 @@
 import { SuperConverter } from "../../SuperConverter.js";
-import { TrackMarksMarkName } from "../../../../extensions/track-changes/constants.js";
+import { TrackFormatMarkName } from "@extensions/track-changes/constants.js";
 import { twipsToInches } from "../../helpers.js";
 
 /**
@@ -75,12 +75,13 @@ export function handleStyleChangeMarks(rPr, currentMarks) {
 
   const { attributes } = styleChangeMark;
   const mappedAttributes = {
-    wid: attributes['w:id'],
+    id: attributes['w:id'],
     date: attributes['w:date'],
     author: attributes['w:author'],
+    authorEmail: attributes['w:authorEmail'],
   }
   const submarks = parseMarks(styleChangeMark);
-  return [{ type: TrackMarksMarkName, attrs: { ...mappedAttributes, before: submarks, after: [...currentMarks] } }]
+  return [{ type: TrackFormatMarkName, attrs: { ...mappedAttributes, before: submarks, after: [...currentMarks] } }]
 }
 
 

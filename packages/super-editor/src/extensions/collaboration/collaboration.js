@@ -42,6 +42,7 @@ export const Collaboration = Extension.create({
     return {
       undo: () => ({ tr, state, dispatch }) => {
         tr.setMeta('preventDispatch', true)
+        tr.setMeta('inputType', 'historyUndo');
         const undoManager = yUndoPluginKey.getState(state).undoManager
         if (undoManager.undoStack.length === 0) return false
         if (!dispatch) return true
@@ -49,6 +50,7 @@ export const Collaboration = Extension.create({
       },
       redo: () => ({ tr, state, dispatch }) => {
         tr.setMeta('preventDispatch', true)
+        tr.setMeta('inputType', 'historyRedo');
         const undoManager = yUndoPluginKey.getState(state).undoManager
         if (undoManager.redoStack.length === 0) return false
         if (!dispatch) return true;

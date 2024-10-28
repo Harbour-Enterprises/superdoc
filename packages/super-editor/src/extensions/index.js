@@ -37,16 +37,17 @@ import { Italic } from './italic/index.js';
 import { Underline } from './underline/index.js';
 import { Strike } from './strike/index.js';
 import { Link } from './link/index.js';
-import {TrackDelete} from "./track-changes/track-delete.js";
-import {TrackInsert} from "./track-changes/track-insert.js";
+import { TrackInsert, TrackDelete, TrackFormat } from "./track-changes/index.js";
 
 // Plugins
 import { DecorationClick } from './decoration-click/index.js';
 import { CommentsPlugin } from './comment/index.js';
 import { Placeholder } from './placeholder/index.js';
 import { PopoverPlugin } from './popover-plugin/index.js';
-import {TrackChangesBase} from "./track-changes/track-changes-base.js";
-import {TrackMarks} from "./track-changes/track-marks.js";
+import { TrackChanges } from "./track-changes/index.js";
+
+// Helpers
+import { trackChangesHelpers } from './track-changes/index.js';
 
 const getRichTextExtensions = () => [
   Bold,
@@ -96,7 +97,7 @@ const getStarterExtensions = () => {
     Underline,
     FormatCommands,
     DecorationClick,
-    // CommentsPlugin,
+    CommentsPlugin,
     Table,
     TableRow,
     TableCell,
@@ -106,10 +107,10 @@ const getStarterExtensions = () => {
     Image,
     BookmarkStart,
     Mention,
-    TrackChangesBase,
-    TrackDelete,
+    TrackChanges,
     TrackInsert,
-    TrackMarks,
+    TrackDelete,
+    TrackFormat,
   ];
 };
 
@@ -154,6 +155,11 @@ export {
   BookmarkStart,
   PopoverPlugin,
   Mention,
+  TrackChanges,
+  TrackInsert,
+  TrackDelete,
+  TrackFormat,
+  trackChangesHelpers,
   getStarterExtensions,
   getRichTextExtensions,
 };

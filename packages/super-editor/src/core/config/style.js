@@ -84,42 +84,13 @@ li.ProseMirror-selectednode:after {
   pointer-events: none;
 }
 
-.insertionMark {
-    &.inline {
-      &.hidden {
-        display: none;
-      }
-      &.normal {
-      }
-      &.highlighted {
-        border: 1px dashed #00853D;
-        background-color: #399C7222;
-        pointer-events: none;
-      }
-    }
-}
-
-.deletionMark {
-    &.inline {
-      &.hidden {
-        display: none;
-      }
-      &.normal {
-      }
-    }
-    &.widget {
-        border: 1px dashed #CB0E47;
-        background-color: #CB0E4722;
-        pointer-events: none;
-    }
-}
-
 /* Protect against generic img rules */
 img.ProseMirror-separator {
   display: inline !important;
   border: none !important;
   margin: 0 !important;
 }
+
 .ProseMirror .tab {
   display: inline-block;
   vertical-align: text-bottom;
@@ -128,5 +99,33 @@ img.ProseMirror-separator {
   white-space: pre;
   border-bottom: 1px solid #000;
   margin-bottom: 1.5px;
+}
+
+/* Track changes */
+.ProseMirror .track-insert-dec,
+.ProseMirror .track-delete-dec,
+.ProseMirror .track-format-dec {
+  pointer-events: none;
+}
+
+.ProseMirror .track-insert-dec.hidden,
+.ProseMirror .track-delete-dec.hidden {
+  display: none;
+}
+
+.ProseMirror .track-insert-dec.highlighted {
+  border-top: 1px dashed #00853D;
+  border-bottom: 1px dashed #00853D;
+  background-color: #399C7222;
+}
+
+.ProseMirror .track-delete-dec.highlighted {
+  border-top: 1px dashed #CB0E47;
+  border-bottom: 1px dashed #CB0E47;
+  background-color: #CB0E4722;
+}
+
+.ProseMirror .track-format-dec.highlighted {
+  border-bottom: 2px solid gold;
 }
 `;

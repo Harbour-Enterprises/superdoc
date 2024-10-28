@@ -1,10 +1,11 @@
 import { Mark, Attribute } from '@core/index.js';
-import { TrackInsertMarkName } from './constants.js';
+import { TrackFormatMarkName } from './constants.js';
+import { parseFormatList } from './trackChangesHelpers/index.js';
 
-const trackInsertClass = 'track-insert';
+const trackFormatClass = 'track-format';
 
-export const TrackInsert = Mark.create({
-  name: TrackInsertMarkName,
+export const TrackFormat = Mark.create({
+  name: TrackFormatMarkName,
 
   group: 'track',
 
@@ -13,7 +14,7 @@ export const TrackInsert = Mark.create({
   addOptions() {
     return {
       htmlAttributes: {
-        class: trackInsertClass,
+        class: trackFormatClass,
       },
     };
   },
@@ -60,6 +61,40 @@ export const TrackInsert = Mark.create({
           if (!attrs.date) return {};
           return {
             'data-date': attrs.date,
+          };
+        },
+      },
+
+      // {
+      //   type: string, // the mark name
+      //   attrs: object, // the mark attrs
+      // }
+      before: {
+        default: [],
+        parseDOM: (elem) => {
+          return parseFormatList(elem.getAttribute('data-before'));
+        },
+        renderDOM: (attrs) => {
+          if (!attrs.before) return {};
+          return {
+            'data-before': JSON.stringify(attrs.before),
+          };
+        },
+      },
+
+      // {
+      //   type: string, // the mark name
+      //   attrs: object, // the mark attrs
+      // }
+      after: {
+        default: [],
+        parseDOM: (elem) => {
+          return parseFormatList(elem.getAttribute('data-after'));
+        },
+        renderDOM: (attrs) => {
+          if (!attrs.after) return {};
+          return {
+            'data-after': JSON.stringify(attrs.after),
           };
         },
       },

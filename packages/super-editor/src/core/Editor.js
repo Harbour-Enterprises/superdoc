@@ -13,7 +13,8 @@ import { createStyleTag } from './utilities/createStyleTag.js';
 import { initComments } from '@features/index.js';
 import { style } from './config/style.js';
 import DocxZipper from '@core/DocxZipper.js';
-import { amendTransaction } from "@extensions/track-changes/track-changes-tr-modifier.js";
+import { trackedTransaction } from "@extensions/track-changes/trackChangesHelpers/trackedTransaction.js";
+import { TrackChangesBasePluginKey } from '@extensions/track-changes/plugins/index.js';
 
 /**
  * Editor main class.
@@ -519,13 +520,23 @@ export class Editor extends EventEmitter {
 
     let state;
     try {
-      const trackedTr = amendTransaction(transaction, this.view, this.options.user);
-      const { state: newState } = this.view.state.applyTransaction(trackedTr);
+      const trackChangesState = TrackChangesBasePluginKey.getState(this.view.state);
+      const isTrackChangesActive = trackChangesState?.isTrackChangesActive ?? false;
+
+      const tr = isTrackChangesActive 
+        ? trackedTransaction({ 
+          tr: transaction, 
+          state: this.state, 
+          user: this.options.user,
+        }) 
+        : transaction;
+
+      const { state: newState } = this.view.state.applyTransaction(tr);
       state = newState;
-    } catch (e) {
-      console.log(e);
-      //just in case
+    } catch (error) {
+      // just in case
       state = this.state.apply(transaction);
+      console.log(error);
     }
 
     const selectionHasChanged = !this.state.selection.eq(state.selection);

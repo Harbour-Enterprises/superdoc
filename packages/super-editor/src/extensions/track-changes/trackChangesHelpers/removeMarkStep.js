@@ -1,0 +1,93 @@
+import { Transaction, EditorState } from 'prosemirror-state';
+import { Mapping, RemoveMarkStep } from 'prosemirror-transform';
+import { Node } from 'prosemirror-model';
+import { v4 as uuidv4 } from 'uuid';
+import { TrackDeleteMarkName, TrackFormatMarkName } from '../constants.js';
+
+/**
+ * Remove mark step.
+ * @param {EditorState} options.state Editor state.
+ * @param {Transaction} options.tr Transaction.
+ * @param {RemoveMarkStep} options.step Step.
+ * @param {Transaction} options.newTr New transaction.
+ * @param {Mapping} options.map Map.
+ * @param {Node} options.doc Doc.
+ * @param {object} options.user User object ({ name, email }).
+ * @param {string} options.date Date.
+ */
+export const removeMarkStep = ({ state, tr, step, newTr, map, doc, user, date }) => {
+  doc.nodesBetween(step.from, step.to, (node, pos) => {
+    if (!node.isInline) {
+      return true;
+    }
+
+    if (node.marks.find((mark) => mark.type.name === TrackDeleteMarkName)) {
+      return false;
+    }
+
+    newTr.removeMark(Math.max(step.from, pos), Math.min(step.to, pos + node.nodeSize), step.mark);
+
+    const allowedMarks = ['bold', 'italic', 'strike', 'underline', 'textStyle'];
+
+    if (
+      allowedMarks.includes(step.mark.type.name) &&
+      node.marks.find((mark) => mark.type === step.mark.type)
+    ) {
+      const formatChangeMark = node.marks.find((mark) => mark.type.name === TrackFormatMarkName);
+
+      let after = [];
+      let before = [];
+
+      if (formatChangeMark) {
+        let foundAfter = formatChangeMark.attrs.after.find(
+          (mark) => mark.type === step.mark.type.name,
+        );
+
+        if (foundAfter) {
+          after = [
+            ...formatChangeMark.attrs.after.filter((mark) => mark.type !== step.mark.type.name),
+          ];
+          before = [...formatChangeMark.attrs.before];
+        } else {
+          after = [...formatChangeMark.attrs.after];
+          before = [
+            ...formatChangeMark.attrs.before,
+            {
+              type: step.mark.type.name,
+              attrs: { ...step.mark.attrs },
+            },
+          ];
+        }
+      } else {
+        after = [];
+        before = [
+          {
+            type: step.mark.type.name,
+            attrs: { ...step.mark.attrs },
+          },
+        ];
+      }
+
+      if (after.length || before.length) {
+        newTr.addMark(
+          Math.max(step.from, pos),
+          Math.min(step.to, pos + node.nodeSize),
+          state.schema.marks[TrackFormatMarkName].create({
+            id: uuidv4(),
+            author: user.name,
+            authorEmail: user.email,
+            date,
+            before,
+            after,
+          }),
+        );
+      } else if (formatChangeMark) {
+        newTr.removeMark(
+          Math.max(step.from, pos),
+          Math.min(step.to, pos + node.nodeSize),
+          formatChangeMark,
+        );
+      }
+    }
+  });
+};
