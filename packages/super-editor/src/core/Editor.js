@@ -477,10 +477,10 @@ export class Editor extends EventEmitter {
         );
         
         // For headless mode, generate JSON from a fragment
-        // if (this.options.fragment) {
-        //   doc = yXmlFragmentToProseMirrorRootNode(this.options.fragment, this.schema);
-        //   console.debug('🦋 [super-editor] Generated JSON from fragment:', doc);
-        // }
+        if (this.options.fragment) {
+          doc = yXmlFragmentToProseMirrorRootNode(this.options.fragment, this.schema);
+          console.debug('🦋 [super-editor] Generated JSON from fragment:', doc);
+        }
   
       } else if (this.options.mode === 'text') {
         if (this.options.content) {
@@ -582,15 +582,15 @@ export class Editor extends EventEmitter {
     if (this.view.isDestroyed) return;
 
     let state;
-    // try {
-    //   const trackedTr = amendTransaction(transaction, this.view, this.options.user);
-    //   const { state: newState } = this.view.state.applyTransaction(trackedTr);
-    //   state = newState;
-    // } catch (e) {
-    //   console.log(e);
-    //   //just in case
-    //   state = this.state.apply(transaction);
-    // }
+    try {
+      const trackedTr = amendTransaction(transaction, this.view, this.options.user);
+      const { state: newState } = this.view.state.applyTransaction(trackedTr);
+      state = newState;
+    } catch (e) {
+      console.log(e);
+      //just in case
+      state = this.state.apply(transaction);
+    }
 
     state = this.state.apply(transaction);
     const selectionHasChanged = !this.state.selection.eq(state.selection);

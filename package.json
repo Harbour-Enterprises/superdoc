@@ -13,9 +13,7 @@
     "build": "npm run build:super-editor && npm run build:superdoc",
     "clean:packages": "rm -rf ./packages/*/dist",
     "reset": "npm run clean:packages && rm -rf ./node_modules && rm -rf ./packages/*/node_modules && rm -rf ./package-lock.json && npm install",
-    "changeset": "changeset",
-    "version": "changeset version && npm i && cd packages/superdoc && npm i && cd ../super-editor && npm i",
-    "publish": "npm run build && changeset publish"
+    "publish": "npm run build && cd packages/superdoc && npm publish --access public"
   },
   "dependencies": {
     "@changesets/cli": "^2.27.9"
