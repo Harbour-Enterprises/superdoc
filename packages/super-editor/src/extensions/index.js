@@ -47,7 +47,6 @@ import { Placeholder } from './placeholder/index.js';
 import { PopoverPlugin } from './popover-plugin/index.js';
 import {TrackChangesBase} from "./track-changes/track-changes-base.js";
 import {TrackMarks} from "./track-changes/track-marks.js";
-import { TabPlugin } from './tab-plugin/index.js';
 
 const getRichTextExtensions = () => [
   Bold,
@@ -111,7 +110,6 @@ const getStarterExtensions = () => {
     TrackDelete,
     TrackInsert,
     TrackMarks,
-    TabPlugin
   ];
 };
 

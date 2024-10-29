@@ -120,4 +120,13 @@ img.ProseMirror-separator {
   border: none !important;
   margin: 0 !important;
 }
+.ProseMirror .tab {
+  display: inline-block;
+  vertical-align: text-bottom;
+}
+.ProseMirror u .tab {
+  white-space: pre;
+  border-bottom: 1px solid #000;
+  margin-bottom: 1.5px;
+}
 `;

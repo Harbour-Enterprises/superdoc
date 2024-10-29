@@ -67,14 +67,3 @@
   margin: 0;
   padding: 0;
 } */
-
-.tab {
-  display: inline-block;
-  vertical-align: text-bottom;
-}
-
-u .tab {
-  white-space: pre;
-  border-bottom: 1px solid #000;
-  margin-bottom: 1.5px;
-}
