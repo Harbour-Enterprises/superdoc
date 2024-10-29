@@ -30,7 +30,7 @@ export const insertContentAt = (position, value, options) => ({ tr, dispatch, ed
         editor,
         error: e,
         disableCollaboration: () => {
-          console.error('[tiptap error]: Unable to disable collaboration at this point in time')
+          console.error('[super-editor error]: Unable to disable collaboration at this point in time')
         },
       })
       return false

@@ -51,10 +51,10 @@ export function createNodeFromContent(content, schema, options) {
       return node
     } catch (error) {
       if (options.errorOnInvalidContent) {
-        throw new Error('[tiptap error]: Invalid JSON content', { cause: error })
+        throw new Error('[super-editor error]: Invalid JSON content', { cause: error })
       }
 
-      console.warn('[tiptap warn]: Invalid content.', 'Passed value:', content, 'Error:', error)
+      console.warn('[super-editor warn]: Invalid content.', 'Passed value:', content, 'Error:', error)
 
       return createNodeFromContent('', schema, options)
     }
@@ -74,7 +74,7 @@ export function createNodeFromContent(content, schema, options) {
         // Prosemirror's schemas are executed such that: the last to execute, matches last
         // This means that we can add a catch-all node at the end of the schema to catch any content that we don't know how to handle
         nodes: schema.spec.nodes.append({
-          __tiptap__private__unknown__catch__all__node: {
+          __supereditor__private__unknown__catch__all__node: {
             content: 'inline*',
             group: 'block',
             parseDOM: [
@@ -100,7 +100,7 @@ export function createNodeFromContent(content, schema, options) {
       }
 
       if (options.errorOnInvalidContent && hasInvalidContent) {
-        throw new Error('[tiptap error]: Invalid HTML content', { cause: new Error(`Invalid element found: ${invalidContent}`) })
+        throw new Error('[super-editor error]: Invalid HTML content', { cause: new Error(`Invalid element found: ${invalidContent}`) })
       }
     }
 
