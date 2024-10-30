@@ -1,4 +1,4 @@
-import { Node, Attribute, helpers } from '@core/index.js';
+import { Node, Attribute } from '@core/index.js';
 import { FieldAnnotationView } from './FieldAnnotationView.js';
 import { FieldAnnotationPlugin } from './FieldAnnotationPlugin.js';
 import { findFieldAnnotationsByFieldId, getAllFieldAnnotations } from './fieldAnnotationHelpers/index.js';
@@ -71,11 +71,18 @@ export const FieldAnnotation = Node.create({
 
       rawHtml: {
         default: null,
-        parseDOM: (elem) => elem.getAttribute('data-raw-html'),
+        parseDOM: (elem) => {
+          try {
+            return JSON.parse(elem.getAttribute('data-raw-html'));
+          } catch (e) {
+            console.warn('Paste parse error', e);
+          }
+          return null;
+        },
         renderDOM: (attrs) => {
           if (!attrs.rawHtml) return {};
           return {
-            'data-raw-html': attrs.rawHtml,
+            'data-raw-html': JSON.stringify(attrs.rawHtml),
           };
         },
       },
@@ -114,6 +121,14 @@ export const FieldAnnotation = Node.create({
             hexColor = `${hexColor}33`;
           }
 
+          let omitHighlight = attrs.highlighted === false;
+
+          if (omitHighlight) {
+            return { 
+              'data-field-color': hexColor,
+            };
+          }
+
           return { 
             'data-field-color': hexColor,
             style: `background-color: ${hexColor}`,
@@ -127,7 +142,7 @@ export const FieldAnnotation = Node.create({
           let hasHiddenAttr = elem.hasAttribute('hidden');
           let hasDisplayNoneStyle = elem.style.display === 'none';
           let isHidden = hasHiddenAttr || hasDisplayNoneStyle;
-          return isHidden ? true : null;
+          return isHidden;
         },
         renderDOM: (attrs) => {
           if (!attrs.hidden) return {};
@@ -148,6 +163,11 @@ export const FieldAnnotation = Node.create({
           if (!attrs.visibility || attrs.visibility === 'visible') return {};
           return { style: `visibility: ${attrs.visibility}` };
         },
+      },
+
+      highlighted: {
+        default: true,
+        rendered: false,
       },
     };
   },
@@ -270,8 +290,10 @@ export const FieldAnnotation = Node.create({
         commands,
       }) => {
         let annotations = findFieldAnnotationsByFieldId(fieldIdOrArray, state);
-
-        if (!annotations.length) return false;
+        
+        if (!annotations.length) {
+          return true;
+        }
 
         if (dispatch) {
           return commands.updateFieldAnnotationsAttributes(annotations, attrs);
@@ -323,7 +345,9 @@ export const FieldAnnotation = Node.create({
       }) => {
         let annotations = findFieldAnnotationsByFieldId(fieldIdOrArray, state);
 
-        if (!annotations.length) return false;
+        if (!annotations.length) {
+          return true;
+        }
 
         if (dispatch) {
           annotations
@@ -363,7 +387,9 @@ export const FieldAnnotation = Node.create({
       }) => {
         let annotations = getAllFieldAnnotations(state);
 
-        if (!annotations.length) return false;
+        if (!annotations.length) {
+          return true;
+        }
 
         if (dispatch) {
           let otherAnnotations = [];
@@ -399,7 +425,9 @@ export const FieldAnnotation = Node.create({
       }) => {
         let annotations = getAllFieldAnnotations(state);
 
-        if (!annotations.length) return false;
+        if (!annotations.length) {
+          return true;
+        }
 
         if (dispatch) {
           return commands
@@ -424,15 +452,59 @@ export const FieldAnnotation = Node.create({
       }) => {
         let annotations = getAllFieldAnnotations(state);
 
-        if (!annotations.length) return false;
+        if (!annotations.length) {
+          return true;
+        }
 
         let containsVisibility = this.options.visibilityOptions.includes(visibility);
         
-        if (!containsVisibility) return false;
+        if (!containsVisibility) {
+          return false;
+        }
 
         if (dispatch) {
           return commands.updateFieldAnnotationsAttributes(annotations, {
             visibility,
+          });
+        }
+
+        return true;
+      },
+
+      /**
+       * Set `highlighted` for annotations matching predicate.
+       * @param predicate The predicate function.
+       * @param highlighted The highlighted attribute.
+       * @example 
+       * editor.commands.setFieldAnnotationsHighlighted((node) => {
+       *   let ids = ['111', '222', '333'];
+       *   return ids.includes(node.attrs.fieldId);
+       * }, false)
+       * @example Set for all annotations.
+       * editor.commands.setFieldAnnotationsHighlighted(() => true, false)
+       * editor.commands.setFieldAnnotationsHighlighted(() => true, true)
+       */
+      setFieldAnnotationsHighlighted: (
+        predicate = () => false,
+        highlighted = true,
+      ) => ({
+        dispatch,
+        state,
+        commands,
+      }) => {
+        let annotations = getAllFieldAnnotations(state);
+
+        if (!annotations.length) {
+          return true;
+        }
+
+        if (dispatch) {
+          let matchedAnnotations = annotations.filter((annotation) => {
+            if (predicate(annotation.node)) return annotation;
+          });
+
+          return commands.updateFieldAnnotationsAttributes(matchedAnnotations, { 
+            highlighted, 
           });
         }
 

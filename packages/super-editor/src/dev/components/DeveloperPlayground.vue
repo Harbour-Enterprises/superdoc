@@ -128,7 +128,7 @@ const attachAnnotationEventHandlers = () => {
     editor.commands.addFieldAnnotation(pos, {
       displayLabel: 'Enter your info',
       fieldId: `agreementinput-${Date.now()}-${Math.floor(Math.random() * 1000000000000)}`,
-      // fieldId: `111`,
+      // fieldId: `222`,
       fieldType: 'TEXTINPUT',
       fieldColor: signer?.signercolor,
     });
@@ -152,6 +152,21 @@ onMounted(async () => {
   // set document to blank
   currentFile.value = await getFileObject(BlankDOCX, 'blank_document.docx', DOCX);
 });
+
+
+const onSetHighlighted = () => {
+  activeEditor?.commands.setFieldAnnotationsHighlighted((node) => true, true);
+};
+
+const onUnsetHighlighted = () => {
+  activeEditor?.commands.setFieldAnnotationsHighlighted((node) => true, false);
+
+  // activeEditor?.commands.setFieldAnnotationsHighlighted((node) => {
+  //   let ids = ['111', '222'];
+  //   if (ids.includes(node.attrs.fieldId)) return true;
+  //   return false;
+  // }, false);
+};
 </script>
 
 <template>
@@ -198,7 +213,9 @@ onMounted(async () => {
         </div>
 
         <div>
-          <!-- -->
+          <button @click="onUnsetHighlighted">Unset highlighted</button>
+          <button @click="onSetHighlighted">Set highlighted</button><br>
+          
         </div>
       </div>
 
