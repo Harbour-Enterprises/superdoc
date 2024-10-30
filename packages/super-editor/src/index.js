@@ -5,6 +5,7 @@ import { getActiveFormatting } from '@/core/helpers/getActiveFormatting.js';
 import { getStarterExtensions } from '@extensions/index.js';
 import { SuperToolbar } from '@components/toolbar/super-toolbar.js';
 import { DocxZipper, helpers } from '@core/index.js';
+import { Editor } from '@core/Editor.js';
 import SuperEditor from '@components/SuperEditor.vue';
 import BasicUpload from './dev/components/BasicUpload.vue';
 import Toolbar from '@components/toolbar/Toolbar.vue';
@@ -24,6 +25,7 @@ export {
   SuperConverter,
   DocxZipper,
   SuperToolbar,
+  Editor,
 
   // Components
   SuperEditor,
