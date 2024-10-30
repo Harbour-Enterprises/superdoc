@@ -97,7 +97,7 @@ function translateBodyNode(params) {
     name: 'w:body',
     elements: [...elements, sectPr]
   }
-};
+}
 
 /**
  * Translate a paragraph node
@@ -111,13 +111,12 @@ function translateParagraphNode(params) {
   // Insert paragraph properties at the beginning of the elements array
   const pPr = generateParagraphProperties(params.node);
   elements.unshift(pPr);
-  
+
   return {
     name: 'w:p',
     elements,
-    attributes: processAttributes(params.node.attrs),
   }
-};
+}
 
 /**
  * Generate the w:pPr props for a paragraph node
@@ -133,7 +132,7 @@ function generateParagraphProperties(node) {
   const { styleId } = attrs;
   if (styleId) pPrElements.push({ name: 'w:pStyle', attributes: { 'w:val': styleId } });
 
-  const { spacing } = attrs;
+  const { spacing, indent, textAlign } = attrs;
   if (spacing) {
     const { lineSpaceBefore, lineSpaceAfter, line } = spacing;
     
@@ -147,8 +146,21 @@ function generateParagraphProperties(node) {
     }
     pPrElements.push(spacingElement);
   }
-
-  const { textAlign } = attrs;
+  
+  if (indent) {
+    const { left, right, firstLine } = indent;
+    const attributes = {};
+    if (left) attributes['w:left'] = pixelsToTwips(left);
+    if (right) attributes['w:right'] = pixelsToTwips(right);
+    if (firstLine) attributes['w:firstLine'] = pixelsToTwips(firstLine);
+    
+    const indentElement = {
+      name: 'w:ind',
+      attributes,
+    }
+    pPrElements.push(indentElement);
+  }
+  
   if (textAlign) {
     const textAlignElement = {
       name: 'w:jc',
@@ -183,7 +195,7 @@ function translateDocumentNode(params) {
   }
 
   return [node, params];
-};
+}
 
 /**
  * The attributes to flatten and prepare for XML
@@ -646,7 +658,7 @@ function generateTableBorders(node) {
         'w:val': 'single',
         'w:sz': pixelsToHalfPoints(border.size),
         'w:space': border.space || 0,
-        'w:color': border.color,
+        'w:color': border.color.substring(1),
       }
     }
     elements.push(borderElement);

@@ -85,10 +85,10 @@ export function handleTableNode(node, docx, nodeListHandler, insideTrackChange) 
     // TODO: What does this do?
     // const tblLook = tblPr.elements.find((el) => el.name === 'w:tblLook');
     const tblGrid = node.elements.find((el) => el.name === 'w:tblGrid');
-    const gridColumnWidths = tblGrid.elements.map((el) => twipsToInches(el.attributes['w:w']));
+    const gridColumnWidths = tblGrid.elements?.map((el) => twipsToInches(el.attributes['w:w']));
 
     const rows = node.elements.filter((el) => el.name === 'w:tr');
-
+    
     const borderData = Object.keys(borders)?.length ? borders : referencedStyles?.borders;
     const borderRowData = Object.keys(rowBorders)?.length ? rowBorders : referencedStyles?.rowBorders;
     attrs['borders'] = borderData;
@@ -140,7 +140,7 @@ export function handleTableCellNode(node, styleTag, docx, nodeListHandler, insid
 
   const verticalAlignTag = tcPr?.elements?.find((el) => el.name === 'w:vAlign');
   const verticalAlign = verticalAlignTag?.attributes['w:val'];
-
+  
   const attributes = {};
   const referencedStyles = getReferencedTableStyles(styleTag, docx) || {};
   attributes.cellMargins = getTableCellMargins(marginTag, referencedStyles);
@@ -281,7 +281,7 @@ function processTableBorders(borderElements) {
     const attrs = {};
     const color = attributes['w:color'];
     const size = attributes['w:sz'];
-    if (color && color !== 'auto') attrs['color'] = `#${color}`;
+    if (color && color !== 'auto') attrs['color'] = color.startsWith('#') ? color : `#${color}`;
     if (size && size !== 'auto') attrs['size'] = halfPointToPixels(size);
 
     const rowBorderNames = ['insideH', 'insideV'];
@@ -343,10 +343,10 @@ const getTableCellMargins = (marginTag, referencedStyles) => {
   const inlineMarginTopTag = marginTag?.elements?.find((el) => el.name === 'w:top');
   const inlineMarginBottomTag = marginTag?.elements?.find((el) => el.name === 'w:bottom');
 
-  const inlineMarginLeftValue = twipsToPixels(inlineMarginLeftTag?.attributes['w:w']);
-  const inlineMarginRightValue = twipsToPixels(inlineMarginRightTag?.attributes['w:w']);
-  const inlineMarginTopValue = twipsToPixels(inlineMarginTopTag?.attributes['w:w']);
-  const inlineMarginBottomValue = twipsToPixels(inlineMarginBottomTag?.attributes['w:w']);
+  const inlineMarginLeftValue = inlineMarginLeftTag?.attributes['w:w'];
+  const inlineMarginRightValue = inlineMarginRightTag?.attributes['w:w'];
+  const inlineMarginTopValue = inlineMarginTopTag?.attributes['w:w'];
+  const inlineMarginBottomValue = inlineMarginBottomTag?.attributes['w:w'];
 
   const { cellMargins = {} } = referencedStyles;
   const {
