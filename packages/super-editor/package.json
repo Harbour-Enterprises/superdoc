@@ -9,19 +9,33 @@
     ".": {
       "import": "./dist/super-editor.es.js"
     },
+    "./super-converter": {
+      "import": "./dist/super-converter.es.js"
+    },
+    "./docx-zipper": {
+      "import": "./dist/docx-zipper.es.js"
+    },
+    "./toolbar": {
+      "import": "./dist/toolbar.es.js"
+    },
+    "./super-input": {
+      "import": "./dist/super-input.es.js"
+    },
+    "./super-editor": {
+      "import": "./dist/super-editor.es.js"
+    },
     "./style.css": "./dist/style.css"
   },
+  "main": "./dist/super-editor.es.js",
   "module": "./dist/super-editor.es.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "clean": "rm -rf dist",
-    "test": "vitest"
+    "test": "vitest",
+    "pack": "rm *.tgz 2>/dev/null || true && npm run build && npm pack && mv harbour-enterprises-super-editor-0.0.1-alpha.0.tgz ./super-editor.tgz"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-free": "^6.5.2",
-    "@fortawesome/free-solid-svg-icons": "^6.5.2",
-    "@fortawesome/vue-fontawesome": "^3.0.8",
     "color2k": "^2.0.3",
     "eventemitter3": "^5.0.1",
     "he": "^1.2.0",
@@ -37,7 +51,6 @@
     "prosemirror-tables": "^1.4.0",
     "prosemirror-transform": "^1.9.0",
     "prosemirror-view": "^1.33.8",
-    "tippy.js": "^6.3.7",
     "uuidv4": "^6.2.13",
     "vue": "^3.4.21",
     "xml-js": "^1.6.11"
@@ -49,14 +62,18 @@
     "naive-ui": "^2.38.2",
     "tippy.js": "^6.3.7",
     "vite-plugin-node-polyfills": "^0.22.0",
+    "y-prosemirror": "^1.2.12",
     "yjs": "13.6.19"
   },
   "devDependencies": {
+    "@fortawesome/fontawesome-free": "^6.5.2",
+    "@fortawesome/free-solid-svg-icons": "^6.5.2",
+    "@fortawesome/vue-fontawesome": "^3.0.8",
     "@vitejs/plugin-vue": "^5.0.4",
     "@vue/test-utils": "^2.4.6",
-    "jsdom": "^24.1.0",
     "postcss-nested": "^6.0.1",
     "postcss-nested-import": "^1.3.0",
+    "tippy.js": "^6.3.7",
     "vite": "^5.3.6",
     "vitest": "^1.6.0",
     "vue-draggable-next": "^2.2.1"

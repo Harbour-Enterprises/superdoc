@@ -56,6 +56,7 @@ const editorOptions = computed(() => {
     user,
     onCreate,
     onCommentClicked,
+    suppressSkeletonLoader: true,
     users: [
       { name: 'Nick Bernal', email: 'nick@harbourshare.com' },
       { name: 'Artem Nistuley', email: 'nick@harbourshare.com' },

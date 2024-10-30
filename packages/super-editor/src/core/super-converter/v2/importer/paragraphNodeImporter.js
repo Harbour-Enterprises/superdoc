@@ -78,6 +78,7 @@ export const handleParagraphNode = (nodes, docx, nodeListHandler, insideTrackCha
       };
     }
   }
+
   return { nodes: schemaNode ? [schemaNode] : [], consumed: 1 };
 }
 

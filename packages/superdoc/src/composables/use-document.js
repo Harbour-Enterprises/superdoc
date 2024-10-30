@@ -14,6 +14,13 @@ export default function useDocument(params, superdocConfig) {
   const pageContainers = ref([]);
   const isReady = ref(false);
 
+  // Collaboration
+  const ydoc = shallowRef(params.ydoc);
+
+  const provider = shallowRef(params.provider);
+  const socket = shallowRef(params.socket);
+  const isNewFile = ref(params.isNewFile);
+
   // For docx
   const editorRef = shallowRef(null);
   const setEditor = (ref) => editorRef.value = ref;
@@ -58,6 +65,10 @@ export default function useDocument(params, superdocConfig) {
     state,
 
     core,
+    ydoc,
+    provider,
+    socket,
+    isNewFile,
 
     // Placement
     container,
