@@ -1,26 +1,36 @@
 import { defineConfig } from 'vite'
 import { fileURLToPath, URL } from 'node:url';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import vue from '@vitejs/plugin-vue'
 
+
 // https://vitejs.dev/config/
-export default defineConfig((data) => {
+export default defineConfig(({ mode, command}) => {
+  const plugins = [vue()];
+  if (mode !== 'test') plugins.push(nodePolyfills());
+
   return {
-    plugins: [
-      vue(),
-    ],
+    plugins,
     build: {
-      target: 'es2020',
+      target: 'es2022',
       lib: {
         entry: "src/index.js",
         formats: ['es'],
         name: "SuperDoc",
         fileName: (format) => `superdoc.${format}.js`
       },
-      minify: true,
+      minify: false,
       sourcemap: false,
       rollupOptions: {
+        input: {
+          'superdoc': 'src/index.js',
+          'super-editor': '@harbour-enterprises/super-editor',
+          'super-converter': '@harbour-enterprises/super-editor/super-converter',
+          'docx-zipper': '@harbour-enterprises/super-editor/docx-zipper',
+          'toolbar': '@harbour-enterprises/super-editor/toolbar',
+          'super-input': '@harbour-enterprises/super-editor/super-input',
+        },
         external: [
-          'vite-plugin-node-polyfills/shims/global',
           'yjs',
           '@hocuspocus/provider',
           'pdfjs-dist',
@@ -28,11 +38,18 @@ export default defineConfig((data) => {
         ],
         output: {
           manualChunks: {
-            vue: ['vue'],
-            BlankDOCX: ['@harbour-enterprises/common/data/blank.docx?url'],
-            SuperEditor: ['@harbour-enterprises/super-editor'],
-          }
-        }
+            'vue': ['vue'],
+            'blank-docx': ['@harbour-enterprises/common/data/blank.docx?url'],
+            'super-editor': ['@harbour-enterprises/super-editor'],
+            'jszip': ['jszip'],
+            'eventemitter3': ['eventemitter3'],
+            'uuid': ['uuid'],
+            'xml-js': ['xml-js'],
+            'super-input': ['@harbour-enterprises/super-editor/super-input'],
+          },
+          entryFileNames: '[name].es.js',
+          chunkFileNames: 'chunks/[name]-[hash].js'
+        },
       }
     },
     optimizeDeps: {

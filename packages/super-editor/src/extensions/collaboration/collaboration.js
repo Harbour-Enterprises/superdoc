@@ -17,6 +17,7 @@ export const Collaboration = Extension.create({
       ydoc: null,
       field: 'supereditor',
       fragment: null,
+      isReady: false,
     }
   },
 
@@ -26,7 +27,7 @@ export const Collaboration = Extension.create({
 
     // Listen for document lock changes
     initDocumentLockHandler(this.options.ydoc, this.editor);
-    initSyncListener(this.options.ydoc, this.editor);
+    initSyncListener(this.options.ydoc, this.editor, this);
 
     const [syncPlugin, fragment] = createSyncPlugin(
       this.options.ydoc,
@@ -109,11 +110,12 @@ const initDocumentLockHandler = (ydoc, editor) => {
   });
 };
 
-const initSyncListener = (ydoc, editor) => {
+const initSyncListener = (ydoc, editor, extension) => {  
   const provider = editor.options.collaborationProvider;
   if (!provider) return;
 
   const emit = () => {
+    extension.options.isReady = true;
     provider.off('synced', emit);
     editor.emit('collaborationUpdate', { editor, ydoc });
   };
