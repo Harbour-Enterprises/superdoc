@@ -81,12 +81,16 @@ const getTabDecorations = (state, view) => {
 
       let textWidth = 0;
 
-      view.state.doc.nodesBetween(pos - prevNodeSize, pos, (node, nodePos) => {
-        if (node.isText && node.textContent !== ' ') {
-          const textWidthForNode = calcTextWidth(view, nodePos);
-          textWidth += textWidthForNode;
-        }
-      });
+      try {
+        view.state.doc.nodesBetween(pos - prevNodeSize - 1, pos - 1, (node, nodePos) => {
+          if (node.isText && node.textContent !== ' ') {
+            const textWidthForNode = calcTextWidth(view, nodePos);
+            textWidth += textWidthForNode;
+          }
+        });
+      } catch (e) {
+        return;
+      };
 
       const tabWidth = $pos.nodeBefore?.type.name === 'tab' ? tabWidthPx : tabWidthPx - textWidth % tabWidthPx;
       const tabHeight = calcTabHeight($pos);

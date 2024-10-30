@@ -339,9 +339,12 @@ export class Superdoc extends EventEmitter {
   async save() {
     const savePromises = [
       this.#triggerCollaborationSaves(),
-      this.exportEditorsToDOCX(),
+      // this.exportEditorsToDOCX(),
     ];
+
+    console.debug('🦋 [superdoc] Saving superdoc');
     const result = await Promise.all(savePromises);
+    console.debug('🦋 [superdoc] Save complete:', result);
     return result;
   };
 
