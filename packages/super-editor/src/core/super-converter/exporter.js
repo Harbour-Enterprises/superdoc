@@ -45,7 +45,6 @@ import {
  * @property {Object} attrs Any attributes for this mark
  */
 
-
 const DEFAULT_DEFS = {
   "xmlns:wpc": "http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas",
   "xmlns:cx": "http://schemas.microsoft.com/office/drawing/2014/chartex",
@@ -1022,7 +1021,6 @@ export class DocxExporter {
     const json = JSON.parse(JSON.stringify(data));
     const declaration = this.converter.declaration.attributes;    
     const xmlTag = `<?xml${Object.entries(declaration).map(([key, value]) => ` ${key}="${value}"`).join('')}?>`;
-
     const result = this.#generateXml(json);
     const final = [xmlTag, ...result];
     return final;
@@ -1038,14 +1036,6 @@ export class DocxExporter {
 
   #generateXml(node) {
     const { name, elements, attributes } = node;
-    if (!name)  {
-      return '';
-    }
-
-    if (name === 'w:pPr') {
-      if (!attributes) return '';
-    }
-
     let tag = `<${name}`;
 
     for (let attr in attributes) {
