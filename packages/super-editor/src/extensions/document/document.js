@@ -15,4 +15,11 @@ export const Document = Node.create({
     return ['doc', 0];
   },
 
+  addAttributes() {
+    return {
+      attributes: {
+        rendered: false,
+      },
+    };
+  },
 });
