@@ -7,9 +7,7 @@ export const handleStandardNode = (nodes, docx, nodeListHandler, insideTrackChan
   if (!nodes || nodes.length === 0) {
     return { nodes: [], consumed: 0 };
   }
-
   const node = nodes[0];
-
   // Parse properties
   const { name, type } = node;
   const { attributes, elements, marks = [] } = parseProperties(node);
