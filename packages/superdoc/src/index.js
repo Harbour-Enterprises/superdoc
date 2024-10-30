@@ -1,4 +1,6 @@
 import { Superdoc } from './core/index.js';
+import { SuperConverter } from '@harbour-enterprises/super-editor';
+
 import { 
   SuperInput, 
   helpers as superEditorHelpers, 
@@ -23,4 +25,7 @@ export {
   // Helpers
   superEditorHelpers,
   fieldAnnotationHelpers,
+
+  // Super Editor
+  SuperConverter,
 }

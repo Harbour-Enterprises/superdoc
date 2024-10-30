@@ -205,15 +205,6 @@ onMounted(async () => {
 </template>
 
 <style>
-*,
-::before,
-::after {
-  box-sizing: border-box;
-}
-
-.super-editor {
-  border: none !important;
-}
 .sd-toolbar {
   min-width: 800px;
   width: 100%;
@@ -234,15 +225,6 @@ onMounted(async () => {
 .superdoc .layers:focus-within {
   border: 1px solid #015fcc;
   box-shadow:0 0 5px hsla( 0,0%,0%,.3 );
-}
-tr {
-  height: 5px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-p {
-  margin: 0 !important;
-  padding: 0 !important;
 }
 </style>
 

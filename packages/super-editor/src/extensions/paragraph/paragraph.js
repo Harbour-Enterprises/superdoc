@@ -1,5 +1,4 @@
 import { Node, Attribute } from '@core/index.js';
-import { style } from '../../core/config/style';
 
 export const Paragraph = Node.create({
   name: 'paragraph',
@@ -20,12 +19,17 @@ export const Paragraph = Node.create({
 
   addAttributes() {
     return {
+      // 'w14:paraId': { default: null, rendered: false },
+      // 'w14:textId': { default: null, rendered: false },
+      // 'w:rsidR': { default: null, rendered: false },
+      // 'w:rsidRDefault': { default: null, rendered: false },
       // paragraphProperties: {
       //   renderDOM: (attrs) => {
       //     // console.debug('\n\n PARAGRAPH PROPERTIES NODE ATTRS', attrs, '\n\n')
       //   }
       // },
       spacing: {
+        default: null,
         renderDOM: (attrs) => {
           const { spacing } = attrs;
           if (!spacing) return {};
@@ -42,6 +46,7 @@ export const Paragraph = Node.create({
         },
       },
       indent: {
+        default: null,
         renderDOM: ({ indent }) => {
           if (!indent) return {};
           const { left, right, firstLine } = indent;
@@ -55,9 +60,6 @@ export const Paragraph = Node.create({
         }
       },
       styleId: { rendered: false, },
-      attributes: {
-        rendered: false,
-      },
     };
   },
 

@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
     },
     optimizeDeps: {
-      exclude: ['yjs', 'tippy.js']
+      include: ['yjs', 'tippy.js']
     },
     build: {
       target: 'es2020',
@@ -24,27 +24,43 @@ export default defineConfig(({ mode }) => {
         entry: "src/index.js",
         formats: ['es'],
         name: "super-editor",
-        fileName: (format) => `super-editor.${format}.js`
       },
       rollupOptions: {
-        external: ['vue', 'tippy.js'],
+        external: [
+          'vue',
+          'yjs',
+          'tippy.js',
+          'y-protocols',
+          '@fortawesome/fontawesome-free',
+          '@fortawesome/free-solid-svg-icons',
+          '@fortawesome/vue-fontawesome',
+        ],
+        input: {
+          'super-editor': 'src/index.js',
+          'editor': '@core/Editor',
+          'super-converter': '@core/super-converter/SuperConverter',
+          'docx-zipper': '@core/DocxZipper',
+          'toolbar': '@components/toolbar/Toolbar.vue',
+          'super-input': '@components/SuperInput.vue',
+        },
         output: {
           globals: {
-            vue: 'Vue',
-            yjs: 'Y',
+            'vue': 'Vue',
             'tippy.js': 'tippy',
-            'y-protocols': 'y-protocols'
           },
           manualChunks: {
-            SuperConverter: ['@core/super-converter/SuperConverter'],
-            Editor: ['@core/Editor'],
-            DocxZipper: ['@core/DocxZipper'],
-            Toolbar: ['@components/toolbar/Toolbar.vue'],
-          }
+            'super-converter': ['@core/super-converter/SuperConverter'],
+            'editor': ['@core/Editor'],
+            'docx-zipper': ['@core/DocxZipper'],
+            'toolbar': ['@components/toolbar/Toolbar.vue'],
+            'super-input': ['@components/SuperInput.vue'],
+          },
+          entryFileNames: '[name].es.js',
+          chunkFileNames: 'chunks/[name]-[hash].js'
         }
       },
-      minify: true,
-      sourcemap: false,
+      minify: false,
+      sourcemap: true,
       esbuild: {
         drop: [],
       },
@@ -64,9 +80,6 @@ export default defineConfig(({ mode }) => {
         '@vue-3': fileURLToPath(new URL('./src/vue-3', import.meta.url)),
       },
       extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json'],
-    },
-    css: {
-      postcss: './postcss.config.cjs',
     },
   }
 })
