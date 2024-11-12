@@ -118,7 +118,7 @@ export class Editor extends EventEmitter {
     this.emit('beforeCreate', { editor: this });
     this.on('contentError', this.options.onContentError);
 
-    this.#createView();    
+    this.#createView();
 
     // If we are running headless, we can stop here
     if (this.options.isHeadless) return;
@@ -481,13 +481,12 @@ export class Editor extends EventEmitter {
           this.converter,
           this.schema,
         );
-        
+
         // For headless mode, generate JSON from a fragment
         if (this.options.fragment) {
           doc = yXmlFragmentToProseMirrorRootNode(this.options.fragment, this.schema);
           console.debug('🦋 [super-editor] Generated JSON from fragment:', doc);
         }
-  
       } else if (this.options.mode === 'text') {
         if (this.options.content) {
           doc = DOMParser.fromSchema(this.schema).parse(this.options.content);
@@ -510,13 +509,13 @@ export class Editor extends EventEmitter {
   /**
    * Creates PM View.
    */
-  #createView() {  
+  #createView() {
     let doc = this.#generatePmData();
 
     // Only initialize the doc if we are not using Yjs
     const state = { schema: this.schema };
     if (!this.options.ydoc) state.doc = doc;
-  
+
     this.view = new EditorView(this.options.element, {
       ...this.options.editorProps,
       dispatchTransaction: this.#dispatchTransaction.bind(this),
@@ -608,7 +607,6 @@ export class Editor extends EventEmitter {
       console.log(error);
     }
 
-    state = this.state.apply(transaction);
     const selectionHasChanged = !this.state.selection.eq(state.selection);
     this.view.updateState(state);
 
@@ -742,11 +740,6 @@ export class Editor extends EventEmitter {
     });
     return result
   }
-
-  // convertSchemaToYdoc() {
-  //   const ydoc = prosemirrorJSONToYDoc(this.schema, this.state.doc.toJSON(), "supereditor");
-  //   return ydoc;
-  // }
 
   /**
    * Destroy collaboration provider and ydoc
