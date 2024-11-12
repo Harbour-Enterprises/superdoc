@@ -131,19 +131,20 @@ const getTrackChangesDecorations = (state, onlyOriginalShown, onlyModifiedShown)
           class: 'track-delete-dec highlighted', // 'hidden'
         });
         decorations.push(decorationInline);
-        /* const decorationWidget = Decoration.widget(
+
+        // Workaround for Chrome to handle text deletion correctly.
+        // Maybe this won't be needed later.
+        const decorationWidget = Decoration.widget(
           from,
           () => {
             const span = document.createElement('span');
-            span.classList.add('track-delete-mark');
-            span.classList.add('widget');
-            span.innerHTML = node.textContent;
+            span.classList.add('track-delete-widget');
             span.contentEditable = false;
             return span;
           },
           { ignoreSelection: true },
         );
-        decorations.push(decorationWidget); */
+        decorations.push(decorationWidget);
       }
     }
 

@@ -128,4 +128,8 @@ img.ProseMirror-separator {
 .ProseMirror .track-format-dec.highlighted {
   border-bottom: 2px solid gold;
 }
+
+.ProseMirror .track-delete-widget {
+  visibility: hidden;
+}
 `;
