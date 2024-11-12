@@ -123,6 +123,8 @@ img.ProseMirror-separator {
   border-top: 1px dashed #CB0E47;
   border-bottom: 1px dashed #CB0E47;
   background-color: #CB0E4722;
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
 }
 
 .ProseMirror .track-format-dec.highlighted {
