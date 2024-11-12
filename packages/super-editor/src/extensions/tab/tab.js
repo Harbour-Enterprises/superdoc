@@ -81,7 +81,7 @@ const getTabDecorations = (state, view) => {
 
       let textWidth = 0;
 
-      view.state.doc.nodesBetween(pos - prevNodeSize - 1, pos - 1, (node, nodePos) => {
+      view.state.doc.nodesBetween(pos - prevNodeSize, pos, (node, nodePos) => {
         if (node.isText && node.textContent !== ' ') {
           const textWidthForNode = calcTextWidth(view, nodePos);
           textWidth += textWidthForNode;

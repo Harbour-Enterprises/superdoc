@@ -5,6 +5,7 @@ import { DocxExporter, exportSchemaToJson } from './exporter';
 import { DocxImporter } from './importer';
 import {createDocumentJson} from "./v2/importer/docxImporter.js";
 import {getInitialJSON} from "./v2/docxHelper.js";
+import { getBlobFromUrl } from './helpers.js';
 
 
 class SuperConverter {
@@ -76,6 +77,8 @@ class SuperConverter {
     this.convertedXml = {};
     this.docx = params?.docx || [];
     this.media = params?.media || {};
+    
+    this.addedMedia = {};
   
     // XML inputs
     this.xml = params?.xml;
@@ -173,16 +176,19 @@ class SuperConverter {
     return exporter.schemaToXml(data);
   }
 
-  exportToDocx(jsonData) {
+  async exportToDocx(jsonData, editorSchema, isFinalDoc = false) {
     const bodyNode = this.savedTagsToRestore.find((el) => el.name === 'w:body');
-    const [result, params] = exportSchemaToJson({ node: jsonData, bodyNode, relationships: [] });
+    const [result, params] = exportSchemaToJson({ node: jsonData, bodyNode, relationships: [], media: {}, isFinalDoc, editorSchema });
     const exporter = new DocxExporter(this);
     const xml = exporter.schemaToXml(result);
+    
+    // Update media
+    await this.#exportProcessMediaFiles(params.media);
     
     // Update the rels table
     this.#exportProcessNewRelationships(params.relationships);
 
-    return xml;
+    return xml
   }
 
   #exportProcessNewRelationships(rels = []) {
@@ -190,6 +196,20 @@ class SuperConverter {
     const relationships = relsData.elements.find(x => x.name === 'Relationships');
     relationships.elements.push(...rels);
     this.convertedXml['word/_rels/document.xml.rels'] = relsData;
+  }
+  
+  async #exportProcessMediaFiles(media) {
+    const processedData = {};
+    for (const filePath in media) {
+      processedData[filePath] = await getBlobFromUrl(media[filePath])
+    }
+
+    this.convertedXml.media = {
+      ...this.convertedXml.media,
+      ...processedData
+    };
+    this.media = this.convertedXml.media;
+    this.addedMedia = processedData;
   }
 }
 

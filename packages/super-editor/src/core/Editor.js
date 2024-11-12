@@ -641,17 +641,19 @@ export class Editor extends EventEmitter {
   /**
    * Export the editor document to DOCX.
    */
-  async exportDocx() {
-    const docx = this.converter.exportToDocx(this.getJSON());
+  async exportDocx({ isFinalDoc = false } = {}) {
+    const docx = await this.converter.exportToDocx(this.getJSON(), this.schema, isFinalDoc);
     const relsData = this.converter.convertedXml['word/_rels/document.xml.rels'];
     const rels = this.converter.schemaToXml(relsData.elements[0]);
+    const media = this.converter.addedMedia;
+    
     const docs = {
       'word/document.xml': String(docx),
       'word/_rels/document.xml.rels': String(rels),
     };
-
+    
     const zipper = new DocxZipper();
-    return await zipper.updateZip(this.options.fileSource, docs);
+    return await zipper.updateZip(this.options.fileSource, docs, media);
   }
 
   /**

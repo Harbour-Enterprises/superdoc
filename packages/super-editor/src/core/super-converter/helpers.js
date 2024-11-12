@@ -50,6 +50,20 @@ function eigthPointsToPixels(eigthPoints) {
   const pixels = points * 1.3333;
     return pixels;
 }
+
+const getBlobFromUrl = async (url) => {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return blob;
+}
+
+const getContentTypesFromXml = (contentTypesXml) => {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(contentTypesXml,'text/xml');
+  const defaults = xmlDoc.querySelectorAll('Default');
+  return Array.from(defaults).map(item => item.getAttribute('Extension'));
+}
+
 export {
   inchesToTwips,
   twipsToInches,
@@ -59,5 +73,7 @@ export {
   emuToPixels,
   pixelsToHalfPoints,
   halfPointToPoints,
-  eigthPointsToPixels
+  eigthPointsToPixels,
+  getBlobFromUrl,
+  getContentTypesFromXml
 }

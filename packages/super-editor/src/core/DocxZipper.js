@@ -1,4 +1,5 @@
 import JSZip, { file } from 'jszip';
+import { getContentTypesFromXml } from "./super-converter/helpers.js";
 
 /**
  * Class to handle unzipping and zipping of docx files
@@ -53,7 +54,7 @@ class DocxZipper {
         this.media[zipEntry.name] = imageUrl;
       }
     }
-
+    
     return this.files;
   }
   
@@ -61,12 +62,43 @@ class DocxZipper {
     return fileName.split('.').pop();
   }
 
+  /**
+   * Update [Content_Types].xml with extensions of new Image annotations
+   */
+  async updateContentTypes(unzippedOriginalDocx, media) {
+    const newMediaTypes = Object.keys(media).map(name => {
+      return this.getFileExtension(name);
+    });
+
+    const contentTypesPath = '[Content_Types].xml';
+    const contentTypesXml = await unzippedOriginalDocx.file(contentTypesPath).async('string');
+    let typesString = ''
+    
+    const defaultMediaTypes = getContentTypesFromXml(contentTypesXml);
+    
+    for (let type of newMediaTypes) {
+      // Current extension already presented in Content_Types
+      if (defaultMediaTypes.includes(type)) return;
+      
+      const newContentType = `<Default Extension="${type}" ContentType="image/${type}"/>`;
+      typesString += newContentType;
+    }
+    
+    const beginningString = '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">';
+
+    const updatedContentTypesXml = contentTypesXml.replace(
+        beginningString,
+        `${beginningString}${typesString}`
+    );
+    unzippedOriginalDocx.file(contentTypesPath, updatedContentTypesXml);
+  }
+
   async unzip(file) {
     const zip = await this.zip.loadAsync(file);
     return zip;
   }
 
-  async updateZip(originalDocx, updatedDocs) {
+  async updateZip(originalDocx, updatedDocs, media) {
     const updatedZip = new JSZip();
     const unzippedOriginalDocx = await this.unzip(originalDocx);
 
@@ -87,8 +119,14 @@ class DocxZipper {
       unzippedOriginalDocx.file(key, updatedDocs[key]);
     });
 
+    Object.keys(media).forEach((name) => {
+      unzippedOriginalDocx.file(`word/media/${name}`, media[name]);
+    });
+    
+    await this.updateContentTypes(unzippedOriginalDocx, media);
+    
     // Zip it up again and return
-    return await unzippedOriginalDocx.generateAsync({ type: "blob" })
+    return await unzippedOriginalDocx.generateAsync({ type: 'blob' })
   }
 }
 
