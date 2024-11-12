@@ -103,7 +103,7 @@ const onCollaborationReady = (data) => {
 onMounted(() => {
   initializeData();
 
-  if (props.options?.suppressSkeletonLoader) editorReady.value = true;
+  if (props.options?.suppressSkeletonLoader || !props.options?.collaborationProvider) editorReady.value = true;
 });
 
 onBeforeUnmount(() => {
