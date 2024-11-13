@@ -64,8 +64,12 @@ export function useField(field) {
   }
 
   const format = ref(field.itemformat);
+  
+  const valueGetter = field.valueGetter;
+  
   return {
     id, icon, iconPack, label, placeholder, fieldType, fieldSubType, value, format, logicRules, hidden, originalJSON, fieldStyle,
+    valueGetter,
     ...additionalOptions
   }
 };

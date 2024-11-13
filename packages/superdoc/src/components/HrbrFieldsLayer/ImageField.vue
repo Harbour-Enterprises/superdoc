@@ -1,13 +1,5 @@
 <script setup>
 import {computed} from 'vue';
-import {storeToRefs} from 'pinia';
-import {useHrbrFieldsStore} from '@/stores/hrbr-fields-store';
-import {useSuperdocStore} from '@/stores/superdoc-store';
-
-const superdocStore = useSuperdocStore();
-const hrbrFieldsStore = useHrbrFieldsStore();
-const {getAnnotations} = storeToRefs(hrbrFieldsStore);
-const {getAttachments} = storeToRefs(superdocStore);
 
 const props = defineProps({
   field: {
@@ -28,6 +20,11 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  noStyle: {
+    type: Boolean,
+    required: false,
+    default: false,
+  }
 });
 
 const getStyle = computed(() => {
@@ -37,18 +34,9 @@ const getStyle = computed(() => {
   }
 });
 
-const multipleInputAnnotations = computed(() => {
-  return getAnnotations.value.filter(a => a.fieldId === props.field.id);
-});
-
 const imageValue = computed(() => {
+  if (props.field.valueGetter && typeof props.field.valueGetter === 'function') return props.field.valueGetter(props.optionId);
   if (typeof props.field.value === 'string') return props.field.value;
-
-  const annotationIndex = multipleInputAnnotations.value.findIndex(annotation => annotation.originalAnnotationId === props.optionId);
-  const attachmentIndex = props.field.originalJSON.multiple ? annotationIndex : 0;
-  
-  const attachment = getAttachments.value.find(a => a.id === props.field.value[attachmentIndex]?.referenceattachmentid || a.id === props.field.value[attachmentIndex]?.userattachmentid);
-  return attachment?.base64data || '';
 });
 
 </script>
@@ -56,7 +44,7 @@ const imageValue = computed(() => {
 <template>
   <div class="image-field" :style="getStyle">
     <img v-if="field.value && imageValue" :src="imageValue" alt="image" :style="getStyle" />
-    <span v-else>{{ field.placeholder || field.label }}</span>
+    <span v-else-if="!noStyle">{{ field.placeholder || field.label }}</span>
   </div> 
 </template>
 
