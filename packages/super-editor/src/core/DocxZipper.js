@@ -158,9 +158,7 @@ class DocxZipper {
 
     // Make replacements of updated docs
     Object.keys(updatedDocs).forEach((key) => {
-      if (key === 'word/document.xml') {
-        unzippedOriginalDocx.file(key, updatedDocs[key]);
-      };
+      unzippedOriginalDocx.file(key, updatedDocs[key]);
     });
 
     Object.keys(media).forEach((name) => {
