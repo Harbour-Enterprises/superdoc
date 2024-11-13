@@ -93,15 +93,3 @@
   padding-right: 2px;
   white-space: nowrap;
 }
-
-/* 
-.custom-list-item {
-  list-style-type: none;
-}
-.custom-list-item::before {
-  margin-right: 0.5em;
-  content: attr(data-bullet-type);
-}
-.custom-list-item p {
-  display: inline;
-} */

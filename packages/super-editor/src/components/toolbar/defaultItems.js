@@ -507,7 +507,8 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth) => {
     ],
     onActivate: ({ zoom: value }) => {
       if (!value) return;
-      zoom.label.value = String(value * 100) + '%';
+
+      zoom.label.value = value;
     },
   });
   

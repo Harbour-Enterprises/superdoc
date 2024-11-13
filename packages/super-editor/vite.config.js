@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
     },
     optimizeDeps: {
-      include: ['yjs', 'tippy.js']
+      exclude: ['yjs', 'tippy.js']
     },
     build: {
       target: 'es2020',
@@ -80,6 +80,9 @@ export default defineConfig(({ mode }) => {
         '@vue-3': fileURLToPath(new URL('./src/vue-3', import.meta.url)),
       },
       extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json'],
+    },
+    css: {
+      postcss: './postcss.config.cjs',
     },
   }
 })

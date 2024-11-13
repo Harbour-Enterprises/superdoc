@@ -95,8 +95,6 @@ export class Superdoc extends EventEmitter {
     // If a toolbar element is provided, render a toolbar
     this.addToolbar(this);
 
-    // TODO: Remove this - debugging only
-    window.superdoc = this;
   }
   get requiredNumberOfEditors() {
     return this.superdocStore.documents.filter((d) => d.type === DOCX).length;
@@ -143,6 +141,7 @@ export class Superdoc extends EventEmitter {
     if (!collaborationModuleConfig) return;
 
     // Initialize global superdoc sync - for comments, etc.
+    // TODO: Leaving it in here for reference as this will be complete soon.
     // this.ydoc = new YDoc();
     // const options = {
     //   config: collaborationModuleConfig,
@@ -175,22 +174,6 @@ export class Superdoc extends EventEmitter {
 
     this.documents = processedDocuments;
   }
-
-  // exportEditorsAsYdocUpdates() {
-  //   const updates = [];
-  //   this.superdocStore.documents.forEach((doc) => {
-  //     const editor = doc.getEditor();
-  //     if (editor) {
-  //       const json = editor.getJSON();
-  //       const ydoc = prosemirrorToYDoc(editor.state.doc);      
-  //       const updateData = encodeStateAsUpdate(ydoc);
-  //       updates.push(updateData);
-  //     }
-  //   })
-
-  //   console.debug('🦋 [superdoc] Exporting updates:', updates);
-  //   return updates;
-  // }
 
   broadcastReady() {
     if (this.readyEditors === this.requiredNumberOfEditors) {
