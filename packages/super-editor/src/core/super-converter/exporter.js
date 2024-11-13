@@ -959,8 +959,9 @@ function prepareCheckboxAnnotation(node) {
 function prepareParagraphAnnotation(node, params) {
   const { attrs = {} } = node;
 
-  const parser = new DOMParser();
+  const parser = new window.DOMParser();
   const paragraphHtml = parser.parseFromString(attrs.rawHtml,'text/html');
+
   const state = EditorState.create({
     doc: PMDOMParser.fromSchema(params.editorSchema).parse(paragraphHtml)
   });

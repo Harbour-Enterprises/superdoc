@@ -58,7 +58,7 @@ const getBlobFromUrl = async (url) => {
 }
 
 const getContentTypesFromXml = (contentTypesXml) => {
-  const parser = new DOMParser();
+  const parser = new window.DOMParser();
   const xmlDoc = parser.parseFromString(contentTypesXml,'text/xml');
   const defaults = xmlDoc.querySelectorAll('Default');
   return Array.from(defaults).map(item => item.getAttribute('Extension'));

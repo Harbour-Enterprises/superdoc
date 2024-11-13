@@ -18,12 +18,6 @@ import { trackedTransaction } from "@extensions/track-changes/trackChangesHelper
 import { TrackChangesBasePluginKey } from '@extensions/track-changes/plugins/index.js';
 
 
-if (typeof navigator === 'undefined') {
-  global.navigator = {
-    isHeadless: true,
-  };
-}
-
 /**
  * Editor main class.
  */
@@ -87,10 +81,7 @@ export class Editor extends EventEmitter {
   constructor(options) {
     super();
 
-    if (options.mockDocument) {
-      global.document = options.mockDocument;
-      global.window = options.mockWindow;
-    }
+    this.#checkHeadless(options);
     this.setOptions(options);
     this.setDocumentMode(options.documentMode);
 
@@ -119,6 +110,7 @@ export class Editor extends EventEmitter {
     this.on('contentError', this.options.onContentError);
 
     this.#createView();
+    this.#initDefaultStyles();
 
     // If we are running headless, we can stop here
     if (this.options.isHeadless) return;
@@ -144,7 +136,6 @@ export class Editor extends EventEmitter {
 
     window.setTimeout(() => {
       if (this.isDestroyed) return;
-      this.#initDefaultStyles();
       this.emit('create', { editor: this });
     }, 0);
   }
@@ -185,6 +176,19 @@ export class Editor extends EventEmitter {
 
   setToolbar(toolbar) {
     this.toolbar = toolbar;
+  }
+
+  #checkHeadless(options) {
+    if (!options.isHeadless) return;
+
+    if (typeof navigator === 'undefined') {
+      global.navigator = { isHeadless: true };
+    }
+
+    if (options.mockDocument) {
+      global.document = options.mockDocument;
+      global.window = options.mockWindow;
+    }
   }
 
   /**
@@ -306,7 +310,8 @@ export class Editor extends EventEmitter {
   }
 
   /**
-   * Replace the current document with new data.
+   * Replace the current document with new data. Necessary for initializing a new collaboration file,
+   * since we need to insert the data only after the provider has synced.
    */
   #insertNewFileData() {
     const doc = this.#generatePmData();
@@ -326,6 +331,7 @@ export class Editor extends EventEmitter {
    * @param options List of options.
    */
   setOptions(options) {
+    options.element = options.element || document.createElement('div');
     this.options = {
       ...this.options,
       ...options,
@@ -483,7 +489,7 @@ export class Editor extends EventEmitter {
         );
 
         // For headless mode, generate JSON from a fragment
-        if (this.options.fragment) {
+        if (this.options.fragment && this.options.isHeadless) {
           doc = yXmlFragmentToProseMirrorRootNode(this.options.fragment, this.schema);
           console.debug('🦋 [super-editor] Generated JSON from fragment:', doc);
         }
@@ -512,7 +518,7 @@ export class Editor extends EventEmitter {
   #createView() {
     let doc = this.#generatePmData();
 
-    // Only initialize the doc if we are not using Yjs
+    // Only initialize the doc if we are not using Yjs/collaboration
     const state = { schema: this.schema };
     if (!this.options.ydoc) state.doc = doc;
 
@@ -549,6 +555,8 @@ export class Editor extends EventEmitter {
    * Set document default font and font size.
    */
   #initDefaultStyles() {
+    if (this.options.isHeadless) return;
+
     const proseMirror = this.element?.querySelector('.ProseMirror');
     if (!proseMirror) return;
 
@@ -738,6 +746,7 @@ export class Editor extends EventEmitter {
       originalDocxFile: this.options.fileSource,
       media
     });
+
     return result
   }
 
@@ -745,13 +754,10 @@ export class Editor extends EventEmitter {
    * Destroy collaboration provider and ydoc
    */
   #endCollaboration() {
-    if (this.options.collaborationProvider) {
-      this.options.collaborationProvider.disconnect();
-    }
-
-    if (this.options.ydoc) {
-      this.options.ydoc.destroy();
-    }
+    try {
+      if (this.options.collaborationProvider) this.options.collaborationProvider.disconnect();
+      if (this.options.ydoc) this.options.ydoc.destroy();
+    } catch (error) {};
   }
 
   /**
