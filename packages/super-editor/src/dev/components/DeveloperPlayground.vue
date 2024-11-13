@@ -132,6 +132,16 @@ const attachAnnotationEventHandlers = () => {
       fieldType: 'TEXTINPUT',
       fieldColor: signer?.signercolor,
     });
+
+    // To test link field.
+    // editor.commands.addFieldAnnotation(pos, {
+    //   displayLabel: 'Enter your link',
+    //   fieldId: `agreementinput-${Date.now()}-${Math.floor(Math.random() * 1000000000000)}`,
+    //   fieldType: 'URLTEXTINPUT',
+    //   fieldColor: signer?.signercolor,
+    //   linkUrl: 'https://google.com',
+    //   type: 'link',
+    // });
   });
 
   activeEditor?.on('fieldAnnotationClicked', (params) => {

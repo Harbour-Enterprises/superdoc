@@ -48,6 +48,7 @@ export class FieldAnnotationView {
       signature: (...args) => this.buildSignatureView(...args),
       checkbox: (...args) => this.buildCheckboxView(...args),
       html: (...args) => this.buildHTMLView(...args),
+      link: (...args) => this.buildLinkView(...args),
       default: (...args) => this.buildTextView(...args),
     };
 
@@ -141,6 +142,29 @@ export class FieldAnnotationView {
 
       annotation.style.display = 'inline-block';
       content.style.display = 'inline-block';
+    } else {
+      content.textContent = displayLabel;
+    }
+
+    this.dom = annotation;
+  }
+
+  buildLinkView() {
+    let { displayLabel, linkUrl } = this.node.attrs;
+
+    let { annotation, content } = this.#createAnnotation();
+
+    if (linkUrl) {
+      let link = document.createElement('a');
+
+      link.href = linkUrl;
+      link.target = '_blank';
+      link.textContent = linkUrl;
+      link.style.textDecoration = 'none';
+
+      content.append(link);
+
+      content.style.pointerEvents = 'all';
     } else {
       content.textContent = displayLabel;
     }

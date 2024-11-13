@@ -28,7 +28,7 @@ export const FieldAnnotation = Node.create({
       },
       annotationClass,
       annotationContentClass,
-      types: ['text', 'image', 'signature', 'checkbox', 'html'], // annotation types
+      types: ['text', 'image', 'signature', 'checkbox', 'html', 'link'], // annotation types
       defaultType: 'text',
       borderColor: '#b015b3',
       visibilityOptions: ['visible', 'hidden'],
@@ -84,6 +84,15 @@ export const FieldAnnotation = Node.create({
           return {
             'data-raw-html': JSON.stringify(attrs.rawHtml),
           };
+        },
+      },
+
+      linkUrl: {
+        default: null,
+        rendered: false,
+        parseDOM: (elem) => {
+          let link = elem.querySelector('a');
+          return link?.getAttribute('href') || null;
         },
       },
 
@@ -180,7 +189,7 @@ export const FieldAnnotation = Node.create({
   },
 
   renderDOM({ node, htmlAttributes }) {
-    let { type, displayLabel, imageSrc, rawHtml } = node.attrs;
+    let { type, displayLabel, imageSrc, rawHtml, linkUrl } = node.attrs;
 
     let textRenderer = () => {
       return [
@@ -221,16 +230,43 @@ export const FieldAnnotation = Node.create({
       ];
     };
 
+    let linkRenderer = () => {
+      let contentRenderer = () => {      
+        if (!linkUrl) return displayLabel;
+        return [
+          'a',
+          {
+            href: linkUrl,
+            target: '_blank',
+          },
+          linkUrl,
+        ];
+      };
+
+      return [
+        'span',
+        Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes),
+        [
+          'span',
+          {
+            class: `${this.options.annotationContentClass}`,
+          },
+          contentRenderer(),
+        ],
+      ];
+    };
+
     let renderers = {
       text: () => textRenderer(),
       image: () => imageRenderer(),
       signature: () => imageRenderer(),
       checkbox: () => textRenderer(),
       html: () => textRenderer(),
+      link: () => linkRenderer(),
       default: () => textRenderer(),
     };
 
-    let renderer = renderers[type] ?? type.default;
+    let renderer = renderers[type] ?? renderers.default;
     
     return renderer();
   },
