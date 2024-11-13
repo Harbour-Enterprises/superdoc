@@ -230,7 +230,7 @@ export const FieldAnnotation = Node.create({
       default: () => textRenderer(),
     };
 
-    let renderer = renderers[type] ?? type.default;
+    let renderer = renderers[type] ?? renderers.default;
     
     return renderer();
   },
