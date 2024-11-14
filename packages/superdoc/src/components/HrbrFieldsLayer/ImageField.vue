@@ -35,7 +35,7 @@ const getStyle = computed(() => {
 });
 
 const imageValue = computed(() => {
-  if (props.field.valueGetter && typeof props.field.valueGetter === 'function') return props.field.valueGetter(props.optionId);
+  if (props.field.valueGetter && typeof props.field.valueGetter === 'function') return props.field.valueGetter({ annotationId: props.optionId });
   if (typeof props.field.value === 'string') return props.field.value;
 });
 
