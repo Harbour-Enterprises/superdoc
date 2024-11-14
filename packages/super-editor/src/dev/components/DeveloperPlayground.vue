@@ -12,15 +12,30 @@ import { fieldAnnotationHelpers } from '@extensions/index.js';
 import BasicUpload from './BasicUpload.vue';
 import BlankDOCX from '@harbour-enterprises/common/data/blank.docx?url';
 import EditorInputs from './EditorInputs/EditorInputs.vue';
+import { Doc as YDoc, encodeStateAsUpdate, applyUpdate } from 'yjs';
 
 // Import the component the same you would in your app
 let activeEditor;
 const currentFile = ref(null);
+const ydoc = ref(null);
 
 const handleNewFile = async (file) => {
   currentFile.value = null;
   const fileUrl = URL.createObjectURL(file);
   currentFile.value = await getFileObject(fileUrl, file.name, file.type);
+};
+
+const handleNewYdoc = (file) => {
+  ydoc.value = new YDoc({ gc: false });
+  
+  const reader = new FileReader();
+  reader.onload = () => {
+    const collaborationData = new Uint8Array(reader.result); // Read bytes as Uint8Array
+    console.log('collaborationData', collaborationData);
+    applyUpdate(ydoc.value, collaborationData); // Apply update to Yjs doc
+  };
+  
+  reader.readAsArrayBuffer(file); // Read file as ArrayBuffer
 };
 
 const onCreate = ({ editor }) => {
@@ -50,6 +65,8 @@ const user = {
   email: 'devs@harbourshare.com',
 };
 
+
+
 const editorOptions = computed(() => {
   return {
     documentId: 'dev-123',
@@ -63,6 +80,7 @@ const editorOptions = computed(() => {
       { name: 'Matthew Connelly', email: 'matthew@harbourshare.com' },
       { name: 'Eric Doversberger', email: 'eric@harbourshare.com'} 
     ],
+    ydoc: ydoc.value,
   }
 });
 
@@ -74,6 +92,87 @@ const exportDocx = async () => {
   a.href = url;
   a.download = 'exported.docx';
   a.click();
+};
+
+const showAnnotations = () => {
+  let annotations = fieldAnnotationHelpers.getAllFieldAnnotations(activeEditor.state);
+  console.log('annotations', annotations);
+};
+
+const fullFillAnnotations = () => {
+  let annotations = fieldAnnotationHelpers.getAllFieldAnnotations(activeEditor.state);
+  const customInputs = [
+    {
+      "itemid": "agreementinput-1730754142668-876770747133",
+      "itemlinkvalue": "abc"
+    },
+    {
+      "itemid": "agreementinput-1730754147898-69623913290",
+      "itemlinkvalue": "123"
+    }
+  ]
+  annotations.forEach((annotation) => {
+    let { node } = annotation;
+    let { fieldId, fieldType } = node.attrs;
+    let newValue = null;
+
+    let input = customInputs.find((input) => input.itemid === fieldId);
+
+    if (!input) {
+      let isCheckboxInput = (input) => input.itemfieldtype === 'CHECKBOXINPUT';
+      let checkboxInputs = customInputs.filter(isCheckboxInput);
+      
+      for (let checkboxInput of checkboxInputs) {
+        if (newValue) break;
+        for (let option of checkboxInput.itemoptions) {
+          if (option.itemid === fieldId) {
+            newValue = checkboxInput.itemlinkvalue[option.itemid] || '&nbsp;&nbsp;';
+            break;
+          }
+        }
+      }
+    }
+    
+    newValue = newValue || input?.itemlinkvalue || null;
+
+    if (!newValue) {
+      return;
+    }
+
+    let isImageField = fieldType === 'IMAGEINPUT';
+    let isSignatureField = fieldType === 'SIGNATUREINPUT';
+    let isHtmlField = fieldType === 'HTMLINPUT';
+    let isUrlField = fieldType === 'URLTEXTINPUT'; // TODO: Double check.
+
+    let isDateField = ['DATEINPUT', 'SIGNDATEINPUT'].includes(input?.itemfieldtype) &&
+      input?.itemformat &&
+      /^(\d{4})-(\d{1,2})-(\d{1,2})$/.test(newValue);
+    
+    if (isImageField || isSignatureField) {
+      activeEditor.commands.updateFieldAnnotations({
+        fieldIdOrArray: fieldId,
+        attrs: {
+          imageSrc: newValue,
+        },
+      });
+    } else if (isHtmlField) {
+      activeEditor.commands.updateFieldAnnotations({
+        fieldIdOrArray: fieldId,
+        attrs: {
+          rawHtml: newValue,
+        },
+      });
+    } else if (isDateField) {
+      let [year, month, day] = newValue.split('-');
+      let date = new Date(year, month - 1, day);
+      newValue = date.toISOString();
+      newValue = this.getFormattedDate(newValue, input.itemformat);
+    } else {
+      activeEditor.commands.updateFieldAnnotations(fieldId,{
+          displayLabel: newValue,
+        });
+    }
+  });
 };
 
 /* Inputs pane and field annotations */
@@ -170,6 +269,8 @@ onMounted(async () => {
           </div>
         </div>
         <div class="dev-app__header-side dev-app__header-side--right">
+          <button class="dev-app__header-export-btn" @click="showAnnotations">Show annotations</button>
+          <button class="dev-app__header-export-btn" @click="fullFillAnnotations">Fill annotations</button>
           <button class="dev-app__header-export-btn" @click="exportDocx">Export</button>
         </div>
       </div>
@@ -191,7 +292,7 @@ onMounted(async () => {
             <div class="dev-app__content" v-if="currentFile">
               <div class="dev-app__content-container">
                 <SuperEditor
-                  :file-source="currentFile" 
+                  :fileSource="currentFile"
                   :options="editorOptions"
                 />
               </div>
