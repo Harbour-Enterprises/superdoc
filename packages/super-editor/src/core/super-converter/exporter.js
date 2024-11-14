@@ -191,18 +191,16 @@ function generateParagraphProperties(node) {
  * @returns {XmlReadyNode} JSON of the XML-ready document node
  */
 function translateDocumentNode(params) {
-  const documentAttributesNode = params.node.content.find((n) => n.type === 'documentAttributes');
-  const content = params.node.content.filter((n) => n.type !== 'documentAttributes');
   const bodyNode = {
     type: 'body',
-    content,
+    content: params.node.content,
   }
 
   const translatedBodyNode = exportSchemaToJson({ ...params, node: bodyNode });
   const node = {
     name: 'w:document',
     elements: [translatedBodyNode],
-    attributes: documentAttributesNode?.attrs?.attributes || DEFAULT_DOCX_DEFS,
+    attributes: DEFAULT_DOCX_DEFS,
   }
 
   return [node, params];

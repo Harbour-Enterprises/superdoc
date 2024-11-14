@@ -40,6 +40,11 @@ const props = defineProps({
 const editorReady = ref(false);
 const editor = shallowRef();
 const editorElem = ref(null);
+let dataPollTimeout;
+
+const stopPolling = () => {
+  clearTimeout(dataPollTimeout);
+};
 
 const pollForMetaMapData = (ydoc, retries = 10, interval = 500) => {
   const metaMap = ydoc.getMap('meta');
@@ -47,10 +52,11 @@ const pollForMetaMapData = (ydoc, retries = 10, interval = 500) => {
   const checkData = () => {
     const docx = metaMap.get('docx');
     if (docx) {
+      stopPolling();
       initEditor(docx);
     } else if (retries > 0) {
       console.debug(`Waiting for 'docx' data... retries left: ${retries}`);
-      setTimeout(checkData, interval); // Retry after the interval
+      dataPollTimeout = setTimeout(checkData, interval); // Retry after the interval
       retries--;
     } else {
       console.warn('Failed to load docx data from meta map.');
@@ -107,6 +113,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  stopPolling();
   editor.value?.destroy();
   editor.value = null;
 });

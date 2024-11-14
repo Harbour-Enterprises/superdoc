@@ -13,7 +13,6 @@ import { CollaborationCursor } from './collaboration-cursor/index.js';
 
 // Nodes extensions
 import { Document } from './document/index.js';
-import { DocumentAttributes } from './document-attributes/index.js';
 import { Text } from './text/index.js';
 import { RunItem } from './run-item/index.js';
 import { BulletList } from './bullet-list/index.js';
@@ -79,7 +78,6 @@ const getStarterExtensions = () => {
     CommentRangeEnd,
     CommentReference,
     Document,
-    DocumentAttributes,
     FontFamily,
     FontSize,
     // History,
@@ -124,7 +122,6 @@ export {
   // History,
   Heading,
   Document,
-  DocumentAttributes,
   Text,
   RunItem,
   BulletList,
