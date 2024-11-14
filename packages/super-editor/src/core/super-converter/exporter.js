@@ -943,7 +943,7 @@ function prepareTextAnnotation(node) {
 }
 
 /**
- * Translates text annotations
+ * Translates checkbox annotations
  *
  * @param {SchemaNode} node
  * @returns {XmlReadyNode} The translated checkbox node
@@ -954,7 +954,14 @@ function prepareCheckboxAnnotation(node) {
   return getTextNodeForExport(content, marks);
 }
 
-function prepareParagraphAnnotation(node, params) {
+/**
+ * Translates html annotations
+ *
+ * @param {SchemaNode} node
+ * @param {ExportParams} params
+ * @returns {XmlReadyNode} The translated html node
+ */
+function prepareHtmlAnnotation(node, params) {
   const { attrs = {} } = node;
 
   const parser = new DOMParser();
@@ -978,7 +985,7 @@ function prepareParagraphAnnotation(node, params) {
  * @param {SchemaNode} node
  * @param {ExportParams} params
  * @param {Object} imageSize Object contains width and height for image in EMU
- * @returns {XmlReadyNode} The translated text node
+ * @returns {XmlReadyNode} The translated image node
  */
 function prepareImageAnnotation(node, params, imageSize) {
   const { attrs = {} } = node;
@@ -1134,6 +1141,29 @@ function prepareImageAnnotation(node, params, imageSize) {
 }
 
 /**
+ * Translates URL annotations
+ *
+ * @param {SchemaNode} node
+ * @param {ExportParams} params
+ * @returns {XmlReadyNode} The translated URL node
+ */
+function prepareUrlAnnotation(node, params) {
+  const { attrs = {}, marks = [] } = node;
+  const newId = addNewLinkRelationship(params, attrs.linkUrl);
+  
+  const linkTextNode = getTextNodeForExport(attrs.linkUrl, marks);
+
+  return {
+    name: 'w:hyperlink',
+    type: 'element',
+    attributes: {
+      'r:id': newId,
+    },
+    elements: [linkTextNode]
+  };
+}
+
+/**
  * Returns node handler based on annotation type
  *
  * @param {String} annotationType
@@ -1155,7 +1185,8 @@ function getTranslationByAnnotationType(annotationType) {
     image: (node, params) => prepareImageAnnotation(node, params, imageEmuSize),
     signature: (node, params) => prepareImageAnnotation(node, params, signatureEmuSize),
     checkbox: prepareCheckboxAnnotation,
-    html: prepareParagraphAnnotation,
+    html: prepareHtmlAnnotation,
+    link: prepareUrlAnnotation
   };
   
   return dictionary[annotationType];
