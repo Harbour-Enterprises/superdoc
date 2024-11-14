@@ -1,12 +1,16 @@
+import he from 'he';
+import { DOMParser as PMDOMParser } from 'prosemirror-model';
 import { SuperConverter } from './SuperConverter.js';
 import { toKebabCase } from '@harbour-enterprises/common';
 import { inchesToTwips, pixelsToHalfPoints, pixelsToTwips } from './helpers.js';
 import { generateDocxRandomId } from '@helpers/generateDocxRandomId.js';
+import { DEFAULT_DOCX_DEFS } from './exporter-docx-defs.js';
 import {
   TrackDeleteMarkName,
   TrackInsertMarkName,
-  TrackMarksMarkName
+  TrackFormatMarkName
 } from "@extensions/track-changes/constants.js";
+
 
 /**
  * @typedef {Object} ExportParams
@@ -45,42 +49,6 @@ import {
  * @property {Object} attrs Any attributes for this mark
  */
 
-const DEFAULT_DEFS = {
-  "xmlns:wpc": "http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas",
-  "xmlns:cx": "http://schemas.microsoft.com/office/drawing/2014/chartex",
-  "xmlns:cx1": "http://schemas.microsoft.com/office/drawing/2015/9/8/chartex",
-  "xmlns:cx2": "http://schemas.microsoft.com/office/drawing/2015/10/21/chartex",
-  "xmlns:cx3": "http://schemas.microsoft.com/office/drawing/2016/5/9/chartex",
-  "xmlns:cx4": "http://schemas.microsoft.com/office/drawing/2016/5/10/chartex",
-  "xmlns:cx5": "http://schemas.microsoft.com/office/drawing/2016/5/11/chartex",
-  "xmlns:cx6": "http://schemas.microsoft.com/office/drawing/2016/5/12/chartex",
-  "xmlns:cx7": "http://schemas.microsoft.com/office/drawing/2016/5/13/chartex",
-  "xmlns:cx8": "http://schemas.microsoft.com/office/drawing/2016/5/14/chartex",
-  "xmlns:mc": "http://schemas.openxmlformats.org/markup-compatibility/2006",
-  "xmlns:aink": "http://schemas.microsoft.com/office/drawing/2016/ink",
-  "xmlns:am3d": "http://schemas.microsoft.com/office/drawing/2017/model3d",
-  "xmlns:o": "urn:schemas-microsoft-com:office:office",
-  "xmlns:oel": "http://schemas.microsoft.com/office/2019/extlst",
-  "xmlns:r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
-  "xmlns:m": "http://schemas.openxmlformats.org/officeDocument/2006/math",
-  "xmlns:v": "urn:schemas-microsoft-com:vml",
-  "xmlns:wp14": "http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing",
-  "xmlns:wp": "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing",
-  "xmlns:w10": "urn:schemas-microsoft-com:office:word",
-  "xmlns:w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
-  "xmlns:w14": "http://schemas.microsoft.com/office/word/2010/wordml",
-  "xmlns:w15": "http://schemas.microsoft.com/office/word/2012/wordml",
-  "xmlns:w16cex": "http://schemas.microsoft.com/office/word/2018/wordml/cex",
-  "xmlns:w16cid": "http://schemas.microsoft.com/office/word/2016/wordml/cid",
-  "xmlns:w16": "http://schemas.microsoft.com/office/word/2018/wordml",
-  "xmlns:w16sdtdh": "http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash",
-  "xmlns:w16se": "http://schemas.microsoft.com/office/word/2015/wordml/symex",
-  "xmlns:wpg": "http://schemas.microsoft.com/office/word/2010/wordprocessingGroup",
-  "xmlns:wpi": "http://schemas.microsoft.com/office/word/2010/wordprocessingInk",
-  "xmlns:wne": "http://schemas.microsoft.com/office/word/2006/wordml",
-  "xmlns:wps": "http://schemas.microsoft.com/office/word/2010/wordprocessingShape",
-  "mc:Ignorable": "w14 w15 w16se w16cid w16 w16cex w16sdtdh wp14"
-}
 
 /**
  * Main export function. It expects the prose mirror data as JSON (ie: a doc node)
@@ -140,13 +108,19 @@ function translateBodyNode(params) {
  * @param {ExportParams} node A prose mirror paragraph node
  * @returns {XmlReadyNode} JSON of the XML-ready paragraph node
  */
-function translateParagraphNode(params) { 
+function translateParagraphNode(params) {
   const elements = translateChildNodes(params);
+
+  // Replace current paragraph with content of html annotation
+  const htmlAnnotationChild = elements.find(element => element.name === 'htmlAnnotation');
+  if (elements.length === 1 && htmlAnnotationChild) {
+    return htmlAnnotationChild.elements;
+  }
 
   // Insert paragraph properties at the beginning of the elements array
   const pPr = generateParagraphProperties(params.node);
   elements.unshift(pPr);
-
+  
   return {
     name: 'w:p',
     elements,
@@ -228,7 +202,7 @@ function translateDocumentNode(params) {
   const node = {
     name: 'w:document',
     elements: [translatedBodyNode],
-    attributes: documentAttributesNode?.attrs?.attributes || DEFAULT_DEFS,
+    attributes: DEFAULT_DOCX_DEFS,
   }
 
   return [node, params];
@@ -272,11 +246,35 @@ function translateChildNodes(params) {
     if (translatedNode instanceof Array) translatedNodes.push(...translatedNode);
     else translatedNodes.push(translatedNode);
   });
-
+  
   // Filter out any null nodes
   return translatedNodes.filter((n) => n);
 }
 
+
+/**
+ * Helper function to be used for text node translation
+ * Also used for transforming text annotations for the final submit
+ *
+ * @param {String} text Text node's content
+ * @param {Object[]} marks The marks to add to the run properties
+ * @returns {XmlReadyNode} The translated text node
+ */
+
+function getTextNodeForExport(text, marks) {
+  const hasLeadingOrTrailingSpace = /^\s|\s$/.test(text);
+  const space = hasLeadingOrTrailingSpace ? 'preserve' : null;
+  const nodeAttrs = space ? { 'xml:space': space } : null;
+
+  const outputMarks = processOutputMarks(marks);
+  const textNode =  {
+    name: 'w:t',
+    elements: [{ text, type: 'text' }],
+    attributes: nodeAttrs,
+  }
+
+  return wrapTextInRun(textNode, outputMarks);
+}
 
 /**
  * Translate a text node or link node.
@@ -286,7 +284,7 @@ function translateChildNodes(params) {
  * 
  * @param {ExportParams} params The text node to translate
  * @param {SchemaNode} params.node The text node from prose mirror
- * @returns {XmlReadyNode[]} The translated text node
+ * @returns {XmlReadyNode} The translated text node
  */
 function translateTextNode(params) {
   const { node } = params;
@@ -301,28 +299,19 @@ function translateTextNode(params) {
   if (isLinkNode) return translateLinkNode(params);
 
   const { text, marks = [] } = node;
-  const hasLeadingOrTrailingSpace = /^\s|\s$/.test(text);
-  const space = hasLeadingOrTrailingSpace ? 'preserve' : null;
-  const attrs = space ? { 'xml:space': space } : null;
-
-  const outputMarks = processOutputMarks(marks);
-  const textNode =  {
-    name: 'w:t',
-    elements: [{ text: node.text, type: 'text' }],
-    attributes: attrs,
-  }
-
-  return wrapTextInRun(textNode, outputMarks);
+  
+  return getTextNodeForExport(text, marks);
 }
 
 function createTrackStyleMark(marks) {
-  const trackStyleMark = marks.find(mark => mark.type === TrackMarksMarkName);
+  const trackStyleMark = marks.find(mark => mark.type === TrackFormatMarkName);
   if (trackStyleMark) {
     const markElement = {
       type: 'element',
       name: 'w:rPrChange', attributes: {
-        'w:id': trackStyleMark.attrs.wid,
+        'w:id': trackStyleMark.attrs.id,
         'w:author': trackStyleMark.attrs.author,
+        'w:authorEmail': trackStyleMark.attrs.authorEmail,
         'w:date': trackStyleMark.attrs.date,
       },
       elements: trackStyleMark.attrs.before
@@ -332,12 +321,12 @@ function createTrackStyleMark(marks) {
     return markElement;
   }
   return undefined;
-};
+}
 
 function translateTrackedNode(params) {
   const { node } = params;
   const marks = node.marks;
-  const trackingMarks = [TrackInsertMarkName, TrackDeleteMarkName, TrackMarksMarkName];
+  const trackingMarks = [TrackInsertMarkName, TrackDeleteMarkName, TrackFormatMarkName];
   const trackedMark = marks.find((m) => trackingMarks.includes(m.type));
   const isInsert = trackedMark.type === TrackInsertMarkName;
 
@@ -360,8 +349,9 @@ function translateTrackedNode(params) {
     name: isInsert ? 'w:ins' : 'w:del',
     type: 'element',
     attributes: {
-      'w:id': trackedMark.attrs.wid,
+      'w:id': trackedMark.attrs.id,
       'w:author': trackedMark.attrs.author,
+      'w:authorEmail': trackedMark.attrs.authorEmail,
       'w:date': trackedMark.attrs.date,
     },
     elements: [
@@ -470,6 +460,27 @@ function addNewLinkRelationship(params, link) {
 }
 
 /**
+ * Create a new image relationship and add it to the relationships array
+ *
+ * @param {ExportParams} params
+ * @param {string} imagePath The path to the image
+ * @returns {string} The new relationship ID
+ */
+function addNewImageRelationship(params, imagePath) {
+  const newId = 'rId' + generateDocxRandomId();
+  params.relationships.push({
+    "type": "element",
+    "name": "Relationship",
+    "attributes": {
+      "Id": newId,
+      "Type": "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image",
+      "Target": imagePath,
+    }
+  });
+  return newId;
+}
+
+/**
  * Translate a list node
  * TODO: Need to reference numbering.xml for additinoal detail on list numbering
  * 
@@ -526,7 +537,7 @@ function getListParagraphProperties(node, level) {
       }
     ]
   }
-};
+}
 
 /**
  * Flatten list nodes for processing.
@@ -600,9 +611,6 @@ function translateTab(params) {
   const attributes = {}
   
   const { marks = [] } = params.node;
-  // if (tab) {
-  //   attributes['w:type'] = tab;
-  // }
 
   const outputMarks = processOutputMarks(marks);
   const tabNode =  {
@@ -761,7 +769,7 @@ function generateTableRowProperties(node) {
       attributes,
     }
     elements.push(rowHeightElement);
-  };
+  }
 
   return {
     name: 'w:trPr',
@@ -810,7 +818,7 @@ function generateTableCellProperties(node) {
     elements.push(gridSpanElement);
   }
 
-  const { color } = background;
+  const { color } = background || {};
   if (color) {
     const cellBgElement = {
       name: 'w:shd',
@@ -923,7 +931,269 @@ function translateMark(mark) {
   }
 
   return markElement;
-};
+}
+
+/**
+ * Translates text annotations
+ *
+ * @param {SchemaNode} node
+ * @returns {XmlReadyNode} The translated text node
+ */
+function prepareTextAnnotation(node) {
+  const { attrs = {}, marks = [] } = node;
+  return getTextNodeForExport(attrs.displayLabel, marks);
+}
+
+/**
+ * Translates checkbox annotations
+ *
+ * @param {SchemaNode} node
+ * @returns {XmlReadyNode} The translated checkbox node
+ */
+function prepareCheckboxAnnotation(node) {
+  const { attrs = {}, marks = [] } = node;
+  const content = he.decode(attrs.displayLabel);
+  return getTextNodeForExport(content, marks);
+}
+
+/**
+ * Translates html annotations
+ *
+ * @param {SchemaNode} node
+ * @param {ExportParams} params
+ * @returns {XmlReadyNode} The translated html node
+ */
+function prepareHtmlAnnotation(node, params) {
+  const { attrs = {} } = node;
+
+  const parser = new window.DOMParser();
+  const paragraphHtml = parser.parseFromString(attrs.rawHtml,'text/html');
+
+  const state = EditorState.create({
+    doc: PMDOMParser.fromSchema(params.editorSchema).parse(paragraphHtml)
+  });
+  
+  const htmlAnnotationNode = state.doc.toJSON();
+  return {
+    name: 'htmlAnnotation',
+    elements: translateChildNodes({
+      node: htmlAnnotationNode
+    })
+  };
+}
+
+/**
+ * Translates image annotations
+ *
+ * @param {SchemaNode} node
+ * @param {ExportParams} params
+ * @param {Object} imageSize Object contains width and height for image in EMU
+ * @returns {XmlReadyNode} The translated image node
+ */
+function prepareImageAnnotation(node, params, imageSize) {
+  const { attrs = {} } = node;
+
+  const type = attrs.imageSrc.split(';')[0].split('/')[1];
+  const imageUrl = `media/${attrs.fieldId}.${type}`;
+  const imageId = addNewImageRelationship(params, imageUrl);
+  
+  params.media[`${attrs.fieldId}.${type}`] = attrs.imageSrc;
+  
+  const drawingXmlns = 'http://schemas.openxmlformats.org/drawingml/2006/main';
+  const pictureXmlns = 'http://schemas.openxmlformats.org/drawingml/2006/picture';
+  return wrapTextInRun({
+    name: 'w:drawing',
+    elements: [
+      {
+        name: 'wp:inline',
+        attributes: {
+          distT: 0, distB: 0, distL: 0, distR: 0
+        },
+        elements: [
+          {
+            name: 'wp:extent',
+            attributes: {
+              cx: imageSize.w,
+              cy: imageSize.h
+            }
+          },
+          {
+            name: 'wp:effectExtent',
+            attributes: {
+              l: 0, t: 0, r: 0, b: 0
+            }
+          },
+          {
+            name: 'wp:docPr',
+            attributes: {
+              id: 0,
+              name: '',
+              descr: ''
+            }
+          },
+          {
+            name: 'wp:cNvGraphicFramePr',
+            elements: [
+              {
+                name: 'a:graphicFrameLocks',
+                attributes: {
+                  'xmlns:a': drawingXmlns,
+                  noChangeAspect: 1
+                }
+              }
+            ]
+          },
+          { 
+            name: 'a:graphic', 
+            attributes: { 'xmlns:a': drawingXmlns },
+            elements: [
+              {
+                name: 'a:graphicData',
+                attributes: { uri: pictureXmlns },
+                elements: [
+                  {
+                    name: 'pic:pic',
+                    attributes: { 'xmlns:pic': pictureXmlns },
+                    elements: [
+                      {
+                        name: 'pic:nvPicPr',
+                        elements: [
+                          {
+                            name: 'pic:cNvPr',
+                            attributes: {
+                              id: 0, 
+                              name: '', 
+                              desc: ''
+                            }
+                          },
+                          {
+                            name: 'pic:cNvPicPr',
+                            elements: [
+                              {
+                                name: 'a:picLocks',
+                                attributes: {
+                                  noChangeAspect: 1,
+                                  noChangeArrowheads: 1
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        name: 'pic:blipFill',
+                        elements: [
+                          {
+                            name: 'a:blip',
+                            attributes: {
+                              'r:embed': imageId,
+                              cstate: 'none'
+                            }
+                          },
+                          {
+                            name: 'a:srcRect'
+                          },
+                          {
+                            name: 'a:stretch',
+                            elements: [{ name: 'a:fillRect' }]
+                          }
+                        ]
+                      },
+                      {
+                        name: 'pic:spPr',
+                        attributes: {
+                          bwMode: 'auto'
+                        },
+                        elements: [
+                          {
+                            name: 'a:xfrm',
+                            elements: [
+                              {
+                                name: 'a:ext',
+                                attributes: {
+                                  cx: imageSize.w,
+                                  cy: imageSize.h
+                                }
+                              },
+                              {
+                                name: 'a:off',
+                                attributes: {
+                                  x: 0,
+                                  y: 0
+                                }
+                              },  
+                            ]
+                          },
+                          {
+                            name: 'a:prstGeom',
+                            attributes: { prst: 'rect' },
+                            elements: [{ name: 'a:avLst' }]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                ]
+              },
+            ]
+          },
+        ]
+      },
+    ]
+  }, []);
+}
+
+/**
+ * Translates URL annotations
+ *
+ * @param {SchemaNode} node
+ * @param {ExportParams} params
+ * @returns {XmlReadyNode} The translated URL node
+ */
+function prepareUrlAnnotation(node, params) {
+  const { attrs = {}, marks = [] } = node;
+  const newId = addNewLinkRelationship(params, attrs.linkUrl);
+  
+  const linkTextNode = getTextNodeForExport(attrs.linkUrl, marks);
+
+  return {
+    name: 'w:hyperlink',
+    type: 'element',
+    attributes: {
+      'r:id': newId,
+    },
+    elements: [linkTextNode]
+  };
+}
+
+/**
+ * Returns node handler based on annotation type
+ *
+ * @param {String} annotationType
+ * @returns {Function} handler for provided annotation type
+ */
+function getTranslationByAnnotationType(annotationType) {
+  const imageEmuSize = {
+    w: 4286250,
+    h: 4286250
+  };
+  
+  const signatureEmuSize = {
+    w: 990000,
+    h: 495000
+  };
+  
+  const dictionary = {
+    text: prepareTextAnnotation,
+    image: (node, params) => prepareImageAnnotation(node, params, imageEmuSize),
+    signature: (node, params) => prepareImageAnnotation(node, params, signatureEmuSize),
+    checkbox: prepareCheckboxAnnotation,
+    html: prepareHtmlAnnotation,
+    link: prepareUrlAnnotation
+  };
+  
+  return dictionary[annotationType];
+}
 
 /**
  * Translate a field annotation node
@@ -931,8 +1201,25 @@ function translateMark(mark) {
  * @param {ExportParams} params
  * @returns {XmlReadyNode} The translated field annotation node
  */
-function translateFieldAnnotation({ node }) {
+function translateFieldAnnotation(params) {
+  const { node , isFinalDoc } = params;
   const { attrs = {} } = node;
+ 
+  const annotationHandler = getTranslationByAnnotationType(attrs.type);
+  if (!annotationHandler) return {};
+  
+  const processedNode = annotationHandler(node, params);
+  let sdtContentElements = [processedNode];
+  
+  if (attrs.type === 'html') {
+    sdtContentElements = [
+        ...processedNode.elements
+    ];
+  }
+  
+  if (isFinalDoc) {
+    return annotationHandler(node, params);
+  }
 
   const customXmlns = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
   return {
@@ -969,20 +1256,10 @@ function translateFieldAnnotation({ node }) {
       },
       {
         name: 'w:sdtContent',
-        elements: [
-          {
-            name: 'w:r',
-            elements: [
-              {
-                name: 'w:t',
-                attributes: { 'xml:space': 'preserve' },
-                elements: [{ type: 'text', text: attrs.displayLabel }] }
-            ]
-          }
-        ]
+        elements: sdtContentElements
       }
     ]
-  }
+  };
 }
 
 

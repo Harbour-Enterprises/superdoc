@@ -84,42 +84,13 @@ li.ProseMirror-selectednode:after {
   pointer-events: none;
 }
 
-.insertionMark {
-    &.inline {
-      &.hidden {
-        display: none;
-      }
-      &.normal {
-      }
-      &.highlighted {
-        border: 1px dashed #00853D;
-        background-color: #399C7222;
-        pointer-events: none;
-      }
-    }
-}
-
-.deletionMark {
-    &.inline {
-      &.hidden {
-        display: none;
-      }
-      &.normal {
-      }
-    }
-    &.widget {
-        border: 1px dashed #CB0E47;
-        background-color: #CB0E4722;
-        pointer-events: none;
-    }
-}
-
 /* Protect against generic img rules */
 img.ProseMirror-separator {
   display: inline !important;
   border: none !important;
   margin: 0 !important;
 }
+
 .ProseMirror .tab {
   display: inline-block;
   vertical-align: text-bottom;
@@ -129,4 +100,70 @@ img.ProseMirror-separator {
   border-bottom: 1px solid #000;
   margin-bottom: 1.5px;
 }
+
+/* Track changes */
+.ProseMirror .track-insert-dec,
+.ProseMirror .track-delete-dec,
+.ProseMirror .track-format-dec {
+  pointer-events: none;
+}
+
+.ProseMirror .track-insert-dec.hidden,
+.ProseMirror .track-delete-dec.hidden {
+  display: none;
+}
+
+.ProseMirror .track-insert-dec.highlighted {
+  border-top: 1px dashed #00853D;
+  border-bottom: 1px dashed #00853D;
+  background-color: #399C7222;
+}
+
+.ProseMirror .track-delete-dec.highlighted {
+  border-top: 1px dashed #CB0E47;
+  border-bottom: 1px dashed #CB0E47;
+  background-color: #CB0E4722;
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.ProseMirror .track-format-dec.highlighted {
+  border-bottom: 2px solid gold;
+}
+
+.ProseMirror .track-delete-widget {
+  visibility: hidden;
+}
+
+/* Collaboration cursors */
+.ProseMirror > .ProseMirror-yjs-cursor:first-child {
+  margin-top: 16px;
+}
+.ProseMirror-yjs-cursor {
+  position: relative;
+  margin-left: -1px;
+  margin-right: -1px;
+  border-left: 1px solid black;
+  border-right: 1px solid black;
+  border-color: orange;
+  word-break: normal;
+  pointer-events: none;
+}
+.ProseMirror-yjs-cursor > div {
+  position: absolute;
+  top: -1.05em;
+  left: -1px;
+  font-size: 13px;
+  background-color: rgb(250, 129, 0);
+  font-family: serif;
+  font-style: normal;
+  font-weight: normal;
+  line-height: normal;
+  user-select: none;
+  color: white;
+  padding-left: 2px;
+  padding-right: 2px;
+  white-space: nowrap;
+}
+
 `;

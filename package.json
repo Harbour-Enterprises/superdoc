@@ -18,6 +18,7 @@
     "lint:prettier": "prettier --check \"**/*.{js,css,vue}\""
   },
   "devDependencies": {
-    "prettier": "3.3.3"
+    "prettier": "3.3.3",
+    "rollup": "^4.26.0"
   }
 }

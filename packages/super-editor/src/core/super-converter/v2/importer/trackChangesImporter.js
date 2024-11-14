@@ -1,4 +1,4 @@
-import { TrackDeleteMarkName, TrackInsertMarkName } from "../../../../extensions/track-changes/constants.js";
+import { TrackDeleteMarkName, TrackInsertMarkName } from "@extensions/track-changes/constants.js";
 import { parseProperties } from "./importerHelpers.js";
 
 /**
@@ -14,11 +14,13 @@ export const handleTrackChangeNode = (nodes, docx, nodeListHandler, insideTrackC
 
   const subs = nodeListHandler.handler(elements, docx, true)
   const changeType = name === 'w:del' ? TrackDeleteMarkName : TrackInsertMarkName;
+
   const mappedAttributes = {
-    wid: attributes['w:id'],
+    id: attributes['w:id'],
     date: attributes['w:date'],
     author: attributes['w:author'],
-  }
+    authorEmail: attributes['w:authorEmail'],
+  };
 
   subs.forEach(subElement => {
     if (subElement.marks === undefined) subElement.marks = [];

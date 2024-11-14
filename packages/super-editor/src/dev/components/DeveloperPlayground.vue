@@ -74,13 +74,8 @@ const editorOptions = computed(() => {
     onCreate,
     onCommentClicked,
     suppressSkeletonLoader: true,
-    users: [
-      { name: 'Nick Bernal', email: 'nick@harbourshare.com' },
-      { name: 'Artem Nistuley', email: 'nick@harbourshare.com' },
-      { name: 'Matthew Connelly', email: 'matthew@harbourshare.com' },
-      { name: 'Eric Doversberger', email: 'eric@harbourshare.com'} 
-    ],
-    ydoc: ydoc.value,
+    users: [], // For comment @-mentions, only users that have access to the document
+    ydoc: ydoc.value
   }
 });
 
@@ -228,10 +223,20 @@ const attachAnnotationEventHandlers = () => {
     editor.commands.addFieldAnnotation(pos, {
       displayLabel: 'Enter your info',
       fieldId: `agreementinput-${Date.now()}-${Math.floor(Math.random() * 1000000000000)}`,
-      // fieldId: `111`,
+      // fieldId: `222`,
       fieldType: 'TEXTINPUT',
       fieldColor: signer?.signercolor,
     });
+
+    // To test link field.
+    // editor.commands.addFieldAnnotation(pos, {
+    //   displayLabel: 'Enter your link',
+    //   fieldId: `agreementinput-${Date.now()}-${Math.floor(Math.random() * 1000000000000)}`,
+    //   fieldType: 'URLTEXTINPUT',
+    //   fieldColor: signer?.signercolor,
+    //   linkUrl: 'https://google.com',
+    //   type: 'link',
+    // });
   });
 
   activeEditor?.on('fieldAnnotationClicked', (params) => {
@@ -245,13 +250,14 @@ const attachAnnotationEventHandlers = () => {
 /* Inputs pane and field annotations */
 
 const initToolbar = () => {
-  return new SuperToolbar({ element: 'toolbar', editor: activeEditor });
+  return new SuperToolbar({ element: 'toolbar', editor: activeEditor, isDev: true, });
 };
 
 onMounted(async () => {
   // set document to blank
   currentFile.value = await getFileObject(BlankDOCX, 'blank_document.docx', DOCX);
 });
+
 </script>
 
 <template>

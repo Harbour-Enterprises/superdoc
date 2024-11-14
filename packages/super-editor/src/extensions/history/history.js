@@ -25,12 +25,10 @@ export const History = Extension.create({
     return {
       undo: () => ({ state, dispatch, tr }) => {
         tr.setMeta('inputType', 'historyUndo');
-        
         return originalUndo(state, dispatch);
       },
       redo: () => ({ state, dispatch, tr }) => {
         tr.setMeta('inputType', 'historyRedo');
-
         return originalRedo(state, dispatch);
       },
     };

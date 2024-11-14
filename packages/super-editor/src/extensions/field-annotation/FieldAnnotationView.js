@@ -48,6 +48,7 @@ export class FieldAnnotationView {
       signature: (...args) => this.buildSignatureView(...args),
       checkbox: (...args) => this.buildCheckboxView(...args),
       html: (...args) => this.buildHTMLView(...args),
+      link: (...args) => this.buildLinkView(...args),
       default: (...args) => this.buildTextView(...args),
     };
 
@@ -148,9 +149,34 @@ export class FieldAnnotationView {
     this.dom = annotation;
   }
 
+  buildLinkView() {
+    let { displayLabel, linkUrl } = this.node.attrs;
+
+    let { annotation, content } = this.#createAnnotation();
+
+    if (linkUrl) {
+      let link = document.createElement('a');
+
+      link.href = linkUrl;
+      link.target = '_blank';
+      link.textContent = linkUrl;
+      link.style.textDecoration = 'none';
+
+      content.append(link);
+
+      content.style.pointerEvents = 'all';
+    } else {
+      content.textContent = displayLabel;
+    }
+
+    this.dom = annotation;
+  }
+
   #createAnnotation({
     displayLabel,
   } = {}) {
+    let { highlighted } = this.node.attrs;
+
     let annotation = document.createElement('span');
     annotation.classList.add(this.annotationClass);
 
@@ -165,6 +191,7 @@ export class FieldAnnotationView {
     
     annotation.append(content);
 
+    let omitHighlight = highlighted === false;
     let annotationStyle = [
       `border: 2px solid ${this.borderColor}`,
       `border-radius: 2px`,
@@ -172,7 +199,7 @@ export class FieldAnnotationView {
     ].join('; ');
 
     let mergedAttrs = Attribute.mergeAttributes(this.htmlAttributes, {
-      style: annotationStyle,
+      style: omitHighlight ? '' : annotationStyle,
     });
 
     for (let [key, value] of Object.entries(mergedAttrs)) {

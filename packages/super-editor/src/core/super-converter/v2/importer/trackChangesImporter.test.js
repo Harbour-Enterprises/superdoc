@@ -4,8 +4,8 @@ import { createNodeListHandlerMock } from "./testUtils.test.js";
 import {
   TrackDeleteMarkName,
   TrackInsertMarkName,
-  TrackMarksMarkName
-} from "../../../../extensions/track-changes/constants.js";
+  TrackFormatMarkName
+} from "@extensions/track-changes/constants.js";
 import { parseXmlToJson } from "../docxHelper.js";
 import { defaultNodeListHandler } from "./docxImporter.js";
 
@@ -118,7 +118,7 @@ describe("trackChanges live xml test", () => {
     expect(result.length).toBe(1);
     expect(result[0].type).toBe('paragraph');
     expect(result[0].content.length).toBe(1);
-    const changeMark = result[0].content[0].marks.find(mark => mark.type === TrackMarksMarkName);
+    const changeMark = result[0].content[0].marks.find(mark => mark.type === TrackFormatMarkName);
     expect(changeMark).toBeDefined();
     expect(changeMark.attrs).toEqual({
       wid: '2',

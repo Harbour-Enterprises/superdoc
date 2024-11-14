@@ -28,14 +28,11 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org/
 
-      - name: Install deps
-        run: |
-          npm i
-          cd packages/super-editor
-          npm i
-          cd ../superdoc
-          npm i
-          cd ../..
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Build
+        run: npm run build
 
       - name: Configure Git Credentials
         run: |

@@ -43,8 +43,10 @@ const init = async () => {
     superdocId: 'superdoc-dev',
     selector: '#superdoc',
     toolbar: 'toolbar',
-    toolbarGroups: ['center'],
+    // toolbarGroups: ['center'],
+    toolbarGroups: ['left', 'center', 'right'],
     documentMode: 'editing',
+    isDev: true,
     user: {
       name: 'Super Document Jr.',
       email: 'user@harbourshare.com',
@@ -57,10 +59,10 @@ const init = async () => {
       },
     ],
     modules: {
-      // 'comments': {
-      //   // readOnly: true,
-      //   // allowResolve: false,
-      // },
+      'comments': {
+        // readOnly: true,
+        // allowResolve: false,
+      },
       'hrbr-fields': {},
       // collaboration: {
       //   providerType: 'hocuspocus',

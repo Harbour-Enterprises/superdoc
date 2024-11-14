@@ -64,8 +64,20 @@ export function useField(field) {
   }
 
   const format = ref(field.itemformat);
+
+  /**
+   * Callback for fields which value is not a String value
+   * and have to be calculated using additional data
+   * Example: multiple image upload input
+   *
+   * @param {Object} data which is passed from SD
+   * @returns {String} string value that can be used in annotation
+   */
+  const valueGetter = field.valueGetter;
+  
   return {
     id, icon, iconPack, label, placeholder, fieldType, fieldSubType, value, format, logicRules, hidden, originalJSON, fieldStyle,
+    valueGetter,
     ...additionalOptions
   }
 };

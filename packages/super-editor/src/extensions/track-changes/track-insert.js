@@ -1,49 +1,65 @@
 import { Mark, Attribute } from '@core/index.js';
 import { TrackInsertMarkName } from './constants.js';
 
+const trackInsertClass = 'track-insert';
+
 export const TrackInsert = Mark.create({
   name: TrackInsertMarkName,
 
+  group: 'track',
+
+  inclusive: false,
+
   addOptions() {
     return {
-      htmlAttributes: {},
+      htmlAttributes: {
+        class: trackInsertClass,
+      },
     };
   },
 
   addAttributes() {
     return {
-      wid: {
+      id: {
         default: '',
-        parseHTML: (element) => element.getAttribute('wid'),
-        renderHTML: (attributes) => {
+        parseDOM: (elem) => elem.getAttribute('data-id'),
+        renderDOM: (attrs) => {
+          if (!attrs.id) return {};
           return {
-            wid: attributes.wid,
+            'data-id': attrs.id,
           };
         },
       },
+
       author: {
-        default: 'imported',
-        parseHTML: (element) => element.getAttribute('author'),
-        renderHTML: (attributes) => {
+        default: '',
+        parseDOM: (elem) => elem.getAttribute('data-author'),
+        renderDOM: (attrs) => {
+          if (!attrs.author) return {};
           return {
-            author: attributes.author,
+            'data-author': attrs.author,
           };
         },
       },
+
       authorEmail: {
-        default: null,
-        renderHTML: (attributes) => {
+        default: '',
+        parseDOM: (elem) => elem.getAttribute('data-authoremail'),
+        renderDOM: (attrs) => {
+          if (!attrs.authorEmail) return {};
           return {
-            authorEmail: attributes.authorEmail,
+            'data-authoremail': attrs.authorEmail,
           };
         },
       },
+
       date: {
-        default: () => new Date().toISOString(),
-        parseHTML: (element) => element.getAttribute('date'),
-        renderHTML: (attributes) => {
+        default: '',
+        parseDOM: (elem) => elem.getAttribute('data-date'),
+        renderDOM: (attrs) => {
+          if (!attrs.date) return {};
           return {
-            date: attributes.date,
+            'data-date': attrs.date,
           };
         },
       },
@@ -55,10 +71,6 @@ export const TrackInsert = Mark.create({
   },
 
   renderDOM({ htmlAttributes }) {
-    return [
-      'span',
-      Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes, { inserted: true }),
-      0,
-    ];
+    return ['span', Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes), 0];
   },
 });

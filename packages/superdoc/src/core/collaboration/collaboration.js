@@ -51,10 +51,21 @@ function createHocuspocusProvider({ config, user, documentId }) {
     name: documentId,
     document: ydoc,
     token: config.token || 'token',
+    preserveConnection: false,
+    onAuthenticationFailed,
+    onDisconnect,
   });
 
   provider.setAwarenessField('user', user);
   return { provider, ydoc };
 };
+
+const onAuthenticationFailed = (data) => {
+  console.warn('🔒 [superdoc] Authentication failed', data);
+}
+
+const onDisconnect = (data) => {
+  console.warn('🔌 [superdoc] Disconnected', data);
+}
 
 export { createAwarenessHandler, createProvider };

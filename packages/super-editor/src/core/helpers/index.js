@@ -14,6 +14,7 @@ export * from './generateDocxListAttributes.js';
 export * from './isTextSelection.js';
 export * from './getMarkRange.js';
 export * from './isMarkActive.js';
+export * from './getMarksBetween.js';
 export * from './getSchemaTypeNameByName.js';
 export * from './isActive.js';
 export * from './isNodeActive.js';

@@ -506,13 +506,13 @@ const handlePdfClick = (e) => {
             :document-id="doc.id"
             :options="editorOptions(doc)" />
 
-        <!-- omitting field props -->
-        <HtmlViewer
-            v-if="doc.type === HTML"
-            @ready="(id) => handleDocumentReady(id, null)" 
-            @selection-change="handleSelectionChange"
-            :file-source="doc.data"
-            :document-id="doc.id" />
+          <!-- omitting field props -->
+          <HtmlViewer
+              v-if="doc.type === HTML"
+              @ready="(id) => handleDocumentReady(id, null)"
+              @selection-change="handleSelectionChange"
+              :file-source="doc.data"
+              :document-id="doc.id" />
       </div>
     </div>
   </div>
@@ -535,12 +535,6 @@ const handlePdfClick = (e) => {
   </div>
 </div>
 </template>
-
-<style>
-.super-editor {
-  min-height: 11in;
-}
-</style>
 
 <style scoped>
 .selection-layer {
@@ -644,6 +638,25 @@ const handlePdfClick = (e) => {
   border: none;
   outline: none;
   background-color: #DBDBDB;
+  cursor: pointer;
+}
+
+.tools__icon :deep(svg) {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+  fill: currentColor;
+}
+
+.layers {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: auto;
+}
+
+.document {
+  position: relative;
 }
 
 @media (max-width: 768px) {

@@ -3,8 +3,8 @@ import { twipsToPixels, twipsToInches, halfPointToPixels, emuToPixels, halfPoint
 import {
   TrackDeleteMarkName,
   TrackInsertMarkName,
-  TrackMarksMarkName
-} from "../../extensions/track-changes/constants.js";
+  TrackFormatMarkName
+} from "@extensions/track-changes/constants.js";
 
 
 /**
@@ -1000,7 +1000,7 @@ export class DocxImporter {
       author: attributes['w:author'],
     }
     const { marks: submarks, unknownMarks } = this.#parseMarks(styleChangeMark);
-    return [{type: TrackMarksMarkName, attrs: {...mappedAttributes, before: submarks, after: [...currentMarks]}}]
+    return [{type: TrackFormatMarkName, attrs: {...mappedAttributes, before: submarks, after: [...currentMarks]}}]
   }
 
   #getIndentValue(attributes) {

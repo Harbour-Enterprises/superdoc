@@ -14,14 +14,9 @@ import { createStyleTag } from './utilities/createStyleTag.js';
 import { initComments } from '@features/index.js';
 import { style } from './config/style.js';
 import DocxZipper from '@core/DocxZipper.js';
-import { amendTransaction } from "@extensions/track-changes/track-changes-tr-modifier.js";
+import { trackedTransaction } from "@extensions/track-changes/trackChangesHelpers/trackedTransaction.js";
+import { TrackChangesBasePluginKey } from '@extensions/track-changes/plugins/index.js';
 
-
-if (typeof navigator === 'undefined') {
-  global.navigator = {
-    isHeadless: true,
-  };
-}
 
 /**
  * Editor main class.
@@ -86,10 +81,7 @@ export class Editor extends EventEmitter {
   constructor(options) {
     super();
 
-    if (options.mockDocument) {
-      global.document = options.mockDocument;
-      global.window = options.mockWindow;
-    }
+    this.#checkHeadless(options);
     this.setOptions(options);
     this.setDocumentMode(options.documentMode);
 
@@ -117,7 +109,8 @@ export class Editor extends EventEmitter {
     this.emit('beforeCreate', { editor: this });
     this.on('contentError', this.options.onContentError);
 
-    this.#createView();    
+    this.#createView();
+    this.#initDefaultStyles();
 
     // If we are running headless, we can stop here
     if (this.options.isHeadless) return;
@@ -184,6 +177,19 @@ export class Editor extends EventEmitter {
 
   setToolbar(toolbar) {
     this.toolbar = toolbar;
+  }
+
+  #checkHeadless(options) {
+    if (!options.isHeadless) return;
+
+    if (typeof navigator === 'undefined') {
+      global.navigator = { isHeadless: true };
+    }
+
+    if (options.mockDocument) {
+      global.document = options.mockDocument;
+      global.window = options.mockWindow;
+    }
   }
 
   /**
@@ -305,7 +311,8 @@ export class Editor extends EventEmitter {
   }
 
   /**
-   * Replace the current document with new data.
+   * Replace the current document with new data. Necessary for initializing a new collaboration file,
+   * since we need to insert the data only after the provider has synced.
    */
   #insertNewFileData() {
     const doc = this.#generatePmData();
@@ -325,6 +332,7 @@ export class Editor extends EventEmitter {
    * @param options List of options.
    */
   setOptions(options) {
+    options.element = options.element || document.createElement('div');
     this.options = {
       ...this.options,
       ...options,
@@ -480,13 +488,12 @@ export class Editor extends EventEmitter {
           this.converter,
           this.schema,
         );
-        
+
         // For headless mode, generate JSON from a fragment
-        if (this.options.fragment) {
+        if (this.options.fragment && this.options.isHeadless) {
           doc = yXmlFragmentToProseMirrorRootNode(this.options.fragment, this.schema);
           console.debug('🦋 [super-editor] Generated JSON from fragment:', doc);
         }
-  
       } else if (this.options.mode === 'text') {
         if (this.options.content) {
           doc = DOMParser.fromSchema(this.schema).parse(this.options.content);
@@ -509,13 +516,13 @@ export class Editor extends EventEmitter {
   /**
    * Creates PM View.
    */
-  #createView() {  
+  #createView() {
     let doc = this.#generatePmData();
 
-    // Only initialize the doc if we are not using Yjs
+    // Only initialize the doc if we are not using Yjs/collaboration
     const state = { schema: this.schema };
     if (!this.options.ydoc) state.doc = doc;
-  
+
     this.view = new EditorView(this.options.element, {
       ...this.options.editorProps,
       dispatchTransaction: this.#dispatchTransaction.bind(this),
@@ -549,6 +556,8 @@ export class Editor extends EventEmitter {
    * Set document default font and font size.
    */
   #initDefaultStyles() {
+    if (this.options.isHeadless) return;
+
     const proseMirror = this.element?.querySelector('.ProseMirror');
     if (!proseMirror) return;
 
@@ -588,13 +597,23 @@ export class Editor extends EventEmitter {
 
     let state;
     try {
-      const trackedTr = amendTransaction(transaction, this.view, this.options.user);
-      const { state: newState } = this.view.state.applyTransaction(trackedTr);
+      const trackChangesState = TrackChangesBasePluginKey.getState(this.view.state);
+      const isTrackChangesActive = trackChangesState?.isTrackChangesActive ?? false;
+
+      const tr = isTrackChangesActive 
+        ? trackedTransaction({ 
+          tr: transaction, 
+          state: this.state, 
+          user: this.options.user,
+        }) 
+        : transaction;
+
+      const { state: newState } = this.view.state.applyTransaction(tr);
       state = newState;
-    } catch (e) {
-      console.log(e);
-      //just in case
+    } catch (error) {
+      // just in case
       state = this.state.apply(transaction);
+      console.log(error);
     }
 
     state = this.state.apply(transaction);
@@ -710,41 +729,37 @@ export class Editor extends EventEmitter {
   /**
    * Export the editor document to DOCX.
    */
-  async exportDocx() {
+  async exportDocx({ isFinalDoc = false } = {}) {
     const json = this.getJSON();
-    const documentXml = this.converter.exportToDocx(json);
+    const documentXml = await this.converter.exportToDocx(json, this.schema, isFinalDoc);
     const relsData = this.converter.convertedXml['word/_rels/document.xml.rels'];
     const rels = this.converter.schemaToXml(relsData.elements[0]);
+    const media = this.converter.addedMedia;
+
     const updatedDocs = {
       'word/document.xml': String(documentXml),
       'word/_rels/document.xml.rels': String(rels),
     };
-
+    
     const zipper = new DocxZipper();
     const result = await zipper.updateZip({
       docx: this.options.content,
       updatedDocs: updatedDocs,
-      originalDocxFile: this.options.fileSource
+      originalDocxFile: this.options.fileSource,
+      media
     });
+
     return result
   }
-
-  // convertSchemaToYdoc() {
-  //   const ydoc = prosemirrorJSONToYDoc(this.schema, this.state.doc.toJSON(), "supereditor");
-  //   return ydoc;
-  // }
 
   /**
    * Destroy collaboration provider and ydoc
    */
   #endCollaboration() {
-    if (this.options.collaborationProvider) {
-      this.options.collaborationProvider.disconnect();
-    }
-
-    if (this.options.ydoc) {
-      this.options.ydoc.destroy();
-    }
+    try {
+      if (this.options.collaborationProvider) this.options.collaborationProvider.disconnect();
+      if (this.options.ydoc) this.options.ydoc.destroy();
+    } catch (error) {};
   }
 
   /**

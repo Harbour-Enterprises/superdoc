@@ -1,10 +1,9 @@
 <script setup>
 import { storeToRefs } from 'pinia';
-import { ref, onMounted, computed } from 'vue';
+import { computed } from 'vue';
 import { useHrbrFieldsStore } from '@/stores/hrbr-fields-store';
 import { useSuperdocStore } from '@/stores/superdoc-store';
 
-const superdocStore = useSuperdocStore();
 const hrbrFieldsStore = useHrbrFieldsStore();
 const { getAnnotations } = storeToRefs(hrbrFieldsStore);
 const { fieldComponentsMap, getField } = hrbrFieldsStore;
@@ -69,6 +68,7 @@ const getAnnotationWithField = computed(() => {
           :field="entry.field"
           :style-override="entry.style"
           :option-id="entry.originalAnnotationId"
+          :no-style="entry.nostyle"
           :is-editing="false" />
     </div>
   </div>

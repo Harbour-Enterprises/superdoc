@@ -1,6 +1,6 @@
 import { Plugin, PluginKey } from 'prosemirror-state';
 import { Extension } from '@core/Extension.js';
-import {TrackInsertMarkName, TrackDeleteMarkName} from "../track-changes/constants";
+import { TrackInsertMarkName, TrackDeleteMarkName } from "../track-changes/constants.js";
 
 const CommentsPluginKey = new PluginKey('comments');
 

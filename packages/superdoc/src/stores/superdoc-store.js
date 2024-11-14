@@ -12,15 +12,9 @@ export const useSuperdocStore = defineStore('superdoc', () => {
   const pages = reactive({});
   const documentUsers = ref([]);
   const activeZoom = ref(1);
-
-  const users = ref([
-    { name: 'Nick Bernal', email: 'nick@harbourshare.com' },
-    { name: 'Artem Nistuley', email: 'nick@harbourshare.com' },
-    { name: 'Matthew Connelly', email: 'matthew@harbourshare.com' },
-    { name: 'Eric Doversberger', email: 'eric@harbourshare.com'} 
-  ])
-
   const isReady = ref(false);
+
+  const users = ref([]);
 
   const user = reactive({ name: null, email: null });
   const modules = reactive({});
@@ -83,10 +77,6 @@ export const useSuperdocStore = defineStore('superdoc', () => {
     return true;
   });
 
-  const getAttachments = computed(() => {
-    return documents.value.map((doc) => doc.attachments).flat(1);
-  });
-
   const getDocument = (documentId) => documents.value.find((doc) => doc.id === documentId);
   const getPageBounds = (documentId, page) => {
     const matchedPage = pages[documentId];
@@ -136,7 +126,6 @@ export const useSuperdocStore = defineStore('superdoc', () => {
     
     // Getters
     areDocumentsReady,
-    getAttachments,
 
     // Actions
     init,

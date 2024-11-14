@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import { getContentTypesFromXml } from "./super-converter/helpers.js";
 
 /**
  * Class to handle unzipping and zipping of docx files
@@ -53,7 +54,7 @@ class DocxZipper {
         this.media[zipEntry.name] = imageUrl;
       }
     }
-
+    
     return this.files;
   }
   
@@ -61,20 +62,51 @@ class DocxZipper {
     return fileName.split('.').pop();
   }
 
+  /**
+   * Update [Content_Types].xml with extensions of new Image annotations
+   */
+  async updateContentTypes(unzippedOriginalDocx, media) {
+    const newMediaTypes = Object.keys(media).map(name => {
+      return this.getFileExtension(name);
+    });
+
+    const contentTypesPath = '[Content_Types].xml';
+    const contentTypesXml = await unzippedOriginalDocx.file(contentTypesPath).async('string');
+    let typesString = ''
+    
+    const defaultMediaTypes = getContentTypesFromXml(contentTypesXml);
+    
+    for (let type of newMediaTypes) {
+      // Current extension already presented in Content_Types
+      if (defaultMediaTypes.includes(type)) return;
+      
+      const newContentType = `<Default Extension="${type}" ContentType="image/${type}"/>`;
+      typesString += newContentType;
+    }
+    
+    const beginningString = '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">';
+
+    const updatedContentTypesXml = contentTypesXml.replace(
+        beginningString,
+        `${beginningString}${typesString}`
+    );
+    unzippedOriginalDocx.file(contentTypesPath, updatedContentTypesXml);
+  }
+
   async unzip(file) {
     const zip = await this.zip.loadAsync(file);
     return zip;
   }
 
-  async updateZip({ docx, updatedDocs, originalDocxFile }) {
+  async updateZip({ docx, updatedDocs, originalDocxFile, media }) {
     const isHeadless = navigator?.isHeadless;
 
     // We use a different re-zip process if we have the original docx vs the docx xml metadata
     let zip;
     if (originalDocxFile) {
-      zip = await this.exportFromOriginalFile(originalDocxFile, updatedDocs);
+      zip = await this.exportFromOriginalFile(originalDocxFile, updatedDocs, media);
     } else {
-      zip = await this.exportFromCollaborativeDocx(docx, updatedDocs);
+      zip = await this.exportFromCollaborativeDocx(docx, updatedDocs, media);
     }
 
     // If we are headless we don't have 'blob' support, so export as 'nodebuffer'
@@ -88,7 +120,7 @@ class DocxZipper {
    * @param {Object} updatedDocs An object containing the updated docs (keys are relative file names)
    * @returns {Promise<JSZip>} The unzipped but updated docx file ready for zipping
    */
-  async exportFromCollaborativeDocx(docx, updatedDocs) {
+  async exportFromCollaborativeDocx(docx, updatedDocs, media) {
     const zip = new JSZip();
     for (const file of docx) {
       let content = file.content;
@@ -97,6 +129,12 @@ class DocxZipper {
       }
       zip.file(file.name, content);
     };
+
+    Object.keys(media).forEach((name) => {
+      zip.file(`word/media/${name}`, media[name]);
+    });
+
+    await this.updateContentTypes(zip, media);
     return zip;
   };
 
@@ -107,7 +145,7 @@ class DocxZipper {
    * @param {Object} updatedDocs An object containing the updated docs (keys are relative file names)
    * @returns {Promise<JSZip>} The unzipped but updated docx file ready for zipping
    */
-  async exportFromOriginalFile(originalDocxFile, updatedDocs) {
+  async exportFromOriginalFile(originalDocxFile, updatedDocs, media) {
     const unzippedOriginalDocx = await this.unzip(originalDocxFile);
     const filePromises = [];
     unzippedOriginalDocx.forEach((relativePath, zipEntry) => {
@@ -124,6 +162,12 @@ class DocxZipper {
         unzippedOriginalDocx.file(key, updatedDocs[key]);
       };
     });
+
+    Object.keys(media).forEach((name) => {
+      unzippedOriginalDocx.file(`word/media/${name}`, media[name]);
+    });
+
+    await this.updateContentTypes(unzippedOriginalDocx, media);
 
     return unzippedOriginalDocx;
   };

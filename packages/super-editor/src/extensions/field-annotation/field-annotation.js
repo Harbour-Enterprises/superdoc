@@ -1,4 +1,4 @@
-import { Node, Attribute, helpers } from '@core/index.js';
+import { Node, Attribute } from '@core/index.js';
 import { FieldAnnotationView } from './FieldAnnotationView.js';
 import { FieldAnnotationPlugin } from './FieldAnnotationPlugin.js';
 import { findFieldAnnotationsByFieldId, getAllFieldAnnotations } from './fieldAnnotationHelpers/index.js';
@@ -28,7 +28,7 @@ export const FieldAnnotation = Node.create({
       },
       annotationClass,
       annotationContentClass,
-      types: ['text', 'image', 'signature', 'checkbox', 'html'], // annotation types
+      types: ['text', 'image', 'signature', 'checkbox', 'html', 'link'], // annotation types
       defaultType: 'text',
       borderColor: '#b015b3',
       visibilityOptions: ['visible', 'hidden'],
@@ -71,12 +71,28 @@ export const FieldAnnotation = Node.create({
 
       rawHtml: {
         default: null,
-        parseDOM: (elem) => elem.getAttribute('data-raw-html'),
+        parseDOM: (elem) => {
+          try {
+            return JSON.parse(elem.getAttribute('data-raw-html'));
+          } catch (e) {
+            console.warn('Paste parse error', e);
+          }
+          return null;
+        },
         renderDOM: (attrs) => {
           if (!attrs.rawHtml) return {};
           return {
-            'data-raw-html': attrs.rawHtml,
+            'data-raw-html': JSON.stringify(attrs.rawHtml),
           };
+        },
+      },
+
+      linkUrl: {
+        default: null,
+        rendered: false,
+        parseDOM: (elem) => {
+          let link = elem.querySelector('a');
+          return link?.getAttribute('href') || null;
         },
       },
 
@@ -114,6 +130,14 @@ export const FieldAnnotation = Node.create({
             hexColor = `${hexColor}33`;
           }
 
+          let omitHighlight = attrs.highlighted === false;
+
+          if (omitHighlight) {
+            return { 
+              'data-field-color': hexColor,
+            };
+          }
+
           return { 
             'data-field-color': hexColor,
             style: `background-color: ${hexColor}`,
@@ -127,7 +151,7 @@ export const FieldAnnotation = Node.create({
           let hasHiddenAttr = elem.hasAttribute('hidden');
           let hasDisplayNoneStyle = elem.style.display === 'none';
           let isHidden = hasHiddenAttr || hasDisplayNoneStyle;
-          return isHidden ? true : null;
+          return isHidden;
         },
         renderDOM: (attrs) => {
           if (!attrs.hidden) return {};
@@ -149,6 +173,11 @@ export const FieldAnnotation = Node.create({
           return { style: `visibility: ${attrs.visibility}` };
         },
       },
+
+      highlighted: {
+        default: true,
+        rendered: false,
+      },
     };
   },
 
@@ -160,7 +189,7 @@ export const FieldAnnotation = Node.create({
   },
 
   renderDOM({ node, htmlAttributes }) {
-    let { type, displayLabel, imageSrc, rawHtml } = node.attrs;
+    let { type, displayLabel, imageSrc, rawHtml, linkUrl } = node.attrs;
 
     let textRenderer = () => {
       return [
@@ -201,16 +230,43 @@ export const FieldAnnotation = Node.create({
       ];
     };
 
+    let linkRenderer = () => {
+      let contentRenderer = () => {      
+        if (!linkUrl) return displayLabel;
+        return [
+          'a',
+          {
+            href: linkUrl,
+            target: '_blank',
+          },
+          linkUrl,
+        ];
+      };
+
+      return [
+        'span',
+        Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes),
+        [
+          'span',
+          {
+            class: `${this.options.annotationContentClass}`,
+          },
+          contentRenderer(),
+        ],
+      ];
+    };
+
     let renderers = {
       text: () => textRenderer(),
       image: () => imageRenderer(),
       signature: () => imageRenderer(),
       checkbox: () => textRenderer(),
       html: () => textRenderer(),
+      link: () => linkRenderer(),
       default: () => textRenderer(),
     };
 
-    let renderer = renderers[type] ?? type.default;
+    let renderer = renderers[type] ?? renderers.default;
     
     return renderer();
   },
@@ -270,8 +326,10 @@ export const FieldAnnotation = Node.create({
         commands,
       }) => {
         let annotations = findFieldAnnotationsByFieldId(fieldIdOrArray, state);
-
-        if (!annotations.length) return false;
+        
+        if (!annotations.length) {
+          return true;
+        }
 
         if (dispatch) {
           return commands.updateFieldAnnotationsAttributes(annotations, attrs);
@@ -323,7 +381,9 @@ export const FieldAnnotation = Node.create({
       }) => {
         let annotations = findFieldAnnotationsByFieldId(fieldIdOrArray, state);
 
-        if (!annotations.length) return false;
+        if (!annotations.length) {
+          return true;
+        }
 
         if (dispatch) {
           annotations
@@ -363,7 +423,9 @@ export const FieldAnnotation = Node.create({
       }) => {
         let annotations = getAllFieldAnnotations(state);
 
-        if (!annotations.length) return false;
+        if (!annotations.length) {
+          return true;
+        }
 
         if (dispatch) {
           let otherAnnotations = [];
@@ -399,7 +461,9 @@ export const FieldAnnotation = Node.create({
       }) => {
         let annotations = getAllFieldAnnotations(state);
 
-        if (!annotations.length) return false;
+        if (!annotations.length) {
+          return true;
+        }
 
         if (dispatch) {
           return commands
@@ -424,15 +488,59 @@ export const FieldAnnotation = Node.create({
       }) => {
         let annotations = getAllFieldAnnotations(state);
 
-        if (!annotations.length) return false;
+        if (!annotations.length) {
+          return true;
+        }
 
         let containsVisibility = this.options.visibilityOptions.includes(visibility);
         
-        if (!containsVisibility) return false;
+        if (!containsVisibility) {
+          return false;
+        }
 
         if (dispatch) {
           return commands.updateFieldAnnotationsAttributes(annotations, {
             visibility,
+          });
+        }
+
+        return true;
+      },
+
+      /**
+       * Set `highlighted` for annotations matching predicate.
+       * @param predicate The predicate function.
+       * @param highlighted The highlighted attribute.
+       * @example 
+       * editor.commands.setFieldAnnotationsHighlighted((node) => {
+       *   let ids = ['111', '222', '333'];
+       *   return ids.includes(node.attrs.fieldId);
+       * }, false)
+       * @example Set for all annotations.
+       * editor.commands.setFieldAnnotationsHighlighted(() => true, false)
+       * editor.commands.setFieldAnnotationsHighlighted(() => true, true)
+       */
+      setFieldAnnotationsHighlighted: (
+        predicate = () => false,
+        highlighted = true,
+      ) => ({
+        dispatch,
+        state,
+        commands,
+      }) => {
+        let annotations = getAllFieldAnnotations(state);
+
+        if (!annotations.length) {
+          return true;
+        }
+
+        if (dispatch) {
+          let matchedAnnotations = annotations.filter((annotation) => {
+            if (predicate(annotation.node)) return annotation;
+          });
+
+          return commands.updateFieldAnnotationsAttributes(matchedAnnotations, { 
+            highlighted, 
           });
         }
 
