@@ -98,7 +98,7 @@ export function createImportMarks(marks) {
   const combinedTextAttrs = {};
   if (textStyleMarksToCombine.length) {
     textStyleMarksToCombine.forEach((mark) => {
-      const { attrs } = mark;
+      const { attrs = {} } = mark;
 
       Object.keys(attrs).forEach((attr) => {
         combinedTextAttrs[attr] = attrs[attr];

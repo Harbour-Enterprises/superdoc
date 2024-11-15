@@ -15,6 +15,7 @@ export const handleBookmarkNode = (nodes, docx, nodeListHandler, insideTrackChan
   const result = handleStandardNode([node], docx, nodeListHandler, insideTrackChange);
   if (result.nodes.length === 1) {
     result.nodes[0].attrs.name = node.attributes['w:name'];
+    result.nodes[0].attrs.id = node.attributes['w:id'];
   }
   return result;
 }

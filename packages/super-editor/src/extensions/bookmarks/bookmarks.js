@@ -21,6 +21,13 @@ export const BookmarkStart = Node.create({
           return {};
         },
       },
+      id: {
+        default: null,
+        renderDOM: ({ id }) => {
+          if (id) return { id };
+          return {};
+        },
+      }
     };
   },
 
