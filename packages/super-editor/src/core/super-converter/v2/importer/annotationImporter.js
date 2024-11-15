@@ -1,3 +1,5 @@
+import { handleDocPartObj } from './docPartObjImporter';
+
 /**
  * @type {import("docxImporter").NodeHandler}
  */
@@ -8,6 +10,12 @@ export const handleAnnotationNode = (nodes, docx, nodeListHandler, insideTrackCh
 
   const node = nodes[0];
   const sdtPr = node.elements.find((el) => el.name === 'w:sdtPr');
+
+  const docPartObj = sdtPr?.elements.find((el) => el.name === 'w:docPartObj');
+  if (docPartObj) {
+    return handleDocPartObj(nodes, docx, nodeListHandler, insideTrackChange);
+  }
+
   const alias = sdtPr?.elements.find((el) => el.name === 'w:alias');
   const tag = sdtPr?.elements.find((el) => el.name === 'w:tag');
   const fieldType = sdtPr?.elements.find((el) => el.name === 'w:fieldType')?.attributes['w:val'];

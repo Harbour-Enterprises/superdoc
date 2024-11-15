@@ -101,7 +101,6 @@ function getDefaultStyleDefinition(defaultStyleId, docx) {
   if (!styles) return result;
 
   const { elements } = styles.elements[0];
-  // console.debug('Default style ID elements:', elements)
   const elementsWithId = elements.filter((el) => {
     return el.elements.some((e) => {
       return 'attributes' in e && e.attributes['w:val'] === defaultStyleId;
@@ -141,6 +140,8 @@ export function preProcessNodesForFldChar(nodes) {
         nodesToCombine.push(n);
         isCombiningNodes = false;
       }
+    } else {
+      processedNodes.push(n);
     }
 
     if (isCombiningNodes) {
@@ -176,9 +177,8 @@ export function preProcessNodesForFldChar(nodes) {
         type: 'element',
         elements: [rPr, ...textNodes]
       });
-    } else {
-      processedNodes.push(n);
     }
   })
+
   return processedNodes;
 }
