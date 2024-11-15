@@ -4,27 +4,22 @@ import '@harbour-enterprises/super-editor/style.css';
 import '@harbour-enterprises/common/icons/icons.css';
 
 import EventEmitter from 'eventemitter3'
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
 import { Doc as YDoc, Array as YArray } from 'yjs';
 import { v4 as uuidv4 } from 'uuid';
 
-import { useSuperdocStore } from '../stores/superdoc-store';
 import { DOCX, PDF, HTML, documentTypes } from '@harbour-enterprises/common';
 import { SuperToolbar } from '@harbour-enterprises/super-editor';
-import { vClickOutside } from '@harbour-enterprises/common';
 import { createAwarenessHandler, createProvider } from './collaboration/collaboration';
-import App from '../Superdoc.vue';
+import { createSuperdocVueApp } from './create-app';
 
-const createVueApp = () => {
-  const app = createApp(App);
-  const pinia = createPinia()
-  app.use(pinia)
-  app.directive('click-outside', vClickOutside);
 
-  const superdocStore = useSuperdocStore();
-  return { app, pinia, superdocStore };
-};
+/**
+ * @typedef {Object} SuperdocUser The current user of this superdoc
+ * @property {string} name The user's name
+ * @property {string} email The user's email
+ * @property {string | null} image The user's photo
+ */
+
 
 /* **
   * Superdoc class
@@ -40,39 +35,55 @@ export class Superdoc extends EventEmitter {
 
   version;
 
+  config = {
+    superdocId: null,
+    selector: '#superdoc', // The selector to mount the superdoc into
+    documentMode: 'viewing',
+    documents: [], // The documents to load
+
+    user: { name: null, email: null }, // The current user of this superdoc
+    users: [], // Optional: All users of this superdoc (can be used for @-mentions)
+
+    modules: {}, // Optional: Modules to load
+
+    // toolbar config
+    toolbar: null, // Optional DOM element to render the toolbar in
+    toolbarGroups: ['left', 'center', 'right'],
+
+    isDev: false,
+
+    // Events
+    onEditorCreate: () => null,
+    onEditorDestroy: () => null,
+    onReady: () => null,
+    onCommentsUpdate: () => null,
+    onAwarenessUpdate: () => null,
+    onLocked: () => null,
+  }
+
   constructor(config) {
     super();
-    this.config = config;
-
-    this.config.toolbarGroups = this.config.toolbarGroups || ['left', 'center', 'right'];
     this.#init(config);
   }
 
   async #init(config) {
-    this.destroy();
-
-    this.documentMode = config.documentMode || 'viewing';
+    this.config = {
+      ...this.config,
+      ...config
+    }
 
     this.superdocId = config.superdocId || uuidv4();
     console.debug('🦋 [superdoc] Superdoc ID:', this.superdocId);
 
     this.documents = this.#preprocessDocuments(config.documents);
     await this.#initCollaboration(config.modules.collaboration);
-
     config.documents = this.documents;
 
-    const { app, pinia, superdocStore } = createVueApp(this);
-    this.app = app;
-    this.pinia = pinia;
-    this.app.config.globalProperties.$config = config;
-    this.app.config.globalProperties.$documentMode = this.documentMode;
+    this.#initVueApp();
+    this.#initListeners();
 
-    this.app.config.globalProperties.$superdoc = this;
-    this.superdocStore = superdocStore;
-    this.version = config.version;
-
-    // Current user
-    this.user = config.user;
+    this.user = config.user; // The current user
+    this.users = config.users || []; // All users who have access to this superdoc
 
     // Toolbar
     this.toolbarElement = config.toolbar;
@@ -82,24 +93,21 @@ export class Superdoc extends EventEmitter {
     this.superdocStore.init(config);
     this.activeEditor = null;
 
-    // Directives
     this.app.mount(config.selector);
 
     // Required editors
     this.readyEditors = 0;
 
-    this.users = config.users || [];
     this.isLocked = config.isLocked || false;
     this.lockedBy = config.lockedBy || null;
 
     // If a toolbar element is provided, render a toolbar
     this.addToolbar(this);
-
   }
+
   get requiredNumberOfEditors() {
     return this.superdocStore.documents.filter((d) => d.type === DOCX).length;
   }
-
 
   get state() {
     return {
@@ -108,7 +116,26 @@ export class Superdoc extends EventEmitter {
     }
   }
 
-  
+  #initVueApp() {
+    const { app, pinia, superdocStore } = createSuperdocVueApp(this);
+    this.app = app;
+    this.pinia = pinia;
+    this.app.config.globalProperties.$config = this.config;
+    this.app.config.globalProperties.$documentMode = this.documentMode;
+
+    this.app.config.globalProperties.$superdoc = this;
+    this.superdocStore = superdocStore;
+    this.version = this.config.version;
+  }
+
+  #initListeners() {
+    this.on('editorCreate', this.config.onEditorCreate);
+    this.on('editorDestroy', this.config.onEditorDestroy);
+    this.on('ready', this.config.onReady);
+    this.on('comments-update', this.config.onCommentsUpdate);
+    this.on('awareness-update', this.config.onAwarenessUpdate);
+    this.on('locked', this.config.onLocked);
+  }
 
   #preprocessDocuments(documents) {
     console.debug('🦋 [superdoc] Preprocessing documents:', documents);
@@ -127,10 +154,6 @@ export class Superdoc extends EventEmitter {
 
       return { ...doc, type: documentType };
     });
-  }
-
-  broadcastDocumentReady() {
-    this.emit('document-ready');
   }
 
   /* **
@@ -173,6 +196,10 @@ export class Superdoc extends EventEmitter {
     });
 
     this.documents = processedDocuments;
+  }
+
+  broadcastDocumentReady() {
+    this.emit('document-ready');
   }
 
   broadcastReady() {
@@ -269,7 +296,7 @@ export class Superdoc extends EventEmitter {
    * @param {boolean} lock 
    */
   setLocked(lock = true) {
-    this.config.documents.forEach((doc) => {
+    this.documents.forEach((doc) => {
       const metaMap = doc.ydoc.getMap('meta');
       doc.ydoc.transact(() => {
         metaMap.set('locked', lock);
@@ -278,6 +305,11 @@ export class Superdoc extends EventEmitter {
     });
   }
 
+  /**
+   * Lock the current superdoc
+   * @param {Boolean} isLocked 
+   * @param {SuperdocUser} lockedBy The user who locked the superdoc
+   */
   lockSuperdoc(isLocked = false, lockedBy) {
     this.isLocked = isLocked;
     this.lockedBy = lockedBy;
@@ -297,6 +329,10 @@ export class Superdoc extends EventEmitter {
     return await Promise.all(docxPromises);
   }
 
+  /**
+   * Request an immediate save from all collaboration documents
+   * @returns {Promise<void>} Resolves when all documents have saved
+   */
   async #triggerCollaborationSaves() {
     console.debug('🦋 [superdoc] Triggering collaboration saves');
     return new Promise((resolve, reject) => {

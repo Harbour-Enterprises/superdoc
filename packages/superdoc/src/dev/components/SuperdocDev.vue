@@ -71,10 +71,9 @@ const init = async () => {
       //   token: 'token',
       // }
     },
+    onEditorCreate,
   }
   superdoc.value = new Superdoc(config);
-  
-  superdoc.value.on('editorCreate', onEditorCreate);
 };
 
 const exportDocx = async () => {
