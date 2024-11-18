@@ -2,7 +2,7 @@ import he from 'he';
 import { DOMParser as PMDOMParser } from 'prosemirror-model';
 import { SuperConverter } from './SuperConverter.js';
 import { toKebabCase } from '@harbour-enterprises/common';
-import { inchesToTwips, pixelsToHalfPoints, pixelsToTwips } from './helpers.js';
+import {inchesToTwips, pixelsToEmu, pixelsToHalfPoints, pixelsToTwips} from './helpers.js';
 import { generateDocxRandomId } from '@helpers/generateDocxRandomId.js';
 import { DEFAULT_DOCX_DEFS } from './exporter-docx-defs.js';
 import {
@@ -75,6 +75,7 @@ export function exportSchemaToJson(params) {
     bookmarkStart: translateBookmarkStart,
     fieldAnnotation: translateFieldAnnotation,
     tab: translateTab,
+    image: translateImageNode,
   }
 
   if (!router[type]) {
@@ -417,17 +418,21 @@ function processOutputMarks(marks = []) {
  */
 function translateLinkNode(params) {
   const { node } = params;
+ 
   const linkMark = node.marks.find((m) => m.type === 'link');
   const link = linkMark.attrs.href;
-  const newId = addNewLinkRelationship(params, link);
-
+  let rId = linkMark.attrs.rId;
+  if (!rId) {
+    rId = addNewLinkRelationship(params, link);
+  }
+  
   node.marks = node.marks.filter((m) => m.type !== 'link');
   const outputNode = exportSchemaToJson({ ...params, node });
   const newNode = {
     name: 'w:hyperlink',
     type: 'element',
     attributes: {
-      'r:id': newId,
+      'r:id': rId,
     },
     elements: [outputNode]
   }
@@ -931,72 +936,27 @@ function translateMark(mark) {
   return markElement;
 }
 
-/**
- * Translates text annotations
- *
- * @param {SchemaNode} node
- * @returns {XmlReadyNode} The translated text node
- */
-function prepareTextAnnotation(node) {
-  const { attrs = {}, marks = [] } = node;
-  return getTextNodeForExport(attrs.displayLabel, marks);
-}
-
-/**
- * Translates checkbox annotations
- *
- * @param {SchemaNode} node
- * @returns {XmlReadyNode} The translated checkbox node
- */
-function prepareCheckboxAnnotation(node) {
-  const { attrs = {}, marks = [] } = node;
-  const content = he.decode(attrs.displayLabel);
-  return getTextNodeForExport(content, marks);
-}
-
-/**
- * Translates html annotations
- *
- * @param {SchemaNode} node
- * @param {ExportParams} params
- * @returns {XmlReadyNode} The translated html node
- */
-function prepareHtmlAnnotation(node, params) {
-  const { attrs = {} } = node;
-
-  const parser = new window.DOMParser();
-  const paragraphHtml = parser.parseFromString(attrs.rawHtml,'text/html');
-
-  const state = EditorState.create({
-    doc: PMDOMParser.fromSchema(params.editorSchema).parse(paragraphHtml)
-  });
+function translateImageNode(params, imageSize) {
+  const { node: { attrs = {}, marks = [] } } = params;
   
-  const htmlAnnotationNode = state.doc.toJSON();
-  return {
-    name: 'htmlAnnotation',
-    elements: translateChildNodes({
-      node: htmlAnnotationNode
-    })
+  let imageId = attrs.rId;
+  let size = imageSize ? Object.assign({}, imageSize) : {
+    w: pixelsToEmu(attrs.size.width),
+    h: pixelsToEmu(attrs.size.height),
   };
-}
-
-/**
- * Translates image annotations
- *
- * @param {SchemaNode} node
- * @param {ExportParams} params
- * @param {Object} imageSize Object contains width and height for image in EMU
- * @returns {XmlReadyNode} The translated image node
- */
-function prepareImageAnnotation(node, params, imageSize) {
-  const { attrs = {} } = node;
-
-  const type = attrs.imageSrc.split(';')[0].split('/')[1];
-  const imageUrl = `media/${attrs.fieldId}.${type}`;
-  const imageId = addNewImageRelationship(params, imageUrl);
   
-  params.media[`${attrs.fieldId}.${type}`] = attrs.imageSrc;
+  if (!imageId) {
+    const type = attrs.imageSrc.split(';')[0].split('/')[1];
+    const imageUrl = `media/${attrs.fieldId}.${type}`;
+    imageId = addNewImageRelationship(params, imageUrl);
+
+    params.media[`${attrs.fieldId}.${type}`] = attrs.imageSrc;
+  }
   
+  const inlineAttrs = attrs.originalPadding || {
+    distT: 0, distB: 0, distL: 0, distR: 0
+  };
+
   const drawingXmlns = 'http://schemas.openxmlformats.org/drawingml/2006/main';
   const pictureXmlns = 'http://schemas.openxmlformats.org/drawingml/2006/picture';
   return wrapTextInRun({
@@ -1004,15 +964,13 @@ function prepareImageAnnotation(node, params, imageSize) {
     elements: [
       {
         name: 'wp:inline',
-        attributes: {
-          distT: 0, distB: 0, distL: 0, distR: 0
-        },
+        attributes: inlineAttrs,
         elements: [
           {
             name: 'wp:extent',
             attributes: {
-              cx: imageSize.w,
-              cy: imageSize.h
+              cx: size.w,
+              cy: size.h
             }
           },
           {
@@ -1041,8 +999,8 @@ function prepareImageAnnotation(node, params, imageSize) {
               }
             ]
           },
-          { 
-            name: 'a:graphic', 
+          {
+            name: 'a:graphic',
             attributes: { 'xmlns:a': drawingXmlns },
             elements: [
               {
@@ -1059,8 +1017,8 @@ function prepareImageAnnotation(node, params, imageSize) {
                           {
                             name: 'pic:cNvPr',
                             attributes: {
-                              id: 0, 
-                              name: '', 
+                              id: 0,
+                              name: '',
                               desc: ''
                             }
                           },
@@ -1109,8 +1067,8 @@ function prepareImageAnnotation(node, params, imageSize) {
                               {
                                 name: 'a:ext',
                                 attributes: {
-                                  cx: imageSize.w,
-                                  cy: imageSize.h
+                                  cx: size.w,
+                                  cy: size.h
                                 }
                               },
                               {
@@ -1119,7 +1077,7 @@ function prepareImageAnnotation(node, params, imageSize) {
                                   x: 0,
                                   y: 0
                                 }
-                              },  
+                              },
                             ]
                           },
                           {
@@ -1142,14 +1100,71 @@ function prepareImageAnnotation(node, params, imageSize) {
 }
 
 /**
+ * Translates text annotations
+ *
+ * @param {ExportParams} params
+ * @returns {XmlReadyNode} The translated text node
+ */
+function prepareTextAnnotation(params) {
+  const { node: { attrs = {}, marks = [] } } = params;
+  return getTextNodeForExport(attrs.displayLabel, marks);
+}
+
+/**
+ * Translates checkbox annotations
+ *
+ * @param {ExportParams} params
+ * @returns {XmlReadyNode} The translated checkbox node
+ */
+function prepareCheckboxAnnotation(params) {
+  const { node: { attrs = {}, marks = [] } } = params;
+  const content = he.decode(attrs.displayLabel);
+  return getTextNodeForExport(content, marks);
+}
+
+/**
+ * Translates html annotations
+ *
+ * @param {ExportParams} params
+ * @returns {XmlReadyNode} The translated html node
+ */
+function prepareHtmlAnnotation(params) {
+  const { node: { attrs = {} } } = params;
+
+  const parser = new window.DOMParser();
+  const paragraphHtml = parser.parseFromString(attrs.rawHtml,'text/html');
+
+  const state = EditorState.create({
+    doc: PMDOMParser.fromSchema(params.editorSchema).parse(paragraphHtml)
+  });
+  
+  const htmlAnnotationNode = state.doc.toJSON();
+  return {
+    name: 'htmlAnnotation',
+    elements: translateChildNodes({
+      node: htmlAnnotationNode
+    })
+  };
+}
+
+/**
+ * Translates image annotations
+ * @param {ExportParams} params
+ * @param {Object} imageSize Object contains width and height for image in EMU
+ * @returns {XmlReadyNode} The translated image node
+ */
+function prepareImageAnnotation(params, imageSize) {
+  return translateImageNode(params, imageSize);
+}
+
+/**
  * Translates URL annotations
  *
- * @param {SchemaNode} node
  * @param {ExportParams} params
  * @returns {XmlReadyNode} The translated URL node
  */
-function prepareUrlAnnotation(node, params) {
-  const { attrs = {}, marks = [] } = node;
+function prepareUrlAnnotation(params) {
+  const { node: { attrs = {}, marks = [] } } = params;
   const newId = addNewLinkRelationship(params, attrs.linkUrl);
   
   const linkTextNode = getTextNodeForExport(attrs.linkUrl, marks);
@@ -1159,6 +1174,7 @@ function prepareUrlAnnotation(node, params) {
     type: 'element',
     attributes: {
       'r:id': newId,
+      'w:history': 1
     },
     elements: [linkTextNode]
   };
@@ -1183,8 +1199,8 @@ function getTranslationByAnnotationType(annotationType) {
   
   const dictionary = {
     text: prepareTextAnnotation,
-    image: (node, params) => prepareImageAnnotation(node, params, imageEmuSize),
-    signature: (node, params) => prepareImageAnnotation(node, params, signatureEmuSize),
+    image: (params) => prepareImageAnnotation(params, imageEmuSize),
+    signature: (params) => prepareImageAnnotation(params, signatureEmuSize),
     checkbox: prepareCheckboxAnnotation,
     html: prepareHtmlAnnotation,
     link: prepareUrlAnnotation
@@ -1206,7 +1222,7 @@ function translateFieldAnnotation(params) {
   const annotationHandler = getTranslationByAnnotationType(attrs.type);
   if (!annotationHandler) return {};
   
-  const processedNode = annotationHandler(node, params);
+  const processedNode = annotationHandler(params);
   let sdtContentElements = [processedNode];
   
   if (attrs.type === 'html') {
@@ -1216,7 +1232,7 @@ function translateFieldAnnotation(params) {
   }
   
   if (isFinalDoc) {
-    return annotationHandler(node, params);
+    return annotationHandler(params);
   }
 
   const customXmlns = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';

@@ -32,6 +32,12 @@ export const Image = Node.create({
       },
       alt: { default: null, },
       title: { default: null, },
+      rId: {
+        default: this.options.htmlAttributes.rId || null,
+      },
+      originalPadding: {
+        default: this.options.htmlAttributes.originalPadding || null,
+      },
       size: {
         renderDOM: ({ size }) => {
           let style = 'display: "inline-block";';

@@ -48,6 +48,9 @@ export const Link = Mark.create({
       rel: {
         default: this.options.htmlAttributes.rel,
       },
+      rId: {
+        default: this.options.htmlAttributes.rId || null,
+      },
       text: { 
         default: null 
       },

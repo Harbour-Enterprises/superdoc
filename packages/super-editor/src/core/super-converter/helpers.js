@@ -39,6 +39,12 @@ function emuToPixels(emu) {
   return Math.round(pixels);
 }
 
+function pixelsToEmu(px) {
+  if (px == null) return;
+  if (typeof px === 'string') px = parseFloat(px);
+  return Math.round(px * 9525);
+}
+
 function pixelsToHalfPoints(pixels) {
   if (pixels == null) return;
   return Math.round(pixels * 72 / 96);
@@ -71,6 +77,7 @@ export {
   pixelsToTwips,
   halfPointToPixels,
   emuToPixels,
+  pixelsToEmu,
   pixelsToHalfPoints,
   halfPointToPoints,
   eigthPointsToPixels,

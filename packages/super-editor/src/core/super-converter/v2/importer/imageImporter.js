@@ -84,6 +84,13 @@ export function handleImageImport(node, currentFileName, docx) {
       padding,
       marginOffset,
       size,
+      originalPadding: {
+        distT: attributes['distT'],
+        distB: attributes['distB'],
+        distL: attributes['distL'],
+        distR: attributes['distR'],
+      },
+      rId: relAttributes['Id']
     }
   }
 }

@@ -191,7 +191,10 @@ class SuperConverter {
     const xml = exporter.schemaToXml(result);
     
     // Update media
-    await this.#exportProcessMediaFiles(params.media);
+    await this.#exportProcessMediaFiles({
+      ...params.media,
+      ...this.media
+    });
     
     // Update the rels table
     this.#exportProcessNewRelationships(params.relationships);
@@ -203,13 +206,17 @@ class SuperConverter {
     const relsData = this.convertedXml['word/_rels/document.xml.rels'];
     const relationships = relsData.elements.find(x => x.name === 'Relationships');
     relationships.elements.push(...rels);
+    relationships.elements.forEach(element => {
+      element.attributes.Target = element.attributes.Target.replace(/&/g,'&amp;').replace(/-/g,'&#45;');
+    })
     this.convertedXml['word/_rels/document.xml.rels'] = relsData;
   }
   
   async #exportProcessMediaFiles(media) {
     const processedData = {};
     for (const filePath in media) {
-      processedData[filePath] = await getBlobFromUrl(media[filePath])
+      const name = filePath.split('/').pop();
+      processedData[name] = await getBlobFromUrl(media[filePath])
     }
 
     this.convertedXml.media = {
