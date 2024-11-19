@@ -24,7 +24,7 @@ function pixelsToTwips(pixels) {
 
 function halfPointToPixels(halfPoints) {
   if (halfPoints == null) return;
-  return Math.round(96 / 72);
+  return Math.round((halfPoints / 8) * 96 / 72);
 }
 
 function halfPointToPoints(halfPoints) {

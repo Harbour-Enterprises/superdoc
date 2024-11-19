@@ -92,7 +92,7 @@ export function handleTableNode(node, docx, nodeListHandler, insideTrackChange) 
     const borderData = Object.keys(borders)?.length ? borders : referencedStyles?.borders;
     const borderRowData = Object.keys(rowBorders)?.length ? rowBorders : referencedStyles?.rowBorders;
     attrs['borders'] = borderData;
-
+    
     const content = rows.map((row) => handleTableRowNode(
       row,
       borderRowData,
@@ -101,6 +101,11 @@ export function handleTableNode(node, docx, nodeListHandler, insideTrackChange) 
       nodeListHandler,
       insideTrackChange)
     );
+    
+    const hasCellBorders = content.some(row => row.content.some(cell => Object.keys(cell.attrs.borders).length > 0));
+    if (hasCellBorders) {
+      attrs['borderCollapse'] = 'separate';
+    }
     
     return {
       type: 'table',
@@ -156,7 +161,7 @@ export function handleTableCellNode(node, styleTag, docx, nodeListHandler, insid
   if (fontSize) attributes['fontSize'] = fontSize;
   if (fontFamily) attributes['fontFamily'] = fontFamily['ascii'];
   if (inlineBorders) attributes['borders'] = inlineBorders;
-
+  
   return {
     type: 'tableCell',
     content: nodeListHandler.handler(node.elements, docx, insideTrackChange),
@@ -289,6 +294,7 @@ function processTableBorders(borderElements) {
     borders[borderName] = attrs;
   });
 
+  //debugger
   return {
     borders,
     rowBorders
@@ -304,7 +310,7 @@ function processTableBorders(borderElements) {
  * @param {boolean} insideTrackChange
  * @returns {*}
  */
-export function handleTableRowNode(node, rowBorders, styleTag, docx, nodeListHandler, insideTrackChange) {
+export function handleTableRowNode(node, rowBorders, styleTag, docx, nodeListHandler,  insideTrackChange) {
   const attrs = {};
 
   const tPr = node.elements.find((el) => el.name === 'w:trPr');
