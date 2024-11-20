@@ -33,10 +33,12 @@ export const Image = Node.create({
       alt: { default: null, },
       title: { default: null, },
       rId: {
-        default: this.options.htmlAttributes.rId || null,
+        default: null,
+        rendered: false,
       },
       originalPadding: {
-        default: this.options.htmlAttributes.originalPadding || null,
+        default: null,
+        rendered: false,
       },
       size: {
         renderDOM: ({ size }) => {

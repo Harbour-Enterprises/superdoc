@@ -70,10 +70,11 @@ export const handleParagraphNode = (nodes, docx, nodeListHandler, insideTrackCha
         'w:before': lineSpaceBeforeInLine,
         'w:line': lineInLine,
       } = spacing.attributes;
-
+      
+      // Zero values have to be considered in export to maintain accurate line height
       schemaNode.attrs['spacing'] = {
-        lineSpaceAfter: twipsToPixels(lineSpaceAfterInLine) || lineSpaceAfter,
-        lineSpaceBefore: twipsToPixels(lineSpaceBeforeInLine) || lineSpaceBefore,
+        lineSpaceAfter: twipsToPixels(lineSpaceAfterInLine) >= 0 ? twipsToPixels(lineSpaceAfterInLine) : lineSpaceAfter,
+        lineSpaceBefore: twipsToPixels(lineSpaceBeforeInLine) >= 0 ? twipsToPixels(lineSpaceBeforeInLine) : lineSpaceBefore,
         line: twipsToPixels(lineInLine),
       };
     }

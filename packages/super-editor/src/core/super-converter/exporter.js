@@ -2,7 +2,7 @@ import he from 'he';
 import { DOMParser as PMDOMParser } from 'prosemirror-model';
 import { SuperConverter } from './SuperConverter.js';
 import { toKebabCase } from '@harbour-enterprises/common';
-import {inchesToTwips, pixelsToEmu, pixelsToHalfPoints, pixelsToTwips} from './helpers.js';
+import {inchesToTwips, pixelsToEightPoints, pixelsToEmu, pixelsToTwips} from './helpers.js';
 import { generateDocxRandomId } from '@helpers/generateDocxRandomId.js';
 import { DEFAULT_DOCX_DEFS } from './exporter-docx-defs.js';
 import {
@@ -147,9 +147,12 @@ function generateParagraphProperties(node) {
     const { lineSpaceBefore, lineSpaceAfter, line } = spacing;
     
     const attributes = {};
-    if (lineSpaceBefore) attributes['w:before'] = pixelsToTwips(lineSpaceBefore);
-    if (lineSpaceAfter) attributes['w:after'] = pixelsToTwips(lineSpaceAfter);
+
+    // Zero values have to be considered in export to maintain accurate line height
+    if (lineSpaceBefore >= 0) attributes['w:before'] = pixelsToTwips(lineSpaceBefore);
+    if (lineSpaceAfter >= 0) attributes['w:after'] = pixelsToTwips(lineSpaceAfter);
     if (line) attributes['w:line'] = pixelsToTwips(line);
+
     const spacingElement = {
       name: 'w:spacing',
       attributes,
@@ -485,7 +488,6 @@ function addNewImageRelationship(params, imagePath) {
 
 /**
  * Translate a list node
- * TODO: Need to reference numbering.xml for additinoal detail on list numbering
  * 
  * @param {ExportParams} params
  * @returns {XmlReadyNode} The translated list node
@@ -499,12 +501,13 @@ function translateList(params) {
     const { content, level } = listNode;
     content.forEach((contentNode) => {
       const outputNode = exportSchemaToJson({ ...params, node: contentNode });
-      const pPr = getListParagraphProperties(listNode, level);
+      const pPr = getListParagraphProperties(listNode, level, type);
       outputNode.elements.unshift(pPr);
       listNodes.push(outputNode);
     })
   })
   
+  //debugger
   return listNodes;
 }
 
@@ -513,11 +516,15 @@ function translateList(params) {
  * 
  * @param {SchemaNode} node The list node
  * @param {number} level The list level
+ * @param {string} type The list type
  * @returns {XmlReadyNode} The list paragraph properties node
  */
-function getListParagraphProperties(node, level) {
-  const { type } = node;
-  const listType = type === 'bulletList' ? 1 : 2;
+function getListParagraphProperties(node, level, type) {
+  let listType = type === 'bulletList' ? 1 : 2;
+  
+  // numbering.xml reference
+  if (node.attrs.numId) listType = node.attrs.numId;
+  
   return {
     name: 'w:pPr',
     type: 'element',
@@ -640,6 +647,7 @@ function generateTableProperties(node) {
     borders,
     tableIndent,
     tableLayout,
+    tableCellSpacing
   } = attrs;
 
   if (tableStyleId) {
@@ -677,6 +685,16 @@ function generateTableProperties(node) {
     attributes: { 'w:w': inchesToTwips(tableWidth), 'w:type': tableWidthType }
   }
   elements.push(tableWidthElement);
+  
+  if (tableCellSpacing) {
+    elements.push({
+      name: 'w:tblCellSpacing',
+      attributes: {
+        'w:w': tableCellSpacing.w,
+        'w:type': tableCellSpacing.type,
+      }
+    });
+  }
 
   return {
     name: 'w:tblPr',
@@ -704,7 +722,7 @@ function generateTableBorders(node) {
       name: `w:${type}`,
       attributes: {
         'w:val': 'single',
-        'w:sz': pixelsToHalfPoints(border.size),
+        'w:sz': pixelsToEightPoints(border.size),
         'w:space': border.space || 0,
         'w:color': border.color.substring(1),
       }
@@ -846,6 +864,24 @@ function generateTableCellProperties(node) {
       attributes: { 'w:val': verticalAlign }
     }
     elements.push(vertAlignElement);
+  }
+  
+  const { borders } = attrs;
+  if (Object.keys(borders).length) {
+    const cellBordersElement = {
+      name: 'w:tcBorders',
+      elements: Object.entries(borders).map(([key, value]) => ({
+        name: `w:${key}`,
+        attributes: {
+          'w:val': 'single',
+          'w:color': value.color.substring(1),
+          'w:sz': pixelsToEightPoints(value.size),
+          'w:space': value.space || 0,
+        }
+      }))
+    };
+
+    elements.push(cellBordersElement);
   }
 
   return {

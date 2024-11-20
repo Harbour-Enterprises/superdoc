@@ -89,6 +89,12 @@ export const ListItem = Node.create({
         default: null,
         rendered: false,
       },
+      
+      // numbering.xml reference id
+      numId: {
+        default: null,
+        rendered: false,
+      },
 
       attributes: {
         rendered: false,

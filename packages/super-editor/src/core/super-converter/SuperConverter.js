@@ -215,6 +215,7 @@ class SuperConverter {
   async #exportProcessMediaFiles(media) {
     const processedData = {};
     for (const filePath in media) {
+      if (typeof media[filePath] !== 'string') return;
       const name = filePath.split('/').pop();
       processedData[name] = await getBlobFromUrl(media[filePath])
     }

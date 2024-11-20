@@ -24,7 +24,7 @@ function pixelsToTwips(pixels) {
 
 function halfPointToPixels(halfPoints) {
   if (halfPoints == null) return;
-  return Math.round((halfPoints / 8) * 96 / 72);
+  return Math.round(halfPoints * 96 / 72);
 }
 
 function halfPointToPoints(halfPoints) {
@@ -57,6 +57,11 @@ function eigthPointsToPixels(eigthPoints) {
     return pixels;
 }
 
+function pixelsToEightPoints(pixels) {
+  if (pixels == null) return;
+  return Math.round(pixels * 6);
+}
+
 const getBlobFromUrl = async (url) => {
   const res = await fetch(url);
   const blob = await res.blob();
@@ -81,6 +86,7 @@ export {
   pixelsToHalfPoints,
   halfPointToPoints,
   eigthPointsToPixels,
+  pixelsToEightPoints,
   getBlobFromUrl,
   getContentTypesFromXml
 }

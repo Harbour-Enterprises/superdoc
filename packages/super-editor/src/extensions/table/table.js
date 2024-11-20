@@ -46,7 +46,12 @@ export const Table = Node.create({
       },
       tableLayout: { rendered: false, },
       borderCollapse: {
-        default: this.options.htmlAttributes.borderCollapse,
+        default: null,
+        rendered: false,
+      },
+      tableCellSpacing: {
+        default: null,
+        rendered: false,
       },
       borders: {
         default: () => ({}),

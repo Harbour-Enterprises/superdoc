@@ -113,7 +113,8 @@ function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, li
       listpPrs,
       start,
       lvlText,
-      lvlJc
+      lvlJc,
+      numId
     } = getNodeNumberingDefinition(attributes, listLevel, docx);
     listStyleType = listOrderingType;
     const intLevel = parseInt(ilvl);
@@ -149,6 +150,7 @@ function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, li
       nodeAttributes['attributes'] = {
         parentAttributes: item?.attributes || null,
       }
+      nodeAttributes['numId'] = numId;
 
       const newListItem = createListItem(schemaElements, nodeAttributes, []);
       parsedListItems.push(newListItem);
@@ -311,7 +313,7 @@ function getNodeNumberingDefinition(attributes, level, docx) {
   else {
     throw new Error(`Unknown list type found during import: ${listTypeDef}`);
   }
-
+  
   return { listType, listOrderingType: listTypeDef, ilvl, numId, listrPrs, listpPrs, start, lvlText, lvlJc };
 }
 
