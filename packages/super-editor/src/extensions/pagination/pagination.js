@@ -150,8 +150,6 @@ const calculatePageBreaks = (view, editor) => {
   const pageSize = editor.converter.pageStyles?.pageSize;
   const { width, height } = pageSize; // Page width and height are in inches
   const { pageMargins } = editor.converter.pageStyles;
-  // console.debug('[pagination] margins', editor.converter.pageStyles.pageMargins);
-  // console.debug('[pagination] page size', pageSize);
 
   // We can't calculate page breaks without a page width and height
   // Under normal docx operation, these are always set
