@@ -4,7 +4,7 @@ import { Decoration, DecorationSet } from 'prosemirror-view';
 import { createApp, h } from 'vue';
 import PageBreak from '@/components/PageBreak/PageBreak.vue';
 
-let isDebugging = false;
+let isDebugging = true;
 const paginationPluginKey = new PluginKey('paginationPlugin');
 
 export const Pagination = Extension.create({
@@ -211,7 +211,8 @@ function generateInternalPageBreaks(doc, view, editor, decorations, PAGE_HEIGHT)
       pageHeightThreshold += PAGE_HEIGHT + 20;
 
       // This is where the decoration itself is generated
-      decorations.push(Decoration.widget(pos - 1, createPageBreak({ editor, coords })));
+      const coordsAtSplit = view.coordsAtPos(pos - 1);
+      decorations.push(Decoration.widget(pos - 1, createPageBreak({ editor, coords: coordsAtSplit })));
     }
   });
 

@@ -58,6 +58,7 @@ const editorOptions = computed(() => {
     onCommentClicked,
     suppressSkeletonLoader: true,
     users: [], // For comment @-mentions, only users that have access to the document
+    pagination: true,
   }
 });
 

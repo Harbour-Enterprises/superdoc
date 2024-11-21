@@ -100,13 +100,13 @@ const mountFooter = () => {
   if (props.isDebugging) console.debug('headerContainerStyle', style);
 
   if (props.coords) {
-    style.left = props.coords.left + 'px';
+    const currentLocation = pageBreakContainer.value.getBoundingClientRect();
+    style.left = (currentLocation.x - editorLeft) * -1 + 'px';
+    return style;
   }
 
   // If no coords, use the page margins
   style.left = pageMargins.left * -1 + 'in';
-  style.width = (pageSize.width * 96) + 'px';
-
   return style;
 });
 
@@ -198,5 +198,6 @@ onMounted(() =>{
   justify-content: space-between; 
   position: relative;
   left: 0;
+  background-color: white;
 }
 </style>
