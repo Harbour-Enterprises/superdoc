@@ -4,7 +4,7 @@ import { Decoration, DecorationSet } from 'prosemirror-view';
 import { createApp, h } from 'vue';
 import PageBreak from '@/components/PageBreak/PageBreak.vue';
 
-let isDebugging = false;
+let isDebugging = true;
 const paginationPluginKey = new PluginKey('paginationPlugin');
 
 export const Pagination = Extension.create({
@@ -206,7 +206,7 @@ function generateInternalPageBreaks(doc, view, editor, decorations, PAGE_HEIGHT)
     }
 
     const shouldAddPageBreak = coords.top > pageHeightThreshold;
-    const isLineBreakNode = node.type.name === 'lineBreak' && node.attrs.lineBreakType === 'page';
+    const isHardBreakNode = node.type.name === 'hardBreak';
     if (shouldAddPageBreak) {
       breaks++;
       lastPageSize = pageHeightThreshold - firstNode;
@@ -218,13 +218,14 @@ function generateInternalPageBreaks(doc, view, editor, decorations, PAGE_HEIGHT)
     }
 
     // Check if we have a hard page break node
-    else if (isLineBreakNode) {
+    else if (isHardBreakNode) {
       const styles = {};
       if (isDebugging) styles.backgroundColor = '#99000044';
-      const widget = Decoration.widget(pos, createFinalPagePadding({ view, pageHeight: pageHeightThreshold, pageHeightThreshold, breaks, coords, styles }));
+      const coordsAtSplit = view.coordsAtPos(pos - 1);
+      const widget = Decoration.widget(pos, createFinalPagePadding({ view, pageHeight: pageHeightThreshold, pageHeightThreshold, breaks, coords: coordsAtSplit, styles }));
       decorations.push(widget);
       decorations.push(Decoration.widget(pos, createPageBreak({ editor, coords })));
-      pageHeightThreshold = coords.bottom + PAGE_HEIGHT;
+      pageHeightThreshold = coordsAtSplit.bottom + PAGE_HEIGHT;
     }
   });
 
@@ -239,9 +240,6 @@ function generateInternalPageBreaks(doc, view, editor, decorations, PAGE_HEIGHT)
  * @returns {HTMLElement} The padding div
  */
 function createFinalPagePadding({ view, pageHeight, breaks, coords = {}, styles = {} }) {
-  const expectedHeight = pageHeight * breaks;
-  const contentHeight = view.dom.scrollHeight;
-
   const bottom = coords.bottom || 0;
   const div = document.createElement('div');
   div.style.height = Math.abs(bottom - pageHeight) + 'px';
