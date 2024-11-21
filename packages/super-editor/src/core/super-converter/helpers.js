@@ -62,10 +62,10 @@ function pixelsToEightPoints(pixels) {
   return Math.round(pixels * 6);
 }
 
-const getBlobFromUrl = async (url) => {
+const getArrayBufferFromUrl = async (url) => {
   const res = await fetch(url);
-  const blob = await res.blob();
-  return blob;
+  const buffer = await res.arrayBuffer();
+  return buffer;
 }
 
 const getContentTypesFromXml = (contentTypesXml) => {
@@ -87,6 +87,6 @@ export {
   halfPointToPoints,
   eigthPointsToPixels,
   pixelsToEightPoints,
-  getBlobFromUrl,
+  getArrayBufferFromUrl,
   getContentTypesFromXml
 }

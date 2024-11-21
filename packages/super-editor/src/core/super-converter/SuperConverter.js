@@ -5,7 +5,7 @@ import { DocxExporter, exportSchemaToJson } from './exporter';
 import { DocxImporter } from './importer';
 import {createDocumentJson} from "./v2/importer/docxImporter.js";
 import {getInitialJSON} from "./v2/docxHelper.js";
-import { getBlobFromUrl } from './helpers.js';
+import { getArrayBufferFromUrl } from './helpers.js';
 
 
 class SuperConverter {
@@ -217,7 +217,7 @@ class SuperConverter {
     for (const filePath in media) {
       if (typeof media[filePath] !== 'string') return;
       const name = filePath.split('/').pop();
-      processedData[name] = await getBlobFromUrl(media[filePath])
+      processedData[name] = await getArrayBufferFromUrl(media[filePath])
     }
 
     this.convertedXml.media = {
