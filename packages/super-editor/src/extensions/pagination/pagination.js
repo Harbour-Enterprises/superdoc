@@ -206,6 +206,7 @@ function generateInternalPageBreaks(doc, view, editor, decorations, PAGE_HEIGHT)
     }
 
     const shouldAddPageBreak = coords.top > pageHeightThreshold;
+    const isLineBreakNode = node.type.name === 'lineBreak' && node.attrs.lineBreakType === 'page';
     if (shouldAddPageBreak) {
       breaks++;
       lastPageSize = pageHeightThreshold - firstNode;
@@ -215,13 +216,20 @@ function generateInternalPageBreaks(doc, view, editor, decorations, PAGE_HEIGHT)
       const coordsAtSplit = view.coordsAtPos(pos - 1);
       decorations.push(Decoration.widget(pos - 1, createPageBreak({ editor, coords: coordsAtSplit })));
     }
+
+    // Check if we have a hard page break node
+    else if (isLineBreakNode) {
+      const styles = {};
+      if (isDebugging) styles.backgroundColor = '#99000044';
+      const widget = Decoration.widget(pos, createFinalPagePadding({ view, pageHeight: pageHeightThreshold, pageHeightThreshold, breaks, coords, styles }));
+      decorations.push(widget);
+      decorations.push(Decoration.widget(pos, createPageBreak({ editor, coords })));
+      pageHeightThreshold = coords.bottom + PAGE_HEIGHT;
+    }
   });
 
   // Add blank padding to the last page to make a full page height
-  const expectedHeight = PAGE_HEIGHT * breaks;
-  const contentHeight = view.dom.scrollHeight;
-  const padding = expectedHeight - contentHeight;
-  const widget = Decoration.widget(doc.content.size, createFinalPagePadding({ editor, padding }));
+  const widget = Decoration.widget(doc.content.size, createFinalPagePadding({ view, pageHeight: PAGE_HEIGHT, breaks }));
   decorations.push(widget);
 }
 
@@ -230,11 +238,20 @@ function generateInternalPageBreaks(doc, view, editor, decorations, PAGE_HEIGHT)
  * @param {Number} param0 The padding to add to the final page in pixels
  * @returns {HTMLElement} The padding div
  */
-function createFinalPagePadding({ padding }) {
-  const div = document.createElement('div');
-  div.style.height = padding + 'px';
+function createFinalPagePadding({ view, pageHeight, breaks, coords = {}, styles = {} }) {
+  const expectedHeight = pageHeight * breaks;
+  const contentHeight = view.dom.scrollHeight;
 
-  if (isDebugging) div.style.backgroundColor = '#00009944';
+  const bottom = coords.bottom || 0;
+  const div = document.createElement('div');
+  div.style.height = Math.abs(bottom - pageHeight) + 'px';
+
+  // Apply additional user-defined styles
+  Object.keys((styles)).forEach((key) => {
+    div.style[key] = styles[key];
+  });
+
+  if (isDebugging && !styles.backgroundColor) div.style.backgroundColor = '#00009944';
   return div;
 };
 
