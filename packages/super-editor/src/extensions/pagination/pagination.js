@@ -166,7 +166,7 @@ const calculatePageBreaks = (view, editor) => {
   const decorations = [];
 
   // Add the initial header
-  const headerStyles = { borderRadius: '8px 8px 0 0' };
+  const headerStyles = { borderRadius: '8px 8px 0 0'  };
   const firstHeader = createPageBreak({ editor, suppressFooter: true, styles: headerStyles });
   decorations.push(Decoration.widget(0, firstHeader));
 
@@ -174,7 +174,8 @@ const calculatePageBreaks = (view, editor) => {
   generateInternalPageBreaks(doc, view, editor, decorations, PAGE_HEIGHT);
 
   // Add the final footer
-  const lastFooter = createPageBreak({ editor, suppressHeader: true });
+  const footerStyles = { borderRadius: '0 0 8px 8px' };
+  const lastFooter = createPageBreak({ editor, suppressHeader: true, styles: footerStyles });
   decorations.push(Decoration.widget(doc.content.size, lastFooter));
 
   return DecorationSet.create(state.doc, decorations);

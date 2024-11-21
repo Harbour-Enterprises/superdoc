@@ -95,6 +95,7 @@ const mountFooter = () => {
     height: props.sectionHeight + 'in',
     width: (pageSize.width * 96) - 1 + 'px',
     backgroundColor: props.isDebugging ? '#00009999' : 'none',
+    ...props.styles,
   }
 
   if (props.isDebugging) console.debug('headerContainerStyle', style);
@@ -145,7 +146,6 @@ const getSectionStyle = computed(() => (sectionType) => {
     borderTop: isHeader ? 'none' : '1px solid #EFEFEF',
     backgroundColor: 'white',
     overflow: 'hidden',
-    ...props.styles,
   };
 
   if (props.isDebugging === true) {
