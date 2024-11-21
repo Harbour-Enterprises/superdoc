@@ -132,14 +132,17 @@ const getSectionStyle = computed(() => (sectionType) => {
   const { pageSize, pageMargins } = props.data;
   const { marginTop, marginBottom } = getPadding(sectionType, pageMargins);
 
+  const isHeader = sectionType === 'header';
   const style = {
+    display: 'flex',
+    alignItems: isHeader ? 'flex-start' : 'flex-end',
     height: props.sectionHeight  - marginTop + 'in',
     paddingLeft: `${pageMargins.left}in`,
     paddingRight: `${pageMargins.right}in`,
     marginTop: marginTop + 'in',
     marginBottom: marginBottom + 'in',
-    borderBottom: sectionType === 'header' ? '1px solid #EFEFEF' : 'none',
-    borderTop: sectionType === 'footer' ? '1px solid #EFEFEF' : 'none',
+    borderBottom: isHeader ? '1px solid #EFEFEF' : 'none',
+    borderTop: isHeader ? 'none' : '1px solid #EFEFEF',
     backgroundColor: 'white',
     overflow: 'hidden',
     ...props.styles,
