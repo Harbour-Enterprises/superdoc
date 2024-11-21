@@ -66,7 +66,6 @@ const pollForMetaMapData = (ydoc, retries = 10, interval = 500) => {
   checkData();
 };
 
-
 const initializeData = async () => {
   let docx = null, media = null;
 
@@ -87,12 +86,20 @@ const initializeData = async () => {
   } 
 };
 
+const getExtensions = () => {
+  const extensions = getStarterExtensions();
+  if (!props.options.pagination) {
+    return extensions.filter(ext => ext.name !== 'pagination');
+  }
+  return extensions;
+};
+
 const initEditor = async (content, media = {}) => {
   editor.value = new Editor({
     mode: 'docx',
     element: editorElem.value,
     fileSource: props.fileSource,
-    extensions: getStarterExtensions(),
+    extensions: getExtensions(),
     documentId: props.documentId,
     content,
     media,
@@ -148,8 +155,6 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
   display: inline-block;
   position: relative;
-  min-width: 8.5in;
-  min-height: 11in;
 }
 .placeholder-editor {
   box-sizing: border-box;

@@ -253,6 +253,7 @@ const onCommentClicked = ({ conversation }) => {
 
 const editorOptions = (doc) => {
   const options = {
+    pagination: proxy.$superdoc.config.pagination,
     documentId: doc.id,
     user: proxy.$superdoc.user,
     onCreate: onEditorCreate,
@@ -652,7 +653,6 @@ const handlePdfClick = (e) => {
   position: relative;
   height: 100%;
   width: 100%;
-  overflow: auto;
 }
 
 .document {

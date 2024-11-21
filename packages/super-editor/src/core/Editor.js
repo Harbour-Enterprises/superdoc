@@ -481,34 +481,31 @@ export class Editor extends EventEmitter {
    */
   #generatePmData() {
     let doc;
+  
     try {
-      if (this.options.mode === 'docx') {
-        doc = createDocument(
-          this.converter,
-          this.schema,
-        );
-
-        // For headless mode, generate JSON from a fragment
-        if (this.options.fragment && this.options.isHeadless) {
-          doc = yXmlFragmentToProseMirrorRootNode(this.options.fragment, this.schema);
+      const { mode, fragment, isHeadless, content, loadFromSchema } = this.options;
+  
+      if (mode === 'docx') {
+        doc = createDocument(this.converter, this.schema);
+  
+        if (fragment && isHeadless) {
+          doc = yXmlFragmentToProseMirrorRootNode(fragment, this.schema);
           console.debug('🦋 [super-editor] Generated JSON from fragment:', doc);
         }
-      } else if (this.options.mode === 'text') {
-        if (this.options.content) {
-          doc = DOMParser.fromSchema(this.schema).parse(this.options.content);
+      } else if (mode === 'text') {
+        if (content) {
+          doc = loadFromSchema
+            ? this.schema.nodeFromJSON(content)
+            : DOMParser.fromSchema(this.schema).parse(content);
         } else {
           doc = this.schema.topNodeType.createAndFill();
         }
       }
     } catch (err) {
       console.error(err);
-
-      this.emit('contentError', {
-        editor: this,
-        error: err,
-      });
+      this.emit('contentError', { editor: this, error: err });
     }
-
+  
     return doc;
   }
 
@@ -563,25 +560,18 @@ export class Editor extends EventEmitter {
     const { pageSize, pageMargins } = this.converter.pageStyles ?? {};
     if (!pageSize || !pageMargins) return;
 
-    this.element.style.boxSizing = 'border-box';
-    this.element.style.width = pageSize.width + 'in';
     this.element.style.minWidth =  pageSize.width + 'in';
     this.element.style.maxWidth = pageSize.width + 'in';
-    this.element.style.minHeight = pageSize.height + 'in';
-    this.element.style.paddingTop = pageMargins.top + 'in';
-    this.element.style.paddingRight = pageMargins.right + 'in';
-    this.element.style.paddingBottom = pageMargins.bottom + 'in';
-    this.element.style.paddingLeft = pageMargins.left + 'in';
 
     proseMirror.style.outline = 'none';
     proseMirror.style.border = 'none';
-    proseMirror.style.padding = '0';
-    proseMirror.style.margin = '0';
-    proseMirror.style.width = '100%';
-    proseMirror.style.paddingBottom = pageMargins.bottom + 'in';
+    proseMirror.style.paddingLeft = pageMargins.left + 'in';
+    proseMirror.style.paddingRight = pageMargins.right + 'in';
+
+    /* For paginatino debugging */
+    // proseMirror.style.backgroundColor = '#0F00F344'
 
     const { typeface, fontSizePt } = this.converter.getDocumentDefaultStyles() ?? {};
-
     typeface && (this.element.style.fontFamily = typeface);
     fontSizePt && (this.element.style.fontSize = fontSizePt);
 

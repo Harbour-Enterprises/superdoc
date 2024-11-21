@@ -78,6 +78,10 @@
   height: 0;
 }
 
+.superdoc {
+  position: relative;
+}
+
 @media (max-width: 768px) {
 
 }

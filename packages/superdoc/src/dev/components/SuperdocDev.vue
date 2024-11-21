@@ -216,6 +216,7 @@ onMounted(async () => {
   box-shadow:0 0 5px hsla( 0,0%,0%,.05);
   transition: all 0.18s ease-out;
   margin: 50px;
+  overflow: hidden;
 }
 .superdoc .layers:hover {
   border: 1px solid #0160cc86;

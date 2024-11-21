@@ -98,6 +98,7 @@ export const paragraphNodeHandlerEntity = {
  */
 function getDefaultStyleDefinition(defaultStyleId, docx) {
   const result = { lineSpaceBefore: null, lineSpaceAfter: null };
+
   const styles = docx['word/styles.xml'];
   if (!styles) return result;
 

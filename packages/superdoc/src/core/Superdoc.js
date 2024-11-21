@@ -46,6 +46,8 @@ export class Superdoc extends EventEmitter {
 
     modules: {}, // Optional: Modules to load
 
+    pagination: true, // Optional: Whether to show pagination in SuperEditors
+
     // toolbar config
     toolbar: null, // Optional DOM element to render the toolbar in
     toolbarGroups: ['left', 'center', 'right'],

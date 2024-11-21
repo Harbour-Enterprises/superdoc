@@ -101,6 +101,16 @@ img.ProseMirror-separator {
   margin-bottom: 1.5px;
 }
 
+.ProseMirror {
+  width: 100%;
+  outline: none;
+  bordeR: none;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin: 0;
+  box-sizing: border-box;
+};
+
 /* Track changes */
 .ProseMirror .track-insert-dec,
 .ProseMirror .track-delete-dec,
