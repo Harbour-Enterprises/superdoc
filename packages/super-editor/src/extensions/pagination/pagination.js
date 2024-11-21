@@ -4,7 +4,7 @@ import { Decoration, DecorationSet } from 'prosemirror-view';
 import { createApp, h } from 'vue';
 import PageBreak from '@/components/PageBreak/PageBreak.vue';
 
-let isDebugging = true;
+let isDebugging = false;
 const paginationPluginKey = new PluginKey('paginationPlugin');
 
 export const Pagination = Extension.create({
