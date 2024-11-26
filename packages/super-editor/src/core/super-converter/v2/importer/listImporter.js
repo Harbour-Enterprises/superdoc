@@ -1,6 +1,7 @@
 import { carbonCopy } from "../../../utilities/carbonCopy.js";
 import { hasTextNode, parseProperties } from "./importerHelpers.js";
 import { preProcessNodesForFldChar } from "./paragraphNodeImporter.js";
+import { mergeTextNodes } from './mergeTextNodes.js';
 
 /**
  * @type {import("docxImporter").NodeHandler}
@@ -126,10 +127,21 @@ function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, li
       item.seen = true;
 
       const schemaElements = [];
-      schemaElements.push({
+
+      let parNode  = {
         type: 'paragraph',
         content: nodeListHandler.handler(elements, docx, insideTrackChange)?.filter(n => n)
-      });
+      };
+
+      // Normalize text nodes.
+      if (parNode.content) {
+        parNode = {
+          ...parNode,
+          content: mergeTextNodes(parNode.content),
+        };
+      }
+      
+      schemaElements.push(parNode);
 
       if (!(intLevel in listItemIndices)) listItemIndices[intLevel] = parseInt(start)
       else listItemIndices[intLevel] += 1;
@@ -176,7 +188,6 @@ function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, li
       break;
     };
   }
-
 
   return {
     type: overallListType || 'bulletList',

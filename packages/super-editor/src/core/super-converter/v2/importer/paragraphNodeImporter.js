@@ -1,6 +1,7 @@
 import { twipsToPixels } from "../../helpers.js";
 import { testForList } from "./listImporter.js";
 import { carbonCopy } from "../../../utilities/carbonCopy.js";
+import { mergeTextNodes } from './mergeTextNodes.js';
 
 /**
  * Special cases of w:p based on paragraph properties
@@ -79,6 +80,15 @@ export const handleParagraphNode = (nodes, docx, nodeListHandler, insideTrackCha
       };
     }
   }
+
+  // Normalize text nodes.
+  if (schemaNode && schemaNode.content) {
+    schemaNode = {
+      ...schemaNode,
+      content: mergeTextNodes(schemaNode.content),
+    };
+  }
+
   return { nodes: schemaNode ? [schemaNode] : [], consumed: 1 };
 }
 
