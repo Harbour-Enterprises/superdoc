@@ -94,7 +94,7 @@ export function handleTableNode(node, docx, nodeListHandler, insideTrackChange) 
     // TODO: What does this do?
     // const tblLook = tblPr.elements.find((el) => el.name === 'w:tblLook');
     const tblGrid = node.elements.find((el) => el.name === 'w:tblGrid');
-    const gridColumnWidths = tblGrid.elements?.map((el) => twipsToInches(el.attributes['w:w']));
+    const gridColumnWidths = tblGrid?.elements?.map((el) => twipsToInches(el.attributes['w:w']));
 
     const rows = node.elements.filter((el) => el.name === 'w:tr');
     

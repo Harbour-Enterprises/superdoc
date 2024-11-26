@@ -51,9 +51,11 @@ export function parseProperties(node, docx) {
   // If this is a paragraph, don't apply marks but apply attributes directly
   if (marks && node.name === 'w:p') {
     marks.forEach((mark) => {
-      const attrValue = Object.keys(mark.attrs)[0];
-      const value = mark.attrs[attrValue];
-      attributes[attrValue] = value;
+      const attrValue = Object.keys(mark.attrs ?? {})[0];
+      if (attrValue) {
+        const value = mark.attrs[attrValue];
+        attributes[attrValue] = value;
+      }
     });
   }
 
