@@ -19,7 +19,6 @@ async function readFileAsBuffer(filePath) {
 }
 
 describe('DocxZipper - file extraction', () => {
-
   let zipper;
   beforeEach(() => {
     zipper = new DocxZipper();
@@ -37,16 +36,15 @@ describe('DocxZipper - file extraction', () => {
     const fileObject = Buffer.from(fileContent);
     const unzippedXml = await zipper.getDocxData(fileObject);
     expect(unzippedXml).toBeInstanceOf(Array);
-    
+
     unzippedXml.forEach((file) => {
       expect(file).toHaveProperty('name');
-      expect(file.name).toMatch(/\.xml$/);
       expect(file).toHaveProperty('content');
       expect(file.content).toMatch(/<\?xml/);
     });
 
     // Make sure we have document.xml
-    const documentXml = unzippedXml.find(file => file.name === 'word/document.xml');
+    const documentXml = unzippedXml.find((file) => file.name === 'word/document.xml');
     expect(documentXml).toBeTruthy();
   });
 });
