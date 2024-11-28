@@ -996,11 +996,13 @@ function translateImageNode(params, imageSize) {
     h: pixelsToEmu(attrs.size.height),
   };
   
-  if (!imageId) {
+  if (params.node.type === 'image' && !imageId) {
+    const path = attrs.src?.split('word/')[1];
+    imageId = addNewImageRelationship(params, path);
+  } else if (params.node.type === 'fieldAnnotation' && !imageId) {
     const type = attrs.imageSrc?.split(';')[0].split('/')[1];
     const imageUrl = `media/${attrs.fieldId}.${type}`;
     imageId = addNewImageRelationship(params, imageUrl);
-
     params.media[`${attrs.fieldId}.${type}`] = attrs.imageSrc;
   }
   

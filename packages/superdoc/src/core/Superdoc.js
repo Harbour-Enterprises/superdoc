@@ -62,7 +62,11 @@ export class Superdoc extends EventEmitter {
     onCommentsUpdate: () => null,
     onAwarenessUpdate: () => null,
     onLocked: () => null,
-  }
+
+    // Image upload handler
+    // async (file) => url;
+    handleImageUpload: null,
+  };
 
   constructor(config) {
     super();

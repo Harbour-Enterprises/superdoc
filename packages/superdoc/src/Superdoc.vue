@@ -266,7 +266,8 @@ const editorOptions = (doc) => {
     ydoc: doc.ydoc,
     collaborationProvider: doc.provider || null,
     isNewFile: doc.isNewFile || false,
-  }
+    handleImageUpload: proxy.$superdoc.config.handleImageUpload,
+  };
 
   return options;
 };

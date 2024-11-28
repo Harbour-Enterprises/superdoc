@@ -5,7 +5,8 @@ import { undoDepth, redoDepth } from "prosemirror-history";
 import { makeDefaultItems } from './defaultItems';
 import { getActiveFormatting } from '@core/helpers/getActiveFormatting.js';
 import { vClickOutside } from '@harbour-enterprises/common';
-import Toolbar from './Toolbar.vue'
+import Toolbar from './Toolbar.vue';
+import { startImageUpload, getFileOpener } from '../../extensions/image/imageHelpers/index.js';
 
 export class SuperToolbar extends EventEmitter {
 
@@ -44,6 +45,23 @@ export class SuperToolbar extends EventEmitter {
 
     setColor: ({ item, argument }) => {
       this.#runCommandWithArgumentOnly({ item, argument });
+    },
+
+    startImageUpload: async ({ item, argument }) => {
+      if (!this.activeEditor) return;
+
+      let open = getFileOpener();
+      let result = await open();
+
+      if (!result?.file) {
+        return;
+      }
+
+      startImageUpload({
+        editor: this.activeEditor,
+        view: this.activeEditor.view,
+        file: result.file,
+      });
     },
   }
 

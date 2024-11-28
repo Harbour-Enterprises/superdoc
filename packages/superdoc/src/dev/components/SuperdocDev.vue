@@ -71,6 +71,7 @@ const init = async () => {
       // }
     },
     onEditorCreate,
+    // handleImageUpload: async (file) => url,
   }
 
   superdoc.value = new Superdoc(config);

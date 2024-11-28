@@ -76,7 +76,9 @@ export class Editor extends EventEmitter {
     onDocumentLocked: () => null,
     onFirstRender: () => null,
     onCollaborationReady: () => null,
-  }
+    // async (file) => url;
+    handleImageUpload: null,
+  };
 
   constructor(options) {
     super();

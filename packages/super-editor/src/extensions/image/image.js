@@ -1,18 +1,18 @@
 import { Node, Attribute } from '@core/index.js';
+import { ImagePlaceholderPlugin } from './imageHelpers/imagePlaceholderPlugin.js';
 
 export const Image = Node.create({
-
   name: 'image',
-
-  draggable: true,
 
   group: 'inline',
 
   inline: true,
 
+  draggable: true,
+
   addOptions() {
     return {
-      allowBase64: false,
+      allowBase64: true,
       htmlAttributes: {},
     }
   },
@@ -20,39 +20,53 @@ export const Image = Node.create({
   addStorage() {
     return {
       media: {},
-    }
+    };
   },
 
   addAttributes() {
     return {
       src: {
+        default: null,
         renderDOM: ({ src }) => {
-          return { src: this.storage.media[src] };
-        }
+          return { 
+            src: this.storage.media[src],
+          };
+        },
       },
-      alt: { default: null, },
-      title: { default: null, },
+
+      alt: { 
+        default: null, 
+      },
+
+      title: { 
+        default: null, 
+      },
+
       rId: {
         default: null,
         rendered: false,
       },
+
       originalPadding: {
         default: null,
         rendered: false,
       },
+
       size: {
+        default: {},
         renderDOM: ({ size }) => {
-          let style = 'display: "inline-block";';
-          const { width, height } = size;
+          let style = 'display: inline-block;';
+          let { width, height } = size ?? {};
           if (width) style += `width: ${width}px;`;
           if (height) style += `height: auto;`;
           return { style };
         }
       },
-      marginOffset: {
-        renderDOM: ({ marginOffset }) => {
-          const { left = 0, top = 0 } = marginOffset;
 
+      marginOffset: {
+        default: {},
+        renderDOM: ({ marginOffset }) => {
+          let { left = 0, top = 0 } = marginOffset ?? {};
           let style = '';
           if (left) style += `margin-left: ${left}px;`;
           if (top) style += `margin-top: ${top}px;`;
@@ -86,5 +100,10 @@ export const Image = Node.create({
       },
     }
   },
-
+  
+  addPmPlugins() {
+    return [
+      ImagePlaceholderPlugin(),
+    ];
+  },
 });

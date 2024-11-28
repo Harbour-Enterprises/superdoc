@@ -166,4 +166,17 @@ img.ProseMirror-separator {
   white-space: nowrap;
 }
 
+/* Image placeholder */
+.ProseMirror placeholder {
+  display: inline;
+  border: 1px solid #ccc;
+  color: #ccc;
+}
+
+.ProseMirror placeholder:after {
+  content: "☁";
+  font-size: 200%;
+  line-height: 0.1;
+  font-weight: bold;
+}
 `;

@@ -360,11 +360,11 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth) => {
   const image = useToolbarItem({
     type: 'button',
     name: 'image',
-    command: 'setImage',
+    command: 'startImageUpload',
     icon: 'fas fa-image',
     active: false,
     tooltip: "Image",
-    disabled: true,
+    disabled: false,
   });
 
   // alignment
