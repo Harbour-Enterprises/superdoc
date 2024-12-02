@@ -1,10 +1,12 @@
 import { defineStore } from 'pinia';
 import { ref, reactive, computed } from 'vue';
 import { useCommentsStore } from './comments-store';
+import { getFileObject } from '@harbour-enterprises/common';
 import useDocument from '@/composables/use-document';
 
 export const useSuperdocStore = defineStore('superdoc', () => {
 
+  const currentConfig = ref(null);
   const commentsStore = useCommentsStore();
   const documents = ref([]);
   const documentContainers = ref([]);
@@ -46,9 +48,10 @@ export const useSuperdocStore = defineStore('superdoc', () => {
     scrollLeft: 0,
   })
 
-  const init = (config) => {
+  const init = async (config) => {
     reset();
-    const { documents: docs, modules: configModules, user: configUser, users: configUsers } = config;
+    currentConfig.value = config;
+    const { documents: configDocs, modules: configModules, user: configUser, users: configUsers } = config;
 
     documentUsers.value = configUsers || [];
 
@@ -58,16 +61,64 @@ export const useSuperdocStore = defineStore('superdoc', () => {
     // Set up module config
     Object.assign(modules, configModules);
 
-    // Initialize document composables
-    docs.forEach((doc) => {
-      const smartDoc = useDocument(doc, config);
-      documents.value.push(smartDoc);
-    });
+    // Initialize documents
+    await initializeDocuments(configDocs);
 
     if ('comments' in modules) {
       commentsStore.suppressInternalExternal = modules.comments.suppressInternalExternal || false;
     }
     isReady.value = true;
+  };
+
+  /**
+   * Initialize the documents for this SuperDoc. Changes the store's documents array ref directly.
+   * @param {Array[Object]} docsToProcess The documents to process from the config
+   * @returns {Promise<void>}
+   */
+  const initializeDocuments = async (docsToProcess) => {
+    if (!docsToProcess) return [];
+
+    for (let doc of docsToProcess) {
+      try {
+        // Ensure the document object has data (ie: if loading from URL)
+        let docWithData = await _initializeDocumentData(doc);
+
+        // Create composable and append to our documents
+        const smartDoc = useDocument(docWithData, currentConfig.value);
+        documents.value.push(smartDoc);
+
+      } catch (e) {
+        console.warn('[superdoc] Error initializing document:', doc, 'with error:', e, 'Skipping document.');
+      };
+    }
+  };
+
+  /**
+   * Initialize the document data by fetching the file if necessary
+   * @param {Object} doc The document config
+   * @returns {Promise<Object>} The document object with data
+   */
+  const _initializeDocumentData = async (doc) => {
+
+    // If in collaboration mode, return the document as is
+    if (currentConfig.value?.modules.collaboration && !doc.isNewFile) {
+      return { ...doc, data: null, url: null, provider: doc.provider, socket: doc.socket };
+    }
+
+    // If we already have a File object, return it
+    else if (doc.data) return doc;
+
+    // If we don't have data, but have a URL and no type, we have an error
+    else if (!doc.data && doc.url && !doc.type) {
+      throw new Error('Document mime type must be specified when loading from URL');
+    }
+
+    // If we have a URL, fetch the file and return it
+    else if (doc.url && doc.type) {
+      const fileObject = await getFileObject(doc.url, doc.name || 'document', doc.type);
+      return { ...doc, data: fileObject };
+    }
+
   };
 
   const areDocumentsReady = computed(() => {

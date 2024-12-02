@@ -8,7 +8,7 @@ import { Doc as YDoc, Array as YArray } from 'yjs';
 import { v4 as uuidv4 } from 'uuid';
 import { HocuspocusProviderWebsocket } from "@hocuspocus/provider";
 
-import { DOCX, PDF, HTML, documentTypes } from '@harbour-enterprises/common';
+import { DOCX, PDF, HTML } from '@harbour-enterprises/common';
 import { SuperToolbar } from '@harbour-enterprises/super-editor';
 import { createAwarenessHandler, createProvider } from './collaboration/collaboration';
 import { createSuperdocVueApp } from './create-app';
@@ -81,11 +81,12 @@ export class Superdoc extends EventEmitter {
 
     this.version = __APP_VERSION__;
     this.superdocId = config.superdocId || uuidv4();
-    console.debug('🦋 [superdoc] Superdoc ID:', this.superdocId);
 
-    this.documents = this.#preprocessDocuments(this.config.documents);
-    await this.#initCollaboration(this.config.modules.collaboration);
-    this.config.documents = this.documents;
+    // Preprocess documents to transform URLs into file objects
+    this.documents = this.config.documents;
+
+    // Initialize collaboration if configured
+    await this.#initCollaboration(this.config.modules);
 
     this.#initVueApp();
     this.#initListeners();
@@ -146,30 +147,13 @@ export class Superdoc extends EventEmitter {
     this.on('locked', this.config.onLocked);
   }
 
-  #preprocessDocuments(documents) {
-    console.debug('🦋 [superdoc] Preprocessing documents:', documents);
-    if (!documents) return [];
 
-    return documents.map((doc) => {
-      const { data: documentFile } = doc;
-
-      let documentType;
-      if (doc.type) {
-        documentType = documentTypes[doc.type];
-      }
-      else if (documentFile) {
-        documentType = documentFile?.type;
-      }
-
-      return { ...doc, type: documentType };
-    });
-  }
 
   /* **
     * Initialize collaboration if configured
     * @param {Object} config
   */
-  async #initCollaboration(collaborationModuleConfig) {
+  async #initCollaboration({ collaboration: collaborationModuleConfig } = {}) {
     if (!collaborationModuleConfig) return;
 
     this.socket = new HocuspocusProviderWebsocket({
