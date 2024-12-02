@@ -83,32 +83,32 @@ export class Superdoc extends EventEmitter {
     this.superdocId = config.superdocId || uuidv4();
     console.debug('🦋 [superdoc] Superdoc ID:', this.superdocId);
 
-    this.documents = this.#preprocessDocuments(config.documents);
-    await this.#initCollaboration(config.modules.collaboration);
-    config.documents = this.documents;
+    this.documents = this.#preprocessDocuments(this.config.documents);
+    await this.#initCollaboration(this.config.modules.collaboration);
+    this.config.documents = this.documents;
 
     this.#initVueApp();
     this.#initListeners();
 
-    this.user = config.user; // The current user
-    this.users = config.users || []; // All users who have access to this superdoc
+    this.user = this.config.user; // The current user
+    this.users = this.config.users || []; // All users who have access to this superdoc
     this.socket = null;
 
     // Toolbar
-    this.toolbarElement = config.toolbar;
+    this.toolbarElement = this.config.toolbar;
     this.toolbar = null;
-    this.isDev = config.isDev || false;
+    this.isDev = this.config.isDev || false;
 
-    this.superdocStore.init(config);
+    this.superdocStore.init(this.config);
     this.activeEditor = null;
 
-    this.app.mount(config.selector);
+    this.app.mount(this.config.selector);
 
     // Required editors
     this.readyEditors = 0;
 
-    this.isLocked = config.isLocked || false;
-    this.lockedBy = config.lockedBy || null;
+    this.isLocked = this.config.isLocked || false;
+    this.lockedBy = this.config.lockedBy || null;
 
     // If a toolbar element is provided, render a toolbar
     this.addToolbar(this);
