@@ -300,6 +300,18 @@ export class Superdoc extends EventEmitter {
     });
   }
 
+  getHTML() {
+    const editors = []
+    this.superdocStore.documents.forEach((doc) => {
+      const editor = doc.getEditor();
+      if (editor) {
+        editors.push(editor);
+      }
+    });
+
+    return editors.map((editor) => editor.getHTML()).join('\n');
+  }
+
   /**
    * Lock the current superdoc
    * @param {Boolean} isLocked 
