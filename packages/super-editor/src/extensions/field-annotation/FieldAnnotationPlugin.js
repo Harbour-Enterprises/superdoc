@@ -1,4 +1,5 @@
 import { Plugin, PluginKey } from 'prosemirror-state';
+import { Slice, Fragment } from 'prosemirror-model';
 import { trackFieldAnnotationsDeletion } from './fieldAnnotationHelpers/trackFieldAnnotationsDeletion.js';
 
 export const FieldAnnotationPlugin = (options = {}) => {
@@ -63,6 +64,33 @@ export const FieldAnnotationPlugin = (options = {}) => {
 
         return false;
       },
+      
+      handlePaste(view, event, slice) {
+        const content = slice.content.content.filter(item => item.type.name === 'fieldAnnotation')
+        if (content.length) {
+          editor.emit('fieldAnnotationPaste', {
+            content,
+            editor,
+          });
+        }
+        return false;
+      },
+
+      transformPasted(slice) {
+        const addMultipleAttributeForImageField = (node) => {
+          if (node.attrs.fieldType === 'IMAGEINPUT') {
+            return node.type.create(
+                {
+                  ...node.attrs,
+                  multiple: true,
+                },
+                node.content
+            );
+          }
+          return node.copy(node.content);
+        }
+        return mapSlice(slice, addMultipleAttributeForImageField);
+      },
 
       handleDOMEvents: {
         dragstart: (view, event) => {
@@ -113,4 +141,30 @@ function handleDropOutside({
       pos: coordinates.pos,
     });
   }
+}
+
+/**
+ * Helpers to transform pasted node
+ * Used to modify multiple attribute for image annotations
+ * 
+ * https://discuss.prosemirror.net/t/modify-specific-node-on-copy-and-paste-in-clipboard/4901
+ */
+
+function mapFragment(fragment, callback) {
+  return Fragment.fromArray(fragment.content.map((node) => {
+    if (node.content.childCount > 0) {
+      return node.type.create(
+        node.attrs,
+        mapFragment(node.content, callback)
+      );
+    }
+
+    return callback(node);
+  })
+);
+}
+
+function mapSlice(slice, callback) {
+  const fragment = mapFragment(slice.content, callback);
+  return new Slice(fragment, slice.openStart, slice.openEnd);
 }

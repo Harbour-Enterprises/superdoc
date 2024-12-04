@@ -178,6 +178,11 @@ export const FieldAnnotation = Node.create({
         default: true,
         rendered: false,
       },
+      
+      multiple: {
+        default: false,
+        rendered: false,
+      }
     };
   },
 
@@ -337,6 +342,28 @@ export const FieldAnnotation = Node.create({
 
         return true;
       },
+
+      /**
+       * Update particular annotation's attributes.
+       * @param annotation field annotation node to be updated.
+       * @param attrs The attributes.
+       * 
+       * Used for a case when multiple annotations for one input presented
+       */
+      updateFieldAnnotation: (annotation, attrs = {}) => ({
+        dispatch,
+        commands,
+      }) => {
+        if (!annotation) {
+          return true;
+        }
+
+        if (dispatch) {
+          return commands.updateFieldAnnotationsAttributes([annotation], attrs);
+        }
+
+        return true;
+      },
       
       /**
        * Update the attributes of annotations.
@@ -401,6 +428,45 @@ export const FieldAnnotation = Node.create({
             });
         }
         
+        return true;
+      },
+
+      /**
+       * Delete a portion of annotations associated with a field.
+       * @param fieldIdOrArray The field ID or array of field IDs.
+       * @param end index at which to end extraction
+       * @example
+       * editor.commands.deleteFieldAnnotations('123')
+       * @example
+       * editor.commands.deleteFieldAnnotations(['123', '456'])
+       */
+      sliceFieldAnnotations: (fieldIdOrArray, end) => ({
+        dispatch,
+        state,
+        tr,
+      }) => {
+        let annotations = findFieldAnnotationsByFieldId(fieldIdOrArray, state);
+
+        if (!annotations.length) {
+          return true;
+        }
+
+        if (dispatch) {
+          annotations
+            .forEach((annotation, index) => {
+              if (index >= end) {
+                let { pos, node } = annotation;
+                let newPosFrom = tr.mapping.map(pos);  // map the position between transaction steps
+                let newPosTo = tr.mapping.map(pos + node.nodeSize);
+
+                let currentNode = tr.doc.nodeAt(newPosFrom);
+                if (node.eq(currentNode)) {
+                  tr.delete(newPosFrom, newPosTo);
+                }
+              }
+            });
+        }
+
         return true;
       },
 
