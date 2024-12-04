@@ -178,6 +178,19 @@ export const FieldAnnotation = Node.create({
         default: true,
         rendered: false,
       },
+
+      meta: {
+        default: {},
+        parseDOM: (elem) => {
+          return parseMeta(elem.getAttribute('data-meta'));
+        },
+        renderDOM: (attrs) => {
+          if (!attrs.meta) return {};
+          return {
+            'data-meta': JSON.stringify(attrs.meta),
+          };
+        },
+      },
     };
   },
 
@@ -570,3 +583,15 @@ export const FieldAnnotation = Node.create({
     ];
   },
 });
+
+
+function parseMeta(str) {
+  if (!str) return {};
+  let meta;
+  try {
+    meta = JSON.parse(str);
+  } catch (error) {
+    return {};
+  }
+  return meta;
+};
