@@ -508,7 +508,6 @@ function translateList(params) {
     })
   })
   
-  //debugger
   return listNodes;
 }
 

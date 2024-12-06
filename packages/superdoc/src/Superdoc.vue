@@ -1,6 +1,6 @@
 <script setup>
 import '@harbour-enterprises/common/styles/common-styles.css';
-import { getCurrentInstance, ref, onMounted, onBeforeUnmount, nextTick, computed, reactive } from 'vue'
+import { getCurrentInstance, ref, onMounted, onBeforeUnmount, nextTick, computed, reactive, watch } from 'vue'
 import { storeToRefs } from 'pinia';
 
 import PdfViewer from './components/PdfViewer/PdfViewer.vue';
@@ -73,7 +73,7 @@ const handleDocumentReady = (documentId, container) => {
     isReady.value = true;
     nextTick(() => initialCheck());
   }
-  proxy.$superdoc.broadcastDocumentReady();
+  proxy.$superdoc.broadcastPdfDocumentReady();
 }
 
 const handleToolClick = (tool) => {
@@ -291,6 +291,10 @@ const showActiveSelection = computed(() => {
   !getConfig?.readOnly && selectionPosition.value
 });
 
+watch(showCommentsSidebar, (value) => {
+  proxy.$superdoc.broadcastSidebarToggle(value);
+});
+
 onMounted(() => {
   if (isCommentsEnabled.value && !modules.comments.readOnly) {
     document.addEventListener('mousedown', handleDocumentMouseDown);
@@ -328,6 +332,7 @@ const getSelectionPosition = computed(() => {
 const handleSelectionChange = (selection) => {
   if (!selection.selectionBounds || !isCommentsEnabled.value) return;
 
+  const isMobileView = window.matchMedia('(max-width: 768px)').matches;
 
   updateSelection({
     startX: selection.selectionBounds.left,
@@ -355,6 +360,7 @@ const handleSelectionChange = (selection) => {
   }
 
   toolsMenuPosition.top = top - 20 + 'px';
+  toolsMenuPosition.right = isMobileView ? '0' : '-25px';
 }
 
 const resetSelection = () => {
@@ -453,7 +459,7 @@ const handlePdfClick = (e) => {
   <div class="layers" ref="layers">
 
     <!-- Floating tools menu (shows up when user has text selection)-->
-    <div  v-if="showToolsFloatingMenu" class="tools" :style="toolsMenuPosition">
+    <div v-if="showToolsFloatingMenu" class="tools" :style="toolsMenuPosition">
       <i
           class="fas fa-comment fa-tool-icon"
           data-id="is-tool"
@@ -586,9 +592,6 @@ const handlePdfClick = (e) => {
   height: 100%;
   position: relative;
 }
-.layers {
-  position: relative;
-}
 
 /* Document Styles */
 .docx {
@@ -652,8 +655,6 @@ const handlePdfClick = (e) => {
 .layers {
   position: relative;
   height: 100%;
-  width: 100%;
-  overflow: auto;
 }
 
 .document {

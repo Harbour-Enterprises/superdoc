@@ -62,6 +62,8 @@ export class Superdoc extends EventEmitter {
     onCommentsUpdate: () => null,
     onAwarenessUpdate: () => null,
     onLocked: () => null,
+    onPdfDocumentReady: () => null,
+    onSidebarToggle: () => null,
 
     // Image upload handler
     // async (file) => url;
@@ -142,6 +144,8 @@ export class Superdoc extends EventEmitter {
     this.on('comments-update', this.config.onCommentsUpdate);
     this.on('awareness-update', this.config.onAwarenessUpdate);
     this.on('locked', this.config.onLocked);
+    this.on('pdf-document-ready', this.config.onPdfDocumentReady);
+    this.on('sidebar-toggle', this.config.onSidebarToggle);
   }
 
 
@@ -193,8 +197,8 @@ export class Superdoc extends EventEmitter {
     return processedDocuments;
   }
 
-  broadcastDocumentReady() {
-    this.emit('document-ready');
+  broadcastPdfDocumentReady() {
+    this.emit('pdf-document-ready');
   }
 
   broadcastReady() {
@@ -216,6 +220,10 @@ export class Superdoc extends EventEmitter {
   broadcastComments(type, data) {
     this.log('[comments] Broadcasting:', type, data);
     this.emit('comments-update', type, data);
+  }
+  
+  broadcastSidebarToggle(isOpened) {
+    this.emit('sidebar-toggle', isOpened);
   }
 
   log(...args) {

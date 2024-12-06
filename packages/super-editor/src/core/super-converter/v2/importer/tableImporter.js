@@ -297,8 +297,7 @@ function processTableBorders(borderElements) {
     if (rowBorderNames.includes(borderName)) rowBorders[borderName] = attrs;
     borders[borderName] = attrs;
   });
-
-  //debugger
+  
   return {
     borders,
     rowBorders
