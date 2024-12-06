@@ -35,6 +35,7 @@ export default defineConfig(({ mode, command}) => {
           'toolbar': '@harbour-enterprises/super-editor/toolbar',
           'super-input': '@harbour-enterprises/super-editor/super-input',
           'common': '@harbour-enterprises/common',
+          'zipper': '@harbour-enterprises/super-editor/zipper',
         },
         external: [
           'yjs',

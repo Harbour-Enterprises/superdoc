@@ -25,6 +25,9 @@
     "./super-editor": {
       "import": "./dist/super-editor.es.js"
     },
+    "./zipper": {
+      "import": "./dist/zipper.es.js"
+    },
     "./style.css": "./dist/style.css"
   },
   "main": "./dist/super-editor.es.js",

@@ -42,6 +42,7 @@ export default defineConfig(({ mode }) => {
           'docx-zipper': '@core/DocxZipper',
           'toolbar': '@components/toolbar/Toolbar.vue',
           'super-input': '@components/SuperInput.vue',
+          'zipper': '@core/super-converter/zipper.js',
         },
         output: {
           globals: {

@@ -7,7 +7,7 @@ export const Link = Mark.create({
 
   keepOnSplit: false,
 
-  exitable: true,
+  inclusive: false,
 
   addOptions() {
     return {

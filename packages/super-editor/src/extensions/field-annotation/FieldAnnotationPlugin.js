@@ -1,4 +1,5 @@
 import { Plugin, PluginKey } from 'prosemirror-state';
+import { trackFieldAnnotationsDeletion } from './fieldAnnotationHelpers/trackFieldAnnotationsDeletion.js';
 
 export const FieldAnnotationPlugin = (options = {}) => {
   let { 
@@ -8,6 +9,18 @@ export const FieldAnnotationPlugin = (options = {}) => {
 
   return new Plugin({
     key: new PluginKey('fieldAnnotation'),
+
+    state: {
+      init() {
+        return null;
+      },
+
+      apply(tr, prevState) {
+        trackFieldAnnotationsDeletion(editor, tr);
+        
+        return prevState;
+      },
+    },
     
     props: {
       handleDrop(view, event, slice, moved) {

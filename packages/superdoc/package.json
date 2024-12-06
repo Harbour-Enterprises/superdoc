@@ -1,7 +1,7 @@
 {
   "name": "@harbour-enterprises/superdoc",
   "type": "module",
-  "version": "0.1.32",
+  "version": "0.1.35",
   "license": "AGPL-3.0",
   "readme": "../../README.md",
   "files": [
@@ -22,6 +22,9 @@
     },
     "./common": {
       "import": "./dist/common.es.js"
+    },
+    "./zipper": {
+      "import": "./dist/zipper.es.js"
     },
     "./style.css": "./dist/style.css"
   },

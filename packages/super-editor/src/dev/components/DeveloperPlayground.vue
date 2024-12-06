@@ -147,6 +147,10 @@ const attachAnnotationEventHandlers = () => {
   activeEditor?.on('fieldAnnotationSelected', (params) => {
     console.log('fieldAnnotationSelected', { params });
   });
+
+  activeEditor?.on('fieldAnnotationDeleted', (params) => {
+    console.log('fieldAnnotationDeleted', { params });
+  });
 };
 /* Inputs pane and field annotations */
 
