@@ -309,7 +309,7 @@ export class Superdoc extends EventEmitter {
       }
     });
 
-    return editors.map((editor) => editor.getHTML()).join('\n');
+    return editors.map((editor) => editor.getHTML());
   }
 
   /**
