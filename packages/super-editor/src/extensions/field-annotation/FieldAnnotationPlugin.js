@@ -76,22 +76,6 @@ export const FieldAnnotationPlugin = (options = {}) => {
         return false;
       },
 
-      transformPasted(slice) {
-        const addMultipleAttributeForImageField = (node) => {
-          if (node.attrs.fieldType === 'IMAGEINPUT') {
-            return node.type.create(
-                {
-                  ...node.attrs,
-                  multiple: true,
-                },
-                node.content
-            );
-          }
-          return node.copy(node.content);
-        }
-        return mapSlice(slice, addMultipleAttributeForImageField);
-      },
-
       handleDOMEvents: {
         dragstart: (view, event) => {
           if (!event.target) return false;
@@ -141,30 +125,4 @@ function handleDropOutside({
       pos: coordinates.pos,
     });
   }
-}
-
-/**
- * Helpers to transform pasted node
- * Used to modify multiple attribute for image annotations
- * 
- * https://discuss.prosemirror.net/t/modify-specific-node-on-copy-and-paste-in-clipboard/4901
- */
-
-function mapFragment(fragment, callback) {
-  return Fragment.fromArray(fragment.content.map((node) => {
-    if (node.content.childCount > 0) {
-      return node.type.create(
-        node.attrs,
-        mapFragment(node.content, callback)
-      );
-    }
-
-    return callback(node);
-  })
-);
-}
-
-function mapSlice(slice, callback) {
-  const fragment = mapFragment(slice.content, callback);
-  return new Slice(fragment, slice.openStart, slice.openEnd);
 }

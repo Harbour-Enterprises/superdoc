@@ -179,9 +179,15 @@ export const FieldAnnotation = Node.create({
         rendered: false,
       },
       
-      multiple: {
+      multipleImage: {
         default: false,
-        rendered: false,
+        parseDOM: (elem) => elem.getAttribute('data-multiple-image'),
+        renderDOM: (attrs) => {
+          if (!attrs.multipleImage) return {};
+          return {
+            'data-multiple-image': attrs.multipleImage,
+          };
+        },
       }
     };
   },
@@ -436,9 +442,9 @@ export const FieldAnnotation = Node.create({
        * @param fieldIdOrArray The field ID or array of field IDs.
        * @param end index at which to end extraction
        * @example
-       * editor.commands.deleteFieldAnnotations('123')
+       * editor.commands.sliceFieldAnnotations('123', 5) - will remove a portion of annotations array starting from index 6
        * @example
-       * editor.commands.deleteFieldAnnotations(['123', '456'])
+       * editor.commands.sliceFieldAnnotations(['123', '456'], 5)
        */
       sliceFieldAnnotations: (fieldIdOrArray, end) => ({
         dispatch,

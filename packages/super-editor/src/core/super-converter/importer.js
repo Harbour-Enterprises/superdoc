@@ -1204,6 +1204,7 @@ export class DocxImporter {
     const fieldType = sdtPr?.elements.find((el) => el.name === 'w:fieldType')?.attributes['w:val'];
     const type = sdtPr?.elements.find((el) => el.name === 'w:fieldTypeShort')?.attributes['w:val'];
     const fieldColor = sdtPr?.elements.find((el) => el.name === 'w:fieldColor')?.attributes['w:val'];
+    const isMultipleImage = sdtPr?.elements.find((el) => el.name === 'w:fieldMultipleImage')?.attributes['w:val'];
 
     const attrs = {
       type,
@@ -1211,6 +1212,7 @@ export class DocxImporter {
       displayLabel: alias?.attributes['w:val'],
       fieldType,
       fieldColor,
+      multipleImage: isMultipleImage
     }
   
     const result = {

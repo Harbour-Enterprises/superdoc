@@ -1318,6 +1318,13 @@ function translateFieldAnnotation(params) {
               'xmlns:w': customXmlns,
               'w:val': attrs.fieldColor,
             }
+          },
+          {
+            name: 'w:fieldMultipleImage',
+            attributes: {
+              'xmlns:w': customXmlns,
+              'w:val': attrs.multipleImage,
+            }
           }
         ]
       },
