@@ -1001,9 +1001,10 @@ function translateImageNode(params, imageSize) {
     imageId = addNewImageRelationship(params, path);
   } else if (params.node.type === 'fieldAnnotation' && !imageId) {
     const type = attrs.imageSrc?.split(';')[0].split('/')[1];
-    const imageUrl = `media/${attrs.fieldId}.${type}`;
+    const hash = generateDocxRandomId(4);
+    const imageUrl = `media/${attrs.fieldId}_${hash}.${type}`;
     imageId = addNewImageRelationship(params, imageUrl);
-    params.media[`${attrs.fieldId}.${type}`] = attrs.imageSrc;
+    params.media[`${attrs.fieldId}_${hash}.${type}`] = attrs.imageSrc;
   }
   
   const inlineAttrs = attrs.originalPadding || {
