@@ -16,7 +16,7 @@ export function getActiveFormatting(editor) {
     marksToProcess.push({ name: key, attrs })
   })
 
-  const hasPendingFormatting = !!editor.storage.formatCommands.storedStyle;
+  const hasPendingFormatting = !!editor.storage.formatCommands?.storedStyle;
   if (hasPendingFormatting) marksToProcess.push({ name: 'copyFormat', attrs: true });
   return marksToProcess;
 };
