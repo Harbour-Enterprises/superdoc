@@ -7,7 +7,8 @@ export function findRemovedFieldAnnotations(tr) {
     !tr.steps.length ||
     (tr.meta && !Object.keys(tr.meta).every((meta) => ['inputType', 'uiEvent', 'paste'].includes(meta))) ||
     ['historyUndo', 'historyRedo'].includes(tr.getMeta('inputType')) ||
-    ['drop'].includes(tr.getMeta('uiEvent'))
+    ['drop'].includes(tr.getMeta('uiEvent')) ||
+    tr.getMeta('fieldAnnotationUpdate') === true
   ) {
     return removedNodes;
   }
