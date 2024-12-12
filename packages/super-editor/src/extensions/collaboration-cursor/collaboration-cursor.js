@@ -28,16 +28,29 @@ export const CollaborationCursor = Extension.create({
     if (!provider) return [];
 
     // Track initial users
-    this.storage.users = onAwarenessUpdate(provider);
+    this.storage.users = onAwarenessUpdate(provider, this.editor.options.colors);
 
     // Set the awareness update handler
-    provider.awareness.on('update', () => onAwarenessUpdate(provider));
-    return [yCursorPlugin(provider.awareness)];
-
+    provider.awareness.on('update', () => {
+      this.storage.users = onAwarenessUpdate(provider, this.editor.options.colors);
+    });
+    return [yCursorPlugin(provider.awareness, { cursorBuilder: customCursors })];
   },
 });
 
-const onAwarenessUpdate = (provider) => {
+const onAwarenessUpdate = (provider, colors) => {
   if (!provider) return;
-  return awarenessStatesToArray(provider.awareness.states)
+  return awarenessStatesToArray(provider.awareness.states, colors)
+}
+
+const customCursors = (user) => {
+  const cursor = document.createElement('span')
+  cursor.classList.add('ProseMirror-yjs-cursor')
+  cursor.setAttribute('style', `border-color: ${user.color}`)
+
+  const userDiv = document.createElement('div')
+  userDiv.setAttribute('style', `background-color: ${user.color}`)
+  userDiv.insertBefore(document.createTextNode(user.name), null)
+  cursor.insertBefore(userDiv, null)
+  return cursor
 }

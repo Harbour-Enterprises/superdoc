@@ -9,7 +9,6 @@ export const useSuperdocStore = defineStore('superdoc', () => {
   const currentConfig = ref(null);
   const commentsStore = useCommentsStore();
   const documents = ref([]);
-  const documentContainers = ref([]);
   const documentBounds = ref([]);
   const pages = reactive({});
   const documentUsers = ref([]);
@@ -32,7 +31,6 @@ export const useSuperdocStore = defineStore('superdoc', () => {
 
   const reset = () => {
     documents.value = [];
-    documentContainers.value = [];
     documentBounds.value = [];
     Object.assign(pages, {});
     documentUsers.value = [];
@@ -160,7 +158,6 @@ export const useSuperdocStore = defineStore('superdoc', () => {
   return {
     commentsStore,
     documents,
-    documentContainers,
     documentBounds,
     pages,
     documentUsers,
@@ -181,6 +178,7 @@ export const useSuperdocStore = defineStore('superdoc', () => {
 
     // Actions
     init,
+    reset,
     handlePageReady,
     getDocument,
     getPageBounds,

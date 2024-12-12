@@ -10,11 +10,11 @@ import { Doc as YDoc } from 'yjs';
  * @param {*} states The awareness states
  * @returns {void}
  */
-function createAwarenessHandler(context, states) {
+function createAwarenessHandler(context, states, colors) {
   // Context is the superdoc instance
   // Since co-presence is handled outside of superdoc,
   // we need to emit an awareness-update event
-  context.emit('awareness-update', awarenessStatesToArray(states));
+  context.emit('awareness-update', awarenessStatesToArray(states, colors));
 }
 
 /**
@@ -28,10 +28,10 @@ function createAwarenessHandler(context, states) {
  * @param {string} param.documentId The document ID
  * @returns {Object} The provider and socket
  */
-function createProvider({ config, user, documentId, socket }) {
+function createProvider({ config, user, documentId, socket, superdocInstance }) {
   config.providerType = 'hocuspocus';
   const providers = {
-    hocuspocus: () => createHocuspocusProvider({ config, user, documentId, socket }),
+    hocuspocus: () => createHocuspocusProvider({ config, user, documentId, socket, superdocInstance }),
   };
   return providers[config.providerType]();
 };
@@ -45,7 +45,7 @@ function createProvider({ config, user, documentId, socket }) {
  * @param {string} param.documentId The document ID
  * @returns {Object} The provider and socket
  */
-function createHocuspocusProvider({ config, user, documentId, socket }) {
+function createHocuspocusProvider({ config, user, documentId, socket, superdocInstance }) {
   const ydoc = new YDoc({ gc: false });
   const provider = new HocuspocusProvider({
     websocketProvider: socket,
@@ -53,24 +53,33 @@ function createHocuspocusProvider({ config, user, documentId, socket }) {
     document: ydoc,
     token: config.token || '',
     onAuthenticationFailed,
-    onConnect,
-    onDisconnect,
+    onConnect: () => onConnect(superdocInstance),
+    onDisconnect: () => onDisconnect(superdocInstance),
   });
-
+  
   provider.setAwarenessField('user', user);
   return { provider, ydoc };
 };
 
 const onAuthenticationFailed = (data) => {
   console.warn('🔒 [superdoc] Authentication failed', data);
-}
+};
 
-const onConnect = () => {
-  console.warn('🔌 [superdoc] Connected');
-}
+const getEditor = (superdocInstance) => {
+  return superdocInstance.superdocStore.documents[0].getEditor();
+};
 
-const onDisconnect = (data) => {
-  console.warn('🔌 [superdoc] Disconnected', data);
-}
+const onConnect = (superdocInstance) => {
+  const editor = getEditor(superdocInstance);
+  console.warn('🔌 [superdoc] Connected -- ', superdocInstance.config.documents[0]);
+  if (superdocInstance.config.documents[0]?.hasDisconnected) editor?.view?.destroy();
+};
+
+const onDisconnect = (superdocInstance) => {
+  console.warn('🔌 [superdoc] Disconnected', superdocInstance.config.documents[0]);
+  const editor = getEditor(superdocInstance);
+  superdocInstance.config.documents[0].hasDisconnected = true;
+  editor?.view?.destroy();
+};
 
 export { createAwarenessHandler, createProvider };

@@ -1,12 +1,12 @@
 import EventEmitter from 'eventemitter3'
 import { createApp } from 'vue'
 import { undoDepth, redoDepth } from "prosemirror-history";
-
 import { makeDefaultItems } from './defaultItems';
 import { getActiveFormatting } from '@core/helpers/getActiveFormatting.js';
 import { vClickOutside } from '@harbour-enterprises/common';
 import Toolbar from './Toolbar.vue';
 import { startImageUpload, getFileOpener } from '../../extensions/image/imageHelpers/index.js';
+import { findParentNode } from '@helpers/index.js';
 
 export class SuperToolbar extends EventEmitter {
 
@@ -48,8 +48,6 @@ export class SuperToolbar extends EventEmitter {
     },
 
     startImageUpload: async ({ item, argument }) => {
-      if (!this.activeEditor) return;
-
       let open = getFileOpener();
       let result = await open();
 
@@ -62,6 +60,40 @@ export class SuperToolbar extends EventEmitter {
         view: this.activeEditor.view,
         file: result.file,
       });
+    },
+
+    increaseTextIndent: ({ item, argument }) => {
+      let command = item.command;
+      let { state } = this.activeEditor;
+      let listItem = findParentNode((node) => node.type.name === 'listItem')(state.selection);
+
+      if (listItem) {
+        return this.activeEditor.chain()
+          .sinkListItem('listItem')
+          .updateOrderedListStyleType()
+          .run();
+      }
+      
+      if (command in this.activeEditor.commands) {
+        this.activeEditor.commands[command](argument);
+      }
+    },
+
+    decreaseTextIndent: ({ item, argument }) => {
+      let command = item.command;
+      let { state } = this.activeEditor;
+      let listItem = findParentNode((node) => node.type.name === 'listItem')(state.selection);
+
+      if (listItem) {
+        return this.activeEditor.chain()
+          .liftListItem('listItem')
+          .updateOrderedListStyleType()
+          .run();
+      }
+
+      if (command in this.activeEditor.commands) {
+        this.activeEditor.commands[command](argument);
+      }
     },
   }
 
@@ -86,6 +118,7 @@ export class SuperToolbar extends EventEmitter {
     this.app.config.globalProperties.$toolbar = this;
     if (el) this.toolbar = this.app.mount(el);
     this.activeEditor = config.editor || null;
+
     this.#updateToolbarState();
   }
 
@@ -121,13 +154,24 @@ export class SuperToolbar extends EventEmitter {
     this.#updateToolbarState();
   }
 
+  #initDefaultFonts() {
+    if (!this.activeEditor || !this.activeEditor.converter) return;
+    const { typeface = 'Arial', fontSizePt = 12 } = this.activeEditor.converter.getDocumentDefaultStyles() ?? {};
+    const fontSizeItem = this.toolbarItems.find(item => item.name.value === 'fontSize');
+    fontSizeItem.defaultLabel.value = fontSizePt;
+
+    const fontFamilyItem = this.toolbarItems.find(item => item.name.value === 'fontFamily');
+    fontFamilyItem.defaultLabel.value = typeface;
+  }
+
   /**
    * Update the toolbar state. Expects a list of marks in the form: { name, attrs }
    * @param {Object} marks
    */
   #updateToolbarState() {
     this.#updateToolbarHistory();
-  
+    this.#initDefaultFonts();
+
     // Decativate toolbar items if no active editor
     // This will skip buttons that are marked as allowWithoutEditor
     if (!this.activeEditor || this.documentMode === 'viewing') return this.#deactivateAll();
@@ -186,15 +230,15 @@ export class SuperToolbar extends EventEmitter {
 
     this.log('(emmitCommand) Command:', command, item, argument);
 
-    // Check if we have a custom or overloaded command defined
-    if (command in this.#interceptedCommands) {
-      return this.#interceptedCommands[command]({ item, argument });
-    }
-  
     // Attempt to run the command on the active editor.
     if (!this.activeEditor) {
       this.log('(emmitCommand) No active editor');
       return;
+    }
+
+    // Check if we have a custom or overloaded command defined
+    if (command in this.#interceptedCommands) {
+      return this.#interceptedCommands[command]({ item, argument });
     }
 
     if (command in this.activeEditor.commands) {

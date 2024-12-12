@@ -730,7 +730,7 @@ function generateTableBorders(node) {
         'w:val': 'single',
         'w:sz': pixelsToEightPoints(border.size),
         'w:space': border.space || 0,
-        'w:color': border.color.substring(1),
+        'w:color': border?.color?.substring(1) || '000000'
       }
     }
     elements.push(borderElement);

@@ -129,11 +129,11 @@ class SuperConverter {
 
     const defaults = styles.elements[0].elements.find((el) => el.name === 'w:docDefaults');
 
-    // TODO: Check if we need this
     // const pDefault = defaults.elements.find((el) => el.name === 'w:pPrDefault');
 
     // Get the run defaults for this document - this will include font, theme etc.
     const rDefault = defaults.elements.find((el) => el.name === 'w:rPrDefault');
+
     if ('elements' in rDefault) {
       const rElements = rDefault.elements[0].elements
       const fontThemeName = rElements.find((el) => el.name === 'w:rFonts')?.attributes['w:asciiTheme'];
@@ -142,6 +142,9 @@ class SuperConverter {
         const fontInfo = this.getThemeInfo(fontThemeName);
         typeface = fontInfo.typeface;
         panose = fontInfo.panose;
+      } else {
+        const rFonts = rElements.find((el) => el.name === 'w:rFonts');
+        typeface = rFonts.attributes['w:ascii'];
       }
 
       const fontSizePt = Number(rElements.find((el) => el.name === 'w:sz')?.attributes['w:val']) / 2;
@@ -184,14 +187,15 @@ class SuperConverter {
     return exporter.schemaToXml(data);
   }
 
-  async exportToDocx(jsonData, editorSchema, isFinalDoc = false) {
+  async exportToDocx(jsonData, editorSchema, documentMedia, isFinalDoc = false) {
     const bodyNode = this.savedTagsToRestore.find((el) => el.name === 'w:body');
-    const [result, params] = exportSchemaToJson({ node: jsonData, bodyNode, relationships: [], media: {}, isFinalDoc, editorSchema });
+    const [result, params] = exportSchemaToJson({ node: jsonData, bodyNode, relationships: [], documentMedia: {}, isFinalDoc, editorSchema });
     const exporter = new DocxExporter(this);
     const xml = exporter.schemaToXml(result);
     
     // Update media
     await this.#exportProcessMediaFiles({
+      ...documentMedia,
       ...params.media,
       ...this.media
     });

@@ -55,7 +55,7 @@ export const startImageUpload = async ({
   view.dispatch(tr);
 
   imageUploadHandler(file).then((url) => {
-    let fileName = file.name;
+    let fileName = file.name.replace(' ', '_');
     let placeholderPos = findPlaceholder(view.state, id);
 
     // If the content around the placeholder has been deleted,
@@ -78,6 +78,11 @@ export const startImageUpload = async ({
       editor.storage.image.media, 
       { [mediaPath]: url },
     );
+
+    // If we are in collaboration, we need to share the image with other clients
+    if (editor.options.ydoc) {
+      editor.commands.addImageToCollaboration({ mediaPath, fileData: url});
+    }
 
     view.dispatch(
       view.state.tr

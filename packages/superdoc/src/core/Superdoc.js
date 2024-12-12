@@ -44,6 +44,7 @@ export class Superdoc extends EventEmitter {
     documentMode: 'viewing',
     documents: [], // The documents to load
 
+    colors: [], // Optional: Colors to use for user awareness
     user: { name: null, email: null }, // The current user of this superdoc
     users: [], // Optional: All users of this superdoc (can be used for @-mentions)
 
@@ -83,6 +84,7 @@ export class Superdoc extends EventEmitter {
 
     this.version = __APP_VERSION__;
     this.superdocId = config.superdocId || uuidv4();
+    this.colors = this.config.colors;
 
     // Initialize collaboration if configured
     await this.#initCollaboration(this.config.modules);
@@ -182,13 +184,13 @@ export class Superdoc extends EventEmitter {
         user: this.config.user,
         documentId: doc.id,
         socket: this.socket,
+        superdocInstance: this,
       };
 
       const { provider, ydoc } = createProvider(options);
       doc.provider = provider;
       doc.socket = this.socket;
       doc.ydoc = ydoc;
-      provider.on('awarenessUpdate', ({ states }) => createAwarenessHandler(this, states));
 
       console.debug('🦋 [superdoc] Document:', doc);
       processedDocuments.push(doc);
@@ -385,6 +387,14 @@ export class Superdoc extends EventEmitter {
   destroy() {
     if (!this.app) return;
     this.log('[superdoc] Unmounting app');
+
+    this.config.documents.forEach((doc) => {
+      doc.ydoc.destroy();
+      doc.provider.destroy();
+    });
+
+    this.superdocStore.reset();
+
     this.app.unmount();
     this.removeAllListeners();
     delete this.app.config.globalProperties.$config;

@@ -1,7 +1,7 @@
 import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { DOMParser, DOMSerializer } from "prosemirror-model"
-import { yXmlFragmentToProseMirrorRootNode, prosemirrorJSONToYDoc } from 'y-prosemirror';
+import { yXmlFragmentToProseMirrorRootNode } from 'y-prosemirror';
 import { EventEmitter } from './EventEmitter.js';
 import { ExtensionService } from './ExtensionService.js';
 import { CommandService } from './CommandService.js';
@@ -13,9 +13,10 @@ import { isActive } from './helpers/isActive.js';
 import { createStyleTag } from './utilities/createStyleTag.js';
 import { initComments } from '@features/index.js';
 import { style } from './config/style.js';
-import DocxZipper from '@core/DocxZipper.js';
 import { trackedTransaction } from "@extensions/track-changes/trackChangesHelpers/trackedTransaction.js";
 import { TrackChangesBasePluginKey } from '@extensions/track-changes/plugins/index.js';
+import { getMediaObjectUrls } from '@core/utilities/imageBlobs.js';
+import DocxZipper from '@core/DocxZipper.js';
 
 
 /**
@@ -48,7 +49,9 @@ export class Editor extends EventEmitter {
     content: '', // XML content
     user: null,
     media: {},
+    mediaFiles: {},
     mode: 'docx',
+    colors: [],
     converter: null,
     fileSource: null,
     initialState: null,
@@ -300,7 +303,6 @@ export class Editor extends EventEmitter {
     if (!this.options.isNewFile || !this.options.collaborationProvider) return;
     const { collaborationProvider: provider } = this.options;
 
-    this.options.isNewFile = false;
     const postSyncInit = () => {
       provider.off('synced', postSyncInit);
       this.#insertNewFileData();
@@ -318,6 +320,7 @@ export class Editor extends EventEmitter {
    */
   #insertNewFileData() {
     if (!this.options.isNewFile) return;
+    this.options.isNewFile = false;
     const doc = this.#generatePmData();
     const tr = this.state.tr.replaceWith(0, this.state.doc.content.size, doc);
     this.view.dispatch(tr);
@@ -444,7 +447,7 @@ export class Editor extends EventEmitter {
     } else {
       this.converter = new SuperConverter({ 
         docx: this.options.content,
-        media: this.options.media,
+        media: this.options.mediaFiles,
         debug: true,
       });
     }
@@ -454,7 +457,24 @@ export class Editor extends EventEmitter {
    * Initialize media.
    */
   #initMedia() {
-    this.storage.image.media = this.options.media;
+    if (!this.options.ydoc) return this.storage.image.media = this.options.mediaFiles;
+
+    const mediaMap = this.options.ydoc.getMap('media');
+
+    // We are creating a new file and need to set the media
+    if (this.options.isNewFile) {
+      Object.entries(this.options.mediaFiles).forEach(([key, value]) => {
+        mediaMap.set(key, value);
+      });
+
+      // Set the storage to the imported media files
+      this.storage.image.media = this.options.mediaFiles
+    }
+
+    // If we are opening an existing file, we need to get the media from the ydoc
+    else {
+      this.storage.image.media = Object.fromEntries(mediaMap.entries());
+    }
   }
 
   /**
@@ -467,9 +487,7 @@ export class Editor extends EventEmitter {
     const zipper = new DocxZipper();
     const xmlFiles = await zipper.getDocxData(fileSource);
     const mediaFiles = zipper.media;
-
-    const documentXml = xmlFiles.find((f) => f.name === 'word/document.xml');
-    return [xmlFiles, mediaFiles];
+    return [xmlFiles, mediaFiles, zipper.mediaFiles];
   }
 
   /**
@@ -584,9 +602,8 @@ export class Editor extends EventEmitter {
     proseMirror.style.paddingBottom = pageMargins.bottom + 'in';
 
     const { typeface, fontSizePt } = this.converter.getDocumentDefaultStyles() ?? {};
-
     typeface && (this.element.style.fontFamily = typeface);
-    fontSizePt && (this.element.style.fontSize = fontSizePt);
+    fontSizePt && (this.element.style.fontSize = fontSizePt + 'pt');
 
   }
 
@@ -732,11 +749,12 @@ export class Editor extends EventEmitter {
    */
   async exportDocx({ isFinalDoc = false } = {}) {
     const json = this.getJSON();
-    
-    // Filter Header nodes
-    json.content = json.content.filter(node => !node.attrs.filename);
-    
-    const documentXml = await this.converter.exportToDocx(json, this.schema, isFinalDoc);
+    const documentXml = await this.converter.exportToDocx(
+      json,
+      this.schema,
+      this.storage.image.media,
+      isFinalDoc
+    );
     const relsData = this.converter.convertedXml['word/_rels/document.xml.rels'];
     const rels = this.converter.schemaToXml(relsData.elements[0]);
     const media = this.converter.addedMedia;

@@ -1,5 +1,5 @@
 import { Extension } from '@core/index.js';
-import { parseSizeUnit } from '@core/utilities/index.js';
+import { parseSizeUnit, minMax } from '@core/utilities/index.js';
 
 /**
  * Do we need a unit conversion system?
@@ -17,6 +17,8 @@ export const FontSize = Extension.create({
       defaults: {
         value: 12,
         unit: 'pt',
+        min: 8,
+        max: 96,
       },
     }
   },
@@ -45,8 +47,18 @@ export const FontSize = Extension.create({
   addCommands() {
     return {
       setFontSize: (fontSize) => ({ chain }) => {
+        let [value, unit] = parseSizeUnit(fontSize);
+
+        if (Number.isNaN(value)) {
+          return false;
+        }
+
+        let { min, max, unit: defaultUnit } = this.options.defaults;
+        value = minMax(value, min, max);
+        unit = unit ? unit : defaultUnit;
+        
         return chain()
-          .setMark('textStyle', { fontSize })
+          .setMark('textStyle', { fontSize: `${value}${unit}` })
           .run();
       },
 

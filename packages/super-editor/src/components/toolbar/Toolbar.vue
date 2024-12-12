@@ -10,6 +10,12 @@ let toolbarKey = ref(1);
 
 const showLeftSide = proxy.$toolbar.config?.toolbarGroups?.includes('left');
 const showRightSide = proxy.$toolbar.config?.toolbarGroups?.includes('right');
+const excludeButtonsList = proxy.$toolbar.config?.toolbarButtonsExclude || [];
+
+const getFilteredItems = (position) => {
+  return proxy.$toolbar.getToolbarItemByGroup(position)
+    .filter(item => !excludeButtonsList.includes(item.name.value));
+};
 
 onMounted(() => {
   window.addEventListener('resize', onResizeThrottled);
@@ -37,20 +43,20 @@ const handleCommand = ({ item, argument }) => {
   >
     <ButtonGroup 
       v-if="showLeftSide"
-      :toolbar-items="proxy.$toolbar.getToolbarItemByGroup('left')" 
+      :toolbar-items="getFilteredItems('left')"
       position="left" 
       @command="handleCommand" 
       class="superdoc-toolbar-group-side" 
     />
     <ButtonGroup 
-      :toolbar-items="proxy.$toolbar.getToolbarItemByGroup('center')" 
+      :toolbar-items="getFilteredItems('center')" 
       :overflow-items="proxy.$toolbar.overflowItems"
       position="center" 
       @command="handleCommand" 
     />
     <ButtonGroup 
       v-if="showRightSide"
-      :toolbar-items="proxy.$toolbar.getToolbarItemByGroup('right')" 
+      :toolbar-items="getFilteredItems('right')" 
       position="right" 
       @command="handleCommand" 
       class="superdoc-toolbar-group-side"
