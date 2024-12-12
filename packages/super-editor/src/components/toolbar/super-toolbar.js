@@ -118,6 +118,9 @@ export class SuperToolbar extends EventEmitter {
     this.app.config.globalProperties.$toolbar = this;
     if (el) this.toolbar = this.app.mount(el);
     this.activeEditor = config.editor || null;
+
+    this.#initDefaultFonts();
+
     this.#updateToolbarState();
   }
 
@@ -151,6 +154,15 @@ export class SuperToolbar extends EventEmitter {
     this.toolbarItems = defaultItems;
     this.overflowItems = overflowItems;
     this.#updateToolbarState();
+  }
+
+  #initDefaultFonts() {
+    const { typeface = 'Arial', fontSizePt = 12 } = this.activeEditor.converter.getDocumentDefaultStyles() ?? {};
+    const fontSizeItem = this.toolbarItems.find(item => item.name.value === 'fontSize');
+    fontSizeItem.defaultLabel.value = fontSizePt;
+
+    const fontFamilyItem = this.toolbarItems.find(item => item.name.value === 'fontFamily');
+    fontFamilyItem.defaultLabel.value = typeface;
   }
 
   /**

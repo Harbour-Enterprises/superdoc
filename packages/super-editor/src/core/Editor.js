@@ -599,9 +599,8 @@ export class Editor extends EventEmitter {
     proseMirror.style.paddingBottom = pageMargins.bottom + 'in';
 
     const { typeface, fontSizePt } = this.converter.getDocumentDefaultStyles() ?? {};
-
     typeface && (this.element.style.fontFamily = typeface);
-    fontSizePt && (this.element.style.fontSize = fontSizePt);
+    fontSizePt && (this.element.style.fontSize = fontSizePt + 'pt');
 
   }
 
