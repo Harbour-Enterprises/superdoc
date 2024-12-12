@@ -1,12 +1,12 @@
 import EventEmitter from 'eventemitter3'
 import { createApp } from 'vue'
 import { undoDepth, redoDepth } from "prosemirror-history";
-
 import { makeDefaultItems } from './defaultItems';
 import { getActiveFormatting } from '@core/helpers/getActiveFormatting.js';
 import { vClickOutside } from '@harbour-enterprises/common';
 import Toolbar from './Toolbar.vue';
 import { startImageUpload, getFileOpener } from '../../extensions/image/imageHelpers/index.js';
+import { findParentNode } from '@helpers/index.js';
 
 export class SuperToolbar extends EventEmitter {
 
@@ -48,8 +48,6 @@ export class SuperToolbar extends EventEmitter {
     },
 
     startImageUpload: async ({ item, argument }) => {
-      if (!this.activeEditor) return;
-
       let open = getFileOpener();
       let result = await open();
 
@@ -62,6 +60,40 @@ export class SuperToolbar extends EventEmitter {
         view: this.activeEditor.view,
         file: result.file,
       });
+    },
+
+    increaseTextIndent: ({ item, argument }) => {
+      let command = item.command;
+      let { state } = this.activeEditor;
+      let listItem = findParentNode((node) => node.type.name === 'listItem')(state.selection);
+
+      if (listItem) {
+        return this.activeEditor.chain()
+          .sinkListItem('listItem')
+          .updateOrderedListStyleType()
+          .run();
+      }
+      
+      if (command in this.activeEditor.commands) {
+        this.activeEditor.commands[command](argument);
+      }
+    },
+
+    decreaseTextIndent: ({ item, argument }) => {
+      let command = item.command;
+      let { state } = this.activeEditor;
+      let listItem = findParentNode((node) => node.type.name === 'listItem')(state.selection);
+
+      if (listItem) {
+        return this.activeEditor.chain()
+          .liftListItem('listItem')
+          .updateOrderedListStyleType()
+          .run();
+      }
+
+      if (command in this.activeEditor.commands) {
+        this.activeEditor.commands[command](argument);
+      }
     },
   }
 
@@ -186,15 +218,15 @@ export class SuperToolbar extends EventEmitter {
 
     this.log('(emmitCommand) Command:', command, item, argument);
 
-    // Check if we have a custom or overloaded command defined
-    if (command in this.#interceptedCommands) {
-      return this.#interceptedCommands[command]({ item, argument });
-    }
-  
     // Attempt to run the command on the active editor.
     if (!this.activeEditor) {
       this.log('(emmitCommand) No active editor');
       return;
+    }
+
+    // Check if we have a custom or overloaded command defined
+    if (command in this.#interceptedCommands) {
+      return this.#interceptedCommands[command]({ item, argument });
     }
 
     if (command in this.activeEditor.commands) {
