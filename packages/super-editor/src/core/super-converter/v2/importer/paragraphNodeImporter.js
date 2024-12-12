@@ -1,4 +1,4 @@
-import { twipsToPixels } from "../../helpers.js";
+import { twipsToInches, twipsToPixels } from '../../helpers.js';
 import { testForList } from "./listImporter.js";
 import { carbonCopy } from "../../../utilities/carbonCopy.js";
 import { mergeTextNodes } from './mergeTextNodes.js';
@@ -11,7 +11,7 @@ import { mergeTextNodes } from './mergeTextNodes.js';
  *
  * @type {import("docxImporter").NodeHandler}
  */
-export const handleParagraphNode = (nodes, docx, nodeListHandler, insideTrackChange) => {
+export const handleParagraphNode = (nodes, docx, nodeListHandler, insideTrackChange, filename) => {
   if (nodes.length === 0 || nodes[0].name !== 'w:p') {
     return { nodes: [], consumed: 0 };
   }
@@ -34,11 +34,12 @@ export const handleParagraphNode = (nodes, docx, nodeListHandler, insideTrackCha
     console.error('Standard node handler not found');
     return { nodes: [], consumed: 0 };
   }
-  const result = handleStandardNode([node], docx, nodeListHandler, insideTrackChange);
+
+  const result = handleStandardNode([node], docx, nodeListHandler, insideTrackChange, filename);
   if (result.nodes.length === 1) {
     schemaNode = result.nodes[0];
   }
-
+  
   if ('attributes' in node) {
     const defaultStyleId = node.attributes['w:rsidRDefault'];
 
@@ -46,6 +47,15 @@ export const handleParagraphNode = (nodes, docx, nodeListHandler, insideTrackCha
     const styleTag = pPr?.elements.find((el) => el.name === 'w:pStyle');
     if (styleTag) {
       schemaNode.attrs['styleId'] = styleTag.attributes['w:val'];
+      
+      const { textAlign, firstLine, leftIndent, rightIndent } = getDefaultStyleDefinition(styleTag.attributes['w:val'], docx);
+      schemaNode.attrs['textAlign'] = textAlign;
+      
+      schemaNode.attrs['indent'] = {
+        left: leftIndent,
+        right: rightIndent,
+        firstLine: firstLine,
+      };
     }
 
     const indent = pPr?.elements.find((el) => el.name === 'w:ind');
@@ -56,6 +66,9 @@ export const handleParagraphNode = (nodes, docx, nodeListHandler, insideTrackCha
         right: twipsToPixels(right),
         firstLine: twipsToPixels(firstLine),
       };
+      
+      const textIndentVal = left || firstLine || 0;
+      schemaNode.attrs['textIndent'] = `${twipsToInches(textIndentVal)}in`;
     }
 
     const justify = pPr?.elements.find((el) => el.name === 'w:jc');
@@ -79,7 +92,10 @@ export const handleParagraphNode = (nodes, docx, nodeListHandler, insideTrackCha
         line: twipsToPixels(lineInLine),
       };
     }
+    schemaNode.attrs['rsidRDefault'] = defaultStyleId;
   }
+  
+  schemaNode.attrs['filename'] = filename;
 
   // Normalize text nodes.
   if (schemaNode && schemaNode.content) {
@@ -110,23 +126,35 @@ function getDefaultStyleDefinition(defaultStyleId, docx) {
   const result = { lineSpaceBefore: null, lineSpaceAfter: null };
   const styles = docx['word/styles.xml'];
   if (!styles) return result;
-
+  
   const { elements } = styles.elements[0];
-  const elementsWithId = elements.filter((el) => {
+  let elementsWithId = elements.filter((el) => {
     return el.elements.some((e) => {
       return 'attributes' in e && e.attributes['w:val'] === defaultStyleId;
     });
   });
+  
+  if (!elementsWithId.length) {
+    elementsWithId = elements.filter((el) => el.attributes && el.attributes['w:styleId'] === defaultStyleId);
+  }
 
   const firstMatch = elementsWithId[0];
   if (!firstMatch) return result;
 
   const pPr = firstMatch.elements.find((el) => el.name === 'w:pPr');
   const spacing = pPr?.elements.find((el) => el.name === 'w:spacing');
-  if (!spacing) return result;
-  const lineSpaceBefore = twipsToPixels(spacing.attributes['w:before']);
-  const lineSpaceAfter = twipsToPixels(spacing.attributes['w:after']);
-  return { lineSpaceBefore, lineSpaceAfter };
+  const justify = pPr?.elements.find((el) => el.name === 'w:jc');
+  const indent = pPr?.elements.find((el) => el.name === 'w:ind');
+  if (!spacing && !justify && !indent) return result;
+  
+  const lineSpaceBefore = twipsToPixels(spacing?.attributes['w:before']);
+  const lineSpaceAfter = twipsToPixels(spacing?.attributes['w:after']);
+  const textAlign = justify?.attributes['w:val'];
+  const leftIndent = twipsToPixels(indent?.attributes['w:left']);
+  const rightIndent = twipsToPixels(indent?.attributes['w:right']);
+  const firstLine = twipsToPixels(indent?.attributes['w:firstLine']);
+  
+  return { lineSpaceBefore, lineSpaceAfter, textAlign, leftIndent, rightIndent, firstLine };
 }
 
 /**

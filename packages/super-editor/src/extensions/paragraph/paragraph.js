@@ -58,6 +58,8 @@ export const Paragraph = Node.create({
       attributes: {
         rendered: false,
       },
+      filename: { rendered: false, },
+      rsidRDefault: { rendered: false, },
     };
   },
 

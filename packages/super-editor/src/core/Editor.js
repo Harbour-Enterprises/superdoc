@@ -732,6 +732,10 @@ export class Editor extends EventEmitter {
    */
   async exportDocx({ isFinalDoc = false } = {}) {
     const json = this.getJSON();
+    
+    // Filter Header nodes
+    json.content = json.content.filter(node => !node.attrs.filename);
+    
     const documentXml = await this.converter.exportToDocx(json, this.schema, isFinalDoc);
     const relsData = this.converter.convertedXml['word/_rels/document.xml.rels'];
     const rels = this.converter.schemaToXml(relsData.elements[0]);

@@ -3,7 +3,7 @@ import { emuToPixels } from "../../helpers.js";
 /**
  * @type {import("docxImporter").NodeHandler}
  */
-export const handleDrawingNode = (nodes, docx, nodeListHandler, insideTrackChange) => {
+export const handleDrawingNode = (nodes, docx, nodeListHandler, insideTrackChange, filename) => {
   if (nodes.length === 0 || nodes[0].name !== 'w:drawing') {
     return { nodes: [], consumed: 0 };
   }
@@ -12,7 +12,7 @@ export const handleDrawingNode = (nodes, docx, nodeListHandler, insideTrackChang
   let result;
   const { elements } = node;
 
-  const currentFileName = null;
+  const currentFileName = filename || null;
 
   // Some images are identified by wp:anchor
   const isAnchor = elements.find((el) => el.name === 'wp:anchor');
@@ -60,7 +60,7 @@ export function handleImageImport(node, currentFileName, docx) {
     left: positionHValue,
     top: positionVValue,
   }
-
+  
   const { attributes: blipAttributes } = blip;
   const rEmbed = blipAttributes['r:embed'];
   const currentFile = currentFileName || 'document.xml';

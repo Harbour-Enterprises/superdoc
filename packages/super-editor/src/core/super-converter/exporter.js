@@ -123,9 +123,15 @@ function translateParagraphNode(params) {
   const pPr = generateParagraphProperties(params.node);
   elements.unshift(pPr);
   
+  let attributes = {};
+  if (params.node.attrs.rsidRDefault) {
+    attributes['rsidRDefault'] = params.node.attrs.rsidRDefault;
+  }
+  
   return {
     name: 'w:p',
     elements,
+    attributes
   }
 }
 
@@ -164,9 +170,9 @@ function generateParagraphProperties(node) {
   if (indent) {
     const { left, right, firstLine } = indent;
     const attributes = {};
-    if (left) attributes['w:left'] = pixelsToTwips(left);
-    if (right) attributes['w:right'] = pixelsToTwips(right);
-    if (firstLine) attributes['w:firstLine'] = pixelsToTwips(firstLine);
+    if (left || left === 0) attributes['w:left'] = pixelsToTwips(left);
+    if (right || right === 0) attributes['w:right'] = pixelsToTwips(right);
+    if (firstLine || firstLine === 0) attributes['w:firstLine'] = pixelsToTwips(firstLine);
     
     const indentElement = {
       name: 'w:ind',
@@ -182,7 +188,7 @@ function generateParagraphProperties(node) {
     }
     pPrElements.push(textAlignElement);
   }
-
+  
   return {
     name: 'w:pPr',
     elements: pPrElements,

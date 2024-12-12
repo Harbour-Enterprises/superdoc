@@ -41,11 +41,20 @@ export const createDocumentJson = (docx) => {
     const node = json.elements[0].elements[0];
     const ignoreNodes = ['w:sectPr'];
     const content = node.elements?.filter((n) => !ignoreNodes.includes(n.name)) ?? [];
-
+    
+    let parsedHeader = [];
+    const header = docx['word/header1.xml'];
+    if (header) {
+      parsedHeader = nodeListHandler.handler(header.elements[0].elements, docx, false, 'header1.xml');
+    }
+    
     const parsedContent = nodeListHandler.handler(content, docx, false);
     const result = {
       type: 'doc',
-      content: parsedContent,
+      content: [
+          ...parsedHeader,
+          ...parsedContent
+      ],
       attrs: {
         attributes: json.elements[0].attributes,
       }
@@ -75,7 +84,7 @@ export const defaultNodeListHandler = () => {
     tabNodeEntityHandler,
     standardNodeHandlerEntity, //this should be the last one, bcs this parses everything!!!
   ];
-
+  
   const handler = createNodeListHandler(entities);
   return {
     handler,
@@ -92,9 +101,10 @@ const createNodeListHandler = (nodeHandlers) => {
    * @param {XmlNode[]} elements
    * @param {ParsedDocx} docx
    * @param {boolean} insideTrackChange
+   * @param {string} filename
    * @return {{type: string, content: *, attrs: {attributes}}[]}
    */
-  const nodeListHandlerFn = (elements, docx, insideTrackChange) => {
+  const nodeListHandlerFn = (elements, docx, insideTrackChange, filename) => {
     if (!elements || !elements.length) return [];
     const processedElements = [];
 
@@ -107,7 +117,8 @@ const createNodeListHandler = (nodeHandlers) => {
           nodesToHandle,
           docx,
           { handler: nodeListHandlerFn, handlerEntities: nodeHandlers },
-          insideTrackChange
+          insideTrackChange,
+          filename
         );
         return result;
       }, { nodes: [], consumed: 0 });
