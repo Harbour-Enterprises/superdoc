@@ -70,6 +70,11 @@ const getStyle = computed(() => {
   }
 })
 
+const onFontSizeInput = (event) => {
+  let { value } = event.target;
+  inlineTextInput.value = value.replace(/[^0-9]/g, '');
+};
+
 </script>
 
 <template>
@@ -95,14 +100,26 @@ const getStyle = computed(() => {
 
         <span v-if="inlineTextInputVisible">
           <input
-              v-model="inlineTextInput"
-              :placeholder="label"
-              @keydown.enter.prevent="handleInputSubmit"
-              type="text"
-              class="button-text-input"
-              :id="'inlineTextInput-' + name" 
-              autoccomplete="off"
-              ref="inlineInput" />
+            v-if="name === 'fontSize'"
+            v-model="inlineTextInput"
+            @input="onFontSizeInput"
+            :placeholder="label"
+            @keydown.enter.prevent="handleInputSubmit"
+            type="text"
+            class="button-text-input"
+            :id="'inlineTextInput-' + name" 
+            autoccomplete="off"
+            ref="inlineInput" />
+          <input
+            v-else
+            v-model="inlineTextInput"
+            :placeholder="label"
+            @keydown.enter.prevent="handleInputSubmit"
+            type="text"
+            class="button-text-input"
+            :id="'inlineTextInput-' + name" 
+            autoccomplete="off"
+            ref="inlineInput" />
         </span>
 
         <i v-if="hasCaret"
@@ -185,6 +202,7 @@ const getStyle = computed(() => {
   padding-right: 2px;
 }
 .button-text-input {
+  color: #47484a;
   border-radius: 4px;
   text-align: center;
   width: 30px;
@@ -196,6 +214,11 @@ const getStyle = computed(() => {
   outline: none;
   border: 1px solid #d8dee5;
 }
+
+.button-text-input::placeholder {
+  color: #47484a;
+}
+
 @media (max-width: 1120px) {
   .doc-mode {
     .button-label {
