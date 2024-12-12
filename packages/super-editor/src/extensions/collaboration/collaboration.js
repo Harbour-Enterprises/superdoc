@@ -35,6 +35,16 @@ export const Collaboration = Extension.create({
     );
     this.options.fragment = fragment;
 
+    const metaMap = this.options.ydoc.getMap('media');
+    metaMap.observe((event) => {
+      event.changes.keys.forEach((change, key) => {
+        if (!(key in this.editor.storage.image.media)) {
+          const fileData = metaMap.get(key);
+          this.editor.storage.image.media[key] = fileData;
+        }
+      });
+    });
+
     const undoPlugin = createUndoPlugin();
     return [syncPlugin, undoPlugin]
   },
@@ -56,6 +66,11 @@ export const Collaboration = Extension.create({
         if (undoManager.redoStack.length === 0) return false
         if (!dispatch) return true;
         return redo(state)
+      },
+      addImageToCollaboration: ({ mediaPath, fileData }) => () => {
+        if (!this.options.ydoc) return;
+        const mediaMap = this.options.ydoc.getMap('media');
+        mediaMap.set(mediaPath, fileData);
       },
     }
   },

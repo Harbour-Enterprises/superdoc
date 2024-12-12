@@ -447,7 +447,7 @@ export class Editor extends EventEmitter {
     } else {
       this.converter = new SuperConverter({ 
         docx: this.options.content,
-        media: this.options.media,
+        media: this.options.mediaFiles,
         debug: true,
       });
     }
@@ -457,20 +457,23 @@ export class Editor extends EventEmitter {
    * Initialize media.
    */
   #initMedia() {
-    this.storage.image.media = this.options.media;
-    const metaMap = this.options.ydoc?.getMap('meta');
-    if (!metaMap) return;
+    if (!this.options.ydoc) return this.storage.image.media = this.options.mediaFiles;
 
-    // If we have media in the meta map, it means someone else initialized it
-    // We create local blob urls for the media
-    const media = metaMap?.get('media');
-    if (metaMap && media) {
-      this.storage.image.media = getMediaObjectUrls(media);
+    const mediaMap = this.options.ydoc.getMap('media');
+
+    // We are creating a new file and need to set the media
+    if (this.options.isNewFile) {
+      Object.entries(this.options.mediaFiles).forEach(([key, value]) => {
+        mediaMap.set(key, value);
+      });
+
+      // Set the storage to the imported media files
+      this.storage.image.media = this.options.mediaFiles
     }
-  
-    // Otherwise, we are creating a new file and need to set the media
-    else if (metaMap && this.options.isNewFile) {
-      metaMap.set('media', this.options.mediaFiles);
+
+    // If we are opening an existing file, we need to get the media from the ydoc
+    else {
+      this.storage.image.media = Object.fromEntries(mediaMap.entries());
     }
   }
 

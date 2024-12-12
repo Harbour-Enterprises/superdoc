@@ -53,8 +53,10 @@ class DocxZipper {
 
         // Create an Object of media Uint8Arrays for collaboration
         // These will be shared via ydoc
-        const fileUint8Array = await zipEntry.async('uint8array');
-        this.mediaFiles[zipEntry.name] = fileUint8Array;
+
+        const extension = this.getFileExtension(zipEntry.name);
+        const fileBase64 = await zipEntry.async('base64');
+        this.mediaFiles[zipEntry.name] = `data:image/${extension};base64,${fileBase64}`;
 
         const file = new File([blob], zipEntry.name, { type: blob.type });
         const imageUrl = URL.createObjectURL(file);
