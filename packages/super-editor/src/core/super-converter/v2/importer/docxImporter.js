@@ -41,20 +41,11 @@ export const createDocumentJson = (docx) => {
     const node = json.elements[0].elements[0];
     const ignoreNodes = ['w:sectPr'];
     const content = node.elements?.filter((n) => !ignoreNodes.includes(n.name)) ?? [];
-    
-    let parsedHeader = [];
-    const header = docx['word/header1.xml'];
-    if (header) {
-      parsedHeader = nodeListHandler.handler(header.elements[0].elements, docx, false, 'header1.xml');
-    }
-    
+
     const parsedContent = nodeListHandler.handler(content, docx, false);
     const result = {
       type: 'doc',
-      content: [
-          ...parsedHeader,
-          ...parsedContent
-      ],
+      content: parsedContent,
       attrs: {
         attributes: json.elements[0].attributes,
       }

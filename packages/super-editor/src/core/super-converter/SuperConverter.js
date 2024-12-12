@@ -133,18 +133,26 @@ class SuperConverter {
 
     // Get the run defaults for this document - this will include font, theme etc.
     const rDefault = defaults.elements.find((el) => el.name === 'w:rPrDefault');
-
+    const rElements = rDefault.elements[0].elements
+    const rFonts = rElements?.find((el) => el.name === 'w:rFonts');
     if ('elements' in rDefault) {
-      const rElements = rDefault.elements[0].elements
       const fontThemeName = rElements.find((el) => el.name === 'w:rFonts')?.attributes['w:asciiTheme'];
       let typeface, panose;
       if (fontThemeName) {
         const fontInfo = this.getThemeInfo(fontThemeName);
         typeface = fontInfo.typeface;
         panose = fontInfo.panose;
+      } else if (rFonts) {
+        typeface = rFonts?.attributes['w:ascii'];
       } else {
-        const rFonts = rElements.find((el) => el.name === 'w:rFonts');
-        typeface = rFonts.attributes['w:ascii'];
+        const paragraphDefaults = styles.elements[0].elements.filter((el) => {
+          return el.name === 'w:style' && el.attributes['w:styleId'] === 'Normal';
+        }) || [];
+        paragraphDefaults.forEach((el) => {
+          const rPr = el.elements.find((el) => el.name === 'w:rPr');
+          const fonts = rPr?.elements?.find((el) => el.name === 'w:rFonts');
+          typeface = fonts?.attributes['w:ascii'];
+        });
       }
 
       const fontSizePt = Number(rElements.find((el) => el.name === 'w:sz')?.attributes['w:val']) / 2;
