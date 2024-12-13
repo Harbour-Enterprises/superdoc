@@ -39,8 +39,9 @@ export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange) 
       }
     }
     
+    const listNodes = handleListNodes(listItems, docx, nodeListHandler, 0);
     return {
-      nodes: [handleListNodes(listItems, docx, nodeListHandler, 0)],
+      nodes: [listNodes],
       consumed: listItems.filter(i => i.seen).length
     };
   } else {
@@ -72,8 +73,16 @@ export const listHandlerEntity = {
  * @param {number} [listLevel=0] - The current indentation level of the list.
  * @returns {Object} The processed list node with structured content.
  */
-function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, listLevel = 0, path = '') {
-
+function handleListNodes(
+  listItems,
+  docx,
+  nodeListHandler,
+  insideTrackChange,
+  listLevel = 0,
+  actualListLevel = 0,
+  currentListNumId = null,
+  path = ''
+) {
   const parsedListItems = [];
   let overallListType;
   let listStyleType;
@@ -85,15 +94,12 @@ function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, li
   }
 
   let listItemIndices = {};
-  let listItemNumbering = {};
-  let prevRootItemIndent;
-
-  const hasTabsDef = listItems.some(n => {
-    const { attributes } = parseProperties(n, docx);
-    const nodeDef = getNodeNumberingDefinition(attributes, listLevel, docx);
-    return nodeDef?.listpPrs?.tabPos;
-  });
-  
+  const initialpPr = listItems[0].elements.find((el) => el.name === 'w:pPr');
+  const initialNumPr = initialpPr?.elements?.find((el) => el.name === 'w:numPr');
+  const initialNumIdTag = initialNumPr?.elements?.find((el) => el.name === 'w:numId') || {};
+  const { attributes: numIdAttrs = {} } = initialNumIdTag;
+  currentListNumId = numIdAttrs['w:val'];
+  actualListLevel = parseInt(initialNumPr?.elements?.find((el) => el.name === 'w:ilvl')?.attributes['w:val']) || 0;
 
   for (let [index, item] of listItems.entries()) {
     // Skip items we've already processed
@@ -127,26 +133,11 @@ function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, li
     listStyleType = listOrderingType;
     const intLevel = parseInt(ilvl);
    
-    let isRoot;
-    let isNested;
-    let shouldBreak = false;
-    
-    if (hasTabsDef) {
-      const currentItemIndent = _getIndentValueFromAttributes(attributes);
-      
-      isRoot = prevRootItemIndent ? currentItemIndent <= prevRootItemIndent : true;
-      isNested = !isRoot;
-      
-      shouldBreak = prevRootItemIndent ? prevRootItemIndent > currentItemIndent : false;
-      if (isRoot) prevRootItemIndent = currentItemIndent;
-    } else {
-      isRoot = listLevel === intLevel;
-      isNested = listLevel < intLevel;
-    }
-    
-    if (shouldBreak) break;
-    
-    // Append node if it belongs on this list level
+    const isRoot = actualListLevel === intLevel && numId === currentListNumId;
+    const isDifferentList = numId !== currentListNumId;
+    const isNested = listLevel < intLevel || (listLevel === intLevel && isDifferentList);
+
+    // If this node belongs on this list level, add it to the list
     const nodeAttributes = {};
     if (isRoot) {
       overallListType = listType;
@@ -199,7 +190,15 @@ function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, li
     else if (isNested) {
       const newPath = [...path, listItemIndices[listLevel]];
       const sublist = handleListNodes(
-        listItems.slice(index), docx, nodeListHandler, insideTrackChange, listLevel + 1, newPath);
+        listItems.slice(index),
+        docx,
+        nodeListHandler,
+        insideTrackChange,
+        listLevel + 1,
+        listLevel,
+        numId,
+        newPath
+      );
       const lastItem = parsedListItems[parsedListItems.length - 1];
       if (!lastItem) {
         parsedListItems.push(createListItem([sublist], nodeAttributes, []));
@@ -293,7 +292,7 @@ const unorderedListTypes = [
  * @param {ParsedDocx} docx
  * @returns
  */
-function getNodeNumberingDefinition(attributes, level, docx) {
+export function getNodeNumberingDefinition(attributes, level, docx) {
   if (!attributes) return;
 
   const def = docx['word/numbering.xml'];
@@ -302,9 +301,8 @@ function getNodeNumberingDefinition(attributes, level, docx) {
   const { elements } = def;
   const listData = elements[0];
 
-  const { paragraphProperties } = attributes;
-  const { elements: listStyles } = paragraphProperties;
-  const tabsPrElement = listStyles.find(style => style.name === 'w:tabs');
+  const { paragraphProperties = {} } = attributes;
+  const { elements: listStyles = [] } = paragraphProperties;
   const numPr = listStyles.find(style => style.name === 'w:numPr');
   if (!numPr) {
     return {};
@@ -341,9 +339,6 @@ function getNodeNumberingDefinition(attributes, level, docx) {
   
   if (pPr) {
     listpPrs = _processListParagraphProperties(pPr);
-    if (tabsPrElement) {
-      listpPrs.tabPos = true;
-    }
   }
 
   const rPr = currentLevel.elements.find(style => style.name === 'w:rPr');
