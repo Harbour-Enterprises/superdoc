@@ -13,11 +13,10 @@ export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange) 
   const node = carbonCopy(nodes[0])
 
   let schemaNode;
-
+  
   // We need to pre-process paragraph nodes to combine various possible elements we will find ie: lists, links.
   const processedElements = preProcessNodesForFldChar(node.elements);
   node.elements = processedElements;
-
 
   const pPr = node.elements.find(el => el.name === 'w:pPr');
 
@@ -39,7 +38,7 @@ export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange) 
         possibleList = siblings.shift();
       }
     }
-
+    
     return {
       nodes: [handleListNodes(listItems, docx, nodeListHandler, 0)],
       consumed: listItems.filter(i => i.seen).length
@@ -87,6 +86,14 @@ function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, li
 
   let listItemIndices = {};
   let listItemNumbering = {};
+  let prevRootItemIndent;
+
+  const hasTabsDef = listItems.some(n => {
+    const { attributes } = parseProperties(n, docx);
+    const nodeDef = getNodeNumberingDefinition(attributes, listLevel, docx);
+    return nodeDef?.listpPrs?.tabPos;
+  });
+  
 
   for (let [index, item] of listItems.entries()) {
     // Skip items we've already processed
@@ -119,10 +126,29 @@ function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, li
     } = getNodeNumberingDefinition(attributes, listLevel, docx);
     listStyleType = listOrderingType;
     const intLevel = parseInt(ilvl);
-
+   
+    let isRoot;
+    let isNested;
+    let shouldBreak = false;
+    
+    if (hasTabsDef) {
+      const currentItemIndent = _getIndentValueFromAttributes(attributes);
+      
+      isRoot = prevRootItemIndent ? currentItemIndent <= prevRootItemIndent : true;
+      isNested = !isRoot;
+      
+      shouldBreak = prevRootItemIndent ? prevRootItemIndent > currentItemIndent : false;
+      if (isRoot) prevRootItemIndent = currentItemIndent;
+    } else {
+      isRoot = listLevel === intLevel;
+      isNested = listLevel < intLevel;
+    }
+    
+    if (shouldBreak) break;
+    
     // Append node if it belongs on this list level
     const nodeAttributes = {};
-    if (listLevel === intLevel) {
+    if (isRoot) {
       overallListType = listType;
       item.seen = true;
 
@@ -170,11 +196,10 @@ function handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, li
 
     // If this item belongs in a deeper list level, we need to process it by calling this function again
     // But going one level deeper.
-    else if (listLevel < intLevel) {
+    else if (isNested) {
       const newPath = [...path, listItemIndices[listLevel]];
       const sublist = handleListNodes(
-        listItems.slice(index), docx, nodeListHandler, insideTrackChange, listLevel + 1, newPath)
-        ;
+        listItems.slice(index), docx, nodeListHandler, insideTrackChange, listLevel + 1, newPath);
       const lastItem = parsedListItems[parsedListItems.length - 1];
       if (!lastItem) {
         parsedListItems.push(createListItem([sublist], nodeAttributes, []));
@@ -279,6 +304,7 @@ function getNodeNumberingDefinition(attributes, level, docx) {
 
   const { paragraphProperties } = attributes;
   const { elements: listStyles } = paragraphProperties;
+  const tabsPrElement = listStyles.find(style => style.name === 'w:tabs');
   const numPr = listStyles.find(style => style.name === 'w:numPr');
   if (!numPr) {
     return {};
@@ -312,7 +338,13 @@ function getNodeNumberingDefinition(attributes, level, docx) {
   // Properties - there can be run properties and paragraph properties
   const pPr = currentLevel.elements.find(style => style.name === 'w:pPr');
   let listpPrs, listrPrs;
-  if (pPr) listpPrs = _processListParagraphProperties(pPr);
+  
+  if (pPr) {
+    listpPrs = _processListParagraphProperties(pPr);
+    if (tabsPrElement) {
+      listpPrs.tabPos = true;
+    }
+  }
 
   const rPr = currentLevel.elements.find(style => style.name === 'w:rPr');
   if (rPr) listrPrs = _processListRunProperties(rPr);
@@ -364,3 +396,9 @@ function _processListRunProperties(data) {
   return runProperties;
 }
 
+function _getIndentValueFromAttributes(attributes) {
+  const { paragraphProperties } = attributes;
+  if (!paragraphProperties) return null;
+  const indent = paragraphProperties.elements.find(style => style.name === 'w:ind');
+  return parseInt(indent?.attributes['w:left']);
+}
