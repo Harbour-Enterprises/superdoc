@@ -108,6 +108,20 @@ const initEditor = async (content, media = {}, mediaFiles = {}, fonts = {}) => {
   });
 };
 
+const handleSuperEditorClick = (event) => {
+  let pmElement = editorElem.value?.querySelector('.ProseMirror');
+
+  if (!pmElement || !editor) {
+    return;
+  }
+  
+  let isInsideEditor = pmElement.contains(event.target);
+
+  if (!isInsideEditor && editor.isEditable) {
+    editor.view?.focus();
+  }
+};
+
 onMounted(() => {
   initializeData();
 
@@ -122,7 +136,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="super-editor" v-show="editorReady">
+  <div class="super-editor" v-show="editorReady" @click="handleSuperEditorClick">
     <div ref="editorElem" class="editor-element"></div>
   </div>
 
