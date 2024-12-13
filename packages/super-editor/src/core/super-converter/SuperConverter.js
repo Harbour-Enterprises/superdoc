@@ -1,10 +1,7 @@
 import xmljs from 'xml-js';
-import { getNodeNumberingDefinition } from './numbering';
 
 import { DocxExporter, exportSchemaToJson } from './exporter';
-import { DocxImporter } from './importer';
-import {createDocumentJson} from "./v2/importer/docxImporter.js";
-import {getInitialJSON} from "./v2/docxHelper.js";
+import { createDocumentJson} from "./v2/importer/docxImporter.js";
 import { getArrayBufferFromUrl } from './helpers.js';
 
 
@@ -249,5 +246,4 @@ class SuperConverter {
   }
 }
 
-SuperConverter.prototype.getNodeNumberingDefinition = getNodeNumberingDefinition;
 export { SuperConverter }
