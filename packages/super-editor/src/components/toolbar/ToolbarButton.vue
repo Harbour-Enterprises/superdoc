@@ -208,7 +208,7 @@ const onFontSizeInput = (event) => {
   width: 30px;
   font-size: 14px;
   margin-right: 5px;
-  font-weight: 100;
+  font-weight: 400;
   background-color: transparent;
   padding: 2px 0;
   outline: none;
