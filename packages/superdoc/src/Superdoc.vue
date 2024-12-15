@@ -1,6 +1,15 @@
 <script setup>
 import '@harbour-enterprises/common/styles/common-styles.css';
-import { getCurrentInstance, ref, onMounted, onBeforeUnmount, nextTick, computed, reactive, watch } from 'vue'
+import {
+  getCurrentInstance,
+  ref,
+  onMounted,
+  onBeforeUnmount,
+  nextTick,
+  computed,
+  reactive,
+  watch,
+} from 'vue';
 import { storeToRefs } from 'pinia';
 
 import PdfViewer from './components/PdfViewer/PdfViewer.vue';
@@ -24,14 +33,8 @@ const superdocStore = useSuperdocStore();
 const commentsStore = useCommentsStore();
 const emit = defineEmits(['selection-update']);
 
-const {
-  documents,
-  isReady,
-  areDocumentsReady,
-  selectionPosition,
-  activeSelection,
-  activeZoom,
-} = storeToRefs(superdocStore);
+const { documents, isReady, areDocumentsReady, selectionPosition, activeSelection, activeZoom } =
+  storeToRefs(superdocStore);
 const { handlePageReady, modules, user, getDocument } = superdocStore;
 
 // for html viewer
@@ -39,17 +42,13 @@ const { handlePageReady, modules, user, getDocument } = superdocStore;
 const fieldClasses = ['annotation'];
 // union of all field properties regardless of type
 const fieldFormat = {
-    id: (field) => field.getAttribute('data-itemid') || null,
-    value: (field) =>  field.querySelector('.annotation-text')?.innerHTML || null,
-    type: (field) => field.getAttribute('data-itemfieldtype') || null
-}
+  id: (field) => field.getAttribute('data-itemid') || null,
+  value: (field) => field.querySelector('.annotation-text')?.innerHTML || null,
+  type: (field) => field.getAttribute('data-itemfieldtype') || null,
+};
 
-const {
-  getConfig,
-  documentsWithConverations,
-  pendingComment,
-  activeComment
-} = storeToRefs(commentsStore);
+const { getConfig, documentsWithConverations, pendingComment, activeComment } =
+  storeToRefs(commentsStore);
 const { initialCheck, showAddComment } = commentsStore;
 const { proxy } = getCurrentInstance();
 commentsStore.proxy = proxy;
@@ -73,12 +72,12 @@ const handleDocumentReady = (documentId, container) => {
     nextTick(() => initialCheck());
   }
   proxy.$superdoc.broadcastPdfDocumentReady();
-}
+};
 
 const handleToolClick = (tool) => {
   const toolOptions = {
     comments: showAddComment,
-  }
+  };
 
   if (tool in toolOptions) {
     toolOptions[tool](activeSelection.value, selectionPosition.value);
@@ -86,16 +85,16 @@ const handleToolClick = (tool) => {
 
   activeSelection.value = null;
   toolsMenuPosition.top = null;
-}
+};
 
 const handleDocumentMouseDown = (e) => {
   if (pendingComment.value) return;
-}
+};
 
-const handleHighlightClick = () => toolsMenuPosition.top = null;
+const handleHighlightClick = () => (toolsMenuPosition.top = null);
 const cancelPendingComment = (e) => {
   if (e.target.classList.contains('n-dropdown-option-body__label')) return;
-}
+};
 
 const onCommentsLoaded = ({ comments }) => {
   proxy.$superdoc.log('[superdoc] onCommentsLoaded', comments);
@@ -103,7 +102,7 @@ const onCommentsLoaded = ({ comments }) => {
     const convo = useConversation(c);
     const doc = getDocument(c.documentId);
     doc.conversations.push(convo);
-  })
+  });
   isReady.value = true;
 };
 
@@ -115,7 +114,7 @@ const onEditorCreate = ({ editor }) => {
   proxy.$superdoc.broadcastEditorCreate(editor);
   proxy.$superdoc.log('[Superdoc] Editor created', proxy.$superdoc.activeEditor);
   proxy.$superdoc.log('[Superdoc] Page styles (pixels)', editor.getPageStyles());
-}
+};
 
 const onEditorDestroy = () => {
   proxy.$superdoc.broadcastEditorDestroy();
@@ -123,11 +122,11 @@ const onEditorDestroy = () => {
 
 const onEditorFocus = ({ editor }) => {
   proxy.$superdoc.setActiveEditor(editor);
-}
+};
 
 const onEditorDocumentLocked = ({ editor, isLocked, lockedBy }) => {
   proxy.$superdoc.lockSuperdoc(isLocked, lockedBy);
-}
+};
 
 const onEditorSelectionChange = ({ editor, transaction }) => {
   const { documentId } = editor.options;
@@ -165,9 +164,10 @@ const onEditorSelectionChange = ({ editor, transaction }) => {
   }, 250);
 };
 
-const onEditorCommentsUpdate = ({ editor, transaction }) => {  
+const onEditorCommentsUpdate = ({ editor, transaction }) => {
   const { documentId } = editor.options;
-  const { commentPositions = {}, activeThreadId } = transaction.getMeta('commentsPluginState') || {};
+  const { commentPositions = {}, activeThreadId } =
+    transaction.getMeta('commentsPluginState') || {};
   if (activeThreadId) onEditorSelectionChange({ editor, transaction });
 
   if (!Object.keys(commentPositions).length) return;
@@ -175,13 +175,13 @@ const onEditorCommentsUpdate = ({ editor, transaction }) => {
   const containerBounds = layers.value.getBoundingClientRect();
   const document = getDocument(documentId);
 
-  Object.keys(commentPositions).forEach((threadId) => {    
+  Object.keys(commentPositions).forEach((threadId) => {
     let convo = document.conversations.find((c) => c.thread == threadId);
     const commentData = commentPositions[threadId];
 
     if (!convo && commentData.type === 'trackedChange') {
       const selection = useSelection({
-      page: 1,
+        page: 1,
         selectionBounds: commentPositions[threadId],
         documentId,
         source: 'super-editor',
@@ -199,7 +199,7 @@ const onEditorCommentsUpdate = ({ editor, transaction }) => {
         user: {
           email: proxy.$superdoc.user.email,
           name: proxy.$superdoc.user.name,
-        }
+        },
       });
 
       convo = useConversation({
@@ -232,7 +232,7 @@ const onEditorCommentsUpdate = ({ editor, transaction }) => {
       convo.selection = newSelection;
     }
   });
-}
+};
 
 function getSelectionBoundingBox() {
   const selection = window.getSelection();
@@ -248,7 +248,7 @@ function getSelectionBoundingBox() {
 const onCommentClicked = ({ conversation }) => {
   const { conversationId } = conversation;
   activeComment.value = conversationId;
-}
+};
 
 const editorOptions = (doc) => {
   const options = {
@@ -276,12 +276,13 @@ const editorOptions = (doc) => {
 
 const isCommentsEnabled = computed(() => 'comments' in modules);
 const showCommentsSidebar = computed(() => {
-  return pendingComment.value || (
-         documentsWithConverations.value.length > 0
-          && layers.value
-          && isReady.value
-          && isCommentsEnabled.value
-        )
+  return (
+    pendingComment.value ||
+    (documentsWithConverations.value.length > 0 &&
+      layers.value &&
+      isReady.value &&
+      isCommentsEnabled.value)
+  );
 });
 
 const showToolsFloatingMenu = computed(() => {
@@ -290,7 +291,7 @@ const showToolsFloatingMenu = computed(() => {
 });
 const showActiveSelection = computed(() => {
   if (!isCommentsEnabled.value) return false;
-  !getConfig?.readOnly && selectionPosition.value
+  !getConfig?.readOnly && selectionPosition.value;
 });
 
 watch(showCommentsSidebar, (value) => {
@@ -307,14 +308,13 @@ onBeforeUnmount(() => {
   document.removeEventListener('mousedown', handleDocumentMouseDown);
 });
 
-
 const selectionLayer = ref(null);
 const isDragging = ref(false);
 
 const getSelectionPosition = computed(() => {
   if (!selectionPosition.value || selectionPosition.value.source === 'super-editor') {
     return { x: null, y: null };
-  };
+  }
 
   const top = selectionPosition.value.top;
   const left = selectionPosition.value.left;
@@ -327,7 +327,7 @@ const getSelectionPosition = computed(() => {
     left: left + 'px',
     height: Math.abs(top - bottom) + 'px',
     width: Math.abs(left - right) + 'px',
-  }
+  };
   return style;
 });
 
@@ -345,15 +345,17 @@ const handleSelectionChange = (selection) => {
   });
 
   if (!selectionPosition.value) return;
-  const selectionIsWideEnough = Math.abs(selectionPosition.value.left - selectionPosition.value.right) > 5;
-  const selectionIsTallEnough = Math.abs(selectionPosition.value.top - selectionPosition.value.bottom) > 5;
+  const selectionIsWideEnough =
+    Math.abs(selectionPosition.value.left - selectionPosition.value.right) > 5;
+  const selectionIsTallEnough =
+    Math.abs(selectionPosition.value.top - selectionPosition.value.bottom) > 5;
   if (!selectionIsWideEnough || !selectionIsTallEnough) {
     selectionLayer.value.style.pointerEvents = 'none';
     resetSelection();
     return;
   }
 
-  activeSelection.value = selection
+  activeSelection.value = selection;
 
   // Place the tools menu at the level of the selection
   let top = selection.selectionBounds.top;
@@ -363,7 +365,7 @@ const handleSelectionChange = (selection) => {
 
   toolsMenuPosition.top = top - 20 + 'px';
   toolsMenuPosition.right = isMobileView ? '0' : '-25px';
-}
+};
 
 const resetSelection = () => {
   selectionPosition.value = null;
@@ -374,7 +376,7 @@ const updateSelection = ({ startX, startY, x, y, source }) => {
   const hasEndCoords = x || y;
 
   if (!hasStartCoords && !hasEndCoords) {
-    return selectionPosition.value = null;
+    return (selectionPosition.value = null);
   }
 
   // Initialize the selection position
@@ -387,9 +389,9 @@ const updateSelection = ({ startX, startY, x, y, source }) => {
       bottom: startY,
       startX,
       startY,
-      source
+      source,
     };
-  };
+  }
 
   if (startX) selectionPosition.value.startX = startX;
   if (startY) selectionPosition.value.startY = startY;
@@ -416,18 +418,18 @@ const handleSelectionStart = (e) => {
 
   nextTick(() => {
     isDragging.value = true;
-    const y = e.offsetY / activeZoom.value
-    const x = e.offsetX / activeZoom.value
+    const y = e.offsetY / activeZoom.value;
+    const x = e.offsetX / activeZoom.value;
     updateSelection({ startX: x, startY: y });
     selectionLayer.value.addEventListener('mousemove', handleDragMove);
-  })
+  });
 };
 
 const handleDragMove = (e) => {
   if (!isDragging.value) return;
   const y = e.offsetY / activeZoom.value;
   const x = e.offsetX / activeZoom.value;
-  updateSelection({ x, y })
+  updateSelection({ x, y });
 };
 
 const handleDragEnd = (e) => {
@@ -446,103 +448,113 @@ const handleDragEnd = (e) => {
   });
   handleSelectionChange(selection);
   selectionLayer.value.style.pointerEvents = 'none';
-}
+};
 
 const handlePdfClick = (e) => {
   if (!isCommentsEnabled.value) return;
   resetSelection();
   isDragging.value = true;
   handleSelectionStart(e);
-}
+};
 </script>
 
 <template>
-<div class="superdoc">
-  <div class="layers" ref="layers">
-
-    <!-- Floating tools menu (shows up when user has text selection)-->
-    <div v-if="showToolsFloatingMenu" class="tools" :style="toolsMenuPosition">
-      <i
+  <div class="superdoc">
+    <div class="layers" ref="layers">
+      <!-- Floating tools menu (shows up when user has text selection)-->
+      <div v-if="showToolsFloatingMenu" class="tools" :style="toolsMenuPosition">
+        <i
           class="fas fa-comment fa-tool-icon"
           data-id="is-tool"
-          @click.stop.prevent="handleToolClick('comments')"></i>
-    </div>
+          @click.stop.prevent="handleToolClick('comments')"
+        ></i>
+      </div>
 
-    <div class="document">
-
-      <div
+      <div class="document">
+        <div
           v-if="isCommentsEnabled"
           class="selection-layer"
           @mousedown="handleSelectionStart"
           @mouseup="handleDragEnd"
-          ref="selectionLayer">
-        <div :style="getSelectionPosition" class="sd-highlight sd-initial-highlight temp-selection" v-if="selectionPosition"></div>
-      </div>
+          ref="selectionLayer"
+        >
+          <div
+            :style="getSelectionPosition"
+            class="sd-highlight sd-initial-highlight temp-selection"
+            v-if="selectionPosition"
+          ></div>
+        </div>
 
-      <!-- Fields layer -->
-      <HrbrFieldsLayer
+        <!-- Fields layer -->
+        <HrbrFieldsLayer
           v-if="'hrbr-fields' in modules && layers"
           :fields="modules['hrbr-fields']"
           class="comments-layer"
-          style="z-index: 5;"
-          ref="hrbrFieldsLayer" />
+          style="z-index: 5"
+          ref="hrbrFieldsLayer"
+        />
 
-      <!-- On-document comments layer -->
-      <CommentsLayer
+        <!-- On-document comments layer -->
+        <CommentsLayer
           class="comments-layer"
           v-if="showCommentsSidebar"
-          style="z-index: 3;"
+          style="z-index: 3"
           ref="commentsLayer"
           :parent="layers"
           :user="user"
-          @highlight-click="handleHighlightClick" />
+          @highlight-click="handleHighlightClick"
+        />
 
-      <div class="sub-document" v-for="doc in documents" :key="doc.id">
-        <!-- PDF renderer -->
+        <div class="sub-document" v-for="doc in documents" :key="doc.id">
+          <!-- PDF renderer -->
 
-        <PdfViewer
+          <PdfViewer
             v-if="doc.type === PDF"
             :document-data="doc"
             @selection-change="handleSelectionChange"
-            @ready="handleDocumentReady" 
+            @ready="handleDocumentReady"
             @page-loaded="handlePageReady"
-            @bypass-selection="handlePdfClick" />
+            @bypass-selection="handlePdfClick"
+          />
 
-        <SuperEditor
+          <SuperEditor
             v-if="doc.type === DOCX"
             :file-source="doc.data"
             :state="doc.state"
             :document-id="doc.id"
-            :options="editorOptions(doc)" />
+            :options="editorOptions(doc)"
+          />
 
           <!-- omitting field props -->
           <HtmlViewer
-              v-if="doc.type === HTML"
-              @ready="(id) => handleDocumentReady(id, null)"
-              @selection-change="handleSelectionChange"
-              :file-source="doc.data"
-              :document-id="doc.id" />
+            v-if="doc.type === HTML"
+            @ready="(id) => handleDocumentReady(id, null)"
+            @selection-change="handleSelectionChange"
+            :file-source="doc.data"
+            :document-id="doc.id"
+          />
+        </div>
       </div>
     </div>
-  </div>
 
     <div class="right-sidebar" v-if="showCommentsSidebar">
-    <CommentDialog
+      <CommentDialog
         v-if="pendingComment"
         :data="pendingComment"
         :current-document="getDocument(pendingComment.documentId)"
-        :user="user" 
+        :user="user"
         :parent="layers"
-        v-click-outside="cancelPendingComment" />
+        v-click-outside="cancelPendingComment"
+      />
 
-    <FloatingComments
+      <FloatingComments
         v-if="isReady"
         v-for="doc in documentsWithConverations"
         :parent="layers"
-        :current-document="doc" />
-
+        :current-document="doc"
+      />
+    </div>
   </div>
-</div>
 </template>
 
 <style scoped>
@@ -569,10 +581,13 @@ const handlePdfClick = (e) => {
 }
 
 /* General Styles */
-.box-sizing, .layers {
+.box-sizing,
+.layers {
   box-sizing: border-box;
 }
-.cursor-pointer, .tools .tool-icon, .toolbar-item {
+.cursor-pointer,
+.tools .tool-icon,
+.toolbar-item {
   cursor: pointer;
 }
 .flex {
@@ -597,7 +612,7 @@ const handlePdfClick = (e) => {
 
 /* Document Styles */
 .docx {
-  border: 1px solid #DFDFDF;
+  border: 1px solid #dfdfdf;
   pointer-events: auto;
 }
 .sub-document {
@@ -614,7 +629,7 @@ const handlePdfClick = (e) => {
   width: 20px;
   height: 20px;
   border-radius: 8px;
-  border: 1px solid #DBDBDB;
+  border: 1px solid #dbdbdb;
   padding: 3px;
   display: flex;
   flex-direction: column;
@@ -623,7 +638,7 @@ const handlePdfClick = (e) => {
   transition: all 250ms ease;
 }
 .toolbar-item:hover {
-  background-color: #DBDBDB;
+  background-color: #dbdbdb;
 }
 
 /* Tools Styles */
@@ -643,7 +658,7 @@ const handlePdfClick = (e) => {
   border-radius: 12px;
   border: none;
   outline: none;
-  background-color: #DBDBDB;
+  background-color: #dbdbdb;
   cursor: pointer;
 }
 
