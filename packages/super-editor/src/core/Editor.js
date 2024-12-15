@@ -579,15 +579,13 @@ export class Editor extends EventEmitter {
     const { pageSize, pageMargins } = this.converter.pageStyles ?? {};
     if (!pageSize || !pageMargins) return;
 
+    // Set fixed dimensions and padding that won't change with scaling
     this.element.style.boxSizing = 'border-box';
     this.element.style.width = pageSize.width + 'in';
     this.element.style.minWidth = pageSize.width + 'in';
     this.element.style.maxWidth = pageSize.width + 'in';
     this.element.style.minHeight = pageSize.height + 'in';
-    this.element.style.paddingTop = pageMargins.top + 'in';
-    this.element.style.paddingRight = pageMargins.right + 'in';
-    this.element.style.paddingBottom = pageMargins.bottom + 'in';
-    this.element.style.paddingLeft = pageMargins.left + 'in';
+    this.element.style.padding = `${pageMargins.top}in ${pageMargins.right}in ${pageMargins.bottom}in ${pageMargins.left}in`;
 
     proseMirror.style.outline = 'none';
     proseMirror.style.border = 'none';
@@ -596,9 +594,39 @@ export class Editor extends EventEmitter {
     proseMirror.style.width = '100%';
     proseMirror.style.paddingBottom = pageMargins.bottom + 'in';
 
+    // Typeface and font size
     const { typeface, fontSizePt } = this.converter.getDocumentDefaultStyles() ?? {};
     typeface && (this.element.style.fontFamily = typeface);
     fontSizePt && (this.element.style.fontSize = fontSizePt + 'pt');
+
+    // Mobile styles
+    this.element.style.transformOrigin = 'top left';
+    this.element.style.touchAction = 'pinch-zoom';
+    this.element.style.webkitOverflowScrolling = 'touch';
+
+    const initialWidth = this.element.offsetWidth;
+    const updateScale = () => {
+      // Get the actual element width including padding
+      const elementWidth = initialWidth;
+      // Get the wrapper width
+      const availableWidth = window.innerWidth;
+      // Calculate scale to make element width match wrapper width exactly
+      const scale = Math.min(1, availableWidth / elementWidth);
+
+      if (scale < 1) {
+        this.element.style.transform = `scale(${scale})`;
+      } else {
+        this.element.style.transform = 'none';
+      }
+    };
+
+    // Initial scale
+    updateScale();
+
+    // Update scale on window orientation change
+    screen.orientation.addEventListener('change', () => {
+      updateScale();
+    });
   }
 
   /**

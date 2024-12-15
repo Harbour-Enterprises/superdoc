@@ -678,6 +678,7 @@ const handlePdfClick = (e) => {
   position: relative;
 }
 
+/* Mobile Styles */
 @media (max-width: 768px) {
   .sub-document {
     max-width: 100%;
@@ -687,6 +688,12 @@ const handlePdfClick = (e) => {
     padding: 10px;
     width: 55px;
     position: relative;
+  }
+
+  .superdoc .layers {
+    margin: 0;
+    border: 0 !important;
+    box-shadow: none;
   }
 }
 </style>

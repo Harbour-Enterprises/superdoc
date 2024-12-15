@@ -23,6 +23,8 @@ const props = defineProps({
 });
 
 const currentItem = ref(null);
+// Matches media query from Superdoc.vue
+const isMobile = window.matchMedia('(max-width: 768px)').matches;
 const styleMap = {
   left: {
     minWidth: '150px',
@@ -33,7 +35,8 @@ const styleMap = {
     justifyContent: 'flex-end',
   },
   default: {
-    flexGrow: 1,
+    // Only grow if not on a mobile device
+    flexGrow: isMobile ? 0 : 1,
     justifyContent: 'center',
   },
 };
