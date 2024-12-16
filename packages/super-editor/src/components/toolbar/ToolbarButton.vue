@@ -133,7 +133,7 @@ const onFontSizeInput = (event) => {
 <style scoped>
 .toolbar-item {
   position: relative;
-  z-index: 100;
+  z-index: 1;
   min-width: 30px;
   margin: 0 1px;
 }
