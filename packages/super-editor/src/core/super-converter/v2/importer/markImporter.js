@@ -23,7 +23,6 @@ export function parseMarks(property, unknownMarks = []) {
         'w:bdr',
         'w:pBdr',
         'w:noProof',
-        'w:highlight',
         'w:contextualSpacing',
         'w:keepNext',
         'w:tabs',
@@ -131,6 +130,7 @@ function getMarkValue(markType, attributes) {
     underline: () => attributes['w:val'],
     bold: () => attributes?.['w:val'] || null,
     italic: () => attributes?.['w:val'] || null,
+    highlight: () => attributes?.['w:val'] || null,
   }
 
   if (!(markType in markValueMapper)) {

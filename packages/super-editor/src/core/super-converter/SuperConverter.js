@@ -48,6 +48,7 @@ class SuperConverter {
     { name: 'w:ind', type: 'textIndent', mark: 'textStyle', property: 'textIndent' },
     { name: 'w:spacing', type: 'lineHeight', mark: 'textStyle', property: 'lineHeight' },
     { name: 'link', type: 'link', mark: 'link', property: 'href' },
+    { name: 'w:highlight', type: 'highlight', mark: 'highlight', property: 'color' },
   ]
 
   static propertyTypes = Object.freeze({

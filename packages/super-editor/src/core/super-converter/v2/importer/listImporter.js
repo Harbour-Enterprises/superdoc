@@ -474,9 +474,3 @@ function _processListRunProperties(data) {
   return runProperties;
 }
 
-function _getIndentValueFromAttributes(attributes) {
-  const { paragraphProperties } = attributes;
-  if (!paragraphProperties) return null;
-  const indent = paragraphProperties.elements.find(style => style.name === 'w:ind');
-  return parseInt(indent?.attributes['w:left']);
-}

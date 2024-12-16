@@ -127,7 +127,7 @@ export function handleTableNode(node, docx, nodeListHandler, insideTrackChange) 
  * @param {boolean} insideTrackChange
  * @returns {{type: string, content: (*|*[]), attrs: {}}}
  */
-export function handleTableCellNode(node, row, table, styleTag, docx, nodeListHandler, insideTrackChange) {
+export function handleTableCellNode(node, row, table, rowBorders, styleTag, docx, nodeListHandler, insideTrackChange) {
   const tcPr = node.elements.find((el) => el.name === 'w:tcPr');
   const borders = tcPr?.elements?.find((el) => el.name === 'w:tcBorders');
   const inlineBorders = processInlineCellBorders(borders);
@@ -151,7 +151,7 @@ export function handleTableCellNode(node, row, table, styleTag, docx, nodeListHa
   const marginTag = tcPr?.elements?.find((el) => el.name === 'w:tcMar');
 
   const verticalAlignTag = tcPr?.elements?.find((el) => el.name === 'w:vAlign');
-  const verticalAlign = verticalAlignTag?.attributes['w:val'];
+  const verticalAlign = verticalAlignTag?.attributes['w:val'] || 'top';
   
   const attributes = {};
   const referencedStyles = getReferencedTableStyles(styleTag, docx) || {};
@@ -168,6 +168,7 @@ export function handleTableCellNode(node, row, table, styleTag, docx, nodeListHa
   if (fontSize) attributes['fontSize'] = fontSize;
   if (fontFamily) attributes['fontFamily'] = fontFamily['ascii'];
   if (inlineBorders) attributes['borders'] = inlineBorders;
+  if (!inlineBorders && rowBorders) attributes['borders'] = rowBorders;
 
   // Tables can have vertically merged cells, indicated by the vMergeAttrs
   if (vMerge) attributes['vMerge'] = vMergeAttrs || 'merged';
@@ -233,7 +234,7 @@ const processBorder = (borders, direction) => {
 };
 
 const processInlineCellBorders = (borders) => {
-  if (!borders) return {};
+  if (!borders) return null;
 
   const processedBorders = {};
   const inlineBorderBottom = processBorder(borders, 'bottom');
@@ -275,6 +276,12 @@ function getReferencedTableStyles(tblStyleTag, docx, nodeListHandler) {
   // TODO: Do we need this?
   const basedOn = styleTag.elements.find((el) => el.name === 'w:basedOn');
   const uiPriotity = styleTag.elements.find((el) => el.name === 'w:uiPriority');
+
+  let baseTblPr;
+  if (basedOn) {
+    const baseStyles = styleElements.find((el) => el.attributes['w:styleId'] === basedOn.attributes['w:val']);
+    baseTblPr = baseStyles ? baseStyles.elements.find((el) => el.name === 'w:tblPr') : {};
+  }
   
   const pPr = styleTag.elements.find((el) => el.name === 'w:pPr');
   if (pPr) {
@@ -296,6 +303,10 @@ function getReferencedTableStyles(tblStyleTag, docx, nodeListHandler) {
 
   const tblPr = styleTag.elements.find((el) => el.name === 'w:tblPr');
   if (tblPr && tblPr.elements) {
+    tblPr.elements = [
+      ...baseTblPr.elements,
+      ...tblPr.elements,
+    ]
     const tableBorders = tblPr?.elements?.find((el) => el.name === 'w:tblBorders');
     const { elements: borderElements = [] } = tableBorders || {};
     const { borders, rowBorders } = processTableBorders(borderElements);
@@ -377,7 +388,7 @@ export function handleTableRowNode(node, table, rowBorders, styleTag, docx, node
   }
 
   const cellNodes = node.elements.filter((el) => el.name === 'w:tc');
-  const content =  cellNodes?.map((n) => handleTableCellNode(n, node, table, styleTag, docx, nodeListHandler, insideTrackChange)) || [];
+  const content =  cellNodes?.map((n) => handleTableCellNode(n, node, table, borders, styleTag, docx, nodeListHandler, insideTrackChange)) || [];
 
   const newNode = {
     type: 'tableRow',

@@ -74,7 +74,7 @@ export const TableCell = Node.create({
           const style = sides
             .map((side) => {
               const border = borders?.[side];
-              if (border) return `border-${side}: ${border.size}px solid ${border.color};`;
+              if (border) return `border-${side}: ${border.size}px solid ${border.color || 'black'};`;
               return '';
             }).join(' ');
           return { style };

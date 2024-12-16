@@ -281,7 +281,7 @@ function getTextNodeForExport(text, marks) {
     elements: [{ text, type: 'text' }],
     attributes: nodeAttrs,
   }
-
+  
   return wrapTextInRun(textNode, outputMarks);
 }
 
@@ -925,7 +925,7 @@ function generateTableCellProperties(node) {
         name: `w:${key}`,
         attributes: {
           'w:val': 'single',
-          'w:color': value.color.substring(1),
+          'w:color': value.color ? value.color.substring(1) : 'auto',
           'w:sz': pixelsToEightPoints(value.size),
           'w:space': value.space || 0,
         }
@@ -1028,6 +1028,10 @@ function translateMark(mark) {
 
     case 'lineHeight':
       markElement.attributes['w:line'] = inchesToTwips(attrs.lineHeight);
+      break;
+      
+    case 'highlight':
+      markElement.attributes['w:val'] = attrs.color;
       break;
 
     case 'link':

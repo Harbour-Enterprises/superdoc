@@ -37,6 +37,7 @@ import { TextStyle } from './text-style/text-style.js';
 import { Bold } from './bold/index.js';
 import { Italic } from './italic/index.js';
 import { Underline } from './underline/index.js';
+import { Highlight } from './highlight/index.js';
 import { Strike } from './strike/index.js';
 import { Link } from './link/index.js';
 import { TrackInsert, TrackDelete, TrackFormat } from "./track-changes/index.js";
@@ -67,6 +68,7 @@ const getRichTextExtensions = () => [
   Placeholder,
   PopoverPlugin,
   Mention,
+  Highlight
 ];
 
 const getStarterExtensions = () => {
@@ -115,6 +117,7 @@ const getStarterExtensions = () => {
     TrackInsert,
     TrackDelete,
     TrackFormat,
+    Highlight
   ];
 };
 
@@ -136,6 +139,7 @@ export {
   Bold,
   Italic,
   Underline,
+  Highlight,
   Strike,
   Color,
   FontFamily,
