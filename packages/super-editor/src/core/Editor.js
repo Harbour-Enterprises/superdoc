@@ -615,6 +615,11 @@ export class Editor extends EventEmitter {
 
       if (scale < 1) {
         this.element.style.transform = `scale(${scale})`;
+        // Set parent width to match scaled width
+        const superEditor = this.element.closest('.super-editor');
+        if (superEditor) {
+          superEditor.style.width = `${initialWidth * scale}px`;
+        }
       } else {
         this.element.style.transform = 'none';
       }

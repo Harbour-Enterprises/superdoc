@@ -167,6 +167,18 @@ onBeforeUnmount(() => {
   min-width: 8.5in;
   min-height: 11in;
 }
+
+/*
+  When scaling on mobile, we dont want to hardcode the width and height
+  because the editor will scale to the width of the screen.
+*/
+@media (max-width: 768px) {
+  .super-editor {
+    min-width: 100%;
+    min-height: 100%;
+  }
+}
+
 .placeholder-editor {
   box-sizing: border-box;
   width: 8.5in;
