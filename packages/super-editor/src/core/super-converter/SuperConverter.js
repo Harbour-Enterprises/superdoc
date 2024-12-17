@@ -152,8 +152,8 @@ class SuperConverter {
           typeface = fonts?.attributes['w:ascii'];
         });
       }
-
-      const fontSizePt = Number(rElements.find((el) => el.name === 'w:sz')?.attributes['w:val']) / 2;
+      
+      const fontSizePt = (Number(rElements.find((el) => el.name === 'w:sz')?.attributes['w:val']) / 2) || 12;
       const kern = rElements.find((el) => el.name === 'w:kern')?.attributes['w:val'];
       return { fontSizePt, kern, typeface, panose };
     }
