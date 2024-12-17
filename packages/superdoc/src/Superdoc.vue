@@ -472,11 +472,20 @@ const handlePdfClick = (e) => {
   <div class="layers" ref="layers">
 
     <!-- Floating tools menu (shows up when user has text selection)-->
-    <div v-if="showToolsFloatingMenu" class="tools" :style="toolsMenuPosition">
-      <i
+    <div 
+      v-if="showToolsFloatingMenu" 
+      class="tools" 
+      :style="toolsMenuPosition"
+    >
+      <div 
+        class="tools-item"
+        data-id="is-tool"
+        @click.stop.prevent="handleToolClick('comments')"
+      >
+        <i
           class="fas fa-comment fa-tool-icon"
-          data-id="is-tool"
-          @click.stop.prevent="handleToolClick('comments')"></i>
+        ></i>
+      </div>
     </div>
 
     <div class="document">
@@ -640,14 +649,9 @@ const handlePdfClick = (e) => {
 /* Tools Styles */
 .tools {
   position: absolute;
-  width: 50px;
-  height: 50px;
-  background-color: rgba(219, 219, 219, 0.6);
-  border-radius: 12px;
   z-index: 100;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  gap: 6px;
 }
 .tools .tool-icon {
   font-size: 20px;
@@ -655,6 +659,15 @@ const handlePdfClick = (e) => {
   border: none;
   outline: none;
   background-color: #DBDBDB;
+}
+.tools-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  background-color: rgba(219, 219, 219, 0.6);
+  border-radius: 12px;
   cursor: pointer;
 }
 
