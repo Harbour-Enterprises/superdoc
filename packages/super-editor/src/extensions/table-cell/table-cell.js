@@ -30,7 +30,7 @@ export const TableCell = Node.create({
           if (!width) return {};
           let unit = 'in';
           if (widthType === 'pct') unit = '%';
-          const style = `width: ${width}${unit}`;
+          const style = `width: ${width}${unit}; word-break: break-all;`;
           return { style };
         },
       },

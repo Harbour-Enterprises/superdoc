@@ -29,10 +29,6 @@ export const Table = Node.create({
           return { style: `min-width: ${width}px;` }
         }
       },
-      gridColumnWidths: { 
-        rendered: false, 
-        default: () => [], 
-      },
       tableStyleId: { rendered: false, },
       tableIndent: {
         renderDOM: ({ tableIndent }) => {

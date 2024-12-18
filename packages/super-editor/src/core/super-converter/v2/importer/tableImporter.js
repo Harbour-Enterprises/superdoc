@@ -1,9 +1,4 @@
-import {
-  twipsToPixels,
-  twipsToInches,
-  eigthPointsToPixels,
-  halfPointToPoints
-} from "../../helpers.js";
+import { eigthPointsToPixels, halfPointToPoints, twipsToInches, twipsToPixels } from '../../helpers.js';
 
 
 /**
@@ -39,7 +34,7 @@ export const tableNodeHandlerEntity = {
  * @param {ParsedDocx} docx
  * @param {NodeListHandler} nodeListHandler
  * @param {boolean} insideTrackChange
- * @returns {{type: string, content: *, attrs: {borders: *, tableWidth: *, tableWidthType: *, gridColumnWidths: *}}}
+ * @returns {{type: string, content: *, attrs: {borders: *, tableWidth: *, tableWidthType: *}}}
  */
 export function handleTableNode(node, docx, nodeListHandler, insideTrackChange) {
     // Table styles
@@ -88,8 +83,6 @@ export function handleTableNode(node, docx, nodeListHandler, insideTrackChange) 
     
     // TODO: What does this do?
     // const tblLook = tblPr.elements.find((el) => el.name === 'w:tblLook');
-    const tblGrid = node.elements.find((el) => el.name === 'w:tblGrid');
-    const gridColumnWidths = tblGrid?.elements?.map((el) => twipsToInches(el.attributes['w:w']));
 
     const rows = node.elements.filter((el) => el.name === 'w:tr');
     
@@ -127,14 +120,18 @@ export function handleTableNode(node, docx, nodeListHandler, insideTrackChange) 
  * @param {boolean} insideTrackChange
  * @returns {{type: string, content: (*|*[]), attrs: {}}}
  */
-export function handleTableCellNode(node, row, table, rowBorders, styleTag, docx, nodeListHandler, insideTrackChange) {
+export function handleTableCellNode(node, row, table, rowBorders, columnWidth = null, styleTag, docx, nodeListHandler, insideTrackChange) {
   const tcPr = node.elements.find((el) => el.name === 'w:tcPr');
   const borders = tcPr?.elements?.find((el) => el.name === 'w:tcBorders');
   const inlineBorders = processInlineCellBorders(borders);
 
+  const gridColumnWidths = getGridColumnWidths(table);
+  
   const tcWidth = tcPr?.elements?.find((el) => el.name === 'w:tcW');
-  const width = tcWidth ? twipsToInches(tcWidth.attributes['w:w']) : null;
+  let width = tcWidth ? twipsToInches(tcWidth.attributes['w:w']) : null;
   const widthType = tcWidth?.attributes['w:type'];
+  
+  if (!width && columnWidth) width = columnWidth;
 
   const vMerge = getTableCellMergeTag(node);
   const { attributes: vMergeAttrs } = vMerge || {};
@@ -188,8 +185,8 @@ export function handleTableCellNode(node, row, table, rowBorders, styleTag, docx
       const cellAtIndex = remainingRow.elements[firstCell + cellIndex];
 
       if (!cellAtIndex) break;
-
-      const convertedCell = handleTableCellNode(cellAtIndex, remainingRow, table, rowBorders, styleTag, docx, nodeListHandler, insideTrackChange);
+      
+      const convertedCell = handleTableCellNode(cellAtIndex, remainingRow, table, rowBorders, gridColumnWidths[firstCell + cellIndex], styleTag, docx, nodeListHandler, insideTrackChange);
       mergedCells.push(convertedCell);
 
       const vMerge = getTableCellMergeTag(cellAtIndex);
@@ -386,9 +383,14 @@ export function handleTableRowNode(node, table, rowBorders, styleTag, docx, node
   if (rowHeight) {
     attrs['rowHeight'] = twipsToPixels(rowHeight);
   }
+  
+  const gridColumnWidths = getGridColumnWidths(table);
 
   const cellNodes = node.elements.filter((el) => el.name === 'w:tc');
-  const content =  cellNodes?.map((n) => handleTableCellNode(n, node, table, borders, styleTag, docx, nodeListHandler, insideTrackChange)) || [];
+  const content = cellNodes?.map((n, index) => {
+    const colWidth = cellNodes.length > 1 ? gridColumnWidths[index] : null;
+    return handleTableCellNode(n, node, table, borders, colWidth, styleTag, docx, nodeListHandler, insideTrackChange)
+  }) || [];
 
   const newNode = {
     type: 'tableRow',
@@ -430,4 +432,12 @@ const getTableCellMargins = (marginTag, referencedStyles) => {
     bottom: twipsToPixels(inlineMarginBottomValue ?? marginBottomStyle),
   };
   return margins;
+}
+
+const getGridColumnWidths = (tableNode) => {
+  const tblGrid = tableNode.elements.find((el) => el.name === 'w:tblGrid');
+  return tblGrid?.elements?.flatMap((el) => {
+    if (el.name !== 'w:gridCol') return [];
+    return twipsToInches(el.attributes['w:w']);
+  }) || {};
 }
