@@ -14,7 +14,7 @@ import falCheckIcon from '@/assets/fontawesome/light/check.svg?raw';
 const superdocStore = useSuperdocStore();
 const commentsStore = useCommentsStore();
 const { COMMENT_EVENTS } = commentsStore;
-const { getConfig, activeComment, pendingComment, floatingCommentsOffset, suppressInternalExternal } = storeToRefs(commentsStore);
+const { getConfig, activeComment, pendingComment, floatingCommentsOffset, suppressInternalExternal, skipSelectionUpdate } = storeToRefs(commentsStore);
 const { areDocumentsReady, getDocument } = superdocStore;
 const { selectionPosition, activeZoom, documentScroll } = storeToRefs(superdocStore);
 const { proxy } = getCurrentInstance();
@@ -93,6 +93,7 @@ const addComment = () => {
 
     // Remove the pending comment
     pendingComment.value = null;
+    skipSelectionUpdate.value = true;
 
     const editor = proxy.$superdoc.activeEditor;
     if (editor) createNewEditorComment({ conversation: newConversation, editor });
@@ -104,7 +105,7 @@ const addComment = () => {
     props.data.comments.push(comment);
     proxy.$superdoc.broadcastComments(COMMENT_EVENTS.ADD, props.data.getValues());
   }
-
+  
   currentComment.value = '';
   emit('dialog-exit');
   activeComment.value = null;

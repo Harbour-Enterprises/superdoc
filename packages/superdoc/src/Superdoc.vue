@@ -48,7 +48,8 @@ const {
   getConfig,
   documentsWithConverations,
   pendingComment,
-  activeComment
+  activeComment,
+  skipSelectionUpdate
 } = storeToRefs(commentsStore);
 const { initialCheck, showAddComment } = commentsStore;
 const { proxy } = getCurrentInstance();
@@ -131,6 +132,12 @@ const onEditorDocumentLocked = ({ editor, isLocked, lockedBy }) => {
 }
 
 const onEditorSelectionChange = ({ editor, transaction }) => {
+  if (skipSelectionUpdate.value) {
+    // When comment is added selection will be equal to comment text
+    // Should skip calculations to keep text selection for comments correct
+    skipSelectionUpdate.value = false;
+    return;
+  }
   const { documentId } = editor.options;
   const { $from, $to } = transaction.selection;
   if ($from.pos === $to.pos) {
@@ -147,7 +154,7 @@ const onEditorSelectionChange = ({ editor, transaction }) => {
     right: (bounds.right - layerBounds.left) / activeZoom.value,
     bottom: (bounds.bottom - layerBounds.top) / activeZoom.value,
   };
-
+  
   const selection = useSelection({
     selectionBounds,
     page: 1,
@@ -326,7 +333,7 @@ const getSelectionPosition = computed(() => {
   if (!selectionPosition.value || selectionPosition.value.source === 'super-editor') {
     return { x: null, y: null };
   };
-
+  
   const top = selectionPosition.value.top;
   const left = selectionPosition.value.left;
   const right = selectionPosition.value.right;
@@ -346,7 +353,7 @@ const handleSelectionChange = (selection) => {
   if (!selection.selectionBounds || !isCommentsEnabled.value) return;
 
   const isMobileView = window.matchMedia('(max-width: 768px)').matches;
-
+  
   updateSelection({
     startX: selection.selectionBounds.left,
     startY: selection.selectionBounds.top,
@@ -387,7 +394,7 @@ const updateSelection = ({ startX, startY, x, y, source }) => {
   if (!hasStartCoords && !hasEndCoords) {
     return selectionPosition.value = null;
   }
-
+  
   // Initialize the selection position
   if (!selectionPosition.value) {
     if (startY <= 0 || startX <= 0) return;
@@ -553,7 +560,8 @@ const handlePdfClick = (e) => {
         :current-document="getDocument(pendingComment.documentId)"
         :user="user" 
         :parent="layers"
-        v-click-outside="cancelPendingComment" />
+        v-click-outside="cancelPendingComment"
+    />
 
     <FloatingComments
         v-if="isReady"

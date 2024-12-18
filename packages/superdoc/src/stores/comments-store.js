@@ -25,6 +25,7 @@ export const useCommentsStore = defineStore('comments', () => {
   const floatingCommentsOffset = ref(0);
   const sortedConversations = ref([]);
   const visibleConversations = ref([]);
+  const skipSelectionUpdate = ref(false);
 
   const pendingComment = ref(null);
   const getPendingComment = (selection) => {
@@ -177,6 +178,7 @@ export const useCommentsStore = defineStore('comments', () => {
     floatingCommentsOffset,
     sortedConversations,
     visibleConversations,
+    skipSelectionUpdate,
 
     // Getters
     getConfig,
