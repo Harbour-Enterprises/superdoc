@@ -12,6 +12,7 @@ import BasicUpload from './dev/components/BasicUpload.vue';
 import Toolbar from '@components/toolbar/Toolbar.vue';
 import SuperInput from '@components/SuperInput.vue';
 import * as fieldAnnotationHelpers from '@extensions/field-annotation/fieldAnnotationHelpers/index.js';
+import * as trackChangesHelpers from '@extensions/track-changes/trackChangesHelpers/index.js';
 
 /**
  * Exported classes and components.
@@ -37,6 +38,7 @@ export {
   // Helpers
   helpers,
   fieldAnnotationHelpers,
+  trackChangesHelpers,
   getMarksFromSelection,
   getActiveFormatting,
   getStarterExtensions,

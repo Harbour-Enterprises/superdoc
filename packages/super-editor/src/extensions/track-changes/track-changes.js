@@ -10,7 +10,7 @@ export const TrackChanges = Extension.create({
 
   addCommands() {
     return {
-      acceptTrackedChangeBetween:
+      acceptTrackedChangesBetween:
         (from, to) =>
         ({ state, dispatch }) => {
           let { tr, doc } = state;
@@ -73,7 +73,7 @@ export const TrackChanges = Extension.create({
           return true;
         },
 
-      rejectTrackedChangeBetween:
+      rejectTrackedChangesBetween:
         (from, to) =>
         ({ state, dispatch }) => {
           const { tr, doc } = state;
@@ -156,14 +156,14 @@ export const TrackChanges = Extension.create({
         ({ trackedChange }) =>
         ({ commands }) => {
           const { start: from, end: to } = trackedChange;
-          return commands.acceptTrackedChangeBetween(from, to);
+          return commands.acceptTrackedChangesBetween(from, to);
         },
 
       acceptTrackedChangeBySelection:
         () =>
         ({ state, commands }) => {
           const { from, to } = state.selection;
-          return commands.acceptTrackedChangeBetween(from, to);
+          return commands.acceptTrackedChangesBetween(from, to);
         },
 
       acceptTrackedChangeById:
@@ -175,9 +175,16 @@ export const TrackChanges = Extension.create({
             .map(({ from, to }) => {
               let mappedFrom = tr.mapping.map(from);
               let mappedTo = tr.mapping.map(to);
-              return commands.acceptTrackedChangeBetween(mappedFrom, mappedTo);
+              return commands.acceptTrackedChangesBetween(mappedFrom, mappedTo);
             })
             .every((result) => result);
+        },
+      
+      acceptAllTrackedChanges:
+        () =>
+        ({ state, commands }) => {
+          const from = 0, to = state.doc.content.size;
+          return commands.acceptTrackedChangesBetween(from, to);
         },
 
       rejectTrackedChangeById:
@@ -189,7 +196,7 @@ export const TrackChanges = Extension.create({
             .map(({ from, to }) => {
               let mappedFrom = tr.mapping.map(from);
               let mappedTo = tr.mapping.map(to);
-              return commands.rejectTrackedChangeBetween(mappedFrom, mappedTo);
+              return commands.rejectTrackedChangesBetween(mappedFrom, mappedTo);
             })
             .every((result) => result);
         },
@@ -198,16 +205,23 @@ export const TrackChanges = Extension.create({
         ({ trackedChange }) =>
         ({ commands }) => {
           const { start: from, end: to } = trackedChange;
-          return commands.rejectTrackedChangeBetween(from, to);
+          return commands.rejectTrackedChangesBetween(from, to);
         },
 
       rejectTrackedChangeOnSelection:
         () =>
         ({ state, commands }) => {
           const { from, to } = state.selection;
-          return commands.rejectTrackedChangeBetween(from, to);
+          return commands.rejectTrackedChangesBetween(from, to);
         },
-
+      
+      rejectAllTrackedChanges:
+        () =>
+        ({ state, commands }) => {
+          const from = 0, to = state.doc.content.size;
+          return commands.rejectTrackedChangesBetween(from, to);
+        },
+        
       toggleTrackChanges:
         () =>
         ({ state }) => {
