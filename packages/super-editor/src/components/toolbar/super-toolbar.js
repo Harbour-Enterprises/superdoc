@@ -118,8 +118,7 @@ export class SuperToolbar extends EventEmitter {
     this.app.config.globalProperties.$toolbar = this;
     if (el) this.toolbar = this.app.mount(el);
     this.activeEditor = config.editor || null;
-
-    this.#updateToolbarState();
+    this.updateToolbarState();
   }
 
   log(...args) {
@@ -140,7 +139,7 @@ export class SuperToolbar extends EventEmitter {
   setActiveEditor(editor) {
     this.activeEditor = editor;
     this.activeEditor.on('transaction', this.onEditorTransaction.bind(this));
-    this.#updateToolbarState();
+    this.updateToolbarState();
   }
   
   getToolbarItemByGroup(groupName) {
@@ -151,7 +150,7 @@ export class SuperToolbar extends EventEmitter {
     const { defaultItems, overflowItems } = makeDefaultItems(superToolbar, isDev, window.innerWidth, this.role);
     this.toolbarItems = defaultItems;
     this.overflowItems = overflowItems;
-    this.#updateToolbarState();
+    this.updateToolbarState();
   }
 
   #initDefaultFonts() {
@@ -168,7 +167,7 @@ export class SuperToolbar extends EventEmitter {
    * Update the toolbar state. Expects a list of marks in the form: { name, attrs }
    * @param {Object} marks
    */
-  #updateToolbarState() {
+  updateToolbarState() {
     this.#updateToolbarHistory();
     this.#initDefaultFonts();
 
@@ -212,7 +211,6 @@ export class SuperToolbar extends EventEmitter {
    * React to editor transactions. Might want to debounce this.
    */
   onEditorTransaction({ editor, transaction }) {
-    this.#updateToolbarState();
    }
 
   /**
@@ -237,7 +235,7 @@ export class SuperToolbar extends EventEmitter {
 
     if (command in this.activeEditor?.commands) {
       this.activeEditor.commands[command](argument);
-      this.#updateToolbarState();
+      this.updateToolbarState();
     } else {
       throw new Error(`[super-toolbar 🎨] Command not found: ${command}`);
     }
@@ -249,7 +247,7 @@ export class SuperToolbar extends EventEmitter {
     let command = item.command;
     if (command in this.activeEditor?.commands) {
       this.activeEditor.commands[command](argument);
-      this.#updateToolbarState();
+      this.updateToolbarState();
     }
   }
 }
