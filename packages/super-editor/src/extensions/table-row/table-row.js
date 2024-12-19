@@ -21,15 +21,6 @@ export const TableRow = Node.create({
 
   addAttributes() {
     return {
-      borders: {
-        renderDOM({ borders = {} }) {
-          if (!borders) return {};
-          const style = Object.entries(borders).reduce((acc, [key, { size, color }]) => {
-            return `${acc}border-${key}: ${size}px solid ${color || 'black'};`;
-          }, '');
-          return { style }
-        }
-      },
       rowHeight: {
         renderDOM({ rowHeight }) {
           if (!rowHeight) return {};

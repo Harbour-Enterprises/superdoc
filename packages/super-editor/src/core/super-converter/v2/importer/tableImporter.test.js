@@ -67,6 +67,73 @@ describe('table live xml test', () => {
       </w:tr>
     </w:tbl>`;
 
+  const nilBordersTableXml = `<w:tbl>
+      <w:tblPr>
+        <w:tblStyle w:val="TableGrid" />
+        <w:tblW w:w="0" w:type="auto" />
+        <w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0"
+          w:noHBand="0" w:noVBand="1" />
+      </w:tblPr>
+      <w:tblGrid>
+        <w:gridCol w:w="4675" />
+        <w:gridCol w:w="4675" />
+      </w:tblGrid>
+      <w:tr w:rsidR="00833D48" w14:paraId="0A54184A" w14:textId="77777777" w:rsidTr="00833D48">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="4675" w:type="dxa" />
+            <w:tcBorders>
+              <w:right w:val="nil"/>
+            </w:tcBorders>
+          </w:tcPr>
+          <w:p w14:paraId="1159FC76" w14:textId="3D07C504" w:rsidR="00833D48"
+            w:rsidRDefault="00833D48">
+            <w:r>
+              <w:t>COL 1 ROW 1</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="4675" w:type="dxa" />
+             <w:tcBorders>
+              <w:bottom w:val="nil"/>
+            </w:tcBorders>
+          </w:tcPr>
+          <w:p w14:paraId="4436EDF8" w14:textId="5B1976D8" w:rsidR="00833D48"
+            w:rsidRDefault="00833D48">
+            <w:r>
+              <w:t>COL 2 ROW 1</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00833D48" w14:paraId="00EE17B3" w14:textId="77777777" w:rsidTr="00833D48">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="4675" w:type="dxa" />
+          </w:tcPr>
+          <w:p w14:paraId="57349683" w14:textId="20493167" w:rsidR="00833D48"
+            w:rsidRDefault="00833D48">
+            <w:r>
+              <w:t>COL 1 ROW 2</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="4675" w:type="dxa" />
+          </w:tcPr>
+          <w:p w14:paraId="177F124F" w14:textId="7105C366" w:rsidR="00833D48"
+            w:rsidRDefault="00833D48">
+            <w:r>
+              <w:t>COL 2 ROW 2</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+    </w:tbl>`;
+
   it('parses simple xml', () => {
     const nodes = parseXmlToJson(simpleTableXml).elements;
     const styles = parseXmlToJson(simpleTableStyleXml);
@@ -114,5 +181,21 @@ describe('table live xml test', () => {
     expect(result.nodes[0].content[1].content[1].content[0].content[0].type).toBe('text');
     expect(result.nodes[0].content[1].content[1].content[0].content[0].text).toBe('COL 2 ROW 2');
     expect(result.nodes[0].content[1].attrs.borders).toBeDefined();
+  });
+  
+  it ('gets styles from base tab and parse internal borders', () => {
+    const nodes = parseXmlToJson(nilBordersTableXml).elements;
+    const styles = parseXmlToJson(simpleTableStyleXml);
+    const docx = {
+      'word/styles.xml': styles,
+    };
+    const result = handleAllTableNodes(nodes, docx, defaultNodeListHandler(), false);
+    expect(result.nodes[0].content[0].content[0].attrs.borders).toBeDefined();
+    expect(result.nodes[0].content[0].content[1].attrs.borders).toBeDefined();
+    expect(result.nodes[0].content[0].content[0].attrs.borders.right.val).toBe('none');
+    expect(result.nodes[0].content[0].content[1].attrs.borders.bottom.val).toBe('none');
+    expect(result.nodes[0].content[0].content[0].attrs.cellMargins).toBeDefined();
+    expect(result.nodes[0].content[0].content[0].attrs.cellMargins.left).toBe(8);
+    expect(result.nodes[0].content[0].content[0].attrs.cellMargins.right).toBe(8);
   });
 });

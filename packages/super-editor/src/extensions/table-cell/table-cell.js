@@ -30,7 +30,7 @@ export const TableCell = Node.create({
           if (!width) return {};
           let unit = 'in';
           if (widthType === 'pct') unit = '%';
-          const style = `width: ${width}${unit}; word-break: break-all;`;
+          const style = `width: ${width}${unit};`;
           return { style };
         },
       },
@@ -74,6 +74,7 @@ export const TableCell = Node.create({
           const style = sides
             .map((side) => {
               const border = borders?.[side];
+              if (border && border.val === 'none') return `border-${side}: ${border.val};`;
               if (border) return `border-${side}: ${border.size}px solid ${border.color || 'black'};`;
               return '';
             }).join(' ');

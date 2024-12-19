@@ -123,7 +123,7 @@ export function handleTableNode(node, docx, nodeListHandler, insideTrackChange) 
 export function handleTableCellNode(node, row, table, rowBorders, columnWidth = null, styleTag, docx, nodeListHandler, insideTrackChange) {
   const tcPr = node.elements.find((el) => el.name === 'w:tcPr');
   const borders = tcPr?.elements?.find((el) => el.name === 'w:tcBorders');
-  const inlineBorders = processInlineCellBorders(borders);
+  const inlineBorders = processInlineCellBorders(borders, rowBorders);
 
   const gridColumnWidths = getGridColumnWidths(table);
   
@@ -164,8 +164,8 @@ export function handleTableCellNode(node, row, table, rowBorders, columnWidth = 
   if (verticalAlign) attributes['verticalAlign'] = verticalAlign;
   if (fontSize) attributes['fontSize'] = fontSize;
   if (fontFamily) attributes['fontFamily'] = fontFamily['ascii'];
-  if (inlineBorders) attributes['borders'] = inlineBorders;
-  if (!inlineBorders && rowBorders) attributes['borders'] = rowBorders;
+  if (rowBorders) attributes['borders'] = {...rowBorders};
+  if (inlineBorders) attributes['borders'] = Object.assign(attributes['borders'] || {}, inlineBorders);
 
   // Tables can have vertically merged cells, indicated by the vMergeAttrs
   if (vMerge) attributes['vMerge'] = vMergeAttrs || 'merged';
@@ -217,32 +217,39 @@ const getTableCellMergeTag = (node) => {
   return vMerge;
 };
 
-const processBorder = (borders, direction) => {
+const processBorder = (borders, direction, rowBorders = {}) => {
   const borderAttrs = borders?.elements?.find((el) => el.name === `w:${direction}`)?.attributes;
+
   if (borderAttrs && borderAttrs['w:val'] !== 'nil') {
     const border = {};
     const color = borderAttrs['w:color'];
-    if (color) border['color'] = `#${color}`;
+    if (color) border['color'] = color === 'auto' ? '#000000' : `#${color}`;
     const size = borderAttrs['w:sz'];
     if (size) border['size'] = eigthPointsToPixels(size);
+    return border;
+  }
+  if (borderAttrs && borderAttrs['w:val'] === 'nil') {
+    const border = Object.assign({}, rowBorders[direction] || {});
+    if (!Object.keys(border)) return null;
+    border['val'] = 'none';
     return border;
   }
   return null;
 };
 
-const processInlineCellBorders = (borders) => {
+const processInlineCellBorders = (borders, rowBorders) => {
   if (!borders) return null;
-
+  
   const processedBorders = {};
-  const inlineBorderBottom = processBorder(borders, 'bottom');
+  const inlineBorderBottom = processBorder(borders, 'bottom', rowBorders);
   if (inlineBorderBottom) processedBorders['bottom'] = inlineBorderBottom;
-  const inlineBorderTop = processBorder(borders, 'top');
+  const inlineBorderTop = processBorder(borders, 'top', rowBorders);
   if (inlineBorderTop) processedBorders['top'] = inlineBorderTop;
-  const inlineBorderLeft = processBorder(borders, 'left');
+  const inlineBorderLeft = processBorder(borders, 'left', rowBorders);
   if (inlineBorderLeft) processedBorders['left'] = inlineBorderLeft;
-  const inlineBorderRight = processBorder(borders, 'right');
+  const inlineBorderRight = processBorder(borders, 'right', rowBorders);
   if (inlineBorderRight) processedBorders['right'] = inlineBorderRight;
-
+  
   return processedBorders;
 };
 
