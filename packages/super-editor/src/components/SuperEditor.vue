@@ -7,6 +7,8 @@ import { getStarterExtensions } from '@extensions/index.js';
 
 const emit = defineEmits([
   'editor-ready',
+  'editor-click',
+  'editor-keydown',
   'comments-loaded',
   'selection-update'
 ]);
@@ -118,7 +120,12 @@ const initEditor = async ({ content, media = {}, mediaFiles = {}, fonts = {} } =
   });
 };
 
+const handleSuperEditorKeydown = (event) => {
+  emit('editor-keydown', { editor });
+};
+
 const handleSuperEditorClick = (event) => {
+  emit('editor-click', { editor });
   let pmElement = editorElem.value?.querySelector('.ProseMirror');
 
   if (!pmElement || !editor) {
@@ -146,7 +153,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="super-editor" v-show="editorReady" @click="handleSuperEditorClick">
+  <div class="super-editor" v-show="editorReady" 
+  @keydown="handleSuperEditorKeydown"
+  @click="handleSuperEditorClick">
     <div ref="editorElem" class="editor-element"></div>
   </div>
 
