@@ -1,6 +1,5 @@
 <script setup>
 import '@harbour-enterprises/common/styles/common-styles.css';
-//prettier-ignore
 import {
   getCurrentInstance,
   ref,
@@ -28,37 +27,36 @@ import { SuperEditor } from '@harbour-enterprises/super-editor';
 import HtmlViewer from './components/HtmlViewer/HtmlViewer.vue';
 import useConversation from './components/CommentsLayer/use-conversation';
 import useComment from './components/CommentsLayer/use-comment';
+import AiLayer from '@/components/AiLayer/AiLayer.vue';
 
 // Stores
 const superdocStore = useSuperdocStore();
 const commentsStore = useCommentsStore();
 const emit = defineEmits(['selection-update']);
 
-//prettier-ignore
-const {
-  documents,
-  isReady,
-  areDocumentsReady,
-  selectionPosition,
-  activeSelection,
-  activeZoom,
-} = storeToRefs(superdocStore);
+const { documents, isReady, areDocumentsReady, selectionPosition, activeSelection, activeZoom } =
+  storeToRefs(superdocStore);
 const { handlePageReady, modules, user, getDocument } = superdocStore;
 
-//prettier-ignore
-const {
-  getConfig,
-  documentsWithConverations,
-  pendingComment,
-  activeComment,
-  skipSelectionUpdate
-} = storeToRefs(commentsStore);
+// for html viewer
+// union of all field classes
+const fieldClasses = ['annotation'];
+// union of all field properties regardless of type
+const fieldFormat = {
+  id: (field) => field.getAttribute('data-itemid') || null,
+  value: (field) => field.querySelector('.annotation-text')?.innerHTML || null,
+  type: (field) => field.getAttribute('data-itemfieldtype') || null,
+};
+
+const { getConfig, documentsWithConverations, pendingComment, activeComment } =
+  storeToRefs(commentsStore);
 const { initialCheck, showAddComment } = commentsStore;
 const { proxy } = getCurrentInstance();
 commentsStore.proxy = proxy;
 
 // Refs
 const layers = ref(null);
+const isCollaborationReady = ref(false);
 
 // Comments layer
 const commentsLayer = ref(null);
@@ -133,12 +131,6 @@ const onEditorDocumentLocked = ({ editor, isLocked, lockedBy }) => {
 };
 
 const onEditorSelectionChange = ({ editor, transaction }) => {
-  if (skipSelectionUpdate.value) {
-    // When comment is added selection will be equal to comment text
-    // Should skip calculations to keep text selection for comments correct
-    skipSelectionUpdate.value = false;
-    return;
-  }
   const { documentId } = editor.options;
   const { $from, $to } = transaction.selection;
   if ($from.pos === $to.pos) {
@@ -176,7 +168,8 @@ const onEditorSelectionChange = ({ editor, transaction }) => {
 
 const onEditorCommentsUpdate = ({ editor, transaction }) => {
   const { documentId } = editor.options;
-  const { commentPositions = {}, activeThreadId } = transaction.getMeta('commentsPluginState') || {};
+  const { commentPositions = {}, activeThreadId } =
+    transaction.getMeta('commentsPluginState') || {};
   if (activeThreadId) onEditorSelectionChange({ editor, transaction });
 
   if (!Object.keys(commentPositions).length) return;
@@ -267,14 +260,6 @@ const onEditorContentError = ({ error, editor }) => {
   proxy.$superdoc.emit('content-error', { error, editor });
 };
 
-const updateToolbarState = () => {
-  proxy.$superdoc.toolbar.updateToolbarState();
-};
-
-const handleEditorClick = ({ editor }) => updateToolbarState();
-
-const handleEditorKeydown = ({ editor }) => updateToolbarState();
-
 const editorOptions = (doc) => {
   const options = {
     documentId: doc.id,
@@ -305,7 +290,10 @@ const isCommentsEnabled = computed(() => 'comments' in modules);
 const showCommentsSidebar = computed(() => {
   return (
     pendingComment.value ||
-    (documentsWithConverations.value.length > 0 && layers.value && isReady.value && isCommentsEnabled.value)
+    (documentsWithConverations.value.length > 0 &&
+      layers.value &&
+      isReady.value &&
+      isCommentsEnabled.value)
   );
 });
 
@@ -326,10 +314,14 @@ onMounted(() => {
   if (isCommentsEnabled.value && !modules.comments.readOnly) {
     document.addEventListener('mousedown', handleDocumentMouseDown);
   }
+  proxy.$superdoc.on('ai-highlight-add', handleAiHighlightAdd);
+  proxy.$superdoc.on('ai-highlight-remove', handleAiHighlightRemove);
 });
 
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', handleDocumentMouseDown);
+  proxy.$superdoc.off('ai-highlight-add', handleAiHighlightAdd);
+  proxy.$superdoc.off('ai-highlight-remove', handleAiHighlightRemove);
 });
 
 const selectionLayer = ref(null);
@@ -369,8 +361,10 @@ const handleSelectionChange = (selection) => {
   });
 
   if (!selectionPosition.value) return;
-  const selectionIsWideEnough = Math.abs(selectionPosition.value.left - selectionPosition.value.right) > 5;
-  const selectionIsTallEnough = Math.abs(selectionPosition.value.top - selectionPosition.value.bottom) > 5;
+  const selectionIsWideEnough =
+    Math.abs(selectionPosition.value.left - selectionPosition.value.right) > 5;
+  const selectionIsTallEnough =
+    Math.abs(selectionPosition.value.top - selectionPosition.value.bottom) > 5;
   if (!selectionIsWideEnough || !selectionIsTallEnough) {
     selectionLayer.value.style.pointerEvents = 'none';
     resetSelection();
@@ -478,6 +472,24 @@ const handlePdfClick = (e) => {
   isDragging.value = true;
   handleSelectionStart(e);
 };
+
+const aiLayer = ref(null);
+
+const handleAiHighlightAdd = () => {
+  if (!aiLayer.value) {
+    console.error('[Superdoc] aiLayer.value is not available');
+    return;
+  }
+  aiLayer.value.addAiHighlight();
+};
+
+const handleAiHighlightRemove = () => {
+  if (!aiLayer.value) {
+    console.error('[Superdoc] aiLayer.value is not available');
+    return;
+  }
+  aiLayer.value.removeAiHighlight();
+};
 </script>
 
 <template>
@@ -525,6 +537,9 @@ const handlePdfClick = (e) => {
           @highlight-click="handleHighlightClick"
         />
 
+        <!-- AI Layer for temporary highlights -->
+        <AiLayer class="ai-layer" style="z-index: 4" ref="aiLayer" :selection="selection" />
+
         <div class="sub-document" v-for="doc in documents" :key="doc.id">
           <!-- PDF renderer -->
 
@@ -539,8 +554,6 @@ const handlePdfClick = (e) => {
 
           <SuperEditor
             v-if="doc.type === DOCX"
-            @editor-click="handleEditorClick"
-            @editor-keydown="handleEditorKeydown"
             :file-source="doc.data"
             :state="doc.state"
             :document-id="doc.id"

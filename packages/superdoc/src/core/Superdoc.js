@@ -255,7 +255,11 @@ export class Superdoc extends EventEmitter {
     };
 
     this.toolbar = new SuperToolbar(config);
+
     this.toolbar.on('superdoc-command', this.onToolbarCommand.bind(this));
+    // AI highlight is not related to document editing, should be separate events
+    this.toolbar.on('ai-highlight-add', (data) => this.emit('ai-highlight-add', data));
+    this.toolbar.on('ai-highlight-remove', () => this.emit('ai-highlight-remove'));
   }
 
   onToolbarCommand({ item, argument }) {

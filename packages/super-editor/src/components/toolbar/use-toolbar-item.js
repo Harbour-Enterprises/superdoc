@@ -45,6 +45,9 @@ export const useToolbarItem = (options) => {
   const iconColor = ref(options.iconColor);
   const hasCaret = ref(options.hasCaret);
 
+  // dropdown properties
+  const dropdownStyles = ref(options.dropdownStyles);
+
   // tooltip properties
   const tooltip = ref(options.tooltip);
   const tooltipVisible = ref(options.tooltipVisible);
@@ -62,7 +65,8 @@ export const useToolbarItem = (options) => {
 
   const nestedOptions = ref([]);
   if (options.options) {
-    if (!Array.isArray(options.options)) throw new Error('Invalid toolbar item options - ' + options.options);
+    if (!Array.isArray(options.options))
+      throw new Error('Invalid toolbar item options - ' + options.options);
     nestedOptions.value.push(...options.options);
   }
 
@@ -124,6 +128,7 @@ export const useToolbarItem = (options) => {
     overflowIcon,
     iconColor,
     hasCaret,
+    dropdownStyles,
     tooltipVisible,
     tooltipTimeout,
     defaultLabel,
