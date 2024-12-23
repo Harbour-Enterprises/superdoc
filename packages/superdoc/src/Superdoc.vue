@@ -1,15 +1,6 @@
 <script setup>
 import '@harbour-enterprises/common/styles/common-styles.css';
-import {
-  getCurrentInstance,
-  ref,
-  onMounted,
-  onBeforeUnmount,
-  nextTick,
-  computed,
-  reactive,
-  watch,
-} from 'vue';
+import { getCurrentInstance, ref, onMounted, onBeforeUnmount, nextTick, computed, reactive, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 
 import PdfViewer from './components/PdfViewer/PdfViewer.vue';
@@ -48,8 +39,7 @@ const fieldFormat = {
   type: (field) => field.getAttribute('data-itemfieldtype') || null,
 };
 
-const { getConfig, documentsWithConverations, pendingComment, activeComment } =
-  storeToRefs(commentsStore);
+const { getConfig, documentsWithConverations, pendingComment, activeComment } = storeToRefs(commentsStore);
 const { initialCheck, showAddComment } = commentsStore;
 const { proxy } = getCurrentInstance();
 commentsStore.proxy = proxy;
@@ -168,8 +158,7 @@ const onEditorSelectionChange = ({ editor, transaction }) => {
 
 const onEditorCommentsUpdate = ({ editor, transaction }) => {
   const { documentId } = editor.options;
-  const { commentPositions = {}, activeThreadId } =
-    transaction.getMeta('commentsPluginState') || {};
+  const { commentPositions = {}, activeThreadId } = transaction.getMeta('commentsPluginState') || {};
   if (activeThreadId) onEditorSelectionChange({ editor, transaction });
 
   if (!Object.keys(commentPositions).length) return;
@@ -290,10 +279,7 @@ const isCommentsEnabled = computed(() => 'comments' in modules);
 const showCommentsSidebar = computed(() => {
   return (
     pendingComment.value ||
-    (documentsWithConverations.value.length > 0 &&
-      layers.value &&
-      isReady.value &&
-      isCommentsEnabled.value)
+    (documentsWithConverations.value.length > 0 && layers.value && isReady.value && isCommentsEnabled.value)
   );
 });
 
@@ -361,10 +347,8 @@ const handleSelectionChange = (selection) => {
   });
 
   if (!selectionPosition.value) return;
-  const selectionIsWideEnough =
-    Math.abs(selectionPosition.value.left - selectionPosition.value.right) > 5;
-  const selectionIsTallEnough =
-    Math.abs(selectionPosition.value.top - selectionPosition.value.bottom) > 5;
+  const selectionIsWideEnough = Math.abs(selectionPosition.value.left - selectionPosition.value.right) > 5;
+  const selectionIsTallEnough = Math.abs(selectionPosition.value.top - selectionPosition.value.bottom) > 5;
   if (!selectionIsWideEnough || !selectionIsTallEnough) {
     selectionLayer.value.style.pointerEvents = 'none';
     resetSelection();
@@ -538,7 +522,7 @@ const handleAiHighlightRemove = () => {
         />
 
         <!-- AI Layer for temporary highlights -->
-        <AiLayer class="ai-layer" style="z-index: 4" ref="aiLayer" :selection="selection" />
+        <AiLayer class="ai-layer" style="z-index: 4" ref="aiLayer" />
 
         <div class="sub-document" v-for="doc in documents" :key="doc.id">
           <!-- PDF renderer -->

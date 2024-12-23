@@ -1,12 +1,6 @@
 <script setup>
 import { useSuperdocStore } from '@/stores/superdoc-store';
 const superdocStore = useSuperdocStore();
-const props = defineProps({
-  selection: {
-    type: Object,
-    required: true,
-  },
-});
 
 const getStyle = () => {
   const placement = superdocStore.activeSelection.selectionBounds;
