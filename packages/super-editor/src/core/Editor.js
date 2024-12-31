@@ -630,9 +630,10 @@ export class Editor extends EventEmitter {
       const { state, dispatch } = this.view;
       const tr = state.tr.setMeta(PaginationPluginKey, { isReadyToInit: true });
 
+      const collaborationDelay = this.options.ydoc ? 250 : 0;
       setTimeout(() => {
         dispatch(tr);
-      }, 250);
+      }, collaborationDelay);
     }
   }
 

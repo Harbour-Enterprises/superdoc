@@ -1055,15 +1055,17 @@ function translateImageNode(params, imageSize) {
     }
 
     const hash = generateDocxRandomId(4);
-    const imageUrl = `media/${attrs.fieldId}_${hash}.${type}`;
+
+    const cleanUrl = attrs.fieldId.replace('-', '_');
+    const imageUrl = `media/${cleanUrl}_${hash}.${type}`;
 
     imageId = addNewImageRelationship(params, imageUrl);
-    params.media[`${attrs.fieldId}_${hash}.${type}`] = attrs.imageSrc;
+    params.media[`${cleanUrl}_${hash}.${type}`] = attrs.imageSrc;
   }
 
   // Fields can receive 'extras' attrs which can contain different data.
   // For images, we can place the correct height/width
-  if (attrs.extras) {
+  if (attrs.extras?.width) {
     const aspectRatio = attrs.extras.width / attrs.extras.height;
     const maxWidth = getMaxWidthInPixels(params.pageStyles);
     size.w = Math.min(pixelsToEmu(attrs.extras.width), pixelsToEmu(maxWidth));
