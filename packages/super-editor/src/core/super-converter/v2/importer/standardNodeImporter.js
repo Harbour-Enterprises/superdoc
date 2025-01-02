@@ -3,14 +3,18 @@ import { getElementName, parseProperties } from './importerHelpers.js';
 /**
  * @type {import("docxImporter").NodeHandler}
  */
-export const handleStandardNode = (nodes, docx, nodeListHandler, insideTrackChange = false, filename) => {
+export const handleStandardNode = (nodes, docx, nodeListHandler, insideTrackChange = false, converter, filename) => {
   if (!nodes || nodes.length === 0) {
     return { nodes: [], consumed: 0 };
   }
   const node = nodes[0];
   // Parse properties
   const { name, type } = node;
-  const { attributes, elements, marks = [] } = parseProperties(node, docx);
+  const { attributes, elements, marks = [], unknownMarks = [] } = parseProperties(node, docx);
+  converter.unknownMarks = [
+    ...converter.unknownMarks,
+    ...unknownMarks
+  ];
 
   // Iterate through the children and build the schemaNode content
   const content = [];
@@ -20,7 +24,7 @@ export const handleStandardNode = (nodes, docx, nodeListHandler, insideTrackChan
       el.marks.push(...marks);
       return el;
     });
-    content.push(...nodeListHandler.handler(updatedElements, docx, insideTrackChange, filename));
+    content.push(...nodeListHandler.handler(updatedElements, docx, insideTrackChange, converter, filename));
   }
 
   const resultNode = {

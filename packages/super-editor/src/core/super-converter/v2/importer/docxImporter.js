@@ -20,7 +20,7 @@ import { listHandlerEntity } from './listImporter.js';
  * @typedef {{type: string, content: *, attrs: {}}} PmNodeJson
  * @typedef {{type: string, attrs: {}}} PmMarkJson
  *
- * @typedef {(nodes: XmlNode[], docx: ParsedDocx, insideTrackCahange: boolean) => PmNodeJson[]} NodeListHandlerFn
+ * @typedef {(nodes: XmlNode[], docx: ParsedDocx, insideTrackCahange: boolean, converter: SuperConverter) => PmNodeJson[]} NodeListHandlerFn
  * @typedef {{handler: NodeListHandlerFn, handlerEntities: NodeHandlerEntry[]}} NodeListHandler
  *
  * @typedef {(nodes: XmlNode[], docx: ParsedDocx, nodeListHandler: NodeListHandler, insideTrackCahange: boolean) => {nodes: PmNodeJson[], consumed: number}} NodeHandler
@@ -44,7 +44,7 @@ export const createDocumentJson = (docx, converter) => {
     const ignoreNodes = ['w:sectPr'];
     const content = node.elements?.filter((n) => !ignoreNodes.includes(n.name)) ?? [];
 
-    const parsedContent = nodeListHandler.handler(content, docx, false);
+    const parsedContent = nodeListHandler.handler(content, docx, false, converter);
     const result = {
       type: 'doc',
       content: parsedContent,
@@ -94,10 +94,11 @@ const createNodeListHandler = (nodeHandlers) => {
    * @param {XmlNode[]} elements
    * @param {ParsedDocx} docx
    * @param {boolean} insideTrackChange
+   * @param {SuperConverter} converter
    * @param {string} filename
    * @return {{type: string, content: *, attrs: {attributes}}[]}
    */
-  const nodeListHandlerFn = (elements, docx, insideTrackChange, filename) => {
+  const nodeListHandlerFn = (elements, docx, insideTrackChange, converter, filename) => {
     if (!elements || !elements.length) return [];
     const processedElements = [];
 
@@ -112,6 +113,7 @@ const createNodeListHandler = (nodeHandlers) => {
             docx,
             { handler: nodeListHandlerFn, handlerEntities: nodeHandlers },
             insideTrackChange,
+            converter,
             filename,
           );
           return result;
@@ -141,6 +143,8 @@ const createNodeListHandler = (nodeHandlers) => {
 /**
  *
  * @param {XmlNode} node
+ * @param {ParsedDocx} docx
+ * @param {SuperConverter} converter
  * @returns {Object} The document styles object
  */
 function getDocumentStyles(node, docx, converter) {
@@ -208,7 +212,7 @@ function getHeaderFooter(el, elementType, docx, converter) {
   const currentFileName = target;
 
   const nodeListHandler = defaultNodeListHandler();
-  const schema = nodeListHandler.handler(referenceFile.elements[0].elements, docx, false, currentFileName);
+  const schema = nodeListHandler.handler(referenceFile.elements[0].elements, docx, false, converter, currentFileName);
 
   let storage, storageIds;
 

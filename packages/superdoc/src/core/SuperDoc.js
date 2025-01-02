@@ -55,6 +55,9 @@ export class SuperDoc extends EventEmitter {
     toolbarGroups: ['left', 'center', 'right'],
 
     isDev: false,
+    
+    // telemetry config
+    telemetryConfig: null,
 
     // Events
     onEditorBeforeCreate: () => null,

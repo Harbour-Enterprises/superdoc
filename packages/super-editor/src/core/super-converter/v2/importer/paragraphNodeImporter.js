@@ -11,7 +11,7 @@ import { mergeTextNodes } from './mergeTextNodes.js';
  *
  * @type {import("docxImporter").NodeHandler}
  */
-export const handleParagraphNode = (nodes, docx, nodeListHandler, insideTrackChange, filename) => {
+export const handleParagraphNode = (nodes, docx, nodeListHandler, insideTrackChange, converter, filename) => {
   if (nodes.length === 0 || nodes[0].name !== 'w:p') {
     return { nodes: [], consumed: 0 };
   }
@@ -38,7 +38,7 @@ export const handleParagraphNode = (nodes, docx, nodeListHandler, insideTrackCha
     return { nodes: [], consumed: 0 };
   }
 
-  const result = handleStandardNode([node], docx, nodeListHandler, insideTrackChange, filename);
+  const result = handleStandardNode([node], docx, nodeListHandler, insideTrackChange, converter, filename);
   if (result.nodes.length === 1) {
     schemaNode = result.nodes[0];
   }

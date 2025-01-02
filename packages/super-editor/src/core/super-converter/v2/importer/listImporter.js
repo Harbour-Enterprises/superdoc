@@ -6,7 +6,7 @@ import { mergeTextNodes } from './mergeTextNodes.js';
 /**
  * @type {import("docxImporter").NodeHandler}
  */
-export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange) => {
+export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange, converter) => {
   if (nodes.length === 0 || nodes[0].name !== 'w:p') {
     return { nodes: [], consumed: 0 };
   }
@@ -39,7 +39,7 @@ export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange) 
       }
     }
 
-    const listNodes = handleListNodes(listItems, docx, nodeListHandler, 0);
+    const listNodes = handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, converter, 0,);
     return {
       nodes: [listNodes],
       consumed: listItems.filter((i) => i.seen).length,
@@ -69,6 +69,7 @@ export const listHandlerEntity = {
  * @param {ParsedDocx} docx - The parsed docx object.
  * @param {NodeListHandler} nodeListHandler - The node list handler function.
  * @param {boolean} insideTrackChange - Whether we are inside a track change.
+ * @param {SuperConverter} converter
  * @param {number} [listLevel=0] - The current indentation level of the list.
  * @returns {Object} The processed list node with structured content.
  */
@@ -77,6 +78,7 @@ function handleListNodes(
   docx,
   nodeListHandler,
   insideTrackChange,
+  converter,
   listLevel = 0,
   actualListLevel = 0,
   currentListNumId = null,
@@ -111,7 +113,7 @@ function handleListNodes(
     // Sometimes there are paragraph nodes that only have pPr element and no text node - these are
     // Spacers in the XML and need to be appended to the last item.
     if (item.elements && !hasTextNode(item.elements)) {
-      const n = handleStandardNode([item], docx, nodeListHandler, insideTrackChange).nodes[0];
+      const n = handleStandardNode([item], docx, nodeListHandler, insideTrackChange, converter).nodes[0];
       parsedListItems[parsedListItems.length - 1]?.content.push(n);
       item.seen = true;
       continue;
@@ -119,8 +121,13 @@ function handleListNodes(
 
     // Get the properties of the node - this is where we will find depth level for the node
     // As well as many other list properties
-    const { attributes, elements, marks = [] } = parseProperties(item, docx);
+    const { attributes, elements, marks = [], unknownMarks = [] } = parseProperties(item, docx);
     const textStyle = marks.find((mark) => mark.type === 'textStyle');
+
+    converter.unknownMarks = [
+      ...converter.unknownMarks,
+      ...unknownMarks
+    ];
 
     const { listType, listOrderingType, ilvl, listrPrs, listpPrs, start, lvlText, lvlJc, numId } =
       getNodeNumberingDefinition(attributes, listLevel, docx);
@@ -149,7 +156,7 @@ function handleListNodes(
 
       let parNode = {
         type: 'paragraph',
-        content: nodeListHandler.handler(elements, docx, insideTrackChange)?.filter((n) => n),
+        content: nodeListHandler.handler(elements, docx, insideTrackChange, converter)?.filter((n) => n),
       };
 
       // Normalize text nodes.
@@ -197,6 +204,7 @@ function handleListNodes(
         docx,
         nodeListHandler,
         insideTrackChange,
+        converter,
         listLevel + 1,
         listLevel,
         numId,

@@ -17,6 +17,7 @@ import { trackedTransaction } from '@extensions/track-changes/trackChangesHelper
 import { TrackChangesBasePluginKey } from '@extensions/track-changes/plugins/index.js';
 import { initPaginationData, PaginationPluginKey } from '@extensions/pagination/pagination-helpers';
 import DocxZipper from '@core/DocxZipper.js';
+import { Telemetry } from './Telemetry.js';
 
 /**
  * Editor main class.
@@ -84,6 +85,10 @@ export class Editor extends EventEmitter {
     onCollaborationReady: () => null,
     // async (file) => url;
     handleImageUpload: null,
+    
+    // telemetry
+    telemetryConfig: null,
+    telemetryService: null,
   };
 
   constructor(options) {
@@ -107,6 +112,7 @@ export class Editor extends EventEmitter {
   }
 
   #init(options) {
+    this.#initTelemetry();
     this.#createExtensionService();
     this.#createCommandService();
     this.#createSchema();
@@ -453,6 +459,8 @@ export class Editor extends EventEmitter {
         docx: this.options.content,
         media: this.options.mediaFiles,
         debug: true,
+        documentId: this.options.documentId,
+        telemetryService: this.telemetryService,
       });
     }
   }
@@ -478,6 +486,15 @@ export class Editor extends EventEmitter {
     // If we are opening an existing file, we need to get the media from the ydoc
     else {
       this.storage.image.media = Object.fromEntries(mediaMap.entries());
+    }
+  }
+
+  /**
+   * Initialize telemetry service.
+   */
+  #initTelemetry() {
+    if (this.options.telemetryConfig?.enabled) {
+      this.telemetryService = new Telemetry(this.options.telemetryConfig);
     }
   }
 

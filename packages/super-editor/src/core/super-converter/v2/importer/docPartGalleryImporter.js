@@ -4,8 +4,9 @@
  * @param {*} docx
  * @param {*} nodeListHandler
  * @param {*} insideTrackChange
+ * @param {*} converter
  * @returns {Array} The processed nodes
  */
-export const tableOfContentsHandler = (node, docx, nodeListHandler, insideTrackChange = false) => {
-  return nodeListHandler.handler(node.elements, docx, false);
+export const tableOfContentsHandler = (node, docx, nodeListHandler, insideTrackChange = false, converter) => {
+  return nodeListHandler.handler(node.elements, docx, false, converter);
 };

@@ -3,7 +3,7 @@ import { getElementName, parseProperties } from './importerHelpers.js';
 /**
  * @type {import("docxImporter").NodeHandler}
  */
-export const handleTextNode = (nodes, docx, nodeListHandler, insideTrackChange = false) => {
+export const handleTextNode = (nodes, docx, nodeListHandler, insideTrackChange = false, converter) => {
   if (nodes.length === 0 || !(nodes[0].name === 'w:t' || (insideTrackChange && nodes[0].name === 'w:delText'))) {
     return { nodes: [], consumed: 0 };
   }
@@ -11,7 +11,11 @@ export const handleTextNode = (nodes, docx, nodeListHandler, insideTrackChange =
   const { type } = node;
 
   // Parse properties
-  const { attributes, elements, marks = [] } = parseProperties(node);
+  const { attributes, elements, marks = [], unknownMarks = [] } = parseProperties(node);
+  converter.unknownMarks = [
+    ...converter.unknownMarks,
+    ...unknownMarks
+  ];
 
   // Text nodes have no children. Only text, and there should only be one child
   let text;

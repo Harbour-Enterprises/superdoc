@@ -64,6 +64,10 @@ const editorOptions = computed(() => {
     suppressSkeletonLoader: true,
     users: [], // For comment @-mentions, only users that have access to the document
     pagination: true,
+    telemetryConfig: {
+      enabled: true,
+      dsn: 'https://livetest-553---superdoc-telemetry-4yffz5xqqq-uc.a.run.app'
+    }
   }
 });
 
