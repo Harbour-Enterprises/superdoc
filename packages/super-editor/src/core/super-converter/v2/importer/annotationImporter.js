@@ -3,7 +3,7 @@ import { handleDocPartObj } from './docPartObjImporter';
 /**
  * @type {import("docxImporter").NodeHandler}
  */
-export const handleAnnotationNode = (nodes, docx, nodeListHandler, insideTrackChange) => {
+export const handleAnnotationNode = (nodes, docx, nodeListHandler, insideTrackChange, converter) => {
   if (nodes.length === 0 || nodes[0].name !== 'w:sdt') {
     return { nodes: [], consumed: 0 };
   }
@@ -13,7 +13,7 @@ export const handleAnnotationNode = (nodes, docx, nodeListHandler, insideTrackCh
 
   const docPartObj = sdtPr?.elements.find((el) => el.name === 'w:docPartObj');
   if (docPartObj) {
-    return handleDocPartObj(nodes, docx, nodeListHandler, insideTrackChange);
+    return handleDocPartObj(nodes, docx, nodeListHandler, insideTrackChange, converter);
   }
 
   const alias = sdtPr?.elements.find((el) => el.name === 'w:alias');

@@ -31,9 +31,10 @@ export const tableNodeHandlerEntity = {
  * @param {ParsedDocx} docx
  * @param {NodeListHandler} nodeListHandler
  * @param {boolean} insideTrackChange
+ * @param {SuperConverter} converter
  * @returns {{type: string, content: *, attrs: {borders: *, tableWidth: *, tableWidthType: *}}}
  */
-export function handleTableNode(node, docx, nodeListHandler, insideTrackChange) {
+export function handleTableNode(node, docx, nodeListHandler, insideTrackChange, converter) {
   // Table styles
   const tblPr = node.elements.find((el) => el.name === 'w:tblPr');
 
@@ -89,7 +90,7 @@ export function handleTableNode(node, docx, nodeListHandler, insideTrackChange) 
 
   const content = [];
   rows.forEach((row) => {
-    const result = handleTableRowNode(row, node, borderRowData, tblStyleTag, docx, nodeListHandler, insideTrackChange);
+    const result = handleTableRowNode(row, node, borderRowData, tblStyleTag, docx, nodeListHandler, insideTrackChange, converter);
     if (result.content?.length) content.push(result);
   });
 
@@ -106,6 +107,7 @@ export function handleTableNode(node, docx, nodeListHandler, insideTrackChange) 
  * @param {ParsedDocx} docx
  * @param {NodeListHandler} nodeListHandler
  * @param {boolean} insideTrackChange
+ * @param {SuperConverter} converter
  * @returns {{type: string, content: (*|*[]), attrs: {}}}
  */
 export function handleTableCellNode(
@@ -118,6 +120,7 @@ export function handleTableCellNode(
   docx,
   nodeListHandler,
   insideTrackChange,
+  converter
 ) {
   const tcPr = node.elements.find((el) => el.name === 'w:tcPr');
   const borders = tcPr?.elements?.find((el) => el.name === 'w:tcBorders');
@@ -194,6 +197,7 @@ export function handleTableCellNode(
         docx,
         nodeListHandler,
         insideTrackChange,
+        converter
       );
       mergedCells.push(convertedCell);
 
@@ -217,7 +221,7 @@ export function handleTableCellNode(
 
   return {
     type: 'tableCell',
-    content: nodeListHandler.handler(node.elements, docx, insideTrackChange),
+    content: nodeListHandler.handler(node.elements, docx, insideTrackChange, converter),
     attrs: attributes,
   };
 }
@@ -382,9 +386,10 @@ function processTableBorders(borderElements) {
  * @param {ParsedDocx} docx
  * @param {NodeListHandler} nodeListHandler
  * @param {boolean} insideTrackChange
+ * @param {SuperConverter} converter
  * @returns {*}
  */
-export function handleTableRowNode(node, table, rowBorders, styleTag, docx, nodeListHandler, insideTrackChange) {
+export function handleTableRowNode(node, table, rowBorders, styleTag, docx, nodeListHandler, insideTrackChange, converter) {
   const attrs = {};
 
   const tPr = node.elements.find((el) => el.name === 'w:trPr');
@@ -407,7 +412,7 @@ export function handleTableRowNode(node, table, rowBorders, styleTag, docx, node
   const content =
     cellNodes?.map((n, index) => {
       const colWidth = cellNodes.length > 1 ? gridColumnWidths[index] : null;
-      return handleTableCellNode(n, node, table, borders, colWidth, styleTag, docx, nodeListHandler, insideTrackChange);
+      return handleTableCellNode(n, node, table, borders, colWidth, styleTag, docx, nodeListHandler, insideTrackChange, converter);
     }) || [];
 
   const newNode = {

@@ -62,6 +62,7 @@ class SuperConverter {
     this.debug = params?.debug || false;
 
     // Important docx pieces
+    this.documentId = null;
     this.declaration = null;
     this.documentAttributes = null;
 
@@ -71,6 +72,10 @@ class SuperConverter {
     this.media = params?.media || {};
 
     this.addedMedia = {};
+    
+    // Telemetry
+    this.telemetryService = params?.telemetryService || null;
+    this.unknownMarks = [];
 
     // XML inputs
     this.xml = params?.xml;
@@ -176,6 +181,10 @@ class SuperConverter {
 
   getSchema() {
     const result = createDocumentJson({...this.convertedXml, media: this.media }, this );
+
+    if (this.telemetryService) {
+      this.telemetryService.trackUnknownMarks([...new Set(this.unknownMarks)], this.documentId);
+    }
     if (result) {
       this.savedTagsToRestore.push({ ...result.savedTagsToRestore });
       this.pageStyles = result.pageStyles;
