@@ -27,9 +27,9 @@ export class Telemetry {
       const token = url.username;
       const projectId = url.pathname.split('/').filter(Boolean)[0];
 
-      // if (!token || !projectId) {
-      //   throw new Error('Invalid DSN format');
-      // }
+      if (!token || !projectId) {
+        throw new Error('Invalid DSN format');
+      }
 
       return {
         token,
@@ -49,16 +49,13 @@ export class Telemetry {
     }, Math.min(this.flushInterval, 60000)); // Check at most every minute
   }
 
-  trackUnmappedElement(elementData) {
+  trackUnknownXml(xml, docId) {
     const event = {
       type: 'unmapped_element',
       timestamp: new Date().toISOString(),
       data: {
-        tagName: elementData.name,
-        parentTag: elementData.parent,
-        attributes: elementData.attributes || {},
-        operation: elementData.operation,
-        documentId: elementData.documentId,
+        xml,
+        documentId: docId,
         userAgent: navigator.userAgent,
         url: window.location.href,
         projectId: this.projectId
