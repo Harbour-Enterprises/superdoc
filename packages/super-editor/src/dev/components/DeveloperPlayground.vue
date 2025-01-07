@@ -66,7 +66,8 @@ const editorOptions = computed(() => {
     pagination: true,
     telemetryConfig: {
       enabled: true,
-      dsn: 'https://livetest-553---superdoc-telemetry-4yffz5xqqq-uc.a.run.app'
+      batchSize: 1,
+      dsn: 'https://test-token@livetest-553---superdoc-telemetry-4yffz5xqqq-uc.a.run.app/test-project'
     }
   }
 });

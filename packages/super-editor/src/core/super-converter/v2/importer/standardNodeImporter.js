@@ -7,6 +7,7 @@ export const handleStandardNode = (nodes, docx, nodeListHandler, insideTrackChan
   if (!nodes || nodes.length === 0) {
     return { nodes: [], consumed: 0 };
   }
+  
   const node = nodes[0];
   // Parse properties
   const { name, type } = node;
@@ -33,6 +34,14 @@ export const handleStandardNode = (nodes, docx, nodeListHandler, insideTrackChan
     attrs: { ...attributes },
     marks: [],
   };
+  
+  if (!resultNode.type) {
+    content.unknownTags.push({
+      name: node.name,
+      attributes: node.attributes,
+      elements: node.elements,
+    });
+  }
 
   return { nodes: [resultNode], consumed: 1 };
 };

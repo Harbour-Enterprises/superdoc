@@ -76,6 +76,7 @@ class SuperConverter {
     // Telemetry
     this.telemetryService = params?.telemetryService || null;
     this.unknownMarks = [];
+    this.unknownTags = [];
 
     // XML inputs
     this.xml = params?.xml;
@@ -182,8 +183,13 @@ class SuperConverter {
   getSchema() {
     const result = createDocumentJson({...this.convertedXml, media: this.media }, this );
 
-    if (this.telemetryService) {
-      this.telemetryService.trackUnknownMarks([...new Set(this.unknownMarks)], this.documentId);
+    if (this.telemetryService && this.unknownMarks.length) {
+      if (this.unknownMarks.length) {
+        this.telemetryService.trackUnknownMarks([...new Set(this.unknownMarks)], this.documentId);
+      }
+      if (this.unknownTags.length) {
+        this.telemetryService.trackUnknownXml(this.unknownTags, this.documentId);
+      }
     }
     if (result) {
       this.savedTagsToRestore.push({ ...result.savedTagsToRestore });
