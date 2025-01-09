@@ -1,4 +1,5 @@
 import { handleDocPartObj } from './docPartObjImporter';
+import { parseProperties } from './importerHelpers.js';
 
 /**
  * @type {import("docxImporter").NodeHandler}
@@ -32,10 +33,20 @@ export const handleAnnotationNode = (nodes, docx, nodeListHandler, insideTrackCh
     multipleImage: isMultipleImage === 'true',
   };
 
+  const annotationMarks = [];
+  const innerContent = node.elements.find((el) => el.name === 'w:sdtContent');
+  const runNode = innerContent?.elements?.find((el) => el.name === 'w:r');
+  if (runNode) {
+    const { marks: runMarks = [] } = parseProperties(runNode, docx);
+    annotationMarks.push(...runMarks);
+  }
+
   const result = {
     type: 'fieldAnnotation',
     attrs,
+    marks: annotationMarks,
   };
+
   return {
     nodes: [result],
     consumed: 1,
