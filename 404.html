@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="generator" content="VuePress 2.0.0-rc.19" />
+    <style>
+      :root {
+        --vp-c-bg: #fff;
+      }
+
+      [data-theme='dark'] {
+        --vp-c-bg: #1b1b1f;
+      }
+
+      html,
+      body {
+        background-color: var(--vp-c-bg);
+      }
+    </style>
+    <script>
+      const userMode = localStorage.getItem('vuepress-color-scheme')
+      const systemDarkMode =
+        'matchMedia' in window
+          ? window.matchMedia('(prefers-color-scheme: dark)').matches
+          : false
+
+      if (userMode === 'light') {
+        document.documentElement.dataset.theme = 'light'
+      } else if (userMode === 'dark' || systemDarkMode) {
+        document.documentElement.dataset.theme = 'dark'
+      }
+    </script>
+    <title>SuperDoc</title><meta name="description" content="The modern collaborative document editor for the web">
+    <link rel="preload" href="/assets/style-Cqle0fys.css" as="style"><link rel="stylesheet" href="/assets/style-Cqle0fys.css">
+    <link rel="modulepreload" href="/assets/app-BgObmRTT.js"><link rel="modulepreload" href="/assets/404.html-D_TIko5D.js">
+    <link rel="prefetch" href="/assets/index.html-CBpfRgnu.js" as="script"><link rel="prefetch" href="/assets/license.html-03y2XsRx.js" as="script"><link rel="prefetch" href="/assets/setupDevtools-7MC2TMWH-BRXA28iw.js" as="script">
+  </head>
+  <body>
+    <div id="app"><!--[--><div class="vp-theme-container" vp-container data-v-8636ca9b><main class="page" data-v-8636ca9b><div vp-content data-v-8636ca9b><h1 data-v-8636ca9b>404</h1><blockquote data-v-8636ca9b>There&#39;s nothing here.</blockquote><a class="route-link" href="/" data-v-8636ca9b>Take me home</a></div></main></div><!--[--><!----><!--]--><!--]--></div>
+    <script type="module" src="/assets/app-BgObmRTT.js" defer></script>
+  </body>
+</html>

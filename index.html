@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="generator" content="VuePress 2.0.0-rc.19" />
+    <style>
+      :root {
+        --vp-c-bg: #fff;
+      }
+
+      [data-theme='dark'] {
+        --vp-c-bg: #1b1b1f;
+      }
+
+      html,
+      body {
+        background-color: var(--vp-c-bg);
+      }
+    </style>
+    <script>
+      const userMode = localStorage.getItem('vuepress-color-scheme')
+      const systemDarkMode =
+        'matchMedia' in window
+          ? window.matchMedia('(prefers-color-scheme: dark)').matches
+          : false
+
+      if (userMode === 'light') {
+        document.documentElement.dataset.theme = 'light'
+      } else if (userMode === 'dark' || systemDarkMode) {
+        document.documentElement.dataset.theme = 'dark'
+      }
+    </script>
+    <title>Getting started | SuperDoc</title><meta name="description" content="The modern collaborative document editor for the web">
+    <link rel="preload" href="/assets/style-Cqle0fys.css" as="style"><link rel="stylesheet" href="/assets/style-Cqle0fys.css">
+    <link rel="modulepreload" href="/assets/app-BgObmRTT.js"><link rel="modulepreload" href="/assets/index.html-CBpfRgnu.js">
+    <link rel="prefetch" href="/assets/license.html-03y2XsRx.js" as="script"><link rel="prefetch" href="/assets/404.html-D_TIko5D.js" as="script"><link rel="prefetch" href="/assets/setupDevtools-7MC2TMWH-BRXA28iw.js" as="script">
+  </head>
+  <body>
+    <div id="app"><!--[--><div class="vp-theme-container external-link-icon" vp-container><!--[--><header class="vp-navbar" vp-navbar><div class="vp-toggle-sidebar-button" title="toggle sidebar" aria-expanded="false" role="button" tabindex="0"><div class="icon" aria-hidden="true"><span></span><span></span><span></span></div></div><span><a class="route-link" href="/"><!----><span class="vp-site-name" aria-hidden="true">SuperDoc</span></a></span><div class="vp-navbar-items-wrapper" style=""><!--[--><!--]--><!----><!--[--><!--]--><button type="button" class="vp-toggle-color-mode-button" title="toggle color mode"><svg class="light-icon" viewbox="0 0 32 32" style=""><path d="M16 12.005a4 4 0 1 1-4 4a4.005 4.005 0 0 1 4-4m0-2a6 6 0 1 0 6 6a6 6 0 0 0-6-6z" fill="currentColor"></path><path d="M5.394 6.813l1.414-1.415l3.506 3.506L8.9 10.318z" fill="currentColor"></path><path d="M2 15.005h5v2H2z" fill="currentColor"></path><path d="M5.394 25.197L8.9 21.691l1.414 1.415l-3.506 3.505z" fill="currentColor"></path><path d="M15 25.005h2v5h-2z" fill="currentColor"></path><path d="M21.687 23.106l1.414-1.415l3.506 3.506l-1.414 1.414z" fill="currentColor"></path><path d="M25 15.005h5v2h-5z" fill="currentColor"></path><path d="M21.687 8.904l3.506-3.506l1.414 1.415l-3.506 3.505z" fill="currentColor"></path><path d="M15 2.005h2v5h-2z" fill="currentColor"></path></svg><svg class="dark-icon" viewbox="0 0 32 32" style="display:none;"><path d="M13.502 5.414a15.075 15.075 0 0 0 11.594 18.194a11.113 11.113 0 0 1-7.975 3.39c-.138 0-.278.005-.418 0a11.094 11.094 0 0 1-3.2-21.584M14.98 3a1.002 1.002 0 0 0-.175.016a13.096 13.096 0 0 0 1.825 25.981c.164.006.328 0 .49 0a13.072 13.072 0 0 0 10.703-5.555a1.01 1.01 0 0 0-.783-1.565A13.08 13.08 0 0 1 15.89 4.38A1.015 1.015 0 0 0 14.98 3z" fill="currentColor"></path></svg></button><!----></div></header><!--]--><div class="vp-sidebar-mask"></div><!--[--><aside class="vp-sidebar" vp-sidebar><!----><!--[--><!--]--><ul class="vp-sidebar-items"><!--[--><li><p tabindex="0" class="vp-sidebar-item vp-sidebar-heading">Getting started <!----></p><!----></li><!--]--></ul><!--[--><!--]--></aside><!--]--><!--[--><main class="vp-page"><!--[--><!--]--><div vp-content><!--[--><!--]--><div><h1 id="🦋️📝️-superdoc" tabindex="-1"><a class="header-anchor" href="#🦋️📝️-superdoc"><span>🦋️📝️ SuperDoc</span></a></h1><h2 id="features" tabindex="-1"><a class="header-anchor" href="#features"><span>Features</span></a></h2><ul><li>✅ View and edit DOCX and PDF documents online</li><li>✅ Has excellent MS Word compatibility supporting importing/exporting, advanced formatting, comments, tracked changes, and more</li><li>✅ Supports real-time collaboration with multiplayer editing, live updates, commenting, sharing, and revision history (and pluggable into any backend)</li><li>✅ Integrates with only a frontend JS library designed to work well with Vue, React, vanilla JS, and more</li><li>✅ Architected for modularity and easy extensibility</li><li>✅ Fully available under both an <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener noreferrer">Open Source license (AGPLv3) for community use</a> and a <a href="https://www.harbourshare.com/request-a-license" target="_blank" rel="noopener noreferrer">Commercial license for enterprise use</a></li><li>✅ Created and actively-developed by <a href="https://www.harbourshare.com" target="_blank" rel="noopener noreferrer">⛵️ Harbour - Superpowered contract management</a> and the SuperDoc community</li></ul><h2 id="getting-started" tabindex="-1"><a class="header-anchor" href="#getting-started"><span>Getting started</span></a></h2><p>Superdoc can be used in any JS environment.</p><h2 id="installation" tabindex="-1"><a class="header-anchor" href="#installation"><span>Installation</span></a></h2><p>You can install from npm</p><div class="language-bash" data-highlighter="prismjs" data-ext="sh" data-title="sh"><pre><code><span class="line"><span class="token function">npm</span> <span class="token function">install</span> @harbour-enterprises/superdoc</span>
+<span class="line"></span></code></pre></div><h2 id="packages" tabindex="-1"><a class="header-anchor" href="#packages"><span>Packages</span></a></h2><p>There are two main packages in the repo:</p><div class="language-text line-numbers-mode" data-highlighter="prismjs" data-ext="text" data-title="text"><pre><code><span class="line">/packages/super-editor  // SuperEditor</span>
+<span class="line">/packages/superdoc      // SuperDoc</span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="packages-superdoc" tabindex="-1"><a class="header-anchor" href="#packages-superdoc"><span>Packages: SuperDoc</span></a></h3><p>This is the main package you&#39;ll want to use (and what is currently published to npm). This package includes SuperEditor.</p><p>For a quick developer playground:</p><div class="language-bash" data-highlighter="prismjs" data-ext="sh" data-title="sh"><pre><code><span class="line"><span class="token builtin class-name">cd</span> packages/superdoc</span>
+<span class="line"><span class="token function">npm</span> <span class="token function">install</span> <span class="token operator">&amp;&amp;</span> <span class="token function">npm</span> run dev</span>
+<span class="line"></span></code></pre></div><p>This will run <strong>SuperdocDev.vue</strong>, with a quick (Vue 3) based example of how to instantiate SuperDoc.</p><h3 id="packages-supereditor" tabindex="-1"><a class="header-anchor" href="#packages-supereditor"><span>Packages: SuperEditor</span></a></h3><p>This is our .docx editor and renderer (including the toolbar). It is included inside SuperDoc.</p><p>For a quick developer playground of just SuperEditor:</p><div class="language-bash" data-highlighter="prismjs" data-ext="sh" data-title="sh"><pre><code><span class="line"><span class="token builtin class-name">cd</span> packages/super-editor</span>
+<span class="line"><span class="token function">npm</span> <span class="token function">install</span> <span class="token operator">&amp;&amp;</span> <span class="token function">npm</span> run dev</span>
+<span class="line"></span></code></pre></div><p>We recommend using SuperDoc mainly in your applications, but there are advanced use cases where you&#39;ll want to use the SuperEditor library directly (e.g. Running a SuperEditor for .docx parsing in a NodeJS environment in the backend).</p><h2 id="basic-setup" tabindex="-1"><a class="header-anchor" href="#basic-setup"><span>Basic setup</span></a></h2><div class="language-javascript" data-highlighter="prismjs" data-ext="js" data-title="js"><pre><code><span class="line"><span class="token keyword">import</span> <span class="token string">&#39;@harbour-enterprises/superdoc/style.css&#39;</span><span class="token punctuation">;</span></span>
+<span class="line"><span class="token keyword">import</span> <span class="token punctuation">{</span> Superdoc <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">&#39;@harbour-enterprises/superdoc&#39;</span><span class="token punctuation">;</span></span>
+<span class="line"></span></code></pre></div><h2 id="initialize-superdoc" tabindex="-1"><a class="header-anchor" href="#initialize-superdoc"><span>Initialize SuperDoc</span></a></h2><div class="language-javascript" data-highlighter="prismjs" data-ext="js" data-title="js"><pre><code><span class="line"><span class="token keyword">const</span> superdoc <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Superdoc</span><span class="token punctuation">(</span><span class="token punctuation">{</span></span>
+<span class="line">  <span class="token literal-property property">selector</span><span class="token operator">:</span> <span class="token string">&#39;#superdoc&#39;</span><span class="token punctuation">,</span>  <span class="token comment">// Required: DOM element ID for rendering</span></span>
+<span class="line">  <span class="token literal-property property">documents</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">{</span>           <span class="token comment">// Required: At least one document</span></span>
+<span class="line">    <span class="token literal-property property">id</span><span class="token operator">:</span> <span class="token string">&#39;my-doc-id&#39;</span><span class="token punctuation">,</span>         <span class="token comment">// Required: Unique document identifier</span></span>
+<span class="line">    <span class="token literal-property property">type</span><span class="token operator">:</span> <span class="token string">&#39;docx&#39;</span><span class="token punctuation">,</span>         <span class="token comment">// Required: &#39;pdf&#39;, &#39;docx&#39;, or &#39;html&#39;</span></span>
+<span class="line">    <span class="token literal-property property">data</span><span class="token operator">:</span> fileObject      <span class="token comment">// Optional: JS File object (if not using collaboration)</span></span>
+<span class="line">  <span class="token punctuation">}</span><span class="token punctuation">]</span></span>
+<span class="line"><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span></span>
+<span class="line"></span></code></pre></div><h2 id="configuration-options" tabindex="-1"><a class="header-anchor" href="#configuration-options"><span>Configuration options</span></a></h2><div class="language-javascript" data-highlighter="prismjs" data-ext="js" data-title="js"><pre><code><span class="line"><span class="token keyword">const</span> config <span class="token operator">=</span> <span class="token punctuation">{</span></span>
+<span class="line">  <span class="token comment">// Optional: Give the superdoc an id</span></span>
+<span class="line">  <span class="token literal-property property">superdocId</span><span class="token operator">:</span> <span class="token string">&#39;my-superdoc-id&#39;</span><span class="token punctuation">,</span></span>
+<span class="line"></span>
+<span class="line">  <span class="token comment">// Required: A DOM element ID to render superdoc into</span></span>
+<span class="line">  <span class="token literal-property property">selector</span><span class="token operator">:</span> <span class="token string">&#39;#superdoc&#39;</span><span class="token punctuation">,</span></span>
+<span class="line"></span>
+<span class="line">  <span class="token comment">// Optional: Initial document mode: viewing, editing. Defaults to viewing</span></span>
+<span class="line">  <span class="token literal-property property">documentMode</span><span class="token operator">:</span> <span class="token string">&#39;editing&#39;</span><span class="token punctuation">,</span></span>
+<span class="line"></span>
+<span class="line">  <span class="token comment">// Required: Documents list with one document</span></span>
+<span class="line">  <span class="token literal-property property">documents</span><span class="token operator">:</span> <span class="token punctuation">[</span></span>
+<span class="line">    <span class="token punctuation">{</span></span>
+<span class="line">      id<span class="token punctuation">,</span> <span class="token comment">// Required: This document&#39;s ID. This is also used as the room name in collaboration.</span></span>
+<span class="line">      type<span class="token punctuation">,</span> <span class="token comment">// Required: &#39;pdf&#39;, &#39;docx&#39; or &#39;html&#39;</span></span>
+<span class="line"></span>
+<span class="line">      <span class="token comment">// Optional: A JS File object of your doc, pdf or html file.</span></span>
+<span class="line">      <span class="token comment">// Only required if not using collaboration. Otherwise, the document</span></span>
+<span class="line">      <span class="token comment">// loads from the collaboration service by ID.</span></span>
+<span class="line">      data<span class="token punctuation">,</span> </span>
+<span class="line">    <span class="token punctuation">}</span><span class="token punctuation">,</span></span>
+<span class="line">  <span class="token punctuation">]</span><span class="token punctuation">,</span></span>
+<span class="line"></span>
+<span class="line">  <span class="token comment">// Optional: The current user</span></span>
+<span class="line">  <span class="token literal-property property">user</span><span class="token operator">:</span> <span class="token punctuation">{</span></span>
+<span class="line">    <span class="token literal-property property">name</span><span class="token operator">:</span> <span class="token string">&#39;Superdoc User&#39;</span><span class="token punctuation">,</span></span>
+<span class="line">    <span class="token literal-property property">email</span><span class="token operator">:</span> <span class="token string">&#39;superdoc@harbourshare.com&#39;</span><span class="token punctuation">,</span></span>
+<span class="line">    <span class="token literal-property property">image</span><span class="token operator">:</span> <span class="token string">&#39;image-url.jpg&#39;</span></span>
+<span class="line">  <span class="token punctuation">}</span><span class="token punctuation">.</span></span>
+<span class="line"></span>
+<span class="line">  <span class="token comment">// Optional: A DOM element ID to render the toolbar into</span></span>
+<span class="line">  <span class="token literal-property property">toolbar</span><span class="token operator">:</span> <span class="token string">&#39;superdoc-toolbar&#39;</span><span class="token punctuation">,</span></span>
+<span class="line"></span>
+<span class="line">  <span class="token comment">// Optional: modules</span></span>
+<span class="line">  <span class="token literal-property property">modules</span><span class="token operator">:</span> <span class="token punctuation">{</span></span>
+<span class="line"></span>
+<span class="line">    <span class="token comment">// The collaboration module</span></span>
+<span class="line">    <span class="token literal-property property">collaboration</span><span class="token operator">:</span> <span class="token punctuation">{</span></span>
+<span class="line">      url<span class="token punctuation">,</span> <span class="token comment">// Required: Path to your collaboration backend</span></span>
+<span class="line">      token <span class="token comment">// Required: Your auth token</span></span>
+<span class="line">    <span class="token punctuation">}</span><span class="token punctuation">,</span></span>
+<span class="line"></span>
+<span class="line">    <span class="token comment">// The comments module</span></span>
+<span class="line">    <span class="token literal-property property">comments</span><span class="token operator">:</span> <span class="token punctuation">{</span></span>
+<span class="line">      <span class="token literal-property property">readOnly</span><span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span> <span class="token comment">// Optional: Comments are read-only. Defaults to false</span></span>
+<span class="line">      <span class="token literal-property property">allowResolve</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span> <span class="token comment">// Optional: Allow comment resolution. Defaults to true</span></span>
+<span class="line">      <span class="token literal-property property">suppressInternalExternal</span><span class="token operator">:</span> <span class="token boolean">false</span> <span class="token comment">// Optional: Don&#39;t separate comments into internal/external. Defaults to false</span></span>
+<span class="line">    <span class="token punctuation">}</span><span class="token punctuation">,</span></span>
+<span class="line"></span>
+<span class="line">  <span class="token punctuation">}</span><span class="token punctuation">,</span></span>
+<span class="line"></span>
+<span class="line">  <span class="token comment">// Optional: events - pass in your own functions for each</span></span>
+<span class="line">  <span class="token function-variable function">onEditorCreate</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token keyword">null</span><span class="token punctuation">,</span></span>
+<span class="line">  <span class="token function-variable function">onEditorDestroy</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token keyword">null</span><span class="token punctuation">,</span></span>
+<span class="line">  <span class="token function-variable function">onReady</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token keyword">null</span><span class="token punctuation">,</span></span>
+<span class="line">  <span class="token function-variable function">onCommentsUpdate</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token keyword">null</span><span class="token punctuation">,</span></span>
+<span class="line">  <span class="token function-variable function">onAwarenessUpdate</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token keyword">null</span><span class="token punctuation">,</span></span>
+<span class="line">  <span class="token function-variable function">onLocked</span><span class="token operator">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token keyword">null</span><span class="token punctuation">,</span></span>
+<span class="line"><span class="token punctuation">}</span><span class="token punctuation">)</span></span>
+<span class="line"></span></code></pre></div><h2 id="license" tabindex="-1"><a class="header-anchor" href="#license"><span>License</span></a></h2><p>This project is licensed under the GNU Affero General Public License v3.0 <a href="/license">See license</a></p><h2 id="contact" tabindex="-1"><a class="header-anchor" href="#contact"><span>Contact</span></a></h2><p><a href="mailto:hello@harbourshare.com?subject=%5BSuperDoc%5D%20Project&amp;20inquiry" target="_blank" rel="noopener noreferrer">✉️️ Email us</a><br><a href="https://www.linkedin.com/company/harbourshare/" target="_blank" rel="noopener noreferrer">🔗️ LinkedIn</a><br><a href="https://www.harbourshare.com" target="_blank" rel="noopener noreferrer">⛵️ Harbour</a></p></div><!--[--><!--]--></div><footer class="vp-page-meta"><!----><div class="vp-meta-item git-info"><div class="vp-meta-item last-updated"><span class="meta-item-label">Last Updated: </span><!----></div><div class="vp-meta-item contributors"><span class="meta-item-label">Contributors: </span><span class="meta-item-info"><!--[--><!--[--><span class="contributor" title="email: nick@harbourshare.com">Nick Bernal</span><!----><!--]--><!--]--></span></div></div></footer><!----><!--[--><!--[--><div class="docs-footer"><p>© 2025 <a href="https://harbourshare.com/" target="_blank">Harbour Enterprises Inc.</a> | Licensed under <a href="/license">AGPL-3.0</a></p></div><!--]--><!--]--></main><!--]--></div><!--[--><!----><!--]--><!--]--></div>
+    <script type="module" src="/assets/app-BgObmRTT.js" defer></script>
+  </body>
+</html>
