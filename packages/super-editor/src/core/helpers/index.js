@@ -22,3 +22,4 @@ export * from './getMarksFromSelection.js';
 export * from './getActiveFormatting.js';
 export * from './findChildren.js';
 export * from './posToDOMRect.js';
+export * from './findMark.js';

@@ -36,7 +36,7 @@ export default defineConfig(({ mode, command}) => {
         fileName: (format) => `superdoc.${format}.js`
       },
       minify: false,
-      sourcemap: false,
+      sourcemap: true,
       rollupOptions: {
         input: {
           'superdoc': 'src/index.js',
@@ -89,6 +89,7 @@ export default defineConfig(({ mode, command}) => {
     },
     server: {
       port: 9094,
+      host: '0.0.0.0',
       fs: {
         allow: ['../', '../../'],
       },

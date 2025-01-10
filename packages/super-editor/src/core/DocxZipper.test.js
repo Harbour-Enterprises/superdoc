@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import DocxZipper from './DocxZipper';
 
 async function readFileAsBuffer(filePath) {
@@ -25,14 +25,14 @@ describe('DocxZipper - file extraction', () => {
   });
 
   it('It can unzip a docx', async () => {
-    const fileContent = await readFileAsBuffer('../tests/fixtures/sample/sample.docx');
+    const fileContent = await readFileAsBuffer('../tests/data/hello_docx_world/Hello docx world.docx');
     const fileObject = Buffer.from(fileContent);
     const unzippedXml = await zipper.unzip(fileObject);
     expect(unzippedXml).toHaveProperty('files');
   });
 
   it('It can extract xml files', async () => {
-    const fileContent = await readFileAsBuffer('../tests/fixtures/sample/sample.docx');
+    const fileContent = await readFileAsBuffer('../tests/data/hello_docx_world/Hello docx world.docx');
     const fileObject = Buffer.from(fileContent);
     const unzippedXml = await zipper.getDocxData(fileObject);
     expect(unzippedXml).toBeInstanceOf(Array);

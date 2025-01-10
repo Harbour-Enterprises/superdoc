@@ -319,12 +319,16 @@ const getListNumIdFromStyleRef = (styleId, docx) => {
 
   const { elements } = styles;
   const styleTags = elements[0].elements.filter((style) => style.name === 'w:style');
-  const style = styleTags.find((tag) => tag.attributes['w:styleId'] === styleId);
-  const pPr = style?.elements.find((style) => style.name === 'w:pPr');
-  const numPr = pPr?.elements.find((style) => style.name === 'w:numPr');
-  const numIdTag = numPr?.elements.find((style) => style.name === 'w:numId');
+  const style = styleTags.find((tag) => tag.attributes['w:styleId'] === styleId) || {};
+  const pPr = style?.elements?.find((style) => style.name === 'w:pPr');
+  if (!pPr) return null;
+
+  const numPr = pPr?.elements?.find((style) => style.name === 'w:numPr');
+  if (!numPr) return null;
+
+  const numIdTag = numPr?.elements?.find((style) => style.name === 'w:numId') || {};
   const numId = numIdTag?.attributes['w:val'];
-  const ilvlTag = numPr?.elements.find((style) => style.name === 'w:ilvl');
+  const ilvlTag = numPr?.elements?.find((style) => style.name === 'w:ilvl');
   const ilvl = ilvlTag?.attributes['w:val'];
   return { numId, ilvl };
 };

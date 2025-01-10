@@ -3,7 +3,7 @@ import { Transaction, EditorState } from 'prosemirror-state';
 import { Node } from 'prosemirror-model';
 import { markInsertion } from './markInsertion.js';
 import { markDeletion } from './markDeletion.js';
-import { findMark } from './documentHelpers.js';
+import { findMark } from '@core/helpers/index.js';
 import { TrackDeleteMarkName } from '../constants.js';
 
 /**

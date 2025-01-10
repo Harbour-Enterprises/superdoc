@@ -20,11 +20,6 @@ export const Paragraph = Node.create({
 
   addAttributes() {
     return {
-      // paragraphProperties: {
-      //   renderDOM: (attrs) => {
-      //     // console.debug('\n\n PARAGRAPH PROPERTIES NODE ATTRS', attrs, '\n\n')
-      //   }
-      // },
       spacing: {
         renderDOM: (attrs) => {
           const { spacing } = attrs;

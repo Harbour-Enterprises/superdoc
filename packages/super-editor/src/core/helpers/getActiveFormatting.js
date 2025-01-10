@@ -1,15 +1,32 @@
 import { getMarksFromSelection } from './getMarksFromSelection.js';
+import { findMark } from './findMark.js';
 
 export function getActiveFormatting(editor) {
-  const marks = getMarksFromSelection(editor.state);
+  const { state } = editor;
+  const { selection } = state;
+
+  const marks = getMarksFromSelection(state);
+
   const marksToProcess = marks
-    .filter((mark) => mark.type.name !== 'textStyle')
+    .filter((mark) =>  !['textStyle', 'link'].includes(mark.type.name))
     .map((mark) => ({ name: mark.type.name, attrs: mark.attrs }));
+
   const textStyleMarks = marks.filter((mark) => mark.type.name === 'textStyle');
   marksToProcess.push(...textStyleMarks.flatMap(unwrapTextMarks));
 
+  const linkMarkType = state.schema.marks['link'];
+  const linkMark = findMark(state, linkMarkType);
+
+  if (linkMark) {
+    let { from, to, attrs } = linkMark;
+
+    if (selection.from >= from && selection.to <= to) {
+      marksToProcess.push({ name: 'link', attrs });
+    }
+  }
+
   const ignoreKeys = ['paragraphSpacing'];
-  const attributes = getActiveAttributes(editor.state);
+  const attributes = getActiveAttributes(state);
   Object.keys(attributes).forEach((key) => {
     if (ignoreKeys.includes(key)) return;
     const attrs = {};

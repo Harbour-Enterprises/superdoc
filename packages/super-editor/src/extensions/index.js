@@ -22,7 +22,7 @@ import { Paragraph } from './paragraph/index.js';
 import { Heading } from './heading/index.js';
 import { CommentRangeStart, CommentRangeEnd, CommentReference } from './comment/index.js';
 import { TabNode } from './tab/index.js';
-import { LineBreak } from './line-break/index.js';
+import { LineBreak, HardBreak } from './line-break/index.js';
 import { Table } from './table/index.js';
 import { TableHeader } from './table-header/index.js';
 import { TableRow } from './table-row/index.js';
@@ -47,7 +47,8 @@ import { DecorationClick } from './decoration-click/index.js';
 import { CommentsPlugin } from './comment/index.js';
 import { Placeholder } from './placeholder/index.js';
 import { PopoverPlugin } from './popover-plugin/index.js';
-import { TrackChanges } from './track-changes/index.js';
+import { TrackChanges } from "./track-changes/index.js";
+import { Pagination } from "./pagination/index.js";
 
 // Helpers
 import { trackChangesHelpers } from './track-changes/index.js';
@@ -91,6 +92,7 @@ const getStarterExtensions = () => {
     OrderedList,
     Paragraph,
     LineBreak,
+    HardBreak,
     RunItem,
     Strike,
     TabNode,
@@ -117,7 +119,8 @@ const getStarterExtensions = () => {
     TrackInsert,
     TrackDelete,
     TrackFormat,
-    Highlight,
+    Pagination,
+    Highlight
   ];
 };
 
@@ -136,6 +139,7 @@ export {
   CommentReference,
   TabNode,
   LineBreak,
+  HardBreak,
   Bold,
   Italic,
   Underline,

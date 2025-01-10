@@ -1,9 +1,10 @@
 <script setup>
 import 'tippy.js/dist/tippy.css';
 import { NSkeleton } from 'naive-ui';
-import { ref, shallowRef, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount, computed, shallowRef } from 'vue';
 import { Editor } from '@vue-3/index.js';
 import { getStarterExtensions } from '@extensions/index.js';
+import { observeDomChanges } from './pagination-helpers.js';
 
 const emit = defineEmits(['editor-ready', 'editor-click', 'editor-keydown', 'comments-loaded', 'selection-update']);
 
@@ -32,8 +33,9 @@ const props = defineProps({
 });
 
 const editorReady = ref(false);
-let editor;
+const editor = shallowRef(null);
 
+const editorWrapper = ref(null);
 const editorElem = ref(null);
 let dataPollTimeout;
 
@@ -88,12 +90,20 @@ const initializeData = async () => {
   }
 };
 
+const getExtensions = () => {
+  const extensions = getStarterExtensions();
+  if (!props.options.pagination) {
+    return extensions.filter(ext => ext.name !== 'pagination');
+  }
+  return extensions;
+};
+
 const initEditor = async ({ content, media = {}, mediaFiles = {}, fonts = {} } = {}) => {
-  editor = new Editor({
+  editor.value = new Editor({
     mode: 'docx',
     element: editorElem.value,
     fileSource: props.fileSource,
-    extensions: getStarterExtensions(),
+    extensions: getExtensions(),
     documentId: props.documentId,
     content,
     media,
@@ -103,84 +113,94 @@ const initEditor = async ({ content, media = {}, mediaFiles = {}, fonts = {} } =
     ...props.options,
   });
 
-  editor.on('collaborationReady', () => {
+  editor.value.on('collaborationReady', () => {
     setTimeout(() => {
       editorReady.value = true;
-    }, 250);
+    }, 150);
   });
 };
 
 const handleSuperEditorKeydown = (event) => {
-  emit('editor-keydown', { editor });
+  emit('editor-keydown', { editor: editor.value });
 };
 
 const handleSuperEditorClick = (event) => {
-  emit('editor-click', { editor });
+  emit('editor-click', { editor: editor.value });
   let pmElement = editorElem.value?.querySelector('.ProseMirror');
 
-  if (!pmElement || !editor) {
+  if (!pmElement || !editor.value) {
     return;
   }
 
   let isInsideEditor = pmElement.contains(event.target);
 
-  if (!isInsideEditor && editor.isEditable) {
-    editor.view?.focus();
+  if (!isInsideEditor && editor.value.isEditable) {
+    editor.value.view?.focus();
   }
 };
 
+let paginationObserver;
 onMounted(() => {
-  initializeData();
+  // Initialize pagination observer if pagination is enabled
+  if (props.options?.pagination) paginationObserver = observeDomChanges(editorWrapper, editor);
 
+  initializeData();
   if (props.options?.suppressSkeletonLoader || !props.options?.collaborationProvider) editorReady.value = true;
 });
 
 onBeforeUnmount(() => {
+  paginationObserver?.disconnect();
   stopPolling();
-  editor?.destroy();
-  editor = null;
+  editor.value?.destroy();
+  editor.value = null;
 });
 </script>
 
 <template>
-  <div class="super-editor" v-show="editorReady" @keydown="handleSuperEditorKeydown" @click="handleSuperEditorClick">
-    <div ref="editorElem" class="editor-element"></div>
-  </div>
-
-  <div class="placeholder-editor" v-if="!editorReady">
-    <div class="placeholder-title">
-      <n-skeleton text style="width: 60%" />
+  <div class="super-editor-component-wrapper">
+    <div class="super-editor" @keydown="handleSuperEditorKeydown" @click="handleSuperEditorClick" ref="editorWrapper">
+      <div ref="editorElem" class="editor-element"></div>
     </div>
 
-    <n-skeleton text :repeat="6" />
-    <n-skeleton text style="width: 60%" />
+    <div class="placeholder-editor" v-if="!editorReady">
+      <div class="placeholder-title">
+        <n-skeleton text style="width: 60%" />
+      </div>
 
-    <n-skeleton text :repeat="6" style="width: 30%; display: block; margin: 20px" />
-    <n-skeleton text style="width: 60%" />
-    <n-skeleton text :repeat="5" />
-    <n-skeleton text style="width: 30%" />
+      <n-skeleton text :repeat="6" />
+      <n-skeleton text style="width: 60%" />
 
-    <n-skeleton text style="margin-top: 50px" />
-    <n-skeleton text :repeat="6" />
-    <n-skeleton text style="width: 70%" />
+      <n-skeleton text :repeat="6" style="width: 30%; display: block; margin: 20px" />
+      <n-skeleton text style="width: 60%" />
+      <n-skeleton text :repeat="5" />
+      <n-skeleton text style="width: 30%" />
+
+      <n-skeleton text style="margin-top: 50px" />
+      <n-skeleton text :repeat="6" />
+      <n-skeleton text style="width: 70%" />
+    </div>
   </div>
 </template>
 
 <style scoped>
-.super-editor {
-  box-sizing: border-box;
-  display: inline-block;
+.super-editor-component-wrapper {
   position: relative;
-  min-width: 8.5in;
   min-height: 11in;
+  min-width: 8in;
+  margin: 0;
+  padding: 0;
 }
 .placeholder-editor {
+  position: absolute;
+  top: 0;
+  left: 0;
   box-sizing: border-box;
-  width: 8.5in;
-  height: 11in;
+  width: 100%;
+  height: 100%;
   border-radius: 8px;
-  border: 1px solid #ccc;
   padding: 1in;
+  z-index: 5;
+  background-color: white;
 }
 .placeholder-title {
   display: flex;

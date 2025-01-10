@@ -83,6 +83,12 @@ class SuperConverter {
     // The JSON converted XML before any processing. This is simply the result of xml2json
     this.initialJSON = null;
 
+    // Headers and footers
+    this.headers = {};
+    this.headerIds = { default: null, even: null, odd: null, first: null };
+    this.footers = {};
+    this.footerIds = { default: null, even: null, odd: null, first: null };
+
     // This is the JSON schema that we will be working with
     this.json = params?.json;
 
@@ -169,7 +175,7 @@ class SuperConverter {
   }
 
   getSchema() {
-    const result = createDocumentJson({ ...this.convertedXml, media: this.media });
+    const result = createDocumentJson({...this.convertedXml, media: this.media }, this );
     if (result) {
       this.savedTagsToRestore.push({ ...result.savedTagsToRestore });
       this.pageStyles = result.pageStyles;
@@ -194,6 +200,7 @@ class SuperConverter {
       media: {},
       isFinalDoc,
       editorSchema,
+      pageStyles: this.pageStyles,
     });
     const exporter = new DocxExporter(this);
     const xml = exporter.schemaToXml(result);

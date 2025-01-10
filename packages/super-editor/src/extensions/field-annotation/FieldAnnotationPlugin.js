@@ -78,7 +78,7 @@ export const FieldAnnotationPlugin = (options = {}) => {
           if (!event.target) return false;
 
           let { target } = event;
-          let isAnnotationField = target.classList.contains(annotationClass);
+          let isAnnotationField = target.classList?.contains(annotationClass);
 
           if (isAnnotationField) {
             event.dataTransfer?.setDragImage(target, 0, 0);

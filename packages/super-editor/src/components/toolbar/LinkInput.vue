@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, getCurrentInstance } from 'vue';
+import { ref, computed, watch, getCurrentInstance, onMounted } from "vue";
 
 const emit = defineEmits(['submit', 'cancel']);
 const props = defineProps({
@@ -65,12 +65,23 @@ const isAnchor = computed(() => props.href.startsWith('#'));
 const openLink = () => {
   window.open(url.value, '_blank');
 };
+
 watch(
   () => props.href,
   (newVal) => {
-    rawUrl.value = newVal;
+  rawUrl.value = newVal;
   },
 );
+
+const focusInput = () => {
+  const input = document.querySelector('.link-input-ctn input');
+  if (!input) return;
+  input.focus();
+};
+
+onMounted(() => {
+  if (props.showInput) focusInput();
+});
 </script>
 
 <template>

@@ -76,6 +76,7 @@ const handleCommand = ({ item, argument }) => {
 @media (max-width: 768px) {
   .superdoc-toolbar {
     padding: 4px 10px;
+    justify-content: inherit;
   }
 }
 </style>

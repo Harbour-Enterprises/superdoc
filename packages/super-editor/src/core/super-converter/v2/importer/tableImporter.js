@@ -275,7 +275,7 @@ function getReferencedTableStyles(tblStyleTag, docx, nodeListHandler) {
   if (!tblStyleTag) return null;
 
   const stylesToReturn = {};
-  const { attributes } = tblStyleTag;
+  const { attributes = {} } = tblStyleTag;
   const tableStyleReference = attributes['w:val'];
   if (!tableStyleReference) return null;
 
@@ -292,7 +292,7 @@ function getReferencedTableStyles(tblStyleTag, docx, nodeListHandler) {
   const uiPriotity = styleTag.elements.find((el) => el.name === 'w:uiPriority');
 
   let baseTblPr;
-  if (basedOn) {
+  if (basedOn?.attributes) {
     const baseStyles = styleElements.find((el) => el.attributes['w:styleId'] === basedOn.attributes['w:val']);
     baseTblPr = baseStyles ? baseStyles.elements.find((el) => el.name === 'w:tblPr') : {};
   }
@@ -300,7 +300,7 @@ function getReferencedTableStyles(tblStyleTag, docx, nodeListHandler) {
   const pPr = styleTag.elements.find((el) => el.name === 'w:pPr');
   if (pPr) {
     const justification = pPr.elements.find((el) => el.name === 'w:jc');
-    if (justification) stylesToReturn.justification = justification.attributes['w:val'];
+    if (justification?.attributes) stylesToReturn.justification = justification.attributes['w:val'];
   }
 
   const rPr = styleTag?.elements.find((el) => el.name === 'w:rPr');
@@ -312,7 +312,7 @@ function getReferencedTableStyles(tblStyleTag, docx, nodeListHandler) {
     }
 
     const fontSize = rPr.elements.find((el) => el.name === 'w:sz');
-    if (fontSize) stylesToReturn.fontSize = halfPointToPoints(fontSize.attributes['w:val']) + 'pt';
+    if (fontSize?.attributes) stylesToReturn.fontSize = halfPointToPoints(fontSize.attributes['w:val']) + 'pt';
   }
 
   const tblPr = styleTag.elements.find((el) => el.name === 'w:tblPr');

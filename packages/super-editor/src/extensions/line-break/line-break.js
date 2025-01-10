@@ -14,10 +14,28 @@ export const LineBreak = Node.create({
   renderDOM() {
     return ['br', {}, 0];
   },
+});
 
-  addAttributes() {
+export const HardBreak = Node.create({
+  name: 'hardBreak',
+  group: 'inline',
+  inline: true,
+
+  addOptions() {
     return {
-      lineBreakType: { default: null },
-    };
+      htmlAttributes: {
+        contentEditable: false,
+        lineBreakType: 'page',
+        style: 'display: none;',
+      },
+    }
+  },
+
+  parseDOM() {
+    return [{ tag: 'span' }];
+  },
+
+  renderDOM({ node, htmlAttributes }) {
+    return ['span', Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes), 0];
   },
 });

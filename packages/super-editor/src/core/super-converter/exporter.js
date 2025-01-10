@@ -246,6 +246,7 @@ function translateChildNodes(params) {
   const translatedNodes = [];
   nodes.forEach((node) => {
     const translatedNode = exportSchemaToJson({ ...params, node });
+    console.debug('[translateChildNodes] Translated node:', node.type, translatedNode);
     if (translatedNode instanceof Array) translatedNodes.push(...translatedNode);
     else translatedNodes.push(translatedNode);
   });
@@ -589,7 +590,7 @@ function flattenContent(content) {
 function translateLineBreak(params) {
   const attributes = {};
 
-  const { lineBreakType } = params.node.attrs;
+  const { lineBreakType } = params.node?.attrs || {};
   if (lineBreakType) {
     attributes['w:type'] = lineBreakType;
   }
@@ -961,10 +962,15 @@ function translateBookmarkStart(params) {
  * Translate a mark to an XML ready attribute
  *
  * @param {MarkType} mark
- * @returns
+ * @returns {Object} The XML ready mark attribute
  */
 function translateMark(mark) {
   const xmlMark = SuperConverter.markTypes.find((m) => m.type === mark.type);
+  if (!xmlMark) {
+    // TODO: Telemetry
+    return {};
+  }
+
   const markElement = { name: xmlMark.name, attributes: {} };
 
   const { attrs } = mark;
@@ -1023,6 +1029,14 @@ function translateMark(mark) {
   return markElement;
 }
 
+function getMaxWidthInPixels(pageStyles) {
+  const { pageSize, pageMargins } = pageStyles;
+  const { width } = pageSize;
+  const { left, right } = pageMargins;
+  const margin = left + right;
+  return (width - margin) * 96;
+};
+
 function translateImageNode(params, imageSize) {
   const {
     node: { attrs = {}, marks = [] },
@@ -1041,10 +1055,26 @@ function translateImageNode(params, imageSize) {
     imageId = addNewImageRelationship(params, path);
   } else if (params.node.type === 'fieldAnnotation' && !imageId) {
     const type = attrs.imageSrc?.split(';')[0].split('/')[1];
+    if (!type) {
+      return prepareTextAnnotation(params);
+    }
+
     const hash = generateDocxRandomId(4);
-    const imageUrl = `media/${attrs.fieldId}_${hash}.${type}`;
+
+    const cleanUrl = attrs.fieldId.replace('-', '_');
+    const imageUrl = `media/${cleanUrl}_${hash}.${type}`;
+
     imageId = addNewImageRelationship(params, imageUrl);
-    params.media[`${attrs.fieldId}_${hash}.${type}`] = attrs.imageSrc;
+    params.media[`${cleanUrl}_${hash}.${type}`] = attrs.imageSrc;
+  }
+
+  // Fields can receive 'extras' attrs which can contain different data.
+  // For images, we can place the correct height/width
+  if (attrs.extras?.width) {
+    const aspectRatio = attrs.extras.width / attrs.extras.height;
+    const maxWidth = getMaxWidthInPixels(params.pageStyles);
+    size.w = Math.min(pixelsToEmu(attrs.extras.width), pixelsToEmu(maxWidth));
+    size.h = size.w / aspectRatio;
   }
 
   const inlineAttrs = attrs.originalPadding || {
@@ -1439,6 +1469,7 @@ export class DocxExporter {
   }
 
   #generateXml(node) {
+    if (!node) return null;
     const { name, elements, attributes } = node;
     let tag = `<${name}`;
 
@@ -1459,7 +1490,9 @@ export class DocxExporter {
     } else {
       if (elements) {
         for (let child of elements) {
-          tags.push(...this.#generateXml(child));
+          const newElements = this.#generateXml(child);
+          if (!newElements) continue;
+          tags.push(...newElements);
         }
       }
     }

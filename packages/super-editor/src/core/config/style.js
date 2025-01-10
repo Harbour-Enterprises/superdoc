@@ -179,4 +179,46 @@ img.ProseMirror-separator {
   line-height: 0.1;
   font-weight: bold;
 }
+
+/* Pagination */
+.pagination-section-header {
+  cursor: default;
+}
+
+.pagination-section-footer {
+  position: relative;
+  width: 100%;
+  minWidth: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  cursor: default;
+}
+.pagination-break-wrapper {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  cursor: default;
+  position: relative;
+}
+
+.pagination-separator {
+  position: relative;
+  display: block;
+  height: 18px;
+  min-height: 18px;
+  min-width: 100%;
+  width: 100%;
+  border-top: 1px solid #DBDBDB;
+  border-bottom: 1px solid #DBDBDB;
+  cursor: default;
+}
+.pagination-inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+}
 `;

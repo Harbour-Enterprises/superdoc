@@ -7,6 +7,8 @@
     "shared/*"
   ],
   "scripts": {
+    "test": "vitest --root ./packages/super-editor",
+    "unzip": "bash packages/super-editor/src/tests/helpers/unzip.sh",
     "dev": "npm run build:super-editor && npm run dev:superdoc",
     "dev:superdoc": "npm run dev --workspace=packages/superdoc",
     "dev:super-editor": "npm run dev --workspace=packages/super-editor",

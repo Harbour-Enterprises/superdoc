@@ -65,11 +65,13 @@ export const handleParagraphNode = (nodes, docx, nodeListHandler, insideTrackCha
 
     const indent = pPr?.elements?.find((el) => el.name === 'w:ind');
     if (indent && indent.attributes) {
-      const { 'w:left': left, 'w:right': right, 'w:firstLine': firstLine } = indent.attributes;
-      schemaNode.attrs['indent'] = {
-        left: twipsToPixels(left),
-        right: twipsToPixels(right),
-        firstLine: twipsToPixels(firstLine),
+      const { 'w:left': left, 'w:right': right, 'w:firstLine': firstLine } = indent?.attributes;
+
+      if (schemaNode.attrs) {
+        if (!schemaNode.attrs.indent) schemaNode.attrs.indent = {};
+        if (left) schemaNode.attrs['indent'].left = twipsToPixels(left);
+        if (right) schemaNode.attrs['indent'].right = twipsToPixels(right);
+        if (firstLine) schemaNode.attrs['indent'].firstLine = twipsToPixels(firstLine);
       };
 
       const textIndentVal = left || firstLine || 0;
@@ -129,6 +131,7 @@ export const paragraphNodeHandlerEntity = {
  */
 function getDefaultStyleDefinition(defaultStyleId, docx) {
   const result = { lineSpaceBefore: null, lineSpaceAfter: null };
+
   const styles = docx['word/styles.xml'];
   if (!styles) return result;
 

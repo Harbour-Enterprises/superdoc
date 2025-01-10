@@ -87,12 +87,15 @@ class DocxZipper {
 
     const defaultMediaTypes = getContentTypesFromXml(contentTypesXml);
 
+    const seenTypes = new Set();
     for (let type of newMediaTypes) {
       // Current extension already presented in Content_Types
-      if (defaultMediaTypes.includes(type)) return;
+      if (defaultMediaTypes.includes(type)) continue;
+      if (seenTypes.has(type)) continue;
 
       const newContentType = `<Default Extension="${type}" ContentType="image/${type}"/>`;
       typesString += newContentType;
+      seenTypes.add(type);
     }
 
     const beginningString = '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">';

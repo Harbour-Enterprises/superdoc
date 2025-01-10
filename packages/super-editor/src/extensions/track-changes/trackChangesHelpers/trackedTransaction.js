@@ -5,7 +5,7 @@ import { replaceAroundStep } from './replaceAroundStep.js';
 import { addMarkStep } from './addMarkStep.js';
 import { removeMarkStep } from './removeMarkStep.js';
 import { TrackDeleteMarkName } from '../constants.js';
-import { findMark } from './documentHelpers.js';
+import { findMark } from '@core/helpers/index.js';
 
 /**
  * Tracked transaction to track changes.

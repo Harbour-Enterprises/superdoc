@@ -32,7 +32,7 @@ import { listHandlerEntity } from './listImporter.js';
  * @param {ParsedDocx} docx
  * @returns {{pmDoc: PmNodeJson, savedTagsToRestore: XmlNode, pageStyles: *}|null}
  */
-export const createDocumentJson = (docx) => {
+export const createDocumentJson = (docx, converter) => {
   const json = carbonCopy(getInitialJSON(docx));
   if (!json) return null;
 
@@ -55,7 +55,7 @@ export const createDocumentJson = (docx) => {
     return {
       pmDoc: result,
       savedTagsToRestore: node,
-      pageStyles: getDocumentStyles(node),
+      pageStyles: getDocumentStyles(node, docx, converter),
     };
   }
   return null;
@@ -141,13 +141,13 @@ const createNodeListHandler = (nodeHandlers) => {
 /**
  *
  * @param {XmlNode} node
- * @returns {*}
+ * @returns {Object} The document styles object
  */
-function getDocumentStyles(node) {
-  const sectPr = node.elements.find((n) => n.name === 'w:sectPr');
+function getDocumentStyles(node, docx, converter) {
+  const sectPr = node.elements?.find((n) => n.name === 'w:sectPr');
   const styles = {};
 
-  sectPr.elements.forEach((el) => {
+  sectPr?.elements?.forEach((el) => {
     const { name, attributes } = el;
     switch (name) {
       case 'w:pgSz':
@@ -180,7 +180,46 @@ function getDocumentStyles(node) {
           type: attributes['w:type'],
         };
         break;
+      case 'w:headerReference':
+        getHeaderFooter(el, 'header', docx, converter);
+        break;
+      case 'w:footerReference':
+        getHeaderFooter(el, 'footer', docx, converter);
+        break;
     }
   });
   return styles;
 }
+
+function getHeaderFooter(el, elementType, docx, converter) {
+  const rels = docx['word/_rels/document.xml.rels'];
+  const relationships = rels.elements.find((el) => el.name === 'Relationships');
+  const { elements } = relationships;
+  
+  // sectionType as in default, first, odd, even
+  const sectionType = el.attributes['w:type'];
+
+  const rId = el.attributes['r:id'];
+  const rel = elements.find((el) => el.attributes['Id'] === rId);
+  const target = rel.attributes['Target'];
+
+  // Get the referenced file (ie: header1.xml)
+  const referenceFile = docx[`word/${target}`];
+  const currentFileName = target;
+
+  const nodeListHandler = defaultNodeListHandler();
+  const schema = nodeListHandler.handler(referenceFile.elements[0].elements, docx, false, currentFileName);
+
+  let storage, storageIds;
+
+  if (elementType === 'header') {
+    storage = converter.headers;
+    storageIds = converter.headerIds;
+  } else if (elementType === 'footer') {
+    storage = converter.footers;
+    storageIds = converter.footerIds;
+  }
+
+  storage[rId] = { type: 'doc', content: [...schema] };
+  storageIds[sectionType] = rId;
+};

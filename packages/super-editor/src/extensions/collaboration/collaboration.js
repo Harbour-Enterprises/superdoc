@@ -86,7 +86,6 @@ const createSyncPlugin = (ydoc, editor) => {
 
   const onFirstRender = () => {
     if (!editor.options.isNewFile) return;
-    console.debug('[super-editor] createSyncPlugin');
     const metaMap = ydoc.getMap('meta');
     metaMap.set('docx', editor.options.content);
     metaMap.set('fonts', editor.options.fonts);

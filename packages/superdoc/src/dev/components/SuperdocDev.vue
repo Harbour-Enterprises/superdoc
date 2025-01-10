@@ -31,10 +31,6 @@ const init = async () => {
     email: 'user@harbourshare.com',
   };
 
-  // const socket = new HocuspocusProviderWebsocket({
-  //   url: 'ws://localhost:3050/docs',
-  // });
-
   let testId = 'document-123';
   // const testId = "document_6a9fb1e0725d46989bdbb3f9879e9e1b";
   const config = {
@@ -45,7 +41,8 @@ const init = async () => {
     role: 'editor',
     documentMode: 'editing',
     toolbarGroups: ['left', 'center', 'right'],
-    isDev: true,
+    pagination: true,
+    // isDev: true,
     user: {
       name: 'Super Document Jr.',
       email: 'user@harbourshare.com',
@@ -54,7 +51,8 @@ const init = async () => {
       {
         data: currentFile.value,
         id: testId,
-        // isNewFile: true,
+        // type: DOCX,
+        isNewFile: true,
       },
     ],
     modules: {
@@ -64,10 +62,7 @@ const init = async () => {
       },
       'hrbr-fields': {},
       // collaboration: {
-      //   providerType: 'hocuspocus',
-      //   server: 'ws://localhost:3050/docs',
-      //   socket,
-      //   token: 'token',
+      //   url: 'ws://localhost:3050/docs/superdoc-id',
       // }
     },
     onEditorCreate,
@@ -155,7 +150,7 @@ const onEditorCreate = ({ editor }) => {
 /* Inputs pane and field annotations */
 
 onMounted(async () => {
-  handleNewFile(await getFileObject(BlankDOCX, 'blank_document.docx', DOCX));
+  handleNewFile(await getFileObject(BlankDOCX, 'test.docx', DOCX));
 });
 </script>
 
@@ -205,6 +200,7 @@ onMounted(async () => {
   box-shadow: 0 0 5px hsla(0, 0%, 0%, 0.05);
   transition: all 0.18s ease-out;
   margin: 50px;
+  overflow: hidden;
 }
 .superdoc .layers:hover {
   border: 1px solid #0160cc86;
