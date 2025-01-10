@@ -13,7 +13,7 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  ai: {
+  aiModule: {
     type: Object,
     required: false,
   },
@@ -23,7 +23,9 @@ const props = defineProps({
 const selectionState = ref(null);
 
 // If we have an open ai key store in a variable
-const openAiKey = props.ai.openAiKey;
+const openAiKey = computed(() => {
+  return props.aiModule?.isOpenAiEnabled?.() ? props.aiModule.keyStorage.getKey() : undefined;
+});
 
 // Save selection when component is mounted
 onMounted(() => {

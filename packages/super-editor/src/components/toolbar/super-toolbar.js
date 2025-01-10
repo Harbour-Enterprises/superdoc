@@ -148,7 +148,7 @@ export class SuperToolbar extends EventEmitter {
       isDev,
       window.innerWidth,
       this.role,
-      this.config.modules.ai,
+      this.config.aiModule,
     );
     this.toolbarItems = defaultItems;
     this.overflowItems = overflowItems;

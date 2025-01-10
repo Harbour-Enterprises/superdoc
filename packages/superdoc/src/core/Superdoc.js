@@ -262,9 +262,7 @@ export class Superdoc extends EventEmitter {
       isDev: this.isDev || false,
       toolbarGroups: this.config.toolbarGroups,
       role: this.config.role,
-      modules: {
-        ai: this.config.modules.ai || {},
-      },
+      aiModule: this.aiModule,
     };
 
     this.toolbar = new SuperToolbar(config);
@@ -441,16 +439,5 @@ export class Superdoc extends EventEmitter {
     this.removeAllListeners();
     delete this.app.config.globalProperties.$config;
     delete this.app.config.globalProperties.$superdoc;
-  }
-
-  /**
-   * Get the status of AI features
-   * @returns {Object} AI configuration status
-   */
-  getAiStatus() {
-    return {
-      isEnabled: this.aiModule?.isOpenAiEnabled() || false,
-      hasValidKey: this.aiModule?.keyStorage.hasKey() || false,
-    };
   }
 }
