@@ -13,10 +13,17 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  ai: {
+    type: Object,
+    required: false,
+  },
 });
 
 // Store the selection state
 const selectionState = ref(null);
+
+// If we have an open ai key store in a variable
+const openAiKey = props.ai.openAiKey;
 
 // Save selection when component is mounted
 onMounted(() => {
@@ -160,9 +167,7 @@ const handleInput = (event) => {
           <i class="fal fa-spinner"></i>
         </span>
       </span>
-      <span v-else-if="isError" class="ai-textarea-icon error"
-        ><i class="fal fa-times" :title="isError"></i
-      ></span>
+      <span v-else-if="isError" class="ai-textarea-icon error"><i class="fal fa-times" :title="isError"></i></span>
       <span v-else-if="promptText" class="ai-textarea-icon ai-submit-button"
         ><i class="fal fa-paper-plane" @click="handleSubmit"></i
       ></span>

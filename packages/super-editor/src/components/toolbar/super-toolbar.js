@@ -143,7 +143,13 @@ export class SuperToolbar extends EventEmitter {
   }
 
   #makeToolbarItems(superToolbar, isDev = false) {
-    const { defaultItems, overflowItems } = makeDefaultItems(superToolbar, isDev, window.innerWidth, this.role);
+    const { defaultItems, overflowItems } = makeDefaultItems(
+      superToolbar,
+      isDev,
+      window.innerWidth,
+      this.role,
+      this.config.modules.ai,
+    );
     this.toolbarItems = defaultItems;
     this.overflowItems = overflowItems;
     this.updateToolbarState();
@@ -180,7 +186,7 @@ export class SuperToolbar extends EventEmitter {
       item.resetDisabled();
 
       const activeMark = marks.find((mark) => mark.name === item.name.value);
-      
+
       if (activeMark) {
         item.activate(activeMark.attrs);
       } else {
