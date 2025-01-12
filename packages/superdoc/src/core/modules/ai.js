@@ -111,7 +111,14 @@ export function createAiModule(config = {}) {
     }
 
     const params = {
-      messages: [{ role: 'user', content: prompt }],
+      messages: [
+        { role: 'user', content: prompt },
+        {
+          role: 'system',
+          content:
+            'You are a text generation and text rewriting assistant. Respond only with the requested text and no additional explanations or responses.',
+        },
+      ],
       temperature: options.temperature || 0.7,
       max_tokens: options.maxTokens || 1000,
       ...options,

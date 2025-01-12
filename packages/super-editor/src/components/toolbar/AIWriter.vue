@@ -77,50 +77,94 @@ const handleSubmit = async () => {
 
   try {
     let previousText = '';
-    let stream;
-    // If there's selected text, we need to remove it and user rewriter
-    if (props.selectedText) {
-      const rewriter = await window.ai.rewriter.create({
-        sharedContext: props.superToolbar.activeEditor.state.doc.textContent,
-      });
 
-      stream = rewriter.rewriteStreaming(props.selectedText, {
-        context: promptText.value,
-      });
-    } else {
-      const writer = await window.ai.writer.create({ tone: 'formal' });
-      stream = writer.writeStreaming(promptText.value, {
-        context: systemPrompt,
-      });
-    }
-
-    // Only enable track changes if in suggesting mode
+    // Enable track changes if in suggesting mode before using any AI model
     if (isInSuggestingMode.value) {
       props.superToolbar.activeEditor.commands.enableTrackChanges();
     }
 
-    for await (const chunk of stream) {
-      try {
-        // Remove the selected text if we are using re-writer
-        if (props.selectedText) {
-          props.superToolbar.activeEditor.commands.deleteSelection();
-          // Remove the ai highlight
-          props.superToolbar.emit('ai-highlight-remove');
+    // If OpenAI is enabled, use it
+    if (openAiKey.value) {
+      if (props.selectedText) {
+        const prompt = `Rewrite the following text according to this instruction: ${promptText.value}\nText to rewrite: ${props.selectedText}`;
+
+        await props.aiModule.generateTextStream(
+          prompt,
+          (chunk) => {
+            try {
+              // Remove the selected text if we are using re-writer
+              if (previousText === '') {
+                props.superToolbar.activeEditor.commands.deleteSelection();
+                // Remove the ai highlight
+                props.superToolbar.emit('ai-highlight-remove');
+              }
+              // Update the document text with only the new content
+              props.superToolbar.activeEditor.commands.insertContent(chunk);
+              // Store the current chunk as previous for next iteration
+              previousText += chunk;
+            } catch (error) {
+              console.error('Error processing chunk:', error);
+            }
+          },
+          { temperature: 0.7 },
+        );
+      } else {
+        // Generate new text using OpenAI
+        await props.aiModule.generateTextStream(
+          promptText.value,
+          (chunk) => {
+            try {
+              props.superToolbar.activeEditor.commands.insertContent(chunk);
+              previousText += chunk;
+            } catch (error) {
+              console.error('Error processing chunk:', error);
+            }
+          },
+          { temperature: 0.7 },
+        );
+      }
+    } else {
+      // Fall back to Chrome model if no OpenAI key
+      let stream;
+      if (props.selectedText) {
+        const rewriter = await window.ai.rewriter.create({
+          sharedContext: props.superToolbar.activeEditor.state.doc.textContent,
+        });
+
+        stream = rewriter.rewriteStreaming(props.selectedText, {
+          context: promptText.value,
+        });
+      } else {
+        const writer = await window.ai.writer.create({ tone: 'formal' });
+        stream = writer.writeStreaming(promptText.value, {
+          context: systemPrompt,
+        });
+      }
+
+      for await (const chunk of stream) {
+        try {
+          // Remove the selected text if we are using re-writer
+          if (props.selectedText && previousText === '') {
+            props.superToolbar.activeEditor.commands.deleteSelection();
+            // Remove the ai highlight
+            props.superToolbar.emit('ai-highlight-remove');
+          }
+          // Extract only the new content by comparing with previous chunk
+          const newContent = chunk.slice(previousText.length);
+          // Update the document text with only the new content
+          props.superToolbar.activeEditor.commands.insertContent(newContent);
+          // Store the current chunk as previous for next iteration
+          previousText = chunk;
+        } catch (error) {
+          console.error('Error processing chunk:', error);
         }
-        // Extract only the new content by comparing with previous chunk
-        const newContent = chunk.slice(previousText.length);
-        // Update the document text with only the new content
-        props.superToolbar.activeEditor.commands.insertContent(newContent);
-        // Store the current chunk as previous for next iteration
-        previousText = chunk;
-      } catch (error) {
-        console.log('error', error);
       }
     }
+
     // If all is good, close the AI Writer
     props.handleClose();
   } catch (error) {
-    console.log('error', error);
+    console.error('AI generation error:', error);
     isError.value = error.message || 'An error occurred';
   } finally {
     promptText.value = ''; // Clear the input after submission

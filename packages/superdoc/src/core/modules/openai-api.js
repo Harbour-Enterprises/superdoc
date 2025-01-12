@@ -4,7 +4,7 @@
  */
 
 const OPENAI_API_BASE = 'https://api.openai.com/v1';
-const DEFAULT_MODEL = 'gpt-4';
+const DEFAULT_MODEL = 'gpt-4o-mini';
 
 /**
  * Error types for OpenAI API calls
