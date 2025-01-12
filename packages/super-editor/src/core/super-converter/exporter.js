@@ -1242,7 +1242,9 @@ function prepareTextAnnotation(params) {
   const {
     node: { attrs = {}, marks = [] },
   } = params;
-  return getTextNodeForExport(attrs.displayLabel, marks);
+
+  const marksFromAttrs = translateFieldAttrsToMarks(attrs);
+  return getTextNodeForExport(attrs.displayLabel, [...marks, ...marksFromAttrs]);
 }
 
 /**
@@ -1349,6 +1351,24 @@ function getTranslationByAnnotationType(annotationType) {
 
   return dictionary[annotationType];
 }
+
+const translateFieldAttrsToMarks = (attrs = {}) => {
+  const {
+    fontFamily,
+    fontSize,
+    bold,
+    underline,
+    italic,
+  } = attrs;
+
+  const marks = [];
+  if (fontFamily) marks.push({ type: 'fontFamily', attrs: { fontFamily } });
+  if (fontSize) marks.push({ type: 'fontSize', attrs: { fontSize } });
+  if (bold) marks.push({ type: 'bold', attrs: {} });
+  if (underline) marks.push({ type: 'underline', attrs: {} });
+  if (italic) marks.push({ type: 'italic', attrs: {} });
+  return marks;
+};
 
 /**
  * Translate a field annotation node

@@ -1,6 +1,6 @@
 import { Plugin, PluginKey } from 'prosemirror-state';
-import { Slice, Fragment } from 'prosemirror-model';
 import { trackFieldAnnotationsDeletion } from './fieldAnnotationHelpers/trackFieldAnnotationsDeletion.js';
+import { getAllFieldAnnotations } from './fieldAnnotationHelpers/getAllFieldAnnotations.js';
 
 export const FieldAnnotationPlugin = (options = {}) => {
   let { editor, annotationClass } = options;
@@ -92,6 +92,38 @@ export const FieldAnnotationPlugin = (options = {}) => {
         // },
       },
     },
+
+    /// For y-prosemirror support.
+    appendTransaction: (transactions, oldState, newState) => {
+      let docChanges = transactions.some((tr) => tr.docChanged) && !oldState.doc.eq(newState.doc);
+
+      if (!docChanges) {
+        return;
+      }
+
+      let { tr, doc } = newState;
+      let changed = false;
+
+      let annotations = getAllFieldAnnotations(newState);
+
+      if (!annotations.length) {
+        return;
+      }
+
+      annotations.forEach(({ node, pos }) => {
+        let { marks } = node;
+        let currentNode = tr.doc.nodeAt(pos);
+
+        if (marks.length > 0 && node.eq(currentNode)) {
+          // Unset all marks from annotation.
+          tr.removeMark(pos, pos + node.nodeSize, null);
+          changed = true;
+        }
+      });
+      
+      return changed ? tr : null;
+    },
+    ///
   });
 };
 

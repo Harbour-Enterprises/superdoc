@@ -1,4 +1,5 @@
 import { handleDocPartObj } from './docPartObjImporter';
+import { parseMarks } from './markImporter.js';
 
 /**
  * @type {import("docxImporter").NodeHandler}
@@ -10,6 +11,8 @@ export const handleAnnotationNode = (nodes, docx, nodeListHandler, insideTrackCh
 
   const node = nodes[0];
   const sdtPr = node.elements.find((el) => el.name === 'w:sdtPr');
+  const sdtContent = node.elements.find((el) => el.name === 'w:sdtContent');
+  const marksAsAttrs = parseAnnotationMarks(sdtContent);
 
   const docPartObj = sdtPr?.elements.find((el) => el.name === 'w:docPartObj');
   if (docPartObj) {
@@ -34,13 +37,49 @@ export const handleAnnotationNode = (nodes, docx, nodeListHandler, insideTrackCh
 
   const result = {
     type: 'fieldAnnotation',
-    attrs,
+    attrs: { ...attrs, ...marksAsAttrs }
   };
+
   return {
     nodes: [result],
     consumed: 1,
   };
 };
+
+/**
+ * Marks for annotations need to be converted to attributes
+ * @param {Object} content The sdtContent node
+ * @returns {Object} The attributes object
+ */
+const parseAnnotationMarks = (content = {}) => {
+  const run = content.elements?.find((el) => el.name === 'w:r');
+  const rPr = run?.elements?.find((el) => el.name === 'w:rPr');
+  if (!rPr) return {};
+
+  // TODO: Telemetry
+  const unknownMarks = [];
+  const marks = parseMarks(rPr, unknownMarks) || [];
+
+  const marksWithFlatFontStyles = [];
+  marks.forEach((mark) => {
+    const { type } = mark;
+    if (type === 'textStyle') {
+      const { attrs } = mark;
+      Object.keys(attrs).forEach((key) => {
+        marksWithFlatFontStyles.push({ type: key, attrs: attrs[key] });
+      });
+    } else {
+      marksWithFlatFontStyles.push(mark);
+    }
+  });
+
+  const attrs = {};
+  marksWithFlatFontStyles?.forEach((mark) => {
+    const { type } = mark;
+    attrs[type] = mark.attrs || true;
+  })
+  return attrs;
+}
 
 /**
  * @type {import("docxImporter").NodeHandlerEntry}

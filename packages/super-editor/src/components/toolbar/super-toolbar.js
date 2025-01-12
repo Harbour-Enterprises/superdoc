@@ -34,11 +34,15 @@ export class SuperToolbar extends EventEmitter {
     },
 
     setFontSize: ({ item, argument }) => {
-      this.#runCommandWithArgumentOnly({ item, argument });
+      this.#runCommandWithArgumentOnly({ item, argument }, () => {
+        this.activeEditor?.commands.setFieldAnnotationsFontSize(argument, true);
+      });
     },
 
     setFontFamily: ({ item, argument }) => {
-      this.#runCommandWithArgumentOnly({ item, argument });
+      this.#runCommandWithArgumentOnly({ item, argument }, () => {
+        this.activeEditor?.commands.setFieldAnnotationsFontFamily(argument, true);
+      });
     },
 
     setColor: ({ item, argument }) => {
@@ -86,6 +90,39 @@ export class SuperToolbar extends EventEmitter {
       if (command in this.activeEditor.commands) {
         this.activeEditor.commands[command](argument);
       }
+    },
+
+    toggleBold: ({ item, argument }) => {
+      let command = item.command;
+
+      if (command in this.activeEditor.commands) {
+        this.activeEditor.commands[command](argument);
+        this.activeEditor.commands.toggleFieldAnnotationsFormat('bold', true);
+      }
+      
+      this.updateToolbarState();
+    },
+
+    toggleItalic: ({ item, argument }) => {
+      let command = item.command;
+      
+      if (command in this.activeEditor.commands) {
+        this.activeEditor.commands[command](argument);
+        this.activeEditor.commands.toggleFieldAnnotationsFormat('italic', true);
+      }
+
+      this.updateToolbarState();
+    },
+
+    toggleUnderline: ({ item, argument }) => {
+      let command = item.command;
+      
+      if (command in this.activeEditor.commands) {
+        this.activeEditor.commands[command](argument);
+        this.activeEditor.commands.toggleFieldAnnotationsFormat('underline', true);
+      }
+
+      this.updateToolbarState();
     },
   };
 
@@ -247,12 +284,13 @@ export class SuperToolbar extends EventEmitter {
     }
   }
 
-  #runCommandWithArgumentOnly({ item, argument }) {
+  #runCommandWithArgumentOnly({ item, argument }, callback) {
     if (!argument || !this.activeEditor) return;
 
     let command = item.command;
     if (command in this.activeEditor?.commands) {
       this.activeEditor.commands[command](argument);
+      if (typeof callback === 'function') callback(argument);
       this.updateToolbarState();
     }
   }

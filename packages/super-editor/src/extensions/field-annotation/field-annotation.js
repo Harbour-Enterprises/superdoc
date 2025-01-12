@@ -1,8 +1,10 @@
 import { Node, Attribute } from '@core/index.js';
 import { FieldAnnotationView } from './FieldAnnotationView.js';
 import { FieldAnnotationPlugin } from './FieldAnnotationPlugin.js';
-import { findFieldAnnotationsByFieldId, getAllFieldAnnotations } from './fieldAnnotationHelpers/index.js';
+import { findFieldAnnotationsByFieldId, getAllFieldAnnotations, findFieldAnnotationsBetween } from './fieldAnnotationHelpers/index.js';
 import { toHex } from 'color2k';
+import { parseSizeUnit, minMax } from '@core/utilities/index.js';
+import { NodeSelection } from 'prosemirror-state';
 
 export const fieldAnnotationName = 'fieldAnnotation';
 export const annotationClass = 'annotation';
@@ -33,6 +35,9 @@ export const FieldAnnotation = Node.create({
       borderColor: '#b015b3',
       visibilityOptions: ['visible', 'hidden'],
       handleDropOutside: true,
+
+      /// for y-prosemirror support
+      toggleFormatNames: ['bold', 'italic', 'underline'],
     };
   },
 
@@ -193,7 +198,73 @@ export const FieldAnnotation = Node.create({
       extras: {
         default: {},
         rendered: false,
-      }
+      },
+
+      /// Formatting attrs for y-prosemirror support.
+      bold: {
+        default: false,
+        parseDOM: (elem) => elem.getAttribute('data-bold') === 'true',
+        renderDOM: (attrs) => {
+          if (!attrs.bold) return {};
+          return {
+            'data-bold': 'true',
+            style: 'font-weight: bold',
+          };
+        },
+      },
+
+      italic: {
+        default: false,
+        parseDOM: (elem) => elem.getAttribute('data-italic') === 'true',
+        renderDOM: (attrs) => {
+          if (!attrs.italic) return {};
+          return {
+            'data-italic': 'true',
+            style: 'font-style: italic',
+          };
+        },
+      },
+
+      underline: {
+        default: false,
+        parseDOM: (elem) => elem.getAttribute('data-underline') === 'true',
+        renderDOM: (attrs) => {
+          if (!attrs.underline) return {};
+          return {
+            'data-underline': 'true',
+            style: 'text-decoration: underline',
+          };
+        },
+      },
+
+      fontFamily: {
+        default: null,
+        parseDOM: (elem) => elem.getAttribute('data-font-family') || elem.style.fontFamily || null,
+        renderDOM: (attrs) => {
+          if (!attrs.fontFamily) return {};
+          return {
+            'data-font-family': attrs.fontFamily,
+            style: `font-family: ${attrs.fontFamily}`,
+          };
+        },
+      },
+
+      fontSize: {
+        default: null,
+        parseDOM: (elem) => elem.getAttribute('data-font-size') || elem.style.fontSize || null,
+        renderDOM: (attrs) => {
+          if (!attrs.fontSize) return {};
+          let [value, unit] = parseSizeUnit(attrs.fontSize);
+          if (Number.isNaN(value)) return {};
+          unit = unit ? unit : 'pt';
+          let fontSize = `${value}${unit}`;
+          return {
+            'data-font-size': fontSize,
+            style: `font-size: ${fontSize}`,
+          };
+        },
+      },
+      /// Formatting attrs - end.
     };
   },
 
@@ -314,8 +385,11 @@ export const FieldAnnotation = Node.create({
             let currentMarks = $pos.marks();
             currentMarks = currentMarks.length ? [...currentMarks] : null;
 
-            let node = schema.nodes[this.name].create({ ...attrs }, null, currentMarks);
+            /// for y-prosemirror support - attrs instead marks
+            let formatAttrs = getFormatAttrsFromMarks(currentMarks);
+            ///
 
+            let node = schema.nodes[this.name].create({ ...attrs, ...formatAttrs }, null, null);
             state.tr.insert(newPos, node);
           }
 
@@ -391,7 +465,7 @@ export const FieldAnnotation = Node.create({
             let newPos = tr.mapping.map(pos);
             let currentNode = tr.doc.nodeAt(pos);
 
-            if (node.attrs.fieldId === currentNode.attrs.fieldId) {
+            if (node.eq(currentNode)) {
               tr.setNodeMarkup(newPos, undefined, {
                 ...node.attrs,
                 ...attrs,
@@ -613,6 +687,99 @@ export const FieldAnnotation = Node.create({
 
           return true;
         },
+
+        /// Formatting commands for y-prosemirror support.
+        toggleFieldAnnotationsFormat:
+          (name, setSelection = false) =>
+          ({ dispatch, tr, state, commands }) => {
+            let formats = this.options.toggleFormatNames;
+
+            if (!formats.includes(name)) {
+              return false;
+            }
+
+            let { from, to, node } = state.selection;
+            let annotations = findFieldAnnotationsBetween(from, to, state.doc);
+
+            if (!annotations.length) {
+              return true;
+            }
+
+            if (dispatch) {
+              annotations.forEach((annotation) => {
+                commands.updateFieldAnnotationsAttributes([annotation], {
+                  [name]: !annotation.node.attrs[name],
+                });
+              });
+
+              if (setSelection && node?.type.name === this.name) {
+                tr.setSelection(NodeSelection.create(tr.doc, from));
+              }
+            }
+
+            return true;
+          },
+
+        setFieldAnnotationsFontFamily: 
+          (fontFamily, setSelection = false) =>
+          ({ dispatch, tr, state, commands }) => {
+            let { from, to, node } = state.selection;
+            let annotations = findFieldAnnotationsBetween(from, to, state.doc);
+
+            if (!annotations.length) {
+              return true;
+            }
+
+            if (dispatch) {
+              annotations.forEach((annotation) => {
+                commands.updateFieldAnnotationsAttributes([annotation], {
+                  fontFamily,
+                });
+              });
+
+              if (setSelection && node?.type.name === this.name) {
+                tr.setSelection(NodeSelection.create(tr.doc, from));
+              }
+            }
+
+            return true;
+          },
+
+        setFieldAnnotationsFontSize:
+          (fontSize, setSelection = false) =>
+          ({ dispatch, tr, state, commands }) => {
+            let { from, to, node } = state.selection;
+            let annotations = findFieldAnnotationsBetween(from, to, state.doc);
+
+            if (!annotations.length) {
+              return true;
+            }
+
+            let [value, unit] = parseSizeUnit(fontSize);
+            let min = 8, max = 96, defaultUnit = 'pt';
+  
+            if (Number.isNaN(value)) {
+              return false;
+            }
+
+            value = minMax(value, min, max);
+            unit = unit ? unit : defaultUnit;
+
+            if (dispatch) {
+              annotations.forEach((annotation) => {
+                commands.updateFieldAnnotationsAttributes([annotation], {
+                  fontSize: `${value}${unit}`,
+                });
+              });
+
+              if (setSelection && node?.type.name === this.name) {
+                tr.setSelection(NodeSelection.create(tr.doc, from));
+              }
+            }
+
+            return true;
+          },
+        /// Formatting commands - end.
     };
   },
 
@@ -637,3 +804,34 @@ export const FieldAnnotation = Node.create({
     ];
   },
 });
+
+/// for y-prosemirror support
+function getFormatAttrsFromMarks(marks) {
+  if (!marks) {
+    return {};
+  }
+
+  let formatAttrs = {
+    bold: false,
+    italic: false,
+    underline: false,
+    fontFamily: null,
+    fontSize: null,
+  };
+
+  if (marks && marks.length) {
+    formatAttrs.bold = marks.some((mark) => mark.type.name === 'bold');
+    formatAttrs.italic = marks.some((mark) => mark.type.name === 'italic');
+    formatAttrs.underline = marks.some((mark) => mark.type.name === 'underline');
+
+    let textStyle = marks.find((mark) => mark.type.name === 'textStyle');
+
+    if (textStyle) {
+      formatAttrs.fontFamily = textStyle.attrs.fontFamily ?? null;
+      formatAttrs.fontSize = textStyle.attrs.fontSize ?? null;
+    }
+  }
+
+  return formatAttrs;
+}
+///

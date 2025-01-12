@@ -2072,8 +2072,6 @@ describe('custom nested list tests', () => {
     };
     const result = handleListNode(nodes, docx, defaultNodeListHandler(), false);
 
-    console.debug(result.nodes[0]);
-    console.debug(JSON.stringify(result.nodes[0]));
     const expectedResult = {
       type: 'orderedList',
       content: [

@@ -81,6 +81,7 @@ export default defineConfig(({ mode }) => {
         '@packages': fileURLToPath(new URL('../', import.meta.url)),
         '@vue-3': fileURLToPath(new URL('./src/vue-3', import.meta.url)),
         '@converter': fileURLToPath(new URL('./src/core/super-converter', import.meta.url)),
+        '@tests': fileURLToPath(new URL('./src/tests', import.meta.url)),
       },
       extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json'],
     },

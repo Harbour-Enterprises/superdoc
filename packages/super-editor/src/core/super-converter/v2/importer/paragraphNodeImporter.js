@@ -15,6 +15,7 @@ export const handleParagraphNode = (nodes, docx, nodeListHandler, insideTrackCha
   if (nodes.length === 0 || nodes[0].name !== 'w:p') {
     return { nodes: [], consumed: 0 };
   }
+
   const node = carbonCopy(nodes[0]);
 
   let schemaNode;
@@ -43,8 +44,6 @@ export const handleParagraphNode = (nodes, docx, nodeListHandler, insideTrackCha
   }
 
   if ('attributes' in node) {
-    const defaultStyleId = node.attributes['w:rsidRDefault'];
-
     const pPr = node.elements?.find((el) => el.name === 'w:pPr');
     const styleTag = pPr?.elements?.find((el) => el.name === 'w:pStyle');
     if (styleTag) {
@@ -83,23 +82,8 @@ export const handleParagraphNode = (nodes, docx, nodeListHandler, insideTrackCha
       schemaNode.attrs['textAlign'] = justify.attributes['w:val'];
     }
 
-    const { lineSpaceAfter, lineSpaceBefore } = getDefaultStyleDefinition(defaultStyleId, docx);
-    const spacing = pPr?.elements?.find((el) => el.name === 'w:spacing');
-    if (spacing && spacing.attributes) {
-      const {
-        'w:after': lineSpaceAfterInLine,
-        'w:before': lineSpaceBeforeInLine,
-        'w:line': lineInLine,
-      } = spacing.attributes;
-
-      // Zero values have to be considered in export to maintain accurate line height
-      schemaNode.attrs['spacing'] = {
-        lineSpaceAfter: twipsToPixels(lineSpaceAfterInLine) >= 0 ? twipsToPixels(lineSpaceAfterInLine) : lineSpaceAfter,
-        lineSpaceBefore:
-          twipsToPixels(lineSpaceBeforeInLine) >= 0 ? twipsToPixels(lineSpaceBeforeInLine) : lineSpaceBefore,
-        line: twipsToPixels(lineInLine),
-      };
-    }
+    const defaultStyleId = node.attributes['w:rsidRDefault'];
+    schemaNode.attrs['spacing'] = getParagraphSpacing(defaultStyleId, node, docx);
     schemaNode.attrs['rsidRDefault'] = defaultStyleId;
   }
 
@@ -116,6 +100,50 @@ export const handleParagraphNode = (nodes, docx, nodeListHandler, insideTrackCha
   return { nodes: schemaNode ? [schemaNode] : [], consumed: 1 };
 };
 
+const getParagraphSpacing = (defaultStyleId, node, docx) => {
+  // Check if we have default paragraph styles to override
+  const spacing = {
+    lineSpaceAfter: 0,
+    lineSpaceBefore: 0,
+    line: 0,
+  }
+
+  const { spacing: pDefaultSpacing = {} } = getDefaultParagraphStyle(docx);
+  const { lineSpaceAfter, lineSpaceBefore, line } = getDefaultStyleDefinition(defaultStyleId, docx);
+
+  const pPr = node.elements?.find((el) => el.name === 'w:pPr');
+  const inLineSpacingTag = pPr?.elements?.find((el) => el.name === 'w:spacing');
+  const inLineSpacing = inLineSpacingTag?.attributes || {};
+
+  // These styles are taken in order of precedence
+  // 1. Inline spacing
+  // 2. Default style spacing
+  // 3. Default paragraph spacing
+  const lineSpacing = inLineSpacing?.['w:line'] || line || pDefaultSpacing?.['w:line'];
+  if (lineSpacing) spacing.line = twipsToPixels(lineSpacing);
+
+  const beforeSpacing = inLineSpacing?.['w:before'] || lineSpaceBefore || pDefaultSpacing?.['w:before'];
+  if (beforeSpacing) spacing.lineSpaceBefore = twipsToPixels(beforeSpacing);
+
+  const afterSpacing = inLineSpacing?.['w:after'] || lineSpaceAfter || pDefaultSpacing?.['w:after'];
+  if (afterSpacing) spacing.lineSpaceAfter = twipsToPixels(afterSpacing);
+
+  return spacing;
+};
+
+const getDefaultParagraphStyle = (docx) => {
+  const styles = docx['word/styles.xml'];
+  const defaults = styles.elements[0].elements?.find((el) => el.name === 'w:docDefaults');
+  const pDefault = defaults.elements.find((el) => el.name === 'w:pPrDefault');
+  const pPrDefault = pDefault?.elements?.find((el) => el.name === 'w:pPr');
+  const pPrDefaultSpacingTag = pPrDefault?.elements?.find((el) => el.name === 'w:spacing') || {};
+  const { attributes: pPrDefaultSpacingAttr } = pPrDefaultSpacingTag;
+
+  return {
+    spacing: pPrDefaultSpacingAttr,
+  }
+};
+
 /**
  * @type {import("docxImporter").NodeHandlerEntry}
  */
@@ -125,7 +153,6 @@ export const paragraphNodeHandlerEntity = {
 };
 
 /**
- * TODO: There are so many possible styles here - confirm what else we need.
  * @param {string} defaultStyleId
  * @param {ParsedDocx} docx
  */
@@ -136,15 +163,10 @@ function getDefaultStyleDefinition(defaultStyleId, docx) {
   if (!styles) return result;
 
   const { elements } = styles.elements[0];
-  let elementsWithId = elements.filter((el) => {
-    return el.elements.some((e) => {
-      return 'attributes' in e && e.attributes['w:val'] === defaultStyleId;
-    });
+  const elementsWithId = elements.filter((el) => {
+    const { attributes } = el;
+    return attributes && attributes['w:styleId'] === defaultStyleId;
   });
-
-  if (!elementsWithId.length) {
-    elementsWithId = elements.filter((el) => el.attributes && el.attributes['w:styleId'] === defaultStyleId);
-  }
 
   const firstMatch = elementsWithId[0];
   if (!firstMatch) return result;
@@ -155,14 +177,15 @@ function getDefaultStyleDefinition(defaultStyleId, docx) {
   const indent = pPr?.elements.find((el) => el.name === 'w:ind');
   if (!spacing && !justify && !indent) return result;
 
-  const lineSpaceBefore = twipsToPixels(spacing?.attributes['w:before']);
-  const lineSpaceAfter = twipsToPixels(spacing?.attributes['w:after']);
+  const lineSpaceBefore = spacing?.attributes['w:before'];
+  const lineSpaceAfter = spacing?.attributes['w:after'];
+  const line = spacing?.attributes['w:line'];
   const textAlign = justify?.attributes['w:val'];
   const leftIndent = twipsToPixels(indent?.attributes['w:left']);
   const rightIndent = twipsToPixels(indent?.attributes['w:right']);
   const firstLine = twipsToPixels(indent?.attributes['w:firstLine']);
 
-  return { lineSpaceBefore, lineSpaceAfter, textAlign, leftIndent, rightIndent, firstLine };
+  return { lineSpaceBefore, lineSpaceAfter, line, textAlign, leftIndent, rightIndent, firstLine };
 }
 
 /**
