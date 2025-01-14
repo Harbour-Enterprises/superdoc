@@ -34,7 +34,10 @@
     "dev": "vite",
     "build": "vite build",
     "clean": "rm -rf dist",
-    "pack": "rm *.tgz 2>/dev/null || true && cd ../super-editor && npm run build && cd ../superdoc && npm run build && npm pack && mv harbour-enterprises-superdoc-0.2.16.tgz ./superdoc.tgz"
+    "pack": "rm *.tgz 2>/dev/null || true && cd ../super-editor && npm run build && cd ../superdoc && npm run build && npm pack && mv harbour-enterprises-superdoc-0.2.16.tgz ./superdoc.tgz",
+    "test": "vitest --reporter=verbose",
+    "test:watch": "vitest watch",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@harbour-enterprises/super-editor": "0.0.1-alpha.0",
@@ -58,6 +61,8 @@
     "postcss-nested": "^6.0.1",
     "postcss-nested-import": "^1.3.0",
     "vite": "^5.3.6",
-    "vue-draggable-next": "^2.2.1"
+    "vue-draggable-next": "^2.2.1",
+    "vitest": "^1.6.0",
+    "jsdom": "^24.0.0"
   }
 }
