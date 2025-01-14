@@ -4,7 +4,7 @@ import { FieldAnnotationPlugin } from './FieldAnnotationPlugin.js';
 import { findFieldAnnotationsByFieldId, getAllFieldAnnotations, findFieldAnnotationsBetween } from './fieldAnnotationHelpers/index.js';
 import { toHex } from 'color2k';
 import { parseSizeUnit, minMax } from '@core/utilities/index.js';
-import { NodeSelection } from 'prosemirror-state';
+import { NodeSelection, Selection } from 'prosemirror-state';
 
 export const fieldAnnotationName = 'fieldAnnotation';
 export const annotationClass = 'annotation';
@@ -375,7 +375,7 @@ export const FieldAnnotation = Node.create({
        * })
        */
       addFieldAnnotation:
-        (pos, attrs = {}) =>
+        (pos, attrs = {}, editorFocus = false) =>
         ({ editor, dispatch, state, tr }) => {
           if (dispatch) {
             let { schema } = editor;
@@ -390,7 +390,13 @@ export const FieldAnnotation = Node.create({
             ///
 
             let node = schema.nodes[this.name].create({ ...attrs, ...formatAttrs }, null, null);
-            state.tr.insert(newPos, node);
+            state.tr
+              .insert(newPos, node)
+              .setSelection(Selection.near(tr.doc.resolve(newPos + node.nodeSize)));
+
+            if (editorFocus) {
+              this.editor.view.focus();
+            }
           }
 
           return true;

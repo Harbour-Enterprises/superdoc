@@ -1060,7 +1060,6 @@ function translateImageNode(params, imageSize) {
     }
 
     const hash = generateDocxRandomId(4);
-
     const cleanUrl = attrs.fieldId.replace('-', '_');
     const imageUrl = `media/${cleanUrl}_${hash}.${type}`;
 
@@ -1070,11 +1069,17 @@ function translateImageNode(params, imageSize) {
 
   // Fields can receive 'extras' attrs which can contain different data.
   // For images, we can place the correct height/width
-  if (attrs.extras?.width) {
-    const aspectRatio = attrs.extras.width / attrs.extras.height;
-    const maxWidth = getMaxWidthInPixels(params.pageStyles);
-    size.w = Math.min(pixelsToEmu(attrs.extras.width), pixelsToEmu(maxWidth));
-    size.h = size.w / aspectRatio;
+  if (attrs.extras?.aspectRatio) {
+    const { aspectRatio, width } = attrs.extras;
+    if (attrs.type === 'signature') {
+      const signatureHeight = 20;
+      size.h = pixelsToEmu(signatureHeight);
+      size.w = pixelsToEmu(signatureHeight * aspectRatio);
+    } else {
+      const maxWidth = getMaxWidthInPixels(params.pageStyles);
+      size.w = Math.min(pixelsToEmu(width), pixelsToEmu(maxWidth));
+      size.h = pixelsToEmu(size.w / aspectRatio);
+    }
   }
 
   const inlineAttrs = attrs.originalPadding || {

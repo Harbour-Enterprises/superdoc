@@ -5,9 +5,9 @@ on:
     types: [opened]
 
 env:
-  LINEAR_TEAM_ID: 79bad215-a49a-4788-ad7e-cc7a77551325
+  LINEAR_TEAM_ID: ${{ secrets.LINEAR_TEAM_ID}}
   LINEAR_TOKEN: ${{ secrets.LINEAR_TOKEN }}
-  LINEAR_STATE_ID: a01c9bd3-963b-43dc-8ae5-ff98297682aa # Triage
+  LINEAR_STATE_ID: ${{ secrets.LINEAR_STATE_ID }}
 
 jobs:
   create-linear-issue:

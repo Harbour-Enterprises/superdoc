@@ -732,7 +732,17 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth, role,
         superToolbar.emitCommand({ item: documentMode, argument: label });
       },
     });
-  }
+  };
+
+  const pageBreakTool = useToolbarItem({
+    type: 'button',
+    name: 'pageBreakTool',
+    command: 'insertPageBreak',
+    icon: 'fa fa-file-dashed-line',
+    active: false,
+    tooltip: 'Insert page break',
+  });
+
   // define sizes to calculate toolbar overflow items
   const controlSizes = new Map([
     ['separator', 20],
@@ -783,6 +793,7 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth, role,
     indentLeft,
     indentRight,
     separator,
+    pageBreakTool,
     copyFormat,
     clearFormatting,
     overflow,
@@ -794,6 +805,11 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth, role,
   // Hide separators on small screens
   if (windowWidth <= hideWideItemsEndpoint) {
     toolbarItems = toolbarItems.filter((item) => item.type !== 'separator');
+  }
+
+  // If no pagination, remove the page break tool
+  if (!superToolbar.config.pagination) {
+    toolbarItems = toolbarItems.filter((item) => item.name.value !== 'pageBreakTool');
   }
 
   // Track changes test buttons

@@ -20,7 +20,8 @@
     "publish": "npm run build && cd packages/superdoc && npm publish --access public",
     "fix:prettier": "prettier --write \"**/*.{js,css,vue}\"",
     "lint:prettier": "prettier --check \"**/*.{js,css,vue}\"",
-    "prettier": "if [ \"$(echo $npm_config_argv | grep -o '\"remain\":\\[\\]' | wc -l)\" -eq 1 ]; then echo 'Error: No arguments passed to prettier'; exit 1; fi && npx prettier --write"
+    "prettier": "if [ \"$(echo $npm_config_argv | grep -o '\"remain\":\\[\\]' | wc -l)\" -eq 1 ]; then echo 'Error: No arguments passed to prettier'; exit 1; fi && npx prettier --write",
+    "pack": "npm --prefix ./packages/superdoc run pack"
   },
   "devDependencies": {
     "rollup-plugin-visualizer": "^5.12.0",

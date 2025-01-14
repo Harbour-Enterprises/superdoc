@@ -118,7 +118,7 @@ export class Editor extends EventEmitter {
     this.on('contentError', this.options.onContentError);
 
     this.#createView();
-    this.#initDefaultStyles();
+    this.initDefaultStyles();
     this.setDocumentMode(options.documentMode);
 
     // If we are running headless, we can stop here
@@ -577,36 +577,36 @@ export class Editor extends EventEmitter {
    * Get page size and margins from the converter.
    * Set document default font and font size.
    */
-  #initDefaultStyles() {
+  initDefaultStyles(element = this.element) {
     if (this.options.isHeadless) return;
 
-    const proseMirror = this.element?.querySelector('.ProseMirror');
+    const proseMirror = element?.querySelector('.ProseMirror');
     if (!proseMirror) return;
 
     const { pageSize, pageMargins } = this.converter.pageStyles ?? {};
     if (!pageSize || !pageMargins) return;
 
     // Set fixed dimensions and padding that won't change with scaling
-    this.element.style.boxSizing = 'border-box';
-    this.element.style.width = pageSize.width + 'in';
-    this.element.style.minWidth = pageSize.width + 'in';
-    this.element.style.maxWidth = pageSize.width + 'in';
-    this.element.style.paddingLeft = pageMargins.left + 'in';
-    this.element.style.paddingRight = pageMargins.right + 'in';
-    this.element.style.minHeight = pageSize.height + 'in';
+    element.style.boxSizing = 'border-box';
+    element.style.width = pageSize.width + 'in';
+    element.style.minWidth = pageSize.width + 'in';
+    element.style.maxWidth = pageSize.width + 'in';
+    element.style.paddingLeft = pageMargins.left + 'in';
+    element.style.paddingRight = pageMargins.right + 'in';
+    element.style.minHeight = pageSize.height + 'in';
 
     proseMirror.style.outline = 'none';
     proseMirror.style.border = 'none';
 
     // Typeface and font size
     const { typeface, fontSizePt } = this.converter.getDocumentDefaultStyles() ?? {};
-    typeface && (this.element.style.fontFamily = typeface);
-    fontSizePt && (this.element.style.fontSize = fontSizePt + 'pt');
+    typeface && (element.style.fontFamily = typeface);
+    fontSizePt && (element.style.fontSize = fontSizePt + 'pt');
 
     // Mobile styles
-    this.element.style.transformOrigin = 'top left';
-    this.element.style.touchAction = 'auto';
-    this.element.style.webkitOverflowScrolling = 'touch';
+    element.style.transformOrigin = 'top left';
+    element.style.touchAction = 'auto';
+    element.style.webkitOverflowScrolling = 'touch';
 
     // Calculate line height
     // const defaultLineHeight = (fontSizePt * 1.3333) * 1.15;
@@ -619,24 +619,24 @@ export class Editor extends EventEmitter {
       proseMirror.style.paddingBottom = '1in';
     }
 
-    this.#initMobileStyles();
+    this.initMobileStyles(element);
   };
 
-  #initMobileStyles() {
-    if (!this.element) return;
-    const initialWidth = this.element.offsetWidth;
+  initMobileStyles(element) {
+    if (!element) return;
+    const initialWidth = element.offsetWidth;
     const updateScale = () => {
       const elementWidth = initialWidth;
       const availableWidth = window.innerWidth - 2;
       this.options.scale = Math.min(1, availableWidth / elementWidth);
 
       if (this.options.scale < 1) {
-        const superEditorElement = this.element.closest('.super-editor');
+        const superEditorElement = element.closest('.super-editor');
         superEditorElement.style.maxWidth = `${elementWidth * this.options.scale}px`;
 
-        this.element.style.transform = `scale(${this.options.scale})`;
+        element.style.transform = `scale(${this.options.scale})`;
       } else {
-        this.element.style.transform = "none";
+        element.style.transform = "none";
       }
     };
 
@@ -832,6 +832,7 @@ export class Editor extends EventEmitter {
       originalDocxFile: this.options.fileSource,
       media,
       fonts: this.options.fonts,
+      isHeadless: this.options.isHeadless,
     });
 
     return result;

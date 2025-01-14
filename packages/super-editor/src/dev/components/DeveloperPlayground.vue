@@ -151,7 +151,7 @@ const attachAnnotationEventHandlers = () => {
 /* Inputs pane and field annotations */
 
 const initToolbar = () => {
-  return new SuperToolbar({ element: 'toolbar', editor: activeEditor, isDev: true });
+  return new SuperToolbar({ element: 'toolbar', editor: activeEditor, isDev: true, pagination: true });
 };
 
 onMounted(async () => {
@@ -181,7 +181,7 @@ onMounted(async () => {
       <div id="toolbar" class="sd-toolbar"></div>
 
       <div class="dev-app__main">
-        <div class="dev-app__view">
+        <div class="dev-app__view" id="dev-parent">
           <div class="dev-app__content" v-if="currentFile">
             <SuperEditor
               :file-source="currentFile" 

@@ -26,7 +26,6 @@ export const HardBreak = Node.create({
       htmlAttributes: {
         contentEditable: false,
         lineBreakType: 'page',
-        style: 'display: none;',
       },
     }
   },

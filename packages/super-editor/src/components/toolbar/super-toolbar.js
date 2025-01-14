@@ -13,6 +13,7 @@ export class SuperToolbar extends EventEmitter {
     element: null,
     toolbarGroups: ['left', 'center', 'right'],
     role: 'editor',
+    pagination: false,
   };
 
   #interceptedCommands = {

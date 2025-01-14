@@ -109,9 +109,7 @@ class DocxZipper {
     return zip;
   }
 
-  async updateZip({ docx, updatedDocs, originalDocxFile, media, fonts }) {
-    const isHeadless = navigator?.isHeadless;
-
+  async updateZip({ docx, updatedDocs, originalDocxFile, media, fonts, isHeadless }) {
     // We use a different re-zip process if we have the original docx vs the docx xml metadata
     let zip;
 

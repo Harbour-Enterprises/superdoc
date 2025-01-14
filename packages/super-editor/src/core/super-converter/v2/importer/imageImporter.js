@@ -35,8 +35,8 @@ export function handleImageImport(node, currentFileName, docx) {
 
   const extent = node.elements.find((el) => el.name === 'wp:extent');
   const size = {
-    width: emuToPixels(extent.attributes['cx']),
-    height: emuToPixels(extent.attributes['cy']),
+    width: emuToPixels(extent.attributes?.cx),
+    height: emuToPixels(extent.attributes?.cy),
   };
 
   const graphic = node.elements.find((el) => el.name === 'a:graphic');
