@@ -2,7 +2,7 @@
  * OpenAI module for SuperDoc
  * Handles OpenAI API key configuration and validation
  */
-import { createCompletion, createStreamingCompletion, OpenAiErrorTypes } from './openai-api';
+import { createStreamingCompletion } from './openai-api';
 
 const OPENAI_KEY_PATTERN = /^sk-/;
 
