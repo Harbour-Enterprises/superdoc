@@ -65,6 +65,10 @@ export function createSecureKeyStorage() {
 
 /**
  * Creates the AI module configuration
+ * This is passed to the AIWriter component for use in the toolbar
+ *
+ * Currently only setup to use OpenAI but can be extended to use other AI providers
+ *
  * @param {Object} config - The AI module configuration
  * @returns {Object} - The initialized AI module
  */
@@ -73,29 +77,6 @@ export function createAiModule(config = {}) {
 
   if (config.openAiKey) {
     keyStorage.setKey(config.openAiKey);
-  }
-
-  /**
-   * Generate text using OpenAI
-   * @param {string} prompt - The prompt for text generation
-   * @param {Object} options - Additional options
-   * @returns {Promise<string>} Generated text
-   */
-  async function generateText(prompt, options = {}) {
-    if (!keyStorage.hasKey()) {
-      throw new Error('OpenAI key not configured');
-    }
-
-    const params = {
-      messages: [{ role: 'user', content: prompt }],
-      temperature: options.temperature || 0.7,
-      max_tokens: options.maxTokens || 1000,
-      ...options,
-    };
-
-    const response = await createCompletion(params, keyStorage.getKey());
-    const data = await response.json();
-    return data.choices[0].message.content;
   }
 
   /**
@@ -120,7 +101,7 @@ export function createAiModule(config = {}) {
         },
       ],
       temperature: options.temperature || 0.7,
-      max_tokens: options.maxTokens || 1000,
+      max_tokens: options.maxTokens || 2000,
       ...options,
     };
 
@@ -130,7 +111,6 @@ export function createAiModule(config = {}) {
   return {
     keyStorage,
     isOpenAiEnabled: () => keyStorage.hasKey(),
-    generateText,
     generateTextStream,
     destroy: () => keyStorage.clearKey(),
   };

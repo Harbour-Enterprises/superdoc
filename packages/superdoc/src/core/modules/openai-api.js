@@ -106,24 +106,6 @@ async function fetchOpenAI(endpoint, options, apiKey) {
 }
 
 /**
- * Create a completion request to OpenAI
- * @param {Object} params - Request parameters
- * @param {string} apiKey - OpenAI API key
- * @returns {Promise} Completion response
- */
-export async function createCompletion(params, apiKey) {
-  const options = {
-    method: 'POST',
-    body: JSON.stringify({
-      model: DEFAULT_MODEL,
-      ...params,
-    }),
-  };
-
-  return fetchOpenAI('/chat/completions', options, apiKey);
-}
-
-/**
  * Create a streaming completion request to OpenAI
  * @param {Object} params - Request parameters
  * @param {string} apiKey - OpenAI API key
