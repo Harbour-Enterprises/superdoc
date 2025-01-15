@@ -1,1 +1,1 @@
-export * from './SuperDoc.js';
+export * from './Superdoc.js';

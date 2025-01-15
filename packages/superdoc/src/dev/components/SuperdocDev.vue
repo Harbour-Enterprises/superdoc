@@ -2,7 +2,7 @@
 import '@harbour-enterprises/common/styles/common-styles.css';
 import { nextTick, onMounted, provide, ref, shallowRef } from 'vue';
 
-import { SuperDoc } from '@core/index.js';
+import { Superdoc } from '@core/index.js';
 import { DOCX, PDF, HTML } from '@harbour-enterprises/common';
 import { BasicUpload, getFileObject } from '@harbour-enterprises/common';
 import { fieldAnnotationHelpers } from '@harbour-enterprises/super-editor';
@@ -70,7 +70,7 @@ const init = async () => {
     // handleImageUpload: async (file) => url,
   };
 
-  superdoc.value = new SuperDoc(config);
+  superdoc.value = new Superdoc(config);
 };
 
 const onContentError = ({ editor, error, documentId, file }) => {

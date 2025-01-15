@@ -23,7 +23,7 @@ const props = defineProps({
 });
 
 const currentItem = ref(null);
-// Matches media query from SuperDoc.vue
+// Matches media query from Superdoc.vue
 const isMobile = window.matchMedia('(max-width: 768px)').matches;
 const styleMap = {
   left: {

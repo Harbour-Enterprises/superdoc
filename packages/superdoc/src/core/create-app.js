@@ -3,7 +3,7 @@ import { createPinia } from 'pinia';
 
 import { vClickOutside } from '@harbour-enterprises/common';
 import { useSuperdocStore } from '../stores/superdoc-store';
-import App from '../SuperDoc.vue';
+import App from '../Superdoc.vue';
 
 /**
  * Generate the superdoc vue app

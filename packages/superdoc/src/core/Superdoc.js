@@ -21,10 +21,10 @@ import { shuffleArray } from '@harbour-enterprises/common/collaboration/awarenes
  */
 
 /* **
- * SuperDoc class
+ * Superdoc class
  * Expects a config object
  */
-export class SuperDoc extends EventEmitter {
+export class Superdoc extends EventEmitter {
   static allowedTypes = [DOCX, PDF, HTML];
 
   config;

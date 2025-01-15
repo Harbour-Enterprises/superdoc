@@ -120,8 +120,8 @@ const onEditorCreate = ({ editor }) => {
   doc.setEditor(editor);
   proxy.$superdoc.activeEditor = editor;
   proxy.$superdoc.broadcastEditorCreate(editor);
-  proxy.$superdoc.log('[SuperDoc] Editor created', proxy.$superdoc.activeEditor);
-  proxy.$superdoc.log('[SuperDoc] Page styles (pixels)', editor.getPageStyles());
+  proxy.$superdoc.log('[Superdoc] Editor created', proxy.$superdoc.activeEditor);
+  proxy.$superdoc.log('[Superdoc] Page styles (pixels)', editor.getPageStyles());
 };
 
 const onEditorDestroy = () => {

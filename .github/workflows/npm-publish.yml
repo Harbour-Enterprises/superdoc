@@ -1,4 +1,4 @@
-name: Publish SuperDoc Package to npm
+name: Publish Superdoc Package to npm
 
 on:
   push:
