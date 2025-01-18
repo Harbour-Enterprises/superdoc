@@ -486,6 +486,7 @@ describe('custom nested list tests', () => {
               ],
               attrs: {
                 'list-style-type': 'lowerLetter',
+                listId: "2",
                 attributes: {
                   parentAttributes: {
                     'w14:paraId': '057544FE',
@@ -738,6 +739,7 @@ describe('custom nested list tests', () => {
               ],
               attrs: {
                 'list-style-type': 'bullet',
+                listId: '2',
                 attributes: {
                   parentAttributes: {
                     'w14:paraId': '437AE2E1',
@@ -879,6 +881,7 @@ describe('custom nested list tests', () => {
       ],
       attrs: {
         'list-style-type': 'bullet',
+        listId: '1',
         attributes: {
           parentAttributes: {
             'w14:paraId': '3947758C',
@@ -1233,6 +1236,7 @@ describe('custom nested list tests', () => {
               ],
               attrs: {
                 'list-style-type': 'bullet',
+                listId: '1',
                 attributes: {
                   parentAttributes: {
                     'w14:paraId': '2F6FAED3',
@@ -1446,6 +1450,7 @@ describe('custom nested list tests', () => {
               ],
               attrs: {
                 'list-style-type': 'bullet',
+                listId: '1',
                 attributes: {
                   parentAttributes: {
                     'w14:paraId': '2DBCC378',
@@ -1740,6 +1745,7 @@ describe('custom nested list tests', () => {
               ],
               attrs: {
                 'list-style-type': 'lowerLetter',
+                listId: "1",
                 attributes: {
                   parentAttributes: {
                     'w14:paraId': '4F17D13D',
@@ -1848,6 +1854,7 @@ describe('custom nested list tests', () => {
       ],
       attrs: {
         'list-style-type': 'decimal',
+        listId: '1',
         attributes: {
           parentAttributes: {
             'w14:paraId': '2D072E4D',
@@ -2206,6 +2213,7 @@ describe('custom nested list tests', () => {
       ],
       attrs: {
         'list-style-type': 'decimal',
+        listId: '2',
         attributes: {
           parentAttributes: {
             'w14:paraId': '2BEDC1A3',

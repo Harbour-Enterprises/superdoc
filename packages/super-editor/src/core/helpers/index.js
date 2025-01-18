@@ -10,7 +10,6 @@ export * from './findParentNodeClosestToPos.js';
 export * from './findParentNode.js';
 export * from './isList.js';
 export * from './generateDocxRandomId.js';
-export * from './generateDocxListAttributes.js';
 export * from './isTextSelection.js';
 export * from './getMarkRange.js';
 export * from './isMarkActive.js';

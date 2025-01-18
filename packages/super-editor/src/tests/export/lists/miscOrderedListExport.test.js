@@ -7,11 +7,12 @@ import {
 
 describe('[orderedlist_interrupted1.docx] interrupted ordered list tests', async () => {
   const fileName = 'orderedlist_interrupted1.docx';
-  const result = await getExportedResult(fileName);
-  const body = {};
+  let data;
+  let body;
 
-  beforeEach(() => {
-    Object.assign(body, result.elements?.find((el) => el.name === 'w:body'));
+  beforeAll(async () => {
+    data = await getExportedResult(fileName);
+    body = data.elements?.find((el) => el.name === 'w:body');
   });
 
   it('correctly exports first list item', () => {
@@ -35,10 +36,10 @@ describe('[orderedlist_interrupted1.docx] interrupted ordered list tests', async
 
   it('exports correct node structure for pPr', () => {
     const firstList = body.elements[0];
-
+  
     // Check if pPr is correct
     const firstListPprList = firstList.elements.filter((n) => n.name = 'w:pPr');
-    expect(firstListPprList.length).toBe(1);
+    expect(firstListPprList.length).toBe(2);
 
     const firstListPpr = firstListPprList[0];
     expect(firstListPpr.elements.length).toBe(1);

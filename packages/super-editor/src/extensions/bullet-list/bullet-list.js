@@ -1,5 +1,4 @@
 import { Node, Attribute } from '@core/index.js';
-import { generateDocxListAttributes } from '@helpers/index.js';
 
 export const BulletList = Node.create({
   name: 'bulletList',
@@ -34,6 +33,10 @@ export const BulletList = Node.create({
         rendered: false,
       },
 
+      listId: {
+        rendered: false,
+      },
+
       attributes: {
         rendered: false,
         keepOnSplit: true,
@@ -45,9 +48,7 @@ export const BulletList = Node.create({
     return {
       toggleBulletList: () => (props) => {
         const { commands, chain } = props;
-        const attributes = generateDocxListAttributes('bulletList');
-        console.debug('[bulletList] Toggling bullet list', attributes);
-        return commands.toggleList(this.name, this.options.itemTypeName, this.options.keepMarks, attributes);
+        return commands.toggleList(this.name, this.options.itemTypeName, this.options.keepMarks);
       },
     };
   },

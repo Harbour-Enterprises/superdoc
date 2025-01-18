@@ -61,6 +61,7 @@ export class Editor extends EventEmitter {
     coreExtensionOptions: {},
     isNewFile: false,
     scale: 1,
+    numbering: {},
     onBeforeCreate: () => null,
     onCreate: () => null,
     onUpdate: () => null,
@@ -819,14 +820,21 @@ export class Editor extends EventEmitter {
    */
   async exportDocx({ isFinalDoc = false } = {}) {
     const json = this.getJSON();
-    const documentXml = await this.converter.exportToDocx(json, this.schema, this.storage.image.media, isFinalDoc);
+    const documentXml = await this.converter.exportToDocx({
+      data: json,
+      editor: this,
+      isFinalDoc,
+    });
     const relsData = this.converter.convertedXml['word/_rels/document.xml.rels'];
     const rels = this.converter.schemaToXml(relsData.elements[0]);
     const media = this.converter.addedMedia;
 
+    const numberingData = this.converter.convertedXml['word/numbering.xml'];
+    const numbering = this.converter.schemaToXml(numberingData.elements[0]);
     const updatedDocs = {
       'word/document.xml': String(documentXml),
       'word/_rels/document.xml.rels': String(rels),
+      'word/numbering.xml': String(numbering),
     };
 
     const zipper = new DocxZipper();

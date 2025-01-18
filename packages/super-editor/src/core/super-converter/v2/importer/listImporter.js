@@ -182,7 +182,7 @@ function handleListNodes(
       nodeAttributes['attributes'] = {
         parentAttributes: item?.attributes || null,
       };
-      nodeAttributes['numId'] = numId;
+      nodeAttributes['numId'] = currentListNumId;
 
       const newListItem = createListItem(schemaElements, nodeAttributes, []);
       parsedListItems.push(newListItem);
@@ -225,6 +225,7 @@ function handleListNodes(
     content: parsedListItems,
     attrs: {
       'list-style-type': listStyleType,
+      listId: currentListNumId,
       attributes: {
         parentAttributes: listItems[0]?.attributes || null,
       },
@@ -425,6 +426,7 @@ export function getNodeNumberingDefinition(attributes, level, docx) {
 
   // Get style for this list level
   let listType;
+
   if (unorderedListTypes.includes(listTypeDef.toLowerCase())) listType = 'bulletList';
   else if (orderedListTypes.includes(listTypeDef)) listType = 'orderedList';
   else {

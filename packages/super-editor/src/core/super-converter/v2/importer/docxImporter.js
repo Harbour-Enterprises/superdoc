@@ -31,7 +31,7 @@ import { listHandlerEntity } from './listImporter.js';
  *
  * @param {ParsedDocx} docx
  * @returns {{pmDoc: PmNodeJson, savedTagsToRestore: XmlNode, pageStyles: *}|null}
- */
+*/
 export const createDocumentJson = (docx, converter) => {
   const json = carbonCopy(getInitialJSON(docx));
   if (!json) return null;
@@ -56,6 +56,7 @@ export const createDocumentJson = (docx, converter) => {
       pmDoc: result,
       savedTagsToRestore: node,
       pageStyles: getDocumentStyles(node, docx, converter),
+      numbering: getNumberingDefinitions(docx),
     };
   }
   return null;
@@ -223,3 +224,28 @@ function getHeaderFooter(el, elementType, docx, converter) {
   storage[rId] = { type: 'doc', content: [...schema] };
   storageIds[sectionType] = rId;
 };
+
+function getNumberingDefinitions(docx) {
+  const numbering = docx['word/numbering.xml'];
+  const elements = numbering.elements[0].elements;
+
+  const abstractDefs = elements.filter((el) => el.name === 'w:abstractNum');
+  const definitions = elements.filter((el) => el.name === 'w:num');
+
+  const abstractDefinitions = {};
+  abstractDefs.forEach((el) => {
+    const abstractId = Number(el.attributes['w:abstractNumId']);
+    abstractDefinitions[abstractId] = el;
+  });
+
+  const importListDefs = {};
+  definitions.forEach((el) => {
+    const numId = Number(el.attributes['w:numId']);
+    importListDefs[numId] = el;
+  });
+
+  return {
+    abstracts: abstractDefinitions,
+    definitions: importListDefs,
+  }
+}

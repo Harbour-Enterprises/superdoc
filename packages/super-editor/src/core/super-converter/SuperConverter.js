@@ -76,6 +76,9 @@ class SuperConverter {
     this.xml = params?.xml;
     this.declaration = null;
 
+    // List defs
+    this.numbering = {};
+
     // Processed additional content
     this.numbering = null;
     this.pageStyles = null;
@@ -179,6 +182,7 @@ class SuperConverter {
     if (result) {
       this.savedTagsToRestore.push({ ...result.savedTagsToRestore });
       this.pageStyles = result.pageStyles;
+      this.numbering = result.numbering;
       return result.pmDoc;
     } else {
       return null;
@@ -190,10 +194,12 @@ class SuperConverter {
     return exporter.schemaToXml(data);
   }
 
-  async exportToDocx(jsonData, editorSchema, documentMedia, isFinalDoc = false) {
+  async exportToDocx({ data, editor, isFinalDoc = false }) {
     const bodyNode = this.savedTagsToRestore.find((el) => el.name === 'w:body');
+    const documentMedia = editor.storage.image.media;
+    const editorSchema = editor.schema;
     const [result, params] = exportSchemaToJson({
-      node: jsonData,
+      node: data,
       bodyNode,
       relationships: [],
       documentMedia: {},
@@ -201,7 +207,14 @@ class SuperConverter {
       isFinalDoc,
       editorSchema,
       pageStyles: this.pageStyles,
+      editor,
+      generatedNumberingDefs: {
+        abstractNums: [],
+        numDefs: [],
+      }
     });
+
+    console.debug('exportToDocx', result, params);
     const exporter = new DocxExporter(this);
     const xml = exporter.schemaToXml(result);
 
@@ -215,8 +228,26 @@ class SuperConverter {
     // Update the rels table
     this.#exportProcessNewRelationships(params.relationships);
 
+    // Update the numbering.xml
+    this.#exportNumberingFile(params.generatedNumberingDefs);
+
     return xml;
-  }
+  };
+
+  #exportNumberingFile({ abstractNums = [], numDefs = [] }) {
+    const numberingPath = 'word/numbering.xml';
+    const numberingXml = this.convertedXml[numberingPath];
+    const numbering = numberingXml.elements[0];
+
+    console.debug('numbeabstractNumsing', abstractNums);
+
+    numbering.elements.push(...abstractNums);
+    numbering.elements.push(...numDefs);
+
+    // Update the numbering file
+    this.convertedXml[numberingPath] = numberingXml;
+    console.debug('numberingXml', numberingXml);
+  };
 
   #exportProcessNewRelationships(rels = []) {
     const relsData = this.convertedXml['word/_rels/document.xml.rels'];
@@ -226,7 +257,7 @@ class SuperConverter {
       element.attributes.Target = element.attributes?.Target?.replace(/&/g, '&amp;').replace(/-/g, '&#45;');
     });
     this.convertedXml['word/_rels/document.xml.rels'] = relsData;
-  }
+  };
 
   async #exportProcessMediaFiles(media) {
     const processedData = {};
@@ -242,7 +273,7 @@ class SuperConverter {
     };
     this.media = this.convertedXml.media;
     this.addedMedia = processedData;
-  }
-}
+  };
+};
 
 export { SuperConverter };

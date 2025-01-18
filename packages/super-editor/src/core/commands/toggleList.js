@@ -53,6 +53,7 @@ const joinListForwards = (tr, listType) => {
 export const toggleList =
   (listTypeOrName, itemTypeOrName, keepMarks, attributes = {}) =>
   (props) => {
+
     const { editor, tr, state, dispatch, chain, can, commands } = props;
 
     const { extensions, splittableMarks } = editor.extensionService;

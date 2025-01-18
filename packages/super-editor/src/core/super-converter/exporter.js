@@ -7,6 +7,7 @@ import { inchesToTwips, pixelsToEightPoints, pixelsToEmu, pixelsToTwips } from '
 import { generateDocxRandomId } from '@helpers/generateDocxRandomId.js';
 import { DEFAULT_DOCX_DEFS } from './exporter-docx-defs.js';
 import { TrackDeleteMarkName, TrackInsertMarkName, TrackFormatMarkName } from '@extensions/track-changes/constants.js';
+import { listPluginKey } from '@extensions/ordered-list/helpers/listPlugin.js';
 
 /**
  * @typedef {Object} ExportParams
@@ -52,7 +53,6 @@ import { TrackDeleteMarkName, TrackInsertMarkName, TrackFormatMarkName } from '@
  * @returns {XmlReadyNode} The complete document node in XML-ready format
  */
 export function exportSchemaToJson(params) {
-  // console.debug('\nExporting schema to JSON:', params.node, '\n');
   const { type } = params.node;
 
   // Node handlers for each node type that we can export
@@ -113,7 +113,7 @@ function translateParagraphNode(params) {
   if (elements.length === 1 && htmlAnnotationChild) {
     return htmlAnnotationChild.elements;
   }
-
+  
   // Insert paragraph properties at the beginning of the elements array
   const pPr = generateParagraphProperties(params.node);
   elements.unshift(pPr);
@@ -492,28 +492,74 @@ function addNewImageRelationship(params, imagePath) {
  * @returns {XmlReadyNode} The translated list node
  */
 function translateList(params) {
-  const { content, type } = params.node;
-  const flatContent = flattenContent(content);
+  const flatContent = flattenContent(params);
+  const { editor } = params;
 
   const listNodes = [];
   flatContent.forEach((listNode) => {
-    const { content, level } = listNode;
-    content.forEach((contentNode) => {
-      const outputNode = exportSchemaToJson({ ...params, node: contentNode });
-      const pPr = getListParagraphProperties(listNode, level, type);
-      const content = outputNode.elements.filter((e) => e.name !== 'w:pPr');
-      if (!content.length) {
-        const spacer = { name: 'w:p', elements: [] };
-        return listNodes.push(spacer);
-      }
+    const { content: innerContent, level, type, listId } = listNode;
+    const { isGenerated, definition, abstractId } = getUserListDetails(listId, editor);
+    if (isGenerated) {
+      const { newAbstractDef, newNumDef } = generateNewListDefinition({ abstractId, listId });
+      params.generatedNumberingDefs.abstractNums.push(newAbstractDef);
+      params.generatedNumberingDefs.numDefs.push(newNumDef);
+    }
 
-      outputNode.elements.unshift(pPr);
-      listNodes.push(outputNode);
-    });
+    const pNode = innerContent[0];
+    const { listId: pNodeId, numId, lvlJc, ...rest } = pNode.attrs || {};
+    pNode.attrs = { ...rest };
+    const result = translateParagraphNode({ ...params, node: innerContent[0] });
+
+    const filteredElements = result.elements.filter((el) => el.name !== 'w:pPr' || el.elements.length);
+    const pPr = getListParagraphProperties(level, listId);
+
+    filteredElements.unshift(pPr);
+    result.elements = filteredElements;
+
+    // Append the node
+    listNodes.push(result);
   });
 
   return listNodes;
 }
+
+/**
+ * Generate a new list definition to be inserted into numbering.xml
+ * @param {Obect} param The parameters object
+ * @param {Number} param.abstractId The abstract number id
+ * @param {Number} param.listId The list id
+ * @returns {Object} The new abstract and num definitions
+ */
+function generateNewListDefinition({ abstractId, listId }) {
+  // Generate a new numId to add to numbering.xml
+
+  // Generate the new abstractNum definition
+  const newAbstractDef = {
+    ...definition,
+    attributes: {
+      ...definition.attributes,
+      'w:abstractNumId': abstractId,
+    }
+  };
+
+  // Generate the new numId definition
+  const newNumDef = {
+    type: 'element',
+    name: 'w:num',
+    attributes: {
+      'w:numId': String(abstractId),
+      'w16cid:durableId': '485517411'
+    },
+    elements: [
+      { name: 'w:abstractNumId', attributes: { 'w:val': String(listId) } },
+    ]
+  };
+
+  return {
+    newAbstractDef,
+    newNumDef,
+  };
+};
 
 /**
  * Get the paragraph properties for a list
@@ -523,12 +569,7 @@ function translateList(params) {
  * @param {string} type The list type
  * @returns {XmlReadyNode} The list paragraph properties node
  */
-function getListParagraphProperties(node, level, type) {
-  let listType = type === 'bulletList' ? 1 : 2;
-
-  // numbering.xml reference
-  if (node.attrs.numId) listType = node.attrs.numId;
-
+function getListParagraphProperties(level, numId) {
   return {
     name: 'w:pPr',
     type: 'element',
@@ -545,7 +586,7 @@ function getListParagraphProperties(node, level, type) {
           {
             name: 'w:numId',
             type: 'element',
-            attributes: { 'w:val': listType },
+            attributes: { 'w:val': numId },
           },
         ],
       },
@@ -554,22 +595,49 @@ function getListParagraphProperties(node, level, type) {
 }
 
 /**
- * Flatten list nodes for processing.
- *
- * @param {SchemaNode[]} content List of list nodes
- * @returns {SchemaNode[]} The flattened list nodes
+ * Get list definition details from the list plugin
+ * @param {Number} listId The current list id
+ * @param {*} editor The current editor instance
+ * @returns {Object} An object containing list details
  */
-function flattenContent(content) {
-  const flatContent = [];
+function getUserListDetails(listId, editor) {
+  const pluginState = listPluginKey.getState(editor.state);
+  const activeLists = pluginState?.lists;
+  const definitions = pluginState?.definitions;
 
+  const currentList = activeLists.find((list) => list.listId === Number(listId));
+  if (!currentList) {
+    //TODO: Investigate why this is happening
+    return {};
+  }
+  const { abstractId, source } = activeLists.find((list) => list.listId === Number(listId));
+
+  const isGenerated = source === 'generated';
+  const listType = activeLists[listId]?.listType;
+  const definition = definitions[listType];
+
+  return {
+    isGenerated,
+    listType,
+    definition,
+    abstractId,
+  };
+};
+
+/**
+ * Flatten list nodes for processing.
+ */
+function flattenContent({ node, editor }) {
+  const { content } = node;
+  const { listId } = node.attrs || {};
+
+  const flatContent = [];
   function recursiveFlatten(items, level = 0) {
     if (!items || !items.length) return;
     items.forEach((item) => {
       const subList = item.content.filter((c) => c.type === 'bulletList' || c.type === 'orderedList');
       const notLists = item.content.filter((c) => c.type !== 'bulletList' && c.type !== 'orderedList');
-
-      const newItem = { ...item, content: notLists };
-      newItem.level = level;
+      const newItem = { ...item, content: notLists, listId, level };
       flatContent.push(newItem);
 
       if (subList.length) {

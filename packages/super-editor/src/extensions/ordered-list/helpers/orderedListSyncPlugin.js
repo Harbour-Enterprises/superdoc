@@ -71,4 +71,4 @@ export function orderedListSync(options = {}) {
       return changed ? tr : null;
     },
   });
-}
+};
