@@ -137,6 +137,8 @@ function handleListNodes(
     const isNested =
       listLevel < intLevel || (listLevel === intLevel && isDifferentList && lastNestedListLevel === listLevel);
 
+    // We keep track of all indices for all lists here with an object
+    // This allows us to detect disconnected lists and handle them correctly
     if (!lists[currentListNumId]) lists[currentListNumId] = {};
     if (!lists[currentListNumId][intLevel]) lists[currentListNumId][intLevel] = 0;
     lists[currentListNumId][intLevel]++;

@@ -46,7 +46,6 @@ export const ListItem = Node.create({
             listLevel,
             lvlText,
             listNumberingType,
-            index: attrs.index,
           });
 
           if (!orderMarker) return {};
@@ -55,10 +54,6 @@ export const ListItem = Node.create({
             'data-marker-type': orderMarker,
           };
         },
-      },
-
-      index: {
-        default: 1,
       },
 
       lvlText: {

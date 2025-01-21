@@ -214,7 +214,6 @@ class SuperConverter {
       }
     });
 
-    console.debug('exportToDocx', result, params);
     const exporter = new DocxExporter(this);
     const xml = exporter.schemaToXml(result);
 
@@ -239,14 +238,11 @@ class SuperConverter {
     const numberingXml = this.convertedXml[numberingPath];
     const numbering = numberingXml.elements[0];
 
-    console.debug('numbeabstractNumsing', abstractNums);
-
     numbering.elements.push(...abstractNums);
     numbering.elements.push(...numDefs);
 
     // Update the numbering file
     this.convertedXml[numberingPath] = numberingXml;
-    console.debug('numberingXml', numberingXml);
   };
 
   #exportProcessNewRelationships(rels = []) {

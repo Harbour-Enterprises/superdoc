@@ -228,6 +228,13 @@ function getHeaderFooter(el, elementType, docx, converter) {
   storageIds[sectionType] = rId;
 };
 
+/**
+ * Import this document's numbering.xml definitions
+ * They will be stored into converter.numbering
+ * 
+ * @param {Object} docx The parsed docx
+ * @returns {Object} The numbering definitions
+ */
 function getNumberingDefinitions(docx) {
   const numbering = docx['word/numbering.xml'];
   const elements = numbering.elements[0].elements;
