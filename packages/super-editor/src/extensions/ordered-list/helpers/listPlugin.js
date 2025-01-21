@@ -63,3 +63,17 @@ export const getNextKeyForList = (definitions) => {
   const highestKey = Math.max(...Object.keys(definitions).map(Number));
   return highestKey + 1;
 };
+
+export const getListStyleType = (listId, lvl, converter) => {
+  const defs = converter.numbering.definitions[listId];
+  const abstractIdNode = defs.elements.find((el) => el.name === 'w:abstractNumId');
+  const abstractId = abstractIdNode.attributes['w:val'];
+  const abstract = converter.numbering.abstracts[abstractId];
+  const levels = abstract.elements.filter((el) => el.name === 'w:lvl');
+  const level = levels.find((el) => el.attributes['w:ilvl'] === String(lvl - 1));
+  console.debug('LEVEL', lvl, levels);
+
+  const numFmtNode = level?.elements.find((el) => el.name === 'w:numFmt');
+  const numFmt = numFmtNode?.attributes['w:val'];
+  return numFmt;
+}

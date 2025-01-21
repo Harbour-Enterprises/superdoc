@@ -25,9 +25,10 @@
     "pack": "npm --prefix ./packages/superdoc run pack"
   },
   "devDependencies": {
-    "rollup-plugin-visualizer": "^5.12.0",
     "prettier": "3.3.3",
     "rollup": "^4.26.0",
+    "rollup-plugin-visualizer": "^5.12.0",
+    "vitest": "^3.0.3",
     "xml-js": "^1.6.11"
   }
 }

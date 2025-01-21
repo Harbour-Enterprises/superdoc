@@ -6,11 +6,13 @@ import { mergeTextNodes } from './mergeTextNodes.js';
 /**
  * @type {import("docxImporter").NodeHandler}
  */
-export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange) => {
+export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange, filename, lists) => {
   if (nodes.length === 0 || nodes[0].name !== 'w:p') {
     return { nodes: [], consumed: 0 };
   }
   const node = carbonCopy(nodes[0]);
+
+  console.debug('List node', lists);
 
   let schemaNode;
 
@@ -39,7 +41,7 @@ export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange) 
       }
     }
 
-    const listNodes = handleListNodes(listItems, docx, nodeListHandler, 0);
+    const listNodes = handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, lists);
     return {
       nodes: [listNodes],
       consumed: listItems.filter((i) => i.seen).length,
@@ -77,6 +79,7 @@ function handleListNodes(
   docx,
   nodeListHandler,
   insideTrackChange,
+  lists,
   listLevel = 0,
   actualListLevel = 0,
   currentListNumId = null,
@@ -139,6 +142,10 @@ function handleListNodes(
     const isNested =
       listLevel < intLevel || (listLevel === intLevel && isDifferentList && lastNestedListLevel === listLevel);
 
+    if (!lists[currentListNumId]) lists[currentListNumId] = {};
+    if (!lists[currentListNumId][intLevel]) lists[currentListNumId][intLevel] = 0;
+    lists[currentListNumId][intLevel]++;
+
     // If this node belongs on this list level, add it to the list
     const nodeAttributes = {};
     if (isRoot) {
@@ -162,8 +169,9 @@ function handleListNodes(
 
       schemaElements.push(parNode);
       lastNestedListLevel = listLevel;
-
-      if (!(intLevel in listItemIndices)) listItemIndices[intLevel] = parseInt(start);
+    
+      const currentIndex = lists[currentListNumId][intLevel];
+      if (!(intLevel in listItemIndices)) listItemIndices[intLevel] = parseInt(currentIndex);
       else listItemIndices[intLevel] += 1;
 
       let thisItemPath = [];
@@ -183,6 +191,7 @@ function handleListNodes(
         parentAttributes: item?.attributes || null,
       };
       nodeAttributes['numId'] = currentListNumId;
+      nodeAttributes['level'] = intLevel;
 
       const newListItem = createListItem(schemaElements, nodeAttributes, []);
       parsedListItems.push(newListItem);
@@ -197,6 +206,7 @@ function handleListNodes(
         docx,
         nodeListHandler,
         insideTrackChange,
+        lists,
         listLevel + 1,
         listLevel,
         numId,

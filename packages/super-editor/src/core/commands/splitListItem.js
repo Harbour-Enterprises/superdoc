@@ -17,6 +17,8 @@ export const splitListItem = (typeOrName) => (props) => {
   const type = getNodeType(typeOrName, state.schema);
   const { $from, $to, node } = state.selection;
 
+  console.debug('splitListItem', type, $from, $to, node);
+  
   if ((node && node.isBlock) || $from.depth < 2 || !$from.sameParent($to)) {
     return false;
   }

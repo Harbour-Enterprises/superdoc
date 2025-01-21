@@ -1,6 +1,7 @@
-export const generateOrderedListIndex = ({ listLevel, lvlText, listNumberingType }) => {
+export const generateOrderedListIndex = ({ listLevel, lvlText, listNumberingType, index }) => {
   const handler = listIndexMap[listNumberingType];
-  return handler ? handler(listLevel, lvlText) : null;
+  console.debug('expected index:', index)
+  return handler ? handler(listLevel, lvlText, index) : null;
 };
 
 const handleDecimal = (path, lvlText) => generateNumbering(path, lvlText, String);

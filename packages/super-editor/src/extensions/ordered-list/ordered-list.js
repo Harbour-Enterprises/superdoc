@@ -3,7 +3,7 @@ import { toKebabCase } from '@harbour-enterprises/common';
 import { findParentNode } from '@helpers/index.js';
 import { orderedListSync as orderedListSyncPlugin } from './helpers/orderedListSyncPlugin.js';
 import { orderedListMarker as orderedListMarkerPlugin } from './helpers/orderedListMarkerPlugin.js';
-import { listPlugin } from './helpers/listPlugin.js';
+import { listPlugin, getListStyleType } from './helpers/listPlugin.js';
 
 export const OrderedList = Node.create({
   name: 'orderedList',
@@ -50,6 +50,13 @@ export const OrderedList = Node.create({
       },
 
       listId: {
+        rendered: false,
+        keepOnSplit: true,
+      },
+
+      level: {
+        default: 1,
+        keepOnSplit: true,
         rendered: false,
       },
 
@@ -103,28 +110,47 @@ export const OrderedList = Node.create({
       updateOrderedListStyleType:
         () =>
         ({ dispatch, state, tr }) => {
-          let list = findParentNode((node) => node.type.name === this.name)(state.selection);
+          const list = findParentNode((node) => node.type.name === this.name)(state.selection);
 
           if (!list) {
             return true;
           }
+
+          const parentList = tr.getMeta('originalList');
+          const { node: parentListNode } = parentList;
+          const { attrs } = parentListNode;
+          const { listId, listLevel } = attrs;
+
+          const newListLevel = parentListNode.attrs.level + 1;
+
+          const style = getListStyleType(listId, newListLevel, this.editor.converter);
+          
+          // tr.setNodeMarkup(list.pos, undefined, {
+          //   ...list.node.attrs,
+          //   listId,
+          //   level: newListLevel,
+          // });
 
           if (dispatch) {
             // Each list level increases depth by 2.
             let listLevel = (list.depth - 1) / 2;
             let listStyleTypes = this.options.listStyleTypes;
             let listStyle = listStyleTypes[listLevel % listStyleTypes.length];
-            let currentListStyle = list.node.attrs['list-style-type'];
+            // let currentListStyle = list.node.attrs['list-style-type'];
             let nodeAtPos = tr.doc.nodeAt(list.pos);
+            console.debug('\n\nSTYLE', style);
 
-            if (currentListStyle !== listStyle && nodeAtPos.eq(list.node)) {
+            // if (style !== listStyle && nodeAtPos.eq(list.node)) {
+
               tr.setNodeMarkup(list.pos, undefined, {
                 ...list.node.attrs,
                 ...{
-                  'list-style-type': listStyle,
+                  'list-style-type': style,
                 },
+                level: newListLevel,
+                listId,
               });
-            }
+            // }
           }
 
           return true;
@@ -182,10 +208,11 @@ export const OrderedList = Node.create({
             if (isPrevOrderedList && isNewOrderedList) {
               let lastOrder = prevListNode.attrs.order || 1;
               let lastIndex = prevListNode.childCount;
-              let lastSyncId = prevListNode.attrs.syncId;
+              let lastSyncId = prevListNode.attrs.listId;
               let newOrder = lastIndex + lastOrder;
               let syncId = !!lastSyncId ? lastSyncId : randomId();
 
+              console.debug('\n\n\n LIFT EMPTY \n\n\n');
               tr.setNodeMarkup(newListPos, undefined, {
                 ...newListNode.attrs,
                 order: newOrder,

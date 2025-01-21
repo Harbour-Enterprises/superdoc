@@ -6,4 +6,7 @@ import { liftEmptyBlock as originalLiftEmptyBlock } from 'prosemirror-commands';
  * https://prosemirror.net/docs/ref/#commands.liftEmptyBlock
  */
 //prettier-ignore
-export const liftEmptyBlock = () => ({ state, dispatch }) => originalLiftEmptyBlock(state, dispatch);
+export const liftEmptyBlock = () => ({ state, dispatch }) => {
+  console.debug('liftEmptyBlock');
+  return originalLiftEmptyBlock(state, dispatch)
+};

@@ -35,6 +35,7 @@ export const ListItem = Node.create({
         renderDOM: (attrs) => {
           let { listLevel, listNumberingType, lvlText } = attrs;
           let hasListLevel = !!listLevel?.length;
+          console.debug('Marker:', listLevel, attrs.index)
 
           if (!hasListLevel || !lvlText) {
             return {};
@@ -46,6 +47,7 @@ export const ListItem = Node.create({
             listLevel,
             lvlText,
             listNumberingType,
+            index: attrs.index,
           });
 
           if (!orderMarker) return {};
@@ -54,6 +56,10 @@ export const ListItem = Node.create({
             'data-marker-type': orderMarker,
           };
         },
+      },
+
+      index: {
+        default: 1,
       },
 
       lvlText: {
@@ -86,12 +92,6 @@ export const ListItem = Node.create({
 
       // This will contain run properties for the list item
       listRunProperties: {
-        default: null,
-        rendered: false,
-      },
-
-      // numbering.xml reference id
-      numId: {
         default: null,
         rendered: false,
       },
