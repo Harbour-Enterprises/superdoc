@@ -36,7 +36,6 @@ export const createDocumentJson = (docx, converter) => {
   const json = carbonCopy(getInitialJSON(docx));
   if (!json) return null;
 
-  const lists = [];
   const nodeListHandler = defaultNodeListHandler();
 
   const bodyNode = json.elements[0].elements.find((el) => el.name === 'w:body');
@@ -45,6 +44,8 @@ export const createDocumentJson = (docx, converter) => {
     const ignoreNodes = ['w:sectPr'];
     const content = node.elements?.filter((n) => !ignoreNodes.includes(n.name)) ?? [];
 
+    // Track imported lists
+    const lists = {};
     const parsedContent = nodeListHandler.handler(content, docx, false, null, lists);
     const result = {
       type: 'doc',

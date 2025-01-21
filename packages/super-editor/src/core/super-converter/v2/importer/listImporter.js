@@ -6,21 +6,15 @@ import { mergeTextNodes } from './mergeTextNodes.js';
 /**
  * @type {import("docxImporter").NodeHandler}
  */
-export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange, filename, lists) => {
+export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange, lists) => {
   if (nodes.length === 0 || nodes[0].name !== 'w:p') {
     return { nodes: [], consumed: 0 };
   }
   const node = carbonCopy(nodes[0]);
 
-  console.debug('List node', lists);
-
-  let schemaNode;
-
   // We need to pre-process paragraph nodes to combine various possible elements we will find ie: lists, links.
   const processedElements = preProcessNodesForFldChar(node.elements);
   node.elements = processedElements;
-
-  const pPr = node.elements.find((el) => el.name === 'w:pPr');
 
   // Check if this paragraph node is a list
   if (testForList(node)) {
@@ -45,9 +39,10 @@ export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange, 
     return {
       nodes: [listNodes],
       consumed: listItems.filter((i) => i.seen).length,
+      lists,
     };
   } else {
-    return { nodes: [], consumed: 0 };
+    return { nodes: [], consumed: 0, lists };
   }
 };
 
@@ -191,7 +186,6 @@ function handleListNodes(
         parentAttributes: item?.attributes || null,
       };
       nodeAttributes['numId'] = currentListNumId;
-      nodeAttributes['level'] = intLevel;
 
       const newListItem = createListItem(schemaElements, nodeAttributes, []);
       parsedListItems.push(newListItem);
@@ -236,6 +230,7 @@ function handleListNodes(
     attrs: {
       'list-style-type': listStyleType,
       listId: currentListNumId,
+      syncId: currentListNumId,
       attributes: {
         parentAttributes: listItems[0]?.attributes || null,
       },

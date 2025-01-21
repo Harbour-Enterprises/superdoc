@@ -35,7 +35,6 @@ export const ListItem = Node.create({
         renderDOM: (attrs) => {
           let { listLevel, listNumberingType, lvlText } = attrs;
           let hasListLevel = !!listLevel?.length;
-          console.debug('Marker:', listLevel, attrs.index)
 
           if (!hasListLevel || !lvlText) {
             return {};

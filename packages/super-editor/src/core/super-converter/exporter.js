@@ -8,6 +8,7 @@ import { generateDocxRandomId } from '@helpers/generateDocxRandomId.js';
 import { DEFAULT_DOCX_DEFS } from './exporter-docx-defs.js';
 import { TrackDeleteMarkName, TrackInsertMarkName, TrackFormatMarkName } from '@extensions/track-changes/constants.js';
 import { listPluginKey } from '@extensions/ordered-list/helpers/listPlugin.js';
+import { baseBulletList, baseOrderedListDef } from './v2/exporter/helpers/base-list.definitions.js';
 
 /**
  * @typedef {Object} ExportParams
@@ -493,26 +494,22 @@ function addNewImageRelationship(params, imagePath) {
  */
 function translateList(params) {
   const flatContent = flattenContent(params);
-  const { editor } = params;
 
   const listNodes = [];
   flatContent.forEach((listNode) => {
-    const { content: innerContent, level, type, listId } = listNode;
-    const { isGenerated, definition, abstractId } = getUserListDetails(listId, editor);
-    if (isGenerated) {
-      const { newAbstractDef, newNumDef } = generateNewListDefinition({ abstractId, listId });
-      params.generatedNumberingDefs.abstractNums.push(newAbstractDef);
-      params.generatedNumberingDefs.numDefs.push(newNumDef);
-    }
-
+    const { content: innerContent, level, listType } = listNode;
     const pNode = innerContent[0];
-    const { listId: pNodeId, numId, lvlJc, ...rest } = pNode.attrs || {};
+    const { listId: pNodeId, lvlJc, ...rest } = pNode.attrs || {};
     pNode.attrs = { ...rest };
     const result = translateParagraphNode({ ...params, node: innerContent[0] });
 
+    // Get the pPr and update it to use new list ID if necessary (if list is generated)
+    // Note: listNode.listId is null if this is a SuperDoc-generated list. If it is imported, then it already has an ID
     const filteredElements = result.elements.filter((el) => el.name !== 'w:pPr' || el.elements.length);
+    const listId = listNode.listId ? listNode.listId : generateNewListDefinition(params, listType);
     const pPr = getListParagraphProperties(level, listId);
 
+    // Add the pPr at the start of the elements
     filteredElements.unshift(pPr);
     result.elements = filteredElements;
 
@@ -525,40 +522,46 @@ function translateList(params) {
 
 /**
  * Generate a new list definition to be inserted into numbering.xml
+ * ⚠️ Caution: This updates params.generatedNumberingDefs and params.generatedNumberingDefs directly
  * @param {Obect} param The parameters object
  * @param {Number} param.abstractId The abstract number id
  * @param {Number} param.listId The list id
- * @returns {Object} The new abstract and num definitions
+ * @returns {Number} The new list id (w:numId)
  */
-function generateNewListDefinition({ abstractId, listId }) {
+function generateNewListDefinition(params, listType) {
   // Generate a new numId to add to numbering.xml
+  const newAbstracts = params.generatedNumberingDefs.abstractNums;
+  const newNumDefs = params.generatedNumberingDefs.numDefs;
+
+  const definition = listType === 'decimal' ? baseOrderedListDef : baseBulletList;
+  const numbering = params.editor.converter.numbering;
 
   // Generate the new abstractNum definition
+  const newAbstractId = Math.max(...Object.keys(numbering.abstracts).map(Number)) + 1;
   const newAbstractDef = {
     ...definition,
     attributes: {
       ...definition.attributes,
-      'w:abstractNumId': abstractId,
+      'w:abstractNumId': String(newAbstractId),
     }
   };
+  newAbstracts.push(newAbstractDef);
 
   // Generate the new numId definition
+  const highestNumDefKey = Math.max(...Object.keys(numbering.abstracts).map(Number)) + 1;
   const newNumDef = {
     type: 'element',
     name: 'w:num',
     attributes: {
-      'w:numId': String(abstractId),
+      'w:numId': String(highestNumDefKey),
       'w16cid:durableId': '485517411'
     },
     elements: [
-      { name: 'w:abstractNumId', attributes: { 'w:val': String(listId) } },
+      { name: 'w:abstractNumId', attributes: { 'w:val': String(newAbstractId) } },
     ]
   };
-
-  return {
-    newAbstractDef,
-    newNumDef,
-  };
+  newNumDefs.push(newNumDef);
+  return highestNumDefKey;
 };
 
 /**
@@ -595,41 +598,12 @@ function getListParagraphProperties(level, numId) {
 }
 
 /**
- * Get list definition details from the list plugin
- * @param {Number} listId The current list id
- * @param {*} editor The current editor instance
- * @returns {Object} An object containing list details
- */
-function getUserListDetails(listId, editor) {
-  const pluginState = listPluginKey.getState(editor.state);
-  const activeLists = pluginState?.lists;
-  const definitions = pluginState?.definitions;
-
-  const currentList = activeLists.find((list) => list.listId === Number(listId));
-  if (!currentList) {
-    //TODO: Investigate why this is happening
-    return {};
-  }
-  const { abstractId, source } = activeLists.find((list) => list.listId === Number(listId));
-
-  const isGenerated = source === 'generated';
-  const listType = activeLists[listId]?.listType;
-  const definition = definitions[listType];
-
-  return {
-    isGenerated,
-    listType,
-    definition,
-    abstractId,
-  };
-};
-
-/**
  * Flatten list nodes for processing.
  */
-function flattenContent({ node, editor }) {
+function flattenContent({ node }) {
   const { content } = node;
   const { listId } = node.attrs || {};
+  const listType = node.attrs['list-style-type'];
 
   const flatContent = [];
   function recursiveFlatten(items, level = 0) {
@@ -637,7 +611,7 @@ function flattenContent({ node, editor }) {
     items.forEach((item) => {
       const subList = item.content.filter((c) => c.type === 'bulletList' || c.type === 'orderedList');
       const notLists = item.content.filter((c) => c.type !== 'bulletList' && c.type !== 'orderedList');
-      const newItem = { ...item, content: notLists, listId, level };
+      const newItem = { ...item, content: notLists, listId, level, listType };
       flatContent.push(newItem);
 
       if (subList.length) {
