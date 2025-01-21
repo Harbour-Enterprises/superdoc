@@ -98,8 +98,7 @@ const getExtensions = () => {
   return extensions;
 };
 
-const initEditor = async ({content, media = {}, mediaFiles = {}, fonts = {} } = {}) => {
-
+const initEditor = async ({ content, media = {}, mediaFiles = {}, fonts = {} } = {}) => {
   editor.value = new Editor({
     mode: 'docx',
     element: editorElem.value,
