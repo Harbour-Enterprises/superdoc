@@ -1,6 +1,5 @@
 export const generateOrderedListIndex = ({ listLevel, lvlText, listNumberingType, index }) => {
   const handler = listIndexMap[listNumberingType];
-  console.debug('expected index:', index)
   return handler ? handler(listLevel, lvlText, index) : null;
 };
 

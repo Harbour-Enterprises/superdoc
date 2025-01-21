@@ -6,7 +6,7 @@ import { mergeTextNodes } from './mergeTextNodes.js';
 /**
  * @type {import("docxImporter").NodeHandler}
  */
-export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange, lists) => {
+export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange, filename, lists) => {
   if (nodes.length === 0 || nodes[0].name !== 'w:p') {
     return { nodes: [], consumed: 0 };
   }

@@ -4,8 +4,14 @@ import { defaultNodeListHandler } from '@converter/v2/importer/docxImporter.js';
 import { getTestDataByFileName } from '@tests/helpers/helpers.js';
 
 import { handleListNode } from '@converter/v2/importer/listImporter.js';
+import { beforeAll } from 'vitest';
 
 describe('paragraph tests to check spacing', () => {
+  let lists = {};
+  beforeEach(() => {
+    lists = {};
+  });
+
   it('correctly gets spacing [paragraph_spacing_missing]', async () => {
     const dataName = 'paragraph_spacing_missing.docx';
     const docx = await getTestDataByFileName(dataName);
@@ -14,7 +20,7 @@ describe('paragraph tests to check spacing', () => {
     const doc = documentXml.elements[0];
     const body = doc.elements[0];
     const content = body.elements;
-    const { nodes } = handleParagraphNode([content[0]], docx, defaultNodeListHandler(), false);
+    const { nodes } = handleParagraphNode([content[0]], docx, defaultNodeListHandler(), false, null, lists);
 
     const node = nodes[0];
     expect(node.type).toBe('paragraph');
@@ -41,7 +47,7 @@ describe('paragraph tests to check spacing', () => {
     const tcNode = trNode.elements[1];
 
     // Check all nodes after the known tcPr
-    const { nodes } = handleParagraphNode(tcNode.elements.slice(1), docx, defaultNodeListHandler(), false);
+    const { nodes } = handleParagraphNode(tcNode.elements.slice(1), docx, defaultNodeListHandler(), false, null, lists);
     const node = nodes[0];
 
     expect(node.type).toBe('paragraph');
@@ -64,7 +70,7 @@ describe('paragraph tests to check spacing', () => {
     const body = doc.elements[0];
     const content = body.elements;
 
-    const { nodes } = handleParagraphNode([content[0]], docx, defaultNodeListHandler(), false);
+    const { nodes } = handleParagraphNode([content[0]], docx, defaultNodeListHandler(), false, null, lists);
 
     const node = nodes[0];
     expect(node.type).toBe('paragraph');
@@ -91,6 +97,6 @@ describe('paragraph tests to check spacing', () => {
     const content = body.elements;
 
     const firstListItem = content[0];
-    const { nodes } = handleListNode([content[0]], docx, defaultNodeListHandler(), false);
+    const { nodes } = handleListNode([content[0]], docx, defaultNodeListHandler(), false, null, lists);
   });
 });

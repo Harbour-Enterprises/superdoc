@@ -7,7 +7,6 @@ import { inchesToTwips, pixelsToEightPoints, pixelsToEmu, pixelsToTwips } from '
 import { generateDocxRandomId } from '@helpers/generateDocxRandomId.js';
 import { DEFAULT_DOCX_DEFS } from './exporter-docx-defs.js';
 import { TrackDeleteMarkName, TrackInsertMarkName, TrackFormatMarkName } from '@extensions/track-changes/constants.js';
-import { listPluginKey } from '@extensions/ordered-list/helpers/listPlugin.js';
 import { baseBulletList, baseOrderedListDef } from './v2/exporter/helpers/base-list.definitions.js';
 
 /**

@@ -291,7 +291,7 @@ describe('custom nested list tests', () => {
     const docx = {
       'word/numbering.xml': numbering,
     };
-    const result = handleListNode(nodes, docx, defaultNodeListHandler(), false, {});
+    const result = handleListNode(nodes, docx, defaultNodeListHandler(), false, null, {});
 
     expect(result.nodes.length).toBe(1);
     const expectedResult = {
@@ -486,6 +486,7 @@ describe('custom nested list tests', () => {
               ],
               attrs: {
                 'list-style-type': 'lowerLetter',
+                listId: '2',
                 syncId: "2",
                 attributes: {
                   parentAttributes: {
@@ -739,6 +740,7 @@ describe('custom nested list tests', () => {
               ],
               attrs: {
                 'list-style-type': 'bullet',
+                listId: '2',
                 syncId: '2',
                 attributes: {
                   parentAttributes: {
@@ -881,6 +883,7 @@ describe('custom nested list tests', () => {
       ],
       attrs: {
         'list-style-type': 'bullet',
+        listId: '1',
         syncId: '1',
         attributes: {
           parentAttributes: {
