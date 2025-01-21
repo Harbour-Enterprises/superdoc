@@ -3,6 +3,7 @@ import xmljs from 'xml-js';
 import { DocxExporter, exportSchemaToJson } from './exporter';
 import { createDocumentJson } from './v2/importer/docxImporter.js';
 import { getArrayBufferFromUrl } from './helpers.js';
+import { Telemetry } from './Telemetry.js';
 
 class SuperConverter {
   static allowedElements = Object.freeze({
@@ -94,6 +95,17 @@ class SuperConverter {
 
     this.tagsNotInSchema = ['w:body'];
     this.savedTagsToRestore = [];
+
+    // Initialize telemetry
+    this.telemetry = new Telemetry({
+      enabled: params?.telemetry?.enabled ?? true,
+      dsn: params?.telemetry?.dsn,
+      endpoint: params?.telemetry?.endpoint
+    });
+
+    // Track unknown marks/elements for telemetry
+    this.unknownMarks = [];
+    this.unknownElements = [];
 
     // Parse the initial XML, if provided
     if (this.docx.length || this.xml) this.parseFromXml();
@@ -242,6 +254,11 @@ class SuperConverter {
     };
     this.media = this.convertedXml.media;
     this.addedMedia = processedData;
+  }
+
+  destroy() {
+    // Clean up telemetry when converter is destroyed
+    return this.telemetry?.destroy();
   }
 }
 
