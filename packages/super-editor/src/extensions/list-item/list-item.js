@@ -47,7 +47,6 @@ export const ListItem = Node.create({
             lvlText,
             listNumberingType,
           });
-          console.debug('orderMarker', listLevel, orderMarker);
 
           if (!orderMarker) return {};
 
@@ -87,6 +86,11 @@ export const ListItem = Node.create({
 
       // This will contain run properties for the list item
       listRunProperties: {
+        default: null,
+        rendered: false,
+      },
+
+      numId: {
         default: null,
         rendered: false,
       },

@@ -3,7 +3,6 @@ import { toKebabCase } from '@harbour-enterprises/common';
 import { findParentNode } from '@helpers/index.js';
 import { orderedListSync as orderedListSyncPlugin } from './helpers/orderedListSyncPlugin.js';
 import { orderedListMarker as orderedListMarkerPlugin } from './helpers/orderedListMarkerPlugin.js';
-import { render } from 'vue';
 
 export const OrderedList = Node.create({
   name: 'orderedList',
