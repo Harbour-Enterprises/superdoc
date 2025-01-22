@@ -3,6 +3,12 @@
  * @property {string} id - Unique event identifier
  * @property {string} timestamp - ISO timestamp of the event
  * @property {string} sessionId - Current session identifier
+ * @property {Object} document - Document information
+ * @property {string} [document.id] - Reference ID
+ * @property {string} [document.type] - Document type
+ * @property {string} [document.internalId] - Internal document ID
+ * @property {string} [document.hash] - Document MD5 hash
+ * @property {string} [document.lastModified] - Last modified timestamp
  */
 
 /**
@@ -33,22 +39,22 @@
 class Telemetry {
   /** @type {boolean} */
   #enabled;
-  
+
   /** @type {string} */
   #endpoint;
-  
+
   /** @type {string} */
   #projectId;
-  
+
   /** @type {string} */
   #token;
-  
+
   /** @type {string} */
   #sessionId;
-  
+
   /** @type {TelemetryEvent[]} */
   #events = [];
-  
+
   /** @type {number|undefined} */
   #flushInterval;
 
@@ -67,7 +73,7 @@ class Telemetry {
    */
   constructor(config = {}) {
     this.#enabled = config.enabled ?? true;
-    
+
     try {
       const dsn = config.dsn ?? Telemetry.COMMUNITY_DSN;
       const { projectId, token, endpoint } = this.#parseDsn(dsn);
@@ -81,7 +87,7 @@ class Telemetry {
     }
 
     this.#sessionId = this.#generateId();
-    
+
     if (this.#enabled) {
       this.#startPeriodicFlush();
     }
@@ -90,9 +96,10 @@ class Telemetry {
   /**
    * Track feature usage
    * @param {string} name - Name of the feature/event
+   * @param {Object} document - Document information
    * @param {Object.<string, *>} [properties] - Additional properties
    */
-  trackUsage(name, properties = {}) {
+  trackUsage(name, document = {}, properties = {}) {
     if (!this.#enabled) return;
 
     /** @type {UsageEvent & BaseEvent} */
@@ -102,7 +109,8 @@ class Telemetry {
       timestamp: new Date().toISOString(),
       sessionId: this.#sessionId,
       name,
-      properties
+      document,
+      properties,
     };
 
     this.#queueEvent(event);
@@ -113,9 +121,10 @@ class Telemetry {
    * @param {'mark'|'element'} category - Category of parsed item
    * @param {string} name - Name of the item
    * @param {string} path - Document path where item was found
+   * @param {Object} document - Document information
    * @param {Object.<string, *>} [metadata] - Additional context
    */
-  trackParsing(category, name, path, metadata) {
+  trackParsing(category, name, path, document = {}, metadata) {
     if (!this.#enabled) return;
 
     /** @type {ParsingEvent & BaseEvent} */
@@ -127,10 +136,42 @@ class Telemetry {
       category,
       name,
       path,
-      ...(metadata && { metadata })
+      document,
+      ...(metadata && { metadata }),
     };
 
     this.#queueEvent(event);
+  }
+
+  /**
+   * Process document metadata
+   * @param {File} file - Document file
+   * @param {Object} options - Additional metadata options
+   * @returns {Promise<Object>} Document metadata
+   */
+  async processDocument(file, options = {}) {
+    const hash = await this.#generateMD5Hash(file);
+
+    return {
+      id: options.id,
+      type: options.type || file.type,
+      internalId: options.internalId,
+      hash,
+      lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : null,
+    };
+  }
+
+  /**
+   * Generate MD5 hash for a file
+   * @param {File} file - File to hash
+   * @returns {Promise<string>} MD5 hash
+   * @private
+   */
+  async #generateMD5Hash(file) {
+    const buffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest('MD5', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
   }
 
   /**
@@ -140,7 +181,7 @@ class Telemetry {
    */
   #queueEvent(event) {
     this.#events.push(event);
-    
+
     if (this.#events.length >= Telemetry.BATCH_SIZE) {
       this.flush();
     }
@@ -162,9 +203,9 @@ class Telemetry {
         headers: {
           'Content-Type': 'application/json',
           'X-Project-ID': this.#projectId,
-          'X-Token': this.#token
+          'X-Token': this.#token,
         },
-        body: JSON.stringify(eventsToSend)
+        body: JSON.stringify(eventsToSend),
       });
 
       if (!response.ok) {
@@ -201,7 +242,7 @@ class Telemetry {
       return {
         token: url.username,
         projectId: url.pathname.split('/')[1],
-        endpoint: `${url.protocol}//${url.host}/v1/collect`
+        endpoint: `${url.protocol}//${url.host}/v1/collect`,
       };
     } catch (error) {
       throw new Error(`Invalid DSN: ${error.message}`);
