@@ -1,39 +1,12 @@
-import { getTestDataAsFileBuffer } from '@tests/helpers/helpers.js';
+import { loadTestDataForEditorTests, initTestEditor } from '@tests/helpers/helpers.js';
 import { beforeAll, beforeEach, expect } from 'vitest';
-import { Editor } from '@core/Editor.js';
-import { getStarterExtensions } from '@extensions/index.js';
 
 describe('[custom-list1.docx] test import custom lists', () => {
 
   const filename = 'custom-list1.docx';
-  let editor;
-  let docx, media, mediaFiles, fonts;
-
-  beforeAll(async () => {
-    const fileSource = await getTestDataAsFileBuffer(filename);
-    const [testDocx, testMedia, testMediaFiles, testFonts] = await Editor.loadXmlData(fileSource);
-
-    docx = testDocx;
-    media = testMedia;
-    mediaFiles = testMediaFiles;
-    fonts = testFonts;
-  });
-
-  beforeEach(() => {
-    editor = new Editor({
-      mode: 'docx',
-      documentId: 'test',
-      role: 'editor',
-      documentMode: 'editing',
-      isHeadless: true,
-      extensions: getStarterExtensions(),
-      content: docx,
-      media,
-      mediaFiles,
-      fonts,
-      users: [],
-    });  
-  });
+  let docx, media, mediaFiles, fonts, editor;
+  beforeAll(async () => ({ docx, media, mediaFiles, fonts } = await loadTestDataForEditorTests(filename)));
+  beforeEach(() => (editor = initTestEditor({ content: docx, media, mediaFiles, fonts })));
 
   it('can import first element in custom list', () => {
     const state = editor.getJSON();
