@@ -3,6 +3,7 @@ import xmljs from 'xml-js';
 import { DocxExporter, exportSchemaToJson } from './exporter';
 import { createDocumentJson } from './v2/importer/docxImporter.js';
 import { getArrayBufferFromUrl } from './helpers.js';
+import { baseNumbering } from './v2/exporter/helpers/base-list.definitions.js';
 
 class SuperConverter {
   static allowedElements = Object.freeze({
@@ -235,7 +236,9 @@ class SuperConverter {
 
   #exportNumberingFile({ abstractNums = [], numDefs = [] }) {
     const numberingPath = 'word/numbering.xml';
-    const numberingXml = this.convertedXml[numberingPath];
+    let numberingXml = this.convertedXml[numberingPath];
+
+    if (!numberingXml) numberingXml = baseNumbering;
     const numbering = numberingXml.elements[0];
 
     numbering.elements.push(...abstractNums);

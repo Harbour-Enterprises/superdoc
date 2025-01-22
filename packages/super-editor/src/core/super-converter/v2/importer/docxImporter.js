@@ -14,6 +14,7 @@ import { lineBreakNodeHandlerEntity } from './lineBreakImporter.js';
 import { bookmarkNodeHandlerEntity } from './bookmarkNodeImporter.js';
 import { tabNodeEntityHandler } from './tabImporter.js';
 import { listHandlerEntity } from './listImporter.js';
+import { baseNumbering } from '../exporter/helpers/base-list.definitions.js';
 
 /**
  * @typedef {import()} XmlNode
@@ -236,7 +237,9 @@ function getHeaderFooter(el, elementType, docx, converter) {
  * @returns {Object} The numbering definitions
  */
 function getNumberingDefinitions(docx) {
-  const numbering = docx['word/numbering.xml'];
+  let numbering = docx['word/numbering.xml'];
+  if (!numbering) numbering = baseNumbering;
+
   const elements = numbering.elements[0].elements;
 
   const abstractDefs = elements.filter((el) => el.name === 'w:abstractNum');

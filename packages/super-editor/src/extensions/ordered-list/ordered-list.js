@@ -1,6 +1,6 @@
 import { Node, Attribute } from '@core/index.js';
 import { toKebabCase } from '@harbour-enterprises/common';
-import { findParentNode } from '@helpers/index.js';
+import { generateDocxListAttributes, findParentNode } from '@helpers/index.js';
 import { orderedListSync as orderedListSyncPlugin } from './helpers/orderedListSyncPlugin.js';
 import { orderedListMarker as orderedListMarkerPlugin } from './helpers/orderedListMarkerPlugin.js';
 
@@ -93,7 +93,8 @@ export const OrderedList = Node.create({
       toggleOrderedList:
         () =>
         ({ commands }) => {
-          return commands.toggleList(this.name, this.options.itemTypeName, this.options.keepMarks, {});
+          const attributes = generateDocxListAttributes('orderedList');
+          return commands.toggleList(this.name, this.options.itemTypeName, this.options.keepMarks, attributes);
         },
 
       /**
