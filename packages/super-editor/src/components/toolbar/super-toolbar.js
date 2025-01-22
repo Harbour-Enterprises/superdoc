@@ -1,7 +1,7 @@
 import EventEmitter from 'eventemitter3';
 import { createApp } from 'vue';
 import { undoDepth, redoDepth } from 'prosemirror-history';
-import { TextSelection } from 'prosemirror-state';
+import { TextSelection, Selection } from 'prosemirror-state';
 import { makeDefaultItems } from './defaultItems';
 import { getActiveFormatting } from '@core/helpers/getActiveFormatting.js';
 import { vClickOutside } from '@harbour-enterprises/common';
@@ -135,17 +135,26 @@ export class SuperToolbar extends EventEmitter {
 
         // move cursor to end
         const { view } = this.activeEditor;
-        const endPos = view.state.selection.$to.pos;
-        const selection = new TextSelection(view.state.doc.resolve(endPos));
-        const tr = view.state.tr.setSelection(selection);
-        const state = view.state.apply(tr);
-        view.updateState(state);
+        let endPos = view.state.selection.$to.pos;
+        const startPos = view.state.selection.$from.pos;
 
-        setTimeout(() => {
-          view.focus();
-        }, 100);
+        let selection = null;
+        if (endPos === startPos) {
+          const selection = Selection.atEnd(view.docView.node);
+          const tr = view.state.tr.setSelection(selection);
+          const state = view.state.apply(tr);
+          view.updateState(state);
+        } else {
+          selection = new TextSelection(view.state.doc.resolve(endPos));
+          const tr = view.state.tr.setSelection(selection);
+          const state = view.state.apply(tr);
+          view.updateState(state);
+          setTimeout(() => {
+            view.focus();
+            this.updateToolbarState();
+          }, 100);
+        }
       }
-      this.updateToolbarState();
     },
   };
 
