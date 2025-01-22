@@ -1,8 +1,9 @@
 import { Node, Attribute } from '@core/index.js';
 import { toKebabCase } from '@harbour-enterprises/common';
-import { generateDocxListAttributes, findParentNode } from '@helpers/index.js';
+import { findParentNode } from '@helpers/index.js';
 import { orderedListSync as orderedListSyncPlugin } from './helpers/orderedListSyncPlugin.js';
 import { orderedListMarker as orderedListMarkerPlugin } from './helpers/orderedListMarkerPlugin.js';
+import { render } from 'vue';
 
 export const OrderedList = Node.create({
   name: 'orderedList',
@@ -48,6 +49,11 @@ export const OrderedList = Node.create({
         // rendered: false,
       },
 
+      listId: {
+        default: null,
+        render: false,
+      },
+
       'list-style-type': {
         default: 'decimal',
         renderDOM: (attrs) => {
@@ -88,8 +94,7 @@ export const OrderedList = Node.create({
       toggleOrderedList:
         () =>
         ({ commands }) => {
-          const attributes = generateDocxListAttributes('orderedList');
-          return commands.toggleList(this.name, this.options.itemTypeName, this.options.keepMarks, attributes);
+          return commands.toggleList(this.name, this.options.itemTypeName, this.options.keepMarks, {});
         },
 
       /**

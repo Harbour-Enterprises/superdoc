@@ -18,6 +18,12 @@ export const getTestDataByFileName = async (name) => {
   return readFilesRecursively(xmlFiles);
 };
 
+export const getTestDataAsFileBuffer = async (name) => {
+  const basePath = join(__dirname, '../data', name);
+  const fileBuffer = await readFile(basePath);
+  return fileBuffer;
+};
+
 const readFilesRecursively = (xmlFiles) => {
   const fileDataMap = {};
 

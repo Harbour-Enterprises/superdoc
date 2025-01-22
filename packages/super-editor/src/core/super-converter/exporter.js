@@ -505,7 +505,7 @@ function translateList(params) {
     // Get the pPr and update it to use new list ID if necessary (if list is generated)
     // Note: listNode.listId is null if this is a SuperDoc-generated list. If it is imported, then it already has an ID
     const filteredElements = result.elements.filter((el) => el.name !== 'w:pPr' || el.elements.length);
-    const listId = listNode.listId ? listNode.listId : generateNewListDefinition(params, listType);
+    const listId = listNode.listId ? listNode.listId : generateNewListDefinition(params, listType);  
     const pPr = getListParagraphProperties(level, listId);
 
     // Add the pPr at the start of the elements

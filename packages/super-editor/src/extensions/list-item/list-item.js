@@ -47,6 +47,7 @@ export const ListItem = Node.create({
             lvlText,
             listNumberingType,
           });
+          console.debug('orderMarker', listLevel, orderMarker);
 
           if (!orderMarker) return {};
 

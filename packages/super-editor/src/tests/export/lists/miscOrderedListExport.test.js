@@ -1,4 +1,5 @@
 // prettier-ignore
+import { expect } from 'vitest';
 import {
   getTextFromNode,
   getExportedResult,
@@ -51,5 +52,42 @@ describe('[orderedlist_interrupted1.docx] interrupted ordered list tests', async
     // Ensure that the pPr tag has the correct children
     const firstListNumPr = firstListNumPrList[0];
     expect(firstListNumPr.elements.length).toBe(2);
+  });
+});
+
+describe('[custom_list1.docx] interrupted ordered list tests', async () => {
+  const fileName = 'custom-list1.docx';
+  let data;
+  let body;
+
+  beforeAll(async () => {
+    data = await getExportedResult(fileName);
+    body = data.elements?.find((el) => el.name === 'w:body');
+  });
+
+  it('exports custom list definition correctly', () => {
+    const firstList = body.elements[0];
+    const firstListPprList = firstList.elements.filter((n) => n.name = 'w:pPr');
+    const firstListPpr = firstListPprList[0];
+    expect(firstListPpr.elements.length).toBe(1);
+
+    const numPr = firstListPpr.elements.find((n) => n.name === 'w:numPr');
+    const numIdTag = numPr.elements.find((n) => n.name === 'w:numId');
+    const numId = numIdTag.attributes['w:val'];
+    expect(numId).toBe("4");
+
+    expect(body.elements.length).toBe(6);
+
+    const secondList = body.elements[1];
+    const secondListRun = secondList.elements.find((n) => n.name === 'w:r');
+    const secondListText = secondListRun.elements.find((n) => n.name === 'w:t');
+    const secondText = secondListText.elements[0].text;
+    expect(secondText).toBe("Num 1.1");
+
+    const fourthList = body.elements[3];
+    const fourthListRun = fourthList.elements.find((n) => n.name === 'w:r');
+    const fourthListText = fourthListRun.elements.find((n) => n.name === 'w:t');
+    const fourthText = fourthListText.elements[0].text;
+    expect(fourthText).toBe("Num 1.2.1");
   });
 });

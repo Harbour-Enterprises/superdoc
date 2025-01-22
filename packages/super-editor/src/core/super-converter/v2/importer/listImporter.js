@@ -140,8 +140,8 @@ function handleListNodes(
     // We keep track of all indices for all lists here with an object
     // This allows us to detect disconnected lists and handle them correctly
     if (!lists[currentListNumId]) lists[currentListNumId] = {};
-    if (!lists[currentListNumId][intLevel]) lists[currentListNumId][intLevel] = 0;
-    lists[currentListNumId][intLevel]++;
+    if (!lists[currentListNumId][listLevel]) lists[currentListNumId][listLevel] = 0;
+    lists[currentListNumId][listLevel]++;
 
     // If this node belongs on this list level, add it to the list
     const nodeAttributes = {};
@@ -167,7 +167,7 @@ function handleListNodes(
       schemaElements.push(parNode);
       lastNestedListLevel = listLevel;
     
-      const currentIndex = lists[currentListNumId][intLevel];
+      const currentIndex = lists[currentListNumId][listLevel];
       if (!(intLevel in listItemIndices)) listItemIndices[intLevel] = parseInt(currentIndex);
       else listItemIndices[intLevel] += 1;
 
