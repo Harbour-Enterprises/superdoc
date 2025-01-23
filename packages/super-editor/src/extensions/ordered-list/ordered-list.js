@@ -48,6 +48,11 @@ export const OrderedList = Node.create({
         // rendered: false,
       },
 
+      listId: {
+        default: null,
+        render: false,
+      },
+
       'list-style-type': {
         default: 'decimal',
         renderDOM: (attrs) => {

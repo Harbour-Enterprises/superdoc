@@ -60,6 +60,11 @@ export const getExportedResult = async (name) => {
     media: {},
     isFinalDoc: false,
     pageStyles: editor.converter.pageStyles,
+    editor,
+    generatedNumberingDefs: {
+      abstractNums: [],
+      numDefs: [],
+    }
   });
 
   return result;

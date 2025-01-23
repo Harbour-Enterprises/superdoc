@@ -6,19 +6,15 @@ import { mergeTextNodes } from './mergeTextNodes.js';
 /**
  * @type {import("docxImporter").NodeHandler}
  */
-export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange) => {
+export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange, filename, lists) => {
   if (nodes.length === 0 || nodes[0].name !== 'w:p') {
     return { nodes: [], consumed: 0 };
   }
   const node = carbonCopy(nodes[0]);
 
-  let schemaNode;
-
   // We need to pre-process paragraph nodes to combine various possible elements we will find ie: lists, links.
   const processedElements = preProcessNodesForFldChar(node.elements);
   node.elements = processedElements;
-
-  const pPr = node.elements.find((el) => el.name === 'w:pPr');
 
   // Check if this paragraph node is a list
   if (testForList(node)) {
@@ -39,13 +35,14 @@ export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange) 
       }
     }
 
-    const listNodes = handleListNodes(listItems, docx, nodeListHandler, 0);
+    const listNodes = handleListNodes(listItems, docx, nodeListHandler, insideTrackChange, lists);
     return {
       nodes: [listNodes],
       consumed: listItems.filter((i) => i.seen).length,
+      lists,
     };
   } else {
-    return { nodes: [], consumed: 0 };
+    return { nodes: [], consumed: 0, lists };
   }
 };
 
@@ -77,6 +74,7 @@ function handleListNodes(
   docx,
   nodeListHandler,
   insideTrackChange,
+  lists,
   listLevel = 0,
   actualListLevel = 0,
   currentListNumId = null,
@@ -139,6 +137,12 @@ function handleListNodes(
     const isNested =
       listLevel < intLevel || (listLevel === intLevel && isDifferentList && lastNestedListLevel === listLevel);
 
+    // We keep track of all indices for all lists here with an object
+    // This allows us to detect disconnected lists and handle them correctly
+    if (!lists[currentListNumId]) lists[currentListNumId] = {};
+    if (!lists[currentListNumId][listLevel]) lists[currentListNumId][listLevel] = 0;
+    lists[currentListNumId][listLevel]++;
+
     // If this node belongs on this list level, add it to the list
     const nodeAttributes = {};
     if (isRoot) {
@@ -162,8 +166,9 @@ function handleListNodes(
 
       schemaElements.push(parNode);
       lastNestedListLevel = listLevel;
-
-      if (!(intLevel in listItemIndices)) listItemIndices[intLevel] = parseInt(start);
+    
+      const currentIndex = lists[currentListNumId][listLevel];
+      if (!(intLevel in listItemIndices)) listItemIndices[intLevel] = parseInt(currentIndex);
       else listItemIndices[intLevel] += 1;
 
       let thisItemPath = [];
@@ -182,7 +187,7 @@ function handleListNodes(
       nodeAttributes['attributes'] = {
         parentAttributes: item?.attributes || null,
       };
-      nodeAttributes['numId'] = numId;
+      nodeAttributes['numId'] = currentListNumId;
 
       const newListItem = createListItem(schemaElements, nodeAttributes, []);
       parsedListItems.push(newListItem);
@@ -197,6 +202,7 @@ function handleListNodes(
         docx,
         nodeListHandler,
         insideTrackChange,
+        lists,
         listLevel + 1,
         listLevel,
         numId,
@@ -225,6 +231,8 @@ function handleListNodes(
     content: parsedListItems,
     attrs: {
       'list-style-type': listStyleType,
+      listId: currentListNumId,
+      syncId: currentListNumId,
       attributes: {
         parentAttributes: listItems[0]?.attributes || null,
       },
@@ -425,6 +433,7 @@ export function getNodeNumberingDefinition(attributes, level, docx) {
 
   // Get style for this list level
   let listType;
+
   if (unorderedListTypes.includes(listTypeDef.toLowerCase())) listType = 'bulletList';
   else if (orderedListTypes.includes(listTypeDef)) listType = 'orderedList';
   else {

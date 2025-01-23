@@ -23,6 +23,7 @@ describe('[simple-ordered-list.docx] simple ordered list tests', async () => {
     expect(titleText).toBe('Simple ordered list:');
 
     const item1 = body.elements[titleIndex + 2];
+
     testListNodes({ node: item1, expectedLevel: 0, expectedNumPr: 0, text: 'Item 1' });
   
     const item2 = body.elements[titleIndex + 3];
