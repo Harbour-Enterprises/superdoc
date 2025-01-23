@@ -47,6 +47,5 @@ const handleBlur = (e) => {
   margin: 0;
   display: flex;
   align-items: center;
-  padding: 1px;
 }
 </style>
