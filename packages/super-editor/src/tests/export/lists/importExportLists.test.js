@@ -136,9 +136,47 @@ describe('[blank-doc.docx] import, add node, export', () => {
   });
 
   it('exports list correctly with break', () => {
-    // editor.state.doc.descendants((node, pos) => {
-    //   console.log(node.type.name, pos);
-    // });
-    //console.debug(JSON.stringify(newParagraph, null, 2));
+    const { result: exported } = editor.converter.exportToXmlJson({
+      data: editor.getJSON(),
+      editor
+    });
+    expect(exported).toBeDefined();
+
+    // Check the first item exported correctly
+    const firstItem = exported.elements[0].elements[0];
+    const pPr = firstItem.elements[0];
+    const numPr = pPr.elements[0];
+    expect(numPr.elements.length).toBe(2);
+
+    const numIdTag = numPr.elements.find((el) => el.name === 'w:numId');
+    const numId = numIdTag.attributes['w:val'];
+    expect(numId).toBe(2);
+
+    const lvl = numPr.elements.find((el) => el.name === 'w:ilvl');
+    const lvlText = lvl.attributes['w:val'];
+    expect(lvlText).toBe(0);
+
+    const runText = firstItem.elements[1].elements[0].elements[0].text;
+    expect(runText).toBe('hello world');
+
+    // Check we now have a paragraph between elements
+    const breakItem = exported.elements[0].elements[1];
+    const breakRun = breakItem.elements[1];
+    const breakText = breakRun.elements[0].elements[0].text;
+    expect(breakText).toBe('--- break');
+
+    // Check the second list element is intact
+    const secondItem = exported.elements[0].elements[2];
+    const pPr2 = secondItem.elements[0];
+    const numPr2 = pPr2.elements[0];
+    expect(numPr2.elements.length).toBe(2);
+
+    const numIdTag2 = numPr2.elements.find((el) => el.name === 'w:numId');
+    const numId2 = numIdTag2.attributes['w:val'];
+    expect(numId2).toBe(2);
+
+    const lvl2 = numPr2.elements.find((el) => el.name === 'w:ilvl');
+    const lvlText2 = lvl2.attributes['w:val'];
+    expect(lvlText2).toBe(0);
   });
 });
