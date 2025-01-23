@@ -195,7 +195,7 @@ class SuperConverter {
     return exporter.schemaToXml(data);
   }
 
-  async exportToDocx({ data, editor, isFinalDoc = false }) {
+  exportToXmlJson({ data, editor, isFinalDoc = false }) {
     const bodyNode = this.savedTagsToRestore.find((el) => el.name === 'w:body');
     const documentMedia = editor.storage.image.media;
     const editorSchema = editor.schema;
@@ -214,7 +214,11 @@ class SuperConverter {
         numDefs: [],
       }
     });
-
+    return { result, params };
+  }
+  
+  async exportToDocx({ data, editor, isFinalDoc = false }) {
+    const { result, params } = this.exportToXmlJson({ data, editor, isFinalDoc });
     const exporter = new DocxExporter(this);
     const xml = exporter.schemaToXml(result);
 

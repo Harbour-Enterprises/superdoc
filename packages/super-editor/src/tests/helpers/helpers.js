@@ -62,7 +62,7 @@ export const loadTestDataForEditorTests = async (filename) => {
  * @returns {Editor} A new test editor instance
  */
 export const initTestEditor = (options = {}) => {
-  return new Editor({
+  const editor = new Editor({
     mode: 'docx',
     documentId: 'test',
     role: 'editor',
@@ -71,5 +71,21 @@ export const initTestEditor = (options = {}) => {
     extensions: getStarterExtensions(),
     users: [],
     ...options
-  }); 
+  });
+  return {
+    editor,
+    dispatch: editor.view.dispatch
+  }
+};
+
+/**
+ * Get a new transaction from an editor instance
+ * 
+ * @param {Editor} editor 
+ * @returns {Transaction} A new transaction instance
+ */
+export const getNewTransaction = (editor) => {
+  const { view } = editor;
+  const { state, dispatch } = view;
+  return state.tr;
 }
