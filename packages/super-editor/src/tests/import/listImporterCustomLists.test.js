@@ -6,7 +6,7 @@ describe('[custom-list1.docx] test import custom lists', () => {
   const filename = 'custom-list1.docx';
   let docx, media, mediaFiles, fonts, editor;
   beforeAll(async () => ({ docx, media, mediaFiles, fonts } = await loadTestDataForEditorTests(filename)));
-  beforeEach(() => (editor = initTestEditor({ content: docx, media, mediaFiles, fonts })));
+  beforeEach(() => ({ editor } = initTestEditor({ content: docx, media, mediaFiles, fonts })));
 
   it('can import first element in custom list', () => {
     const state = editor.getJSON();
