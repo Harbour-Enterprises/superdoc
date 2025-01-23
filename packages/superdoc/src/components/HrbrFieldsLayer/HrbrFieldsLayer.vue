@@ -22,7 +22,7 @@ const getStyle = computed(() => (entry) => {
   const adjustTypes = ['TEXTINPUT', 'SELECT'];
   if (adjustTypes.includes(field.fieldType)) {
     const top = coordinates.top.split('px')[0];
-    const newTop = top - 13;
+    const newTop = top - 4;
     coordinates.top = `${newTop}px`;
   }
 
@@ -38,6 +38,7 @@ const getStyle = computed(() => (entry) => {
     position: 'absolute',
     //field,
     ...coordinates,
+    lineHeight: 1,
   };
 });
 
