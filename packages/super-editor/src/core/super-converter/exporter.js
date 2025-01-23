@@ -1079,7 +1079,7 @@ function translateImageNode(params, imageSize) {
     } else {
       const maxWidth = getMaxWidthInPixels(params.pageStyles);
       size.w = Math.min(pixelsToEmu(width), pixelsToEmu(maxWidth));
-      size.h = pixelsToEmu(size.w / aspectRatio);
+      size.h = size.w / aspectRatio;
     }
   }
 
