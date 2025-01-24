@@ -31,7 +31,7 @@
 
 /**
  * @typedef {Object} TelemetryConfig
- * @property {string} [dsn] - Data Source Name for telemetry service
+ * @property {string} [licenseKey] - License key for telemetry service
  * @property {string} [endpoint] - Optional override for telemetry endpoint
  * @property {boolean} [enabled=true] - Whether telemetry is enabled
  * @property {File} [fileSource] - current editor file
@@ -46,10 +46,7 @@ class Telemetry {
   #endpoint;
 
   /** @type {string} */
-  #projectId;
-
-  /** @type {string} */
-  #token;
+  #licenseKey;
   
   /** @type {object} */
   #documentConfig;
@@ -70,7 +67,10 @@ class Telemetry {
   static FLUSH_INTERVAL = 30000; // 30 seconds
 
   /** @type {string} */
-  static COMMUNITY_DSN = 'https://public@telemetry.superdoc.dev/community';
+  static COMMUNITY_LICENSE_KEY = 'community-and-eval-agplv3';
+
+  /** @type {string} */
+  static DEFAULT_ENDPOINT = 'https://telemetry.superdoc.dev/v1/collect';
 
   /**
    * Initialize telemetry service
@@ -80,11 +80,10 @@ class Telemetry {
     this.#enabled = config.enabled ?? true;
 
     try {
-      const dsn = config.dsn ?? Telemetry.COMMUNITY_DSN;
-      this.initTelemetry(config, dsn);
+      const licenseKey = config.licenseKey ?? Telemetry.COMMUNITY_LICENSE_KEY;
+      this.initTelemetry(config, licenseKey);
     } catch (error) {
-      console.warn('Invalid telemetry configuration, enabling community version:', error);
-      if (config.dsn) this.initTelemetry(config, Telemetry.COMMUNITY_DSN);
+      console.warn('Failed to initialize telemetry:', error);
       return;
     }
 
@@ -98,13 +97,11 @@ class Telemetry {
   /**
    * Init variables
    * @param {TelemetryConfig} config
-   * @param {string} dsn - Data Source Name for telemetry service
+   * @param {string} licenseKey - License key for telemetry service
    */
-  initTelemetry(config, dsn) {
-    const { projectId, token, endpoint } = this.#parseDsn(dsn);
-    this.#projectId = projectId;
-    this.#token = token;
-    this.#endpoint = config.endpoint ?? endpoint;
+  initTelemetry(config, licenseKey) {
+    this.#licenseKey = licenseKey;
+    this.#endpoint = config.endpoint ?? Telemetry.DEFAULT_ENDPOINT;
     this.#documentConfig = {
       documentId: config.documentId,
       internalId: config.internalId,
@@ -253,8 +250,7 @@ class Telemetry {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Project-ID': this.#projectId,
-          'X-Token': this.#token,
+          'X-License-Key': this.#licenseKey,
         },
         body: JSON.stringify(eventsToSend),
       });
@@ -279,25 +275,6 @@ class Telemetry {
         this.flush();
       }
     }, Telemetry.FLUSH_INTERVAL);
-  }
-
-  /**
-   * Parse DSN string into config
-   * @param {string} dsn
-   * @returns {{ projectId: string, token: string, endpoint: string }}
-   * @private
-   */
-  #parseDsn(dsn) {
-    try {
-      const url = new URL(dsn);
-      return {
-        token: url.username,
-        projectId: url.pathname.split('/')[1],
-        endpoint: `${url.protocol}//${url.host}/v1/collect`,
-      };
-    } catch (error) {
-      throw new Error(`Invalid DSN: ${error.message}`);
-    }
   }
 
   /**
