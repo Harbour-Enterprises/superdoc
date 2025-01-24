@@ -51,7 +51,7 @@ const readFilesRecursively = (xmlFiles) => {
  */
 export const loadTestDataForEditorTests = async (filename) => {
   const fileSource = await getTestDataAsFileBuffer(filename);
-  const [docx, media, mediaFiles, fonts] = await Editor.loadXmlData(fileSource);
+  const [docx, media, mediaFiles, fonts] = await Editor.loadXmlData(fileSource, true);
   return { docx, media, mediaFiles, fonts };
 };
 

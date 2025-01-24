@@ -61,10 +61,6 @@ export const getExportedResult = async (name) => {
     isFinalDoc: false,
     pageStyles: editor.converter.pageStyles,
     editor,
-    generatedNumberingDefs: {
-      abstractNums: [],
-      numDefs: [],
-    }
   });
 
   return result;
@@ -93,6 +89,7 @@ export const getExportedResultForAnnotations = async (isFinalDoc) => {
     media: {},
     isFinalDoc,
     pageStyles: editor.converter.pageStyles,
+    editor,
   });
 
   return { result, params };

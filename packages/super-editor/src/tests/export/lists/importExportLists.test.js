@@ -2,6 +2,7 @@
 import { beforeAll, beforeEach, expect } from 'vitest';
 import { TextSelection } from "prosemirror-state";
 import { loadTestDataForEditorTests, initTestEditor, getNewTransaction } from '@tests/helpers/helpers.js';
+import { handleEnter } from '@core/extensions/keymap.js';
 
 describe('[blank-doc.docx] import, add node, export', () => {
   const filename = 'blank-doc.docx';
@@ -12,8 +13,6 @@ describe('[blank-doc.docx] import, add node, export', () => {
     ({ editor, dispatch } = initTestEditor({ content: docx, media, mediaFiles, fonts }));
   });
 
-  // beforeEach(() => ({ editor, dispatch } = initTestEditor({ content: docx, media, mediaFiles, fonts })));
-
   it('starts with an empty document containing only a paragraph', () => {
     const currentState = editor.getJSON();
     expect(currentState.content.length).toBe(1);
@@ -21,7 +20,9 @@ describe('[blank-doc.docx] import, add node, export', () => {
   });
 
   it('can start an ordered list', () => {
+    // Generate a new list, track the list ID to check it later
     editor.commands.toggleOrderedList();
+
     const currentState = editor.getJSON();
     expect(currentState.content.length).toBe(1);
     expect(currentState.content[0].type).toBe('orderedList');
@@ -64,13 +65,13 @@ describe('[blank-doc.docx] import, add node, export', () => {
 
     const numIdTag = numPr.elements.find((el) => el.name === 'w:numId');
     const numId = numIdTag.attributes['w:val'];
-    expect(numId).toBe(2);
+    expect(numId).toBe(3);
 
     const lvl = numPr.elements.find((el) => el.name === 'w:ilvl');
     const lvlText = lvl.attributes['w:val'];
     expect(lvlText).toBe(0);
 
-    const runText = listItem.elements[1].elements[0].elements[0].text;
+    const runText = listItem.elements[2].elements[0].elements[0].text;
     expect(runText).toBe('hello world');
 
   });
@@ -135,7 +136,7 @@ describe('[blank-doc.docx] import, add node, export', () => {
 
   });
 
-  it('exports list correctly with break', () => {
+  it('exports list correctly with break', async () => {
     const { result: exported } = editor.converter.exportToXmlJson({
       data: editor.getJSON(),
       editor
@@ -150,13 +151,13 @@ describe('[blank-doc.docx] import, add node, export', () => {
 
     const numIdTag = numPr.elements.find((el) => el.name === 'w:numId');
     const numId = numIdTag.attributes['w:val'];
-    expect(numId).toBe(2);
+    expect(numId).toBe(3);
 
     const lvl = numPr.elements.find((el) => el.name === 'w:ilvl');
     const lvlText = lvl.attributes['w:val'];
     expect(lvlText).toBe(0);
 
-    const runText = firstItem.elements[1].elements[0].elements[0].text;
+    const runText = firstItem.elements[2].elements[0].elements[0].text;
     expect(runText).toBe('hello world');
 
     // Check we now have a paragraph between elements
@@ -173,10 +174,44 @@ describe('[blank-doc.docx] import, add node, export', () => {
 
     const numIdTag2 = numPr2.elements.find((el) => el.name === 'w:numId');
     const numId2 = numIdTag2.attributes['w:val'];
-    expect(numId2).toBe(2);
-
+    expect(numId2).toBe(3);
+ 
     const lvl2 = numPr2.elements.find((el) => el.name === 'w:ilvl');
     const lvlText2 = lvl2.attributes['w:val'];
     expect(lvlText2).toBe(0);
   });
+  
+  it('can add a new list in between separated (synced) list items', async () => {
+    // Set the selection in between the two lists after the '--- break' text
+    let tr = getNewTransaction(editor);
+    tr.setSelection(TextSelection.create(editor.state.doc, 27));
+    dispatch(tr);
+
+    // Simulate enter key to add a blank line
+    handleEnter(editor);
+    handleEnter(editor);
+
+    // Move the selection to the end of the new list
+    tr = getNewTransaction(editor);
+    tr.setSelection(TextSelection.create(editor.state.doc, 29));
+    dispatch(tr);
+
+    // Toggle a new ordered list in the blank line
+    editor.commands.toggleOrderedList();
+
+    editor.state.doc.descendants((node, pos) => {
+      console.debug(pos, node.type.name);
+    });
+
+    const content = editor.getJSON();
+    await save(editor);
+  });
+
 });
+
+const save = async (editor) => {
+    // save to local file
+    const exportResult = await editor.exportDocx();
+    const { writeFile } = await import('node:fs/promises');
+    await writeFile('abc.docx', exportResult);
+};

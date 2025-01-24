@@ -124,7 +124,6 @@ function handleListNodes(
       getNodeNumberingDefinition(attributes, listLevel, docx);
     listStyleType = listOrderingType;
     const intLevel = parseInt(ilvl);
-
     const isRoot = actualListLevel === intLevel && numId === currentListNumId;
     const isSameListLevelDef = isSameListLevelDefsExceptStart({
       firstListId: numId,

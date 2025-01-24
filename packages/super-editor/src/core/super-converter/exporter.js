@@ -93,6 +93,8 @@ export function exportSchemaToJson(params) {
 function translateBodyNode(params) {
   const sectPr = params.bodyNode?.elements.find((n) => n.name === 'w:sectPr') || {};
   const elements = translateChildNodes(params);
+
+  // console.debug('BODY', elements);
   return {
     name: 'w:body',
     elements: [...elements, sectPr],
@@ -246,13 +248,25 @@ function translateChildNodes(params) {
   if (!nodes) return [];
 
   const translatedNodes = [];
+  let hasEmpty = false;
   nodes.forEach((node) => {
+    if (!node.content?.length && node.type === 'paragraph') { 
+      // console.debug('node IS EMPTY content', node)
+      hasEmpty = true;
+    }
     const translatedNode = exportSchemaToJson({ ...params, node });
+    if (!node.content?.length && node.type === 'paragraph') { 
+      // console.debug('translatedNode', translatedNode);
+    }
+  
     if (translatedNode instanceof Array) translatedNodes.push(...translatedNode);
     else translatedNodes.push(translatedNode);
   });
 
   // Filter out any null nodes
+  if (hasEmpty) {
+    // console.debug('translatedNodes', translatedNodes);
+  }
   return translatedNodes.filter((n) => n);
 }
 
@@ -496,24 +510,19 @@ function translateList(params) {
 
   const listNodes = [];
   flatContent.forEach((listNode) => {
-    const { content: innerContent, level, listType } = listNode;
-    const pNode = innerContent[0];
-    const { listId: pNodeId, lvlJc, ...rest } = pNode.attrs || {};
-    pNode.attrs = { ...rest };
-    const result = translateParagraphNode({ ...params, node: innerContent[0] });
-
-    // Get the pPr and update it to use new list ID if necessary (if list is generated)
-    // Note: listNode.listId is null if this is a SuperDoc-generated list. If it is imported, then it already has an ID
-    const filteredElements = result.elements.filter((el) => el.name !== 'w:pPr' || el.elements.length);
-    const listId = listNode.listId ? listNode.listId : generateNewListDefinition(params, listType);  
-    const pPr = getListParagraphProperties(level, listId);
+    const { content: innerContent, level, listType, pPrs: additionalPprs } = listNode;
+    const attrsNumId = listNode.attrs.numId;
+    const result = translateChildNodes({ ...params, node: listNode });
+  
+    const actualNumId = attrsNumId || listNode.listId;
+    const listId = actualNumId ?? generateNewListDefinition(params, listType);
+    const pPr = getListParagraphProperties(level, listId, additionalPprs);
 
     // Add the pPr at the start of the elements
-    filteredElements.unshift(pPr);
-    result.elements = filteredElements;
+    result[0].elements.unshift(pPr);
 
     // Append the node
-    listNodes.push(result);
+    listNodes.push(...result);
   });
 
   return listNodes;
@@ -529,9 +538,6 @@ function translateList(params) {
  */
 function generateNewListDefinition(params, listType) {
   // Generate a new numId to add to numbering.xml
-  const newAbstracts = params.generatedNumberingDefs.abstractNums;
-  const newNumDefs = params.generatedNumberingDefs.numDefs;
-
   const definition = listType === 'decimal' ? baseOrderedListDef : baseBulletList;
   const numbering = params.editor.converter.numbering;
 
@@ -544,10 +550,10 @@ function generateNewListDefinition(params, listType) {
       'w:abstractNumId': String(newAbstractId),
     }
   };
-  newAbstracts.push(newAbstractDef);
+  numbering.abstracts[newAbstractId] = newAbstractDef;
 
   // Generate the new numId definition
-  const highestNumDefKey = Math.max(...Object.keys(numbering.abstracts).map(Number)) + 1;
+  const highestNumDefKey = Math.max(...Object.keys(numbering.definitions).map(Number)) + 1;
   const newNumDef = {
     type: 'element',
     name: 'w:num',
@@ -559,7 +565,9 @@ function generateNewListDefinition(params, listType) {
       { name: 'w:abstractNumId', attributes: { 'w:val': String(newAbstractId) } },
     ]
   };
-  newNumDefs.push(newNumDef);
+  numbering.definitions[highestNumDefKey] = newNumDef;
+
+  console.debug('Generated list def. Abstract:', newAbstractId, 'Num:', highestNumDefKey);
   return highestNumDefKey;
 };
 
@@ -571,7 +579,7 @@ function generateNewListDefinition(params, listType) {
  * @param {string} type The list type
  * @returns {XmlReadyNode} The list paragraph properties node
  */
-function getListParagraphProperties(level, numId) {
+function getListParagraphProperties(level, numId, additionalPprs = []) {
   return {
     name: 'w:pPr',
     type: 'element',
@@ -592,6 +600,7 @@ function getListParagraphProperties(level, numId) {
           },
         ],
       },
+      ...additionalPprs,
     ],
   };
 }
@@ -600,9 +609,12 @@ function getListParagraphProperties(level, numId) {
  * Flatten list nodes for processing.
  */
 function flattenContent({ node }) {
-  const { content } = node;
-  const { listId } = node.attrs || {};
+  const { content, attrs = {} } = node;
+  const { listId, syncId } = node.attrs || {};
   const listType = node.attrs['list-style-type'];
+
+  const { attributes = {} } = attrs;
+  const pPrs = attributes?.parentAttributes?.paragraphProperties?.elements?.filter((el) => el.name !== 'w:numPr') || [];
 
   const flatContent = [];
   function recursiveFlatten(items, level = 0) {
@@ -610,7 +622,7 @@ function flattenContent({ node }) {
     items.forEach((item) => {
       const subList = item.content.filter((c) => c.type === 'bulletList' || c.type === 'orderedList');
       const notLists = item.content.filter((c) => c.type !== 'bulletList' && c.type !== 'orderedList');
-      const newItem = { ...item, content: notLists, listId, level, listType };
+      const newItem = { ...item, content: notLists, listId, level, listType, syncId, pPrs };
       flatContent.push(newItem);
 
       if (subList.length) {

@@ -103,6 +103,7 @@ export const splitListItem = (typeOrName) => (props) => {
     const { selection, storedMarks } = state;
     const { splittableMarks } = editor.extensionService;
     const marks = storedMarks || (selection.$to.parentOffset && selection.$from.marks());
+    console.debug('MARKS', marks);
 
     tr.split($from.pos, 2, types).scrollIntoView();
 

@@ -471,11 +471,11 @@ export class Editor extends EventEmitter {
    * Load the data from DOCX to be used in the schema.
    * Expects a DOCX file.
    */
-  static async loadXmlData(fileSource) {
+  static async loadXmlData(fileSource, isNode = false) {
     if (!fileSource) return;
 
     const zipper = new DocxZipper();
-    const xmlFiles = await zipper.getDocxData(fileSource);
+    const xmlFiles = await zipper.getDocxData(fileSource, isNode);
     const mediaFiles = zipper.media;
 
     return [xmlFiles, mediaFiles, zipper.mediaFiles, zipper.fonts];

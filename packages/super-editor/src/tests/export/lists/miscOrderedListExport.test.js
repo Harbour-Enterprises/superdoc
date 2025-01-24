@@ -39,7 +39,7 @@ describe('[orderedlist_interrupted1.docx] interrupted ordered list tests', async
     const firstList = body.elements[0];
   
     // Check if pPr is correct
-    const firstListPprList = firstList.elements.filter((n) => n.name = 'w:pPr');
+    const firstListPprList = firstList.elements.filter((n) => n.name = 'w:pPr' && n.elements.length);
     expect(firstListPprList.length).toBe(2);
 
     const firstListPpr = firstListPprList[0];
@@ -67,9 +67,9 @@ describe('[custom_list1.docx] interrupted ordered list tests', async () => {
 
   it('exports custom list definition correctly', () => {
     const firstList = body.elements[0];
-    const firstListPprList = firstList.elements.filter((n) => n.name = 'w:pPr');
+    const firstListPprList = firstList.elements.filter((n) => n.name = 'w:pPr' && n.elements.length);
     const firstListPpr = firstListPprList[0];
-    expect(firstListPpr.elements.length).toBe(1);
+    expect(firstListPpr.elements.length).toBe(4);
 
     const numPr = firstListPpr.elements.find((n) => n.name === 'w:numPr');
     const numIdTag = numPr.elements.find((n) => n.name === 'w:numId');

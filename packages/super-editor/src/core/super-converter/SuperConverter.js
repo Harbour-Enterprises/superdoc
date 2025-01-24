@@ -197,7 +197,6 @@ class SuperConverter {
 
   exportToXmlJson({ data, editor, isFinalDoc = false }) {
     const bodyNode = this.savedTagsToRestore.find((el) => el.name === 'w:body');
-    const documentMedia = editor.storage.image.media;
     const editorSchema = editor.schema;
     const [result, params] = exportSchemaToJson({
       node: data,
@@ -209,10 +208,6 @@ class SuperConverter {
       editorSchema,
       pageStyles: this.pageStyles,
       editor,
-      generatedNumberingDefs: {
-        abstractNums: [],
-        numDefs: [],
-      }
     });
     return { result, params };
   }
@@ -223,6 +218,7 @@ class SuperConverter {
     const xml = exporter.schemaToXml(result);
 
     // Update media
+    const documentMedia = editor.storage.image.media;
     await this.#exportProcessMediaFiles({
       ...documentMedia,
       ...params.media,
@@ -233,20 +229,23 @@ class SuperConverter {
     this.#exportProcessNewRelationships(params.relationships);
 
     // Update the numbering.xml
-    this.#exportNumberingFile(params.generatedNumberingDefs);
+    this.#exportNumberingFile(params);
 
     return xml;
   };
 
-  #exportNumberingFile({ abstractNums = [], numDefs = [] }) {
+  #exportNumberingFile(params) {
     const numberingPath = 'word/numbering.xml';
     let numberingXml = this.convertedXml[numberingPath];
 
-    if (!numberingXml) numberingXml = baseNumbering;
-    const numbering = numberingXml.elements[0];
+    const newNumbering = params.editor.converter.numbering;
 
-    numbering.elements.push(...abstractNums);
-    numbering.elements.push(...numDefs);
+    if (!numberingXml) numberingXml = baseNumbering;
+    const currentNumberingXml = numberingXml.elements[0];
+
+    const newAbstracts = Object.values(newNumbering.abstracts).map((entry) => entry);
+    const newNumDefs = Object.values(newNumbering.definitions).map((entry) => entry);
+    currentNumberingXml.elements = [...newAbstracts, ...newNumDefs];
 
     // Update the numbering file
     this.convertedXml[numberingPath] = numberingXml;
