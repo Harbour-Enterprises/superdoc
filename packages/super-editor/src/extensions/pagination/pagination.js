@@ -67,7 +67,12 @@ export const Pagination = Extension.create({
             shouldUpdate = true;
             shouldInitialize = meta.isReadyToInit;
           };
-      
+
+          const isAnnotationUpdate = tr.getMeta('fieldAnnotationUpdate');
+          if (isAnnotationUpdate) {
+            return { ...oldState }
+          }
+
           if (!shouldInitialize && !oldState.isReadyToInit) {
             if (isDebugging) console.debug('🚫 NO INIT')
             return { ...oldState }
@@ -82,8 +87,10 @@ export const Pagination = Extension.create({
             }
           };
 
+          const isForceUpdate = tr.getMeta('forceUpdatePagination');
+
           // If the document hasn't changed, and we've already initialized, don't update
-          if (prevEditorState.doc.eq(newEditorState.doc) && hasInitialized) {
+          if (!isForceUpdate && prevEditorState.doc.eq(newEditorState.doc) && hasInitialized) {
             if (isDebugging) console.debug('🚫 NO UPDATE')
             shouldUpdate = false;
             return { ...oldState };
@@ -288,24 +295,19 @@ function generateInternalPageBreaks(doc, view, editor, sectionData) {
       header = createHeader(pageMargins, pageSize, sectionData, headerId);
       footer = createFooter(pageMargins, pageSize, sectionData, footerId);
 
+      const bufferHeight = pageHeightThreshold - actualBreakBottom;
+      const { node: spacingNode } = createFinalPagePadding(bufferHeight);
+      const pageSpacer = Decoration.widget(breakPos, spacingNode, { key: 'stable-key' });
+      decorations.push(pageSpacer);
+
+      const pageBreak = createPageBreak({ editor, header, footer });
+      decorations.push(Decoration.widget(breakPos, pageBreak, { key: 'stable-key' }));
+
       // Check if we have a hard page break node
       // If so, calculate and add spacer to push us into a next page
       if (isHardBreakNode) {
-        const bufferHeight = pageHeightThreshold - actualBreakBottom;
-        const { node: spacingNode } = createFinalPagePadding(bufferHeight);
-        const pageSpacer = Decoration.widget(breakPos, spacingNode, { key: 'stable-key' });
-        decorations.push(pageSpacer);
-
-        const pageBreak = createPageBreak({ editor, header, footer });
-        decorations.push(Decoration.widget(breakPos, pageBreak, { key: 'stable-key' }));
         hardBreakOffsets += pageHeight;
       }
-
-      // Otherwise, check if we should add a page break
-      else if (shouldAddPageBreak) {
-        const pageBreak = createPageBreak({ editor, footer, header, });
-        decorations.push(Decoration.widget(breakPos, pageBreak, { key: 'stable-key' }));
-      };
 
       // Recalculate the page threshold based on where we actually inserted the break
       pageHeightThreshold = actualBreakBottom + (pageHeight - header.headerHeight - footer.footerHeight);

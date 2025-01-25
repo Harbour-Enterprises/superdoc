@@ -195,6 +195,15 @@ export const FieldAnnotation = Node.create({
         },
       },
 
+      size: {
+        default: null,
+        renderDOM: ({ size }) => {
+          if (!size || !size.width) return {};
+          const style = `width: ${size.width}px; height: ${size.height}px; overflow: hidden;`;
+          return { style };
+        },
+      },
+
       extras: {
         default: {},
         rendered: false,
@@ -446,7 +455,12 @@ export const FieldAnnotation = Node.create({
           }
 
           if (dispatch) {
-            return commands.updateFieldAnnotationsAttributes([annotation], attrs);
+            commands.updateFieldAnnotationsAttributes([annotation], attrs);
+
+            const newTr = this.editor.view.state.tr;
+            newTr.setMeta('forceUpdatePagination', true);
+            this.editor.view.dispatch(newTr);
+            return true;
           }
 
           return true;
@@ -471,7 +485,7 @@ export const FieldAnnotation = Node.create({
             let newPos = tr.mapping.map(pos);
             let currentNode = tr.doc.nodeAt(pos);
             let nodeEqual = node.attrs.fieldId === currentNode.attrs.fieldId;
-            
+
             if (nodeEqual) {
               tr.setNodeMarkup(newPos, undefined, {
                 ...node.attrs,

@@ -572,6 +572,20 @@ export class Editor extends EventEmitter {
     });
   }
 
+  getMaxContentSize() {
+    const { pageSize = {}, pageMargins = {} } = this.converter.pageStyles ?? {};
+    const { width, height } = pageSize;
+    const { top, bottom, left, right } = pageMargins;
+
+    // All sizes are in inches so we multiply by 96 to get pixels
+    const maxHeight = height * 96 - top * 96 - bottom * 96 - 50;
+    const maxWidth = width * 96 - left * 96 - right * 96 - 50;
+    return {
+      width: maxWidth,
+      height: maxHeight,
+    }
+  }
+
   /**
    * Initialize default styles for the editor container and prose mirror.
    * Get page size and margins from the converter.
