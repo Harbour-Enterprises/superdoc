@@ -39,7 +39,6 @@ export const ImagePlaceholderPlugin = (options = {}) => {
         } else if (action?.type === 'remove') {
           set = set.remove(set.find(null, null, (spec) => spec.id == action.id));
         }
-
         return set;
       },
     },

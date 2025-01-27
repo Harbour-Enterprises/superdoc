@@ -22,15 +22,10 @@ export const startImageUpload = async ({ editor, view, file }) => {
   let height;
 
   try {
-    ({ width, height } = await getImageFileDimensions(file));
+    ({ width, height } = await getImageFileDimensions(file, editor));
   } catch (err) {
     return;
   }
-
-  let pmElement = editor.element?.querySelector('.ProseMirror');
-  let maxWidth = pmElement?.clientWidth ?? MAX_WIDTH;
-
-  ({ width, height } = resizeImageIfNeeded(width, height, maxWidth));
 
   // A fresh object to act as the ID for this upload
   let id = {};
@@ -84,6 +79,20 @@ export const startImageUpload = async ({ editor, view, file }) => {
           .replaceWith(placeholderPos, placeholderPos, imageNode) // or .insert(placeholderPos, imageNode)
           .setMeta(ImagePlaceholderPluginKey, removeMeta),
       );
+
+      const onImageLoad = () => {
+        const newTr = editor.view.state.tr;
+        newTr.setMeta('forceUpdatePagination', true);
+        editor.view.dispatch(newTr);
+      };
+
+      // Wait for transaction and then attach a load event listener to the image
+      // Since we need to know when it is finished loading in order to update the layout
+      setTimeout(() => {
+        const domImage = view.domAtPos(placeholderPos).node.querySelector("img");
+        domImage?.addEventListener("load", onImageLoad);
+      }, 0);
+
     },
     () => {
       let removeMeta = { type: 'remove', id };
@@ -93,14 +102,3 @@ export const startImageUpload = async ({ editor, view, file }) => {
     },
   );
 };
-
-function resizeImageIfNeeded(width, height, maxWidth) {
-  if (width > maxWidth) {
-    let scale = maxWidth / width;
-    let newWidth = maxWidth;
-    let newHeight = Math.round(height * scale);
-    return { width: newWidth, height: newHeight };
-  }
-
-  return { width, height };
-}

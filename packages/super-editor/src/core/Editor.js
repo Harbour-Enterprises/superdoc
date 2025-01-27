@@ -575,11 +575,13 @@ export class Editor extends EventEmitter {
   getMaxContentSize() {
     const { pageSize = {}, pageMargins = {} } = this.converter.pageStyles ?? {};
     const { width, height } = pageSize;
-    const { top, bottom, left, right } = pageMargins;
+    const { top = 0, bottom = 0, left = 0, right = 0 } = pageMargins;
 
     // All sizes are in inches so we multiply by 96 to get pixels
+    if (!width || !height) return {};
+
     const maxHeight = height * 96 - top * 96 - bottom * 96 - 50;
-    const maxWidth = width * 96 - left * 96 - right * 96 - 50;
+    const maxWidth = width * 96 - left * 96 - right * 96 - 20;
     return {
       width: maxWidth,
       height: maxHeight,
