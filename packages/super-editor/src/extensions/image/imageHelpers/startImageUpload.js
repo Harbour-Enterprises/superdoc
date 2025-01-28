@@ -1,8 +1,6 @@
 import { ImagePlaceholderPluginKey, findPlaceholder } from './imagePlaceholderPlugin.js';
 import { handleImageUpload as handleImageUploadDefault } from './handleImageUpload.js';
-import { getImageFileDimensions } from './getImageFileDimensions.js';
-
-const MAX_WIDTH = 600;
+import { processUploadedImage } from './processUploadedImage.js';
 
 export const startImageUpload = async ({ editor, view, file }) => {
   // Handler from config or default
@@ -20,10 +18,14 @@ export const startImageUpload = async ({ editor, view, file }) => {
 
   let width;
   let height;
-
   try {
-    ({ width, height } = await getImageFileDimensions(file, editor));
+    // Will process the image file in place
+    const processedImageResult = await processUploadedImage(file, editor);
+    width = processedImageResult.width;
+    height = processedImageResult.height;
+    file = processedImageResult.file;
   } catch (err) {
+    console.warn('Error processing image:', err);
     return;
   }
 
@@ -79,20 +81,6 @@ export const startImageUpload = async ({ editor, view, file }) => {
           .replaceWith(placeholderPos, placeholderPos, imageNode) // or .insert(placeholderPos, imageNode)
           .setMeta(ImagePlaceholderPluginKey, removeMeta),
       );
-
-      const onImageLoad = () => {
-        const newTr = editor.view.state.tr;
-        newTr.setMeta('forceUpdatePagination', true);
-        editor.view.dispatch(newTr);
-      };
-
-      // Wait for transaction and then attach a load event listener to the image
-      // Since we need to know when it is finished loading in order to update the layout
-      setTimeout(() => {
-        const domImage = view.domAtPos(placeholderPos).node.querySelector("img");
-        domImage?.addEventListener("load", onImageLoad);
-      }, 0);
-
     },
     () => {
       let removeMeta = { type: 'remove', id };

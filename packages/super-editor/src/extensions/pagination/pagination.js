@@ -4,6 +4,7 @@ import { Extension } from '@core/Extension.js';
 import { Decoration, DecorationSet } from 'prosemirror-view';
 import { PaginationPluginKey } from './pagination-helpers.js';
 import { CollaborationPluginKey } from '@extensions/collaboration/collaboration.js';
+import { ImagePlaceholderPluginKey } from '@extensions/image/imageHelpers/imagePlaceholderPlugin.js';
 
 const isDebugging = false;
 
@@ -68,6 +69,19 @@ export const Pagination = Extension.create({
             shouldInitialize = meta.isReadyToInit;
           };
 
+          // We need special handling for images / the image placeholder plugin
+          const imagePluginTransaction = tr.getMeta(ImagePlaceholderPluginKey);
+          if (imagePluginTransaction) {
+            if (imagePluginTransaction.type === 'remove') {
+              const imagePos = imagePluginTransaction.pos;
+              const domImage = editor.view.domAtPos(imagePos).node.querySelector("img");
+              if (domImage.complete) onImageLoad(editor);
+              else domImage.onload = () => onImageLoad(editor);
+            };
+            console.debug('🚀 IMAGE PLUGIN TRANSACTION', tr)
+            return { ...oldState }
+          };
+
           const isAnnotationUpdate = tr.getMeta('fieldAnnotationUpdate');
           if (isAnnotationUpdate) {
             return { ...oldState }
@@ -99,6 +113,7 @@ export const Pagination = Extension.create({
           // content size
           shouldUpdate = true;
           if (isDebugging) console.debug('🚀 UPDATE DECORATIONS')
+          if (isForceUpdate) shouldUpdate = true;
 
           return {
             ...oldState,
@@ -502,4 +517,17 @@ function getActualBreakCoords(view, pos, calculatedThreshold) {
   };
 
   return actualBreak;
+};
+
+/**
+ * Special handling for images in pagination. Trigger a pagination update transaction after an image loads.
+ * @param {Editor} editor The editor instance
+ * @returns {void}
+ */
+const onImageLoad = (editor) => {
+  requestAnimationFrame(() => {
+    const newTr = editor.view.state.tr;
+    newTr.setMeta('forceUpdatePagination', true);
+    editor.view.dispatch(newTr);
+  });
 };

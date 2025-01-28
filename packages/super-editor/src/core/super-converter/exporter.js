@@ -7,6 +7,7 @@ import { inchesToTwips, pixelsToEightPoints, pixelsToEmu, pixelsToTwips } from '
 import { generateDocxRandomId } from '@helpers/generateDocxRandomId.js';
 import { DEFAULT_DOCX_DEFS } from './exporter-docx-defs.js';
 import { TrackDeleteMarkName, TrackInsertMarkName, TrackFormatMarkName } from '@extensions/track-changes/constants.js';
+import { h } from 'vue';
 
 /**
  * @typedef {Object} ExportParams
@@ -1030,26 +1031,17 @@ function translateMark(mark) {
   return markElement;
 }
 
-function getMaxWidthInPixels(pageStyles) {
-  const { pageSize, pageMargins } = pageStyles;
-  const { width } = pageSize;
-  const { left, right } = pageMargins;
-  const margin = left + right;
-  return (width - margin) * 96;
-};
-
 function translateImageNode(params, imageSize) {
   const {
     node: { attrs = {}, marks = [] },
   } = params;
 
   let imageId = attrs.rId;
-  let size = imageSize
-    ? Object.assign({}, imageSize)
-    : {
-        w: pixelsToEmu(attrs.size.width),
-        h: pixelsToEmu(attrs.size.height),
-      };
+  const size = attrs.size
+    ? {
+      w: pixelsToEmu(attrs.size.width),
+      h: pixelsToEmu(attrs.size.height),
+    } : imageSize;
 
   if (params.node.type === 'image' && !imageId) {
     const path = attrs.src?.split('word/')[1];
@@ -1066,21 +1058,6 @@ function translateImageNode(params, imageSize) {
 
     imageId = addNewImageRelationship(params, imageUrl);
     params.media[`${cleanUrl}_${hash}.${type}`] = attrs.imageSrc;
-  }
-
-  // Fields can receive 'extras' attrs which can contain different data.
-  // For images, we can place the correct height/width
-  if (attrs.extras?.aspectRatio) {
-    const { aspectRatio, width } = attrs.extras;
-    if (attrs.type === 'signature') {
-      const signatureHeight = 20;
-      size.h = pixelsToEmu(signatureHeight);
-      size.w = pixelsToEmu(signatureHeight * aspectRatio);
-    } else {
-      const maxWidth = getMaxWidthInPixels(params.pageStyles);
-      size.w = Math.min(pixelsToEmu(width), pixelsToEmu(maxWidth));
-      size.h = size.w / aspectRatio;
-    }
   }
 
   const inlineAttrs = attrs.originalPadding || {
