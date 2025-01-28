@@ -306,7 +306,6 @@ export const FieldAnnotation = Node.create({
     let imageRenderer = () => {
       let contentRenderer = () => {
         if (!imageSrc) return displayLabel;
-
         return [
           'img',
           {
@@ -460,7 +459,6 @@ export const FieldAnnotation = Node.create({
 
             if (this.editor.options.pagination) {
               setTimeout(() => {
-                console.debug('forceUpdatePagination');
                 const newTr = this.editor.view.state.tr;
                 newTr.setMeta('forceUpdatePagination', true);
                 this.editor.view.dispatch(newTr);

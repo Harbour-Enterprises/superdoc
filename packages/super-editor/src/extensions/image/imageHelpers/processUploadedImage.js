@@ -40,7 +40,6 @@ export const processUploadedImage = (fileData, editor) => {
 
 export const getAllowedImageDimensions = (width, height, editor) => {
   const { width: maxWidth, height: maxHeight } = editor.getMaxContentSize();
-  console.debug('maxWidth', maxWidth, 'maxHeight', maxHeight);
   if (!maxWidth || !maxHeight) return { width, height };
 
   let adjustedWidth = width;

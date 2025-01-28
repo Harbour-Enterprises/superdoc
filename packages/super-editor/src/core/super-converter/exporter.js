@@ -7,7 +7,6 @@ import { inchesToTwips, pixelsToEightPoints, pixelsToEmu, pixelsToTwips } from '
 import { generateDocxRandomId } from '@helpers/generateDocxRandomId.js';
 import { DEFAULT_DOCX_DEFS } from './exporter-docx-defs.js';
 import { TrackDeleteMarkName, TrackInsertMarkName, TrackFormatMarkName } from '@extensions/track-changes/constants.js';
-import { h } from 'vue';
 
 /**
  * @typedef {Object} ExportParams
