@@ -78,7 +78,6 @@ export const Pagination = Extension.create({
               if (domImage.complete) onImageLoad(editor);
               else domImage.onload = () => onImageLoad(editor);
             };
-            console.debug('🚀 IMAGE PLUGIN TRANSACTION', tr)
             return { ...oldState }
           };
 
