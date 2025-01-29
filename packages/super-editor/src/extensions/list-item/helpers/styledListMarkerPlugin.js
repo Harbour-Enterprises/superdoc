@@ -10,13 +10,19 @@ export function styledListMarker(options = {}) {
 
     state: {
       init(_, state) {
-        let decorations = getListMarkerDecorations(state);
+        const decorations = [
+          ...getListMarkerDecorations(state),
+          ...getListItemStylingFromParagraphProps(state),
+        ];
         return DecorationSet.create(state.doc, decorations);
       },
 
       apply(tr, oldDecorationSet, oldState, newState) {
         if (!tr.docChanged) return oldDecorationSet;
-        const decorations = getListMarkerDecorations(newState);
+        const decorations = [
+          ...getListMarkerDecorations(newState),
+          ...getListItemStylingFromParagraphProps(newState),
+        ];
         return DecorationSet.create(newState.doc, decorations);
       },
     },
@@ -79,8 +85,49 @@ function getListMarkerDecorations(state) {
     let fontFamilyAttrs = {
       style: `--marker-font-family: ${fontFamily ?? 'initial'}`,
     };
-
+    
     let attrs = Attribute.mergeAttributes(fontSizeAttrs, fontFamilyAttrs);
+
+    let dec = Decoration.node(pos, pos + node.nodeSize, attrs);
+    decorations.push(dec);
+  });
+
+  return decorations;
+}
+
+function getListItemStylingFromParagraphProps(state) {
+  let { doc } = state;
+  let decorations = [];
+  let listItems = findChildren(doc, (node) => node.type.name === 'listItem');
+
+  if (!listItems.length) {
+    return decorations;
+  }
+
+  listItems.forEach(({ node, pos }) => {
+    let jsAttrs = {};
+    let spacingAttrs = {};
+    
+    if (node.attrs.lvlJc) {
+      jsAttrs = {
+        style: `text-align: ${node.attrs.lvlJc === 'both' ? 'justify' : node.attrs.lvlJc}`,
+      }
+    }
+
+    if (node.attrs.spacing) {
+      const { lineSpaceBefore, lineSpaceAfter, line } = node.attrs.spacing;
+      const style = `
+            ${lineSpaceBefore ? `margin-top: ${lineSpaceBefore}px;` : ''}
+            ${lineSpaceAfter ? `margin-bottom: ${lineSpaceAfter}px;` : ''}
+            ${line ? `line-height: ${line}px;` : ''}
+          `.trim();
+      
+      spacingAttrs = {
+        style
+      };
+    }
+
+    let attrs = Attribute.mergeAttributes(spacingAttrs, jsAttrs);
 
     let dec = Decoration.node(pos, pos + node.nodeSize, attrs);
     decorations.push(dec);

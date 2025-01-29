@@ -70,7 +70,7 @@ export const ListItem = Node.create({
         default: null,
         rendered: false,
       },
-
+      
       // JC = justification. Expect left, right, center
       lvlJc: {
         default: null,
@@ -99,6 +99,11 @@ export const ListItem = Node.create({
       attributes: {
         rendered: false,
       },
+      
+      spacing: {
+        default: null,
+        rendered: false,
+      }
     };
   },
 

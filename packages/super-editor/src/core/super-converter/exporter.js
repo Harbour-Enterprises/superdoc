@@ -528,11 +528,13 @@ function getListParagraphProperties(node, level, type) {
 
   // numbering.xml reference
   if (node.attrs.numId) listType = node.attrs.numId;
+  const importAttributes = node.attrs.attributes?.parentAttributes?.paragraphProperties?.elements;
 
   return {
     name: 'w:pPr',
     type: 'element',
     elements: [
+      ...importAttributes.filter(attrs => attrs.name !== 'w:numPr'),
       {
         name: 'w:numPr',
         type: 'element',

@@ -1,6 +1,6 @@
 import { carbonCopy } from '../../../utilities/carbonCopy.js';
 import { hasTextNode, parseProperties } from './importerHelpers.js';
-import { preProcessNodesForFldChar } from './paragraphNodeImporter.js';
+import { preProcessNodesForFldChar, getParagraphSpacing } from './paragraphNodeImporter.js';
 import { mergeTextNodes } from './mergeTextNodes.js';
 import { ErrorWithDetails } from '../../../helpers/ErrorWithDetails.js';
 
@@ -18,7 +18,7 @@ export const handleListNode = (nodes, docx, nodeListHandler, insideTrackChange) 
   // We need to pre-process paragraph nodes to combine various possible elements we will find ie: lists, links.
   const processedElements = preProcessNodesForFldChar(node.elements);
   node.elements = processedElements;
-
+  
   const pPr = node.elements.find((el) => el.name === 'w:pPr');
 
   // Check if this paragraph node is a list
@@ -122,7 +122,7 @@ function handleListNodes(
     // As well as many other list properties
     const { attributes, elements, marks = [] } = parseProperties(item, docx);
     const textStyle = marks.find((mark) => mark.type === 'textStyle');
-
+    
     const { listType, listOrderingType, ilvl, listrPrs, listpPrs, start, lvlText, lvlJc, numId } =
       getNodeNumberingDefinition(attributes, listLevel, docx);
     listStyleType = listOrderingType;
@@ -177,13 +177,19 @@ function handleListNodes(
       nodeAttributes['textStyle'] = textStyle;
       nodeAttributes['order'] = start;
       nodeAttributes['lvlText'] = lvlText;
-      nodeAttributes['lvlJc'] = lvlJc;
+      nodeAttributes['lvlJc'] = textStyle?.attrs.textAlign;
       nodeAttributes['listLevel'] = thisItemPath;
       nodeAttributes['listNumberingType'] = listOrderingType;
       nodeAttributes['attributes'] = {
         parentAttributes: item?.attributes || null,
       };
       nodeAttributes['numId'] = numId;
+
+      if (docx) {
+        const defaultStyleId = item?.attributes['w:rsidRDefault'];
+        nodeAttributes['spacing'] = getParagraphSpacing(defaultStyleId, item, docx);
+      }
+
 
       const newListItem = createListItem(schemaElements, nodeAttributes, []);
       parsedListItems.push(newListItem);

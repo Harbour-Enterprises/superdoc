@@ -24,7 +24,8 @@ export const TextAlign = Extension.create({
             },
             renderDOM: (attrs) => {
               if (attrs.textAlign === this.options.defaultAlignment) return {};
-              return { style: `text-align: ${attrs.textAlign}` };
+              const textAlign = attrs.textAlign === 'both' ? 'justify' : attrs.textAlign;
+              return { style: `text-align: ${textAlign}` };
             },
           },
         },
