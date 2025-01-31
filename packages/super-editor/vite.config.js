@@ -3,6 +3,8 @@ import { fileURLToPath, URL } from 'node:url'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import vue from '@vitejs/plugin-vue'
 
+import { version as superdocVersion } from '../superdoc/package.json';
+
 export default defineConfig(({ mode }) => {
   const plugins = [vue()];
 
@@ -14,6 +16,9 @@ export default defineConfig(({ mode }) => {
     test: {
       globals: true,
       environment: 'jsdom',
+    },
+    define: {
+      __APP_VERSION__: JSON.stringify(superdocVersion),
     },
     optimizeDeps: {
       exclude: ['yjs', 'tippy.js']

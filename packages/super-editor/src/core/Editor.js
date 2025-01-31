@@ -846,11 +846,13 @@ export class Editor extends EventEmitter {
     const documentXml = await this.converter.exportToDocx(json, this.schema, this.storage.image.media, isFinalDoc);
     const relsData = this.converter.convertedXml['word/_rels/document.xml.rels'];
     const rels = this.converter.schemaToXml(relsData.elements[0]);
+    const customXml = this.converter.schemaToXml(this.converter.convertedXml['docProps/custom.xml'].elements[0]);
     const media = this.converter.addedMedia;
 
     const updatedDocs = {
       'word/document.xml': String(documentXml),
       'word/_rels/document.xml.rels': String(rels),
+      'docProps/custom.xml': String(customXml),
     };
 
     const zipper = new DocxZipper();

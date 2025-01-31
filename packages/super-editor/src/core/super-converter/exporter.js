@@ -525,7 +525,7 @@ function translateList(params) {
       listNodes.push(outputNode);
     });
   });
-  
+
   return listNodes;
 }
 
@@ -542,7 +542,7 @@ function getListParagraphProperties(node, level, type) {
 
   // numbering.xml reference
   if (node.attrs.numId) listType = node.attrs.numId;
-  const importAttributes = node.attrs.attributes?.parentAttributes?.paragraphProperties?.elements;
+  const importAttributes = node.attrs.attributes?.parentAttributes?.paragraphProperties?.elements || [];
 
   return {
     name: 'w:pPr',
@@ -1527,10 +1527,6 @@ export class DocxExporter {
     }
 
     if (!selfClosing) tags.push(`</${name}>`);
-
-    if (name === 'w:instrText') {
-      console.debug('INSTR TEXT', tags);
-    }
     return tags;
   }
 }

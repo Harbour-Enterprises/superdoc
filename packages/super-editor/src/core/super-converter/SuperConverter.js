@@ -3,6 +3,7 @@ import xmljs from 'xml-js';
 import { DocxExporter, exportSchemaToJson } from './exporter';
 import { createDocumentJson } from './v2/importer/docxImporter.js';
 import { getArrayBufferFromUrl } from './helpers.js';
+import { DEFAULT_CUSTOM_XML } from './exporter-docx-defs.js';
 
 class SuperConverter {
   static allowedElements = Object.freeze({
@@ -125,6 +126,24 @@ class SuperConverter {
     return JSON.parse(xmljs.xml2json(xml, null, 2));
   }
 
+  getStoredSuperdocVersion() {
+    try {
+      const customXml = this.convertedXml['docProps/custom.xml'];
+      if (!customXml) return;
+
+      const properties = customXml.elements.find((el) => el.name === 'Properties');
+      if (!properties.elements) return;
+
+      const superdocVersion = properties.elements.find((el) => el.name === 'property' && el.attributes.name === 'SuperdocVersion');
+      if (!superdocVersion) return;
+
+      const version = superdocVersion.elements[0].elements[0].elements[0].text;
+      return version;
+    } catch (e) {
+      return;
+    };
+  }
+
   getDocumentDefaultStyles() {
     const styles = this.convertedXml['word/styles.xml'];
     if (!styles) return {};
@@ -234,6 +253,9 @@ class SuperConverter {
     // Update the rels table
     this.#exportProcessNewRelationships(params.relationships);
 
+    // Store the SuperDoc version
+    this.#storeSuperdocVersion();
+
     return xml;
   }
 
@@ -262,6 +284,49 @@ class SuperConverter {
     this.media = this.convertedXml.media;
     this.addedMedia = processedData;
   }
+
+  #storeSuperdocVersion() {
+    const customLocation = 'docProps/custom.xml';
+    if (!this.convertedXml[customLocation]) {
+      this.convertedXml[customLocation] = this.#generateCustomXml(__APP_VERSION__);
+    }
+    const customXml = this.convertedXml[customLocation];
+    const properties = customXml.elements.find((el) => el.name === 'Properties');
+    if (!properties.elements) properties.elements = [];
+    const elements = properties.elements;
+    elements.push(this.#generateSuperdocVersion());
+  };
+
+  #generateCustomXml() {
+    return DEFAULT_CUSTOM_XML;
+  }
+
+  #generateSuperdocVersion() {
+    return {
+      type: "element",
+      name: "property",
+      attributes: {
+        name: "SuperdocVersion",
+        formatId: "{D5CDD505-2E9C-101B-9397-08002B2CF9AE}",
+        pid: "2"
+      },
+      elements: [
+        {
+          type: "element",
+          name: "vt:superdoc",
+          elements: [
+            {
+              name: "w:t",
+              elements: [{
+                type: "text",
+                text: __APP_VERSION__
+              }],
+            }
+          ]
+        }
+      ]
+    }
+  };
 }
 
 export { SuperConverter };
