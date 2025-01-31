@@ -34,3 +34,17 @@ export const DEFAULT_DOCX_DEFS = {
   'xmlns:wps': 'http://schemas.microsoft.com/office/word/2010/wordprocessingShape',
   'mc:Ignorable': 'w14 w15 w16se w16cid w16 w16cex w16sdtdh wp14',
 };
+
+export const DEFAULT_CUSTOM_XML = {
+  "elements": [
+    {
+      "type": "element",
+      "name": "Properties",
+      "attributes": {
+        "xmlns": "http://schemas.openxmlformats.org/officeDocument/2006/custom-properties",
+        "xmlns:vt": "http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"
+      },
+      "elements": []
+    }
+  ]
+};
