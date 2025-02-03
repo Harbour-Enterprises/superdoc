@@ -283,7 +283,15 @@ const updateToolbarState = () => {
 
 const handleEditorClick = ({ editor }) => updateToolbarState();
 
-const handleEditorKeydown = ({ editor }) => updateToolbarState();
+const handleEditorKeydown = ({ editor }) => {
+  const { view } = editor;
+  const currentLineText = view.state?.selection?.$head?.parent?.textContent || null;
+  const currentLineWords = currentLineText ? currentLineText.split(' ') : [''];
+  const currentWord = currentLineWords[currentLineWords.length - 1];
+  console.log('>>> current word', currentWord);
+
+  return updateToolbarState();
+}
 
 const editorOptions = (doc) => {
   const options = {
