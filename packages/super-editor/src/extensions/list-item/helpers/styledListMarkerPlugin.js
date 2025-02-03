@@ -105,15 +105,8 @@ function getListItemStylingFromParagraphProps(state) {
   }
 
   listItems.forEach(({ node, pos }) => {
-    let jsAttrs = {};
     let spacingAttrs = {};
     
-    if (node.attrs.lvlJc) {
-      jsAttrs = {
-        style: `text-align: ${node.attrs.lvlJc === 'both' ? 'justify' : node.attrs.lvlJc}`,
-      }
-    }
-
     if (node.attrs.spacing) {
       const { lineSpaceBefore, lineSpaceAfter, line } = node.attrs.spacing;
       const style = `
@@ -127,9 +120,7 @@ function getListItemStylingFromParagraphProps(state) {
       };
     }
 
-    let attrs = Attribute.mergeAttributes(spacingAttrs, jsAttrs);
-
-    let dec = Decoration.node(pos, pos + node.nodeSize, attrs);
+    let dec = Decoration.node(pos, pos + node.nodeSize, spacingAttrs);
     decorations.push(dec);
   });
 
