@@ -778,6 +778,8 @@ export class Editor extends EventEmitter {
       });
     }
 
+    this.toolbar?.updateToolbarState();
+    
     if (!transaction.docChanged) {
       return;
     }
