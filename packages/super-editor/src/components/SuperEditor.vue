@@ -122,7 +122,7 @@ const initEditor = async ({ content, media = {}, mediaFiles = {}, fonts = {} } =
 };
 
 const handleSuperEditorKeydown = (event) => {
-  emit('editor-keydown', { editor: editor.value });
+  emit('editor-keydown', { editor: editor.value, event });
 };
 
 const handleSuperEditorClick = (event) => {

@@ -79,6 +79,8 @@ const handleDocumentReady = (documentId, container) => {
   proxy.$superdoc.broadcastPdfDocumentReady();
 };
 
+const recentWord = ref(null);
+
 const handleToolClick = (tool) => {
   const toolOptions = {
     comments: showAddComment,
@@ -283,12 +285,37 @@ const updateToolbarState = () => {
 
 const handleEditorClick = ({ editor }) => updateToolbarState();
 
-const handleEditorKeydown = ({ editor }) => {
+const updateRecentWord = (word) => {
+  recentWord.value = word;
+};
+
+const insertLinkIntoText = ({editor, url}) => {
+  const { state, view } = editor;
+  const { from, to } = state.selection;
+  const tr = state.tr.insertText(`LINK{${url}}`, from, to);
+  view.dispatch(tr);
+};
+
+const handleEditorKeydown = ({ editor, event }) => {
   const { view } = editor;
   const currentLineText = view.state?.selection?.$head?.parent?.textContent || null;
   const currentLineWords = currentLineText ? currentLineText.split(' ') : [''];
-  const currentWord = currentLineWords[currentLineWords.length - 1];
-  console.log('>>> current word', currentWord);
+  const lastWordInLine = currentLineWords[currentLineWords.length - 1];
+
+  // update recent word buffer conditionally
+  if (lastWordInLine.trim()) recentWord.value = lastWordInLine;
+  
+  
+  // auto insert link
+  const { code: keyCode } = event;
+  const triggerKeyCodes = ['Space', 'Enter']
+  if (!triggerKeyCodes.includes(keyCode)) return;
+  
+  const isValidUrl = recentWord.value?.startsWith('http') || recentWord.value?.startsWith('www') || false;
+  if (isValidUrl) {
+    insertLinkIntoText({editor, url: recentWord.value});
+    recentWord.value = null;
+  }
 
   return updateToolbarState();
 }
