@@ -13,6 +13,7 @@ import {
   watch,
 } from 'vue';
 import { storeToRefs } from 'pinia';
+import { TextSelection, Selection } from 'prosemirror-state';
 
 import PdfViewer from './components/PdfViewer/PdfViewer.vue';
 import CommentsLayer from './components/CommentsLayer/CommentsLayer.vue';
@@ -289,7 +290,7 @@ const updateRecentWord = (word) => {
   recentWord.value = word;
 };
 
-const insertLinkIntoText = ({editor, url}) => {
+const insertLinkIntoText = ({ editor, url }) => {
   const { state, view } = editor;
   const { from, to } = state.selection;
   const tr = state.tr.insertText(`LINK{${url}}`, from, to);
@@ -299,21 +300,47 @@ const insertLinkIntoText = ({editor, url}) => {
 const handleEditorKeydown = ({ editor, event }) => {
   const { view } = editor;
   const currentLineText = view.state?.selection?.$head?.parent?.textContent || null;
+  if (!currentLineText) return;
+
   const currentLineWords = currentLineText ? currentLineText.split(' ') : [''];
   const lastWordInLine = currentLineWords[currentLineWords.length - 1];
 
   // update recent word buffer conditionally
   if (lastWordInLine.trim()) recentWord.value = lastWordInLine;
-  
-  
+
+
   // auto insert link
   const { code: keyCode } = event;
   const triggerKeyCodes = ['Space', 'Enter']
   if (!triggerKeyCodes.includes(keyCode)) return;
-  
+
+  // get recent word position in current line
+  const recentWordIndex = currentLineText.lastIndexOf(recentWord.value);
+  const isValidRecentWordIndex = Boolean(recentWordIndex >= 0);
+
   const isValidUrl = recentWord.value?.startsWith('http') || recentWord.value?.startsWith('www') || false;
-  if (isValidUrl) {
-    insertLinkIntoText({editor, url: recentWord.value});
+  if (isValidUrl && isValidRecentWordIndex) {
+    const { state, view } = editor;
+    let { tr, selection: oldSelection } = state;
+    console.log(">> oldSelection", oldSelection);
+
+    const from = recentWordIndex;
+    const to = from + recentWord.value.length;
+
+    // set selection for setLink command
+    const newSelection = new TextSelection(tr.doc.resolve(from), tr.doc.resolve(to + 1));
+    tr.setSelection(newSelection);
+    view.dispatch(tr);
+    editor.commands.setLink({ href: recentWord.value });
+
+    // send cursor to end of line
+    tr = editor.state.tr; // update transaction
+    const endOfLine = currentLineText.length + 1;
+    const newEndOfLineSelection = new TextSelection(tr.doc.resolve(endOfLine), tr.doc.resolve(endOfLine));
+    tr.setSelection(newEndOfLineSelection);
+    view.dispatch(tr);
+
+    // reset recent word buffer
     recentWord.value = null;
   }
 
@@ -543,90 +570,44 @@ const handlePdfClick = (e) => {
       </div>
 
       <div class="superdoc__document document">
-        <div
-          v-if="isCommentsEnabled"
-          class="superdoc__selection-layer selection-layer"
-          @mousedown="handleSelectionStart"
-          @mouseup="handleDragEnd"
-          ref="selectionLayer"
-        >
-          <div
-            :style="getSelectionPosition"
-            class="superdoc__temp-selection temp-selection sd-highlight sd-initial-highlight"
-            v-if="selectionPosition"
-          ></div>
+        <div v-if="isCommentsEnabled" class="superdoc__selection-layer selection-layer"
+          @mousedown="handleSelectionStart" @mouseup="handleDragEnd" ref="selectionLayer">
+          <div :style="getSelectionPosition"
+            class="superdoc__temp-selection temp-selection sd-highlight sd-initial-highlight" v-if="selectionPosition">
+          </div>
         </div>
 
         <!-- Fields layer -->
-        <HrbrFieldsLayer
-          v-if="'hrbr-fields' in modules && layers"
-          :fields="modules['hrbr-fields']"
-          class="superdoc__comments-layer comments-layer"
-          style="z-index: 5"
-          ref="hrbrFieldsLayer"
-        />
+        <HrbrFieldsLayer v-if="'hrbr-fields' in modules && layers" :fields="modules['hrbr-fields']"
+          class="superdoc__comments-layer comments-layer" style="z-index: 5" ref="hrbrFieldsLayer" />
 
         <!-- On-document comments layer -->
-        <CommentsLayer
-          class="superdoc__comments-layer comments-layer"
-          v-if="showCommentsSidebar"
-          style="z-index: 3"
-          ref="commentsLayer"
-          :parent="layers"
-          :user="user"
-          @highlight-click="handleHighlightClick"
-        />
+        <CommentsLayer class="superdoc__comments-layer comments-layer" v-if="showCommentsSidebar" style="z-index: 3"
+          ref="commentsLayer" :parent="layers" :user="user" @highlight-click="handleHighlightClick" />
 
         <div class="superdoc__sub-document sub-document" v-for="doc in documents" :key="doc.id">
           <!-- PDF renderer -->
 
-          <PdfViewer
-            v-if="doc.type === PDF"
-            :document-data="doc"
-            @selection-change="handleSelectionChange"
-            @ready="handleDocumentReady"
-            @page-loaded="handlePageReady"
-            @bypass-selection="handlePdfClick"
-          />
+          <PdfViewer v-if="doc.type === PDF" :document-data="doc" @selection-change="handleSelectionChange"
+            @ready="handleDocumentReady" @page-loaded="handlePageReady" @bypass-selection="handlePdfClick" />
 
-          <SuperEditor
-            v-if="doc.type === DOCX"
-            @editor-click="handleEditorClick"
-            @editor-keydown="handleEditorKeydown"
-            :file-source="doc.data"
-            :state="doc.state"
-            :document-id="doc.id"
-            :options="editorOptions(doc)"
-          />
+          <SuperEditor v-if="doc.type === DOCX" @editor-click="handleEditorClick" @editor-keydown="handleEditorKeydown"
+            :file-source="doc.data" :state="doc.state" :document-id="doc.id" :options="editorOptions(doc)" />
 
           <!-- omitting field props -->
-          <HtmlViewer
-            v-if="doc.type === HTML"
-            @ready="(id) => handleDocumentReady(id, null)"
-            @selection-change="handleSelectionChange"
-            :file-source="doc.data"
-            :document-id="doc.id"
-          />
+          <HtmlViewer v-if="doc.type === HTML" @ready="(id) => handleDocumentReady(id, null)"
+            @selection-change="handleSelectionChange" :file-source="doc.data" :document-id="doc.id" />
         </div>
       </div>
     </div>
 
     <div class="superdoc__right-sidebar right-sidebar" v-if="showCommentsSidebar">
-      <CommentDialog
-        v-if="pendingComment"
-        :data="pendingComment"
-        :current-document="getDocument(pendingComment.documentId)"
-        :user="user"
-        :parent="layers"
-        v-click-outside="cancelPendingComment"
-      />
+      <CommentDialog v-if="pendingComment" :data="pendingComment"
+        :current-document="getDocument(pendingComment.documentId)" :user="user" :parent="layers"
+        v-click-outside="cancelPendingComment" />
 
-      <FloatingComments
-        v-if="isReady"
-        v-for="doc in documentsWithConverations"
-        :parent="layers"
-        :current-document="doc"
-      />
+      <FloatingComments v-if="isReady" v-for="doc in documentsWithConverations" :parent="layers"
+        :current-document="doc" />
     </div>
   </div>
 </template>
@@ -636,7 +617,9 @@ const handlePdfClick = (e) => {
   display: flex;
 }
 
-.superdoc--with-sidebar { /*  */ }
+.superdoc--with-sidebar {
+  /*  */
+}
 
 .superdoc__layers {
   height: 100%;
@@ -718,6 +701,7 @@ const handlePdfClick = (e) => {
   height: 20px;
   flex-shrink: 0;
 }
+
 /* Tools styles - end */
 
 /* .docx {
