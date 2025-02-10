@@ -1,6 +1,7 @@
 import { Plugin, PluginKey } from 'prosemirror-state';
 import { Extension } from '@core/Extension.js';
 import { TrackInsertMarkName, TrackDeleteMarkName } from '../track-changes/constants.js';
+import { Decoration, DecorationSet } from "prosemirror-view";
 
 const CommentsPluginKey = new PluginKey('comments');
 
@@ -16,7 +17,12 @@ export const CommentsPlugin = Extension.create({
           const { $from, $to } = selection;
 
           const { conversationId: threadId } = conversation;
-          const startNode = this.editor.schema.nodes.commentRangeStart.create({ 'w:id': threadId });
+
+          const commentStartNodeAttrs = {
+            'w:id': threadId,
+            internal: true,
+          };
+          const startNode = this.editor.schema.nodes.commentRangeStart.create(commentStartNodeAttrs);
           const endNode = this.editor.schema.nodes.commentRangeEnd.create({ 'w:id': threadId });
           tr.insert($from.pos, startNode);
           tr.insert($to.pos + 2, endNode);
@@ -32,8 +38,12 @@ export const CommentsPlugin = Extension.create({
       key: CommentsPluginKey,
       state: {
         init(_, { doc, selection }) {
+          const { commentPositions, decorations:initialDecs } = processDocumentComments(editor, doc) || {};
+          const decorations = initialDecs.length ? DecorationSet.create(doc, initialDecs) : DecorationSet.empty;
+
           return {
-            commentPositions: processDocumentComments(editor, doc, selection) || {},
+            commentPositions,
+            decorations,
             activeThreadId: null,
           };
         },
@@ -41,27 +51,44 @@ export const CommentsPlugin = Extension.create({
           const { selection } = tr;
           const doc = newEditorState.doc;
 
-          let commentPositions = [];
           let activeThreadId = null;
 
-          commentPositions = processDocumentComments(editor, doc) || {};
-
           // If the selection changes, check if we're inside a comment
-          if (!tr.docChanged && tr.selectionSet) {
-            activeThreadId = getActiveCommentId(doc, selection);
-          }
+          // if (!tr.docChanged && tr.selectionSet) {
+          //   activeThreadId = getActiveCommentId(doc, selection);
+          // }
 
-          if (Object.keys(commentPositions)?.length || activeThreadId) {
-            tr.setMeta('commentsPluginState', { commentPositions, activeThreadId });
-            editor.emit('commentsUpdate', { editor, transaction: tr });
-          }
+          // if (Object.keys(commentPositions)?.length || activeThreadId) {
+          //   tr.setMeta('commentsPluginState', { commentPositions, activeThreadId });
+          //   editor.emit('commentsUpdate', { editor, transaction: tr });
+          // }
 
+          tr.mapping.maps.forEach((stepMap, i) => {
+            stepMap.forEach((oldStart, oldEnd, newStart, newEnd) => {
+              let node = newEditorState.doc.nodeAt(newStart);
+              if (node && node.type.name === "commentRangeEnd") {
+                const params = {
+                  type: 'new',
+                  id: node.attrs['w:id'],
+                };
+                // editor.emit('commentsUpdate', params);
+              }
+            });
+          });
+          
+          const { commentPositions, decorations } = processDocumentComments(editor, doc) || {};
           return {
             commentPositions,
             activeThreadId,
+            decorations: DecorationSet.create(doc, decorations),
           };
         },
       },
+      props: {
+        decorations(state) {
+          return this.getState(state).decorations;
+        }
+      }
     });
     return [commentsPlugin];
   },
@@ -150,43 +177,29 @@ const updatePositions = (view, pos, currentPos) => {
  * @param {Number} pos The position of the node
  * @returns {void} allCommentPositions is modified in place
  */
-const trackCommentNodes = (view, allCommentPositions, node, pos) => {
-  const openNodes = new Set();
+const trackCommentNodes = (view, allCommentPositions, decorations, node, pos) => {
   const commentIds = new Set();
   const threadId = node.attrs['w:id'];
 
   if (threadId && node.type.name === 'commentRangeStart') {
     commentIds.add(threadId);
-    let startPos = pos;
-
-    // Track DOM positions of all comment nodes
-    const domBounds = view.coordsAtPos(pos);
-    const domBoundsRight = view.coordsAtPos(startPos + 1);
     allCommentPositions[threadId] = {
       threadId,
-      top: domBounds.top,
-      left: domBounds.left,
-      right: domBoundsRight.right,
-      bottom: domBoundsRight.bottom,
+      start: pos,
+      end: null,
+      internal: node.attrs.internal,
     };
-
-    // Keep track that we are inside this node currently
-    openNodes.add(threadId);
   } else if (node.type.name === 'commentRangeEnd') {
-    const currentCoords = allCommentPositions[threadId];
-    allCommentPositions[threadId] = updatePositions(view, pos, currentCoords);
+    const currentItem = allCommentPositions[threadId];
+    currentItem.end = pos + node.nodeSize;
 
-    // We are finished with this node, remove it from our open-node tracker
-    openNodes.delete(threadId);
-  }
-
-  // Check all nodes between commentRangeStart and commentRangeEnd to update positions
-  else {
-    openNodes.forEach((threadId) => {
-      const currentCoords = allCommentPositions[threadId];
-      allCommentPositions[threadId] = updatePositions(view, pos, currentCoords);
-    });
-  }
+    const deco = Decoration.inline(
+      currentItem.start,
+      currentItem.end + 1,
+      { style: "background-color: #D2E5E6;" }
+    );
+    decorations.push(deco);
+  };
 };
 
 /**
@@ -198,17 +211,22 @@ const trackCommentNodes = (view, allCommentPositions, node, pos) => {
 const processDocumentComments = (editor, doc) => {
   const { view } = editor;
   const allCommentPositions = {};
+  const decorations = [];
 
   // Both of the funcitons below alter coordinates in allCommentPositions
   doc.descendants((node, pos) => {
     // Try to track comment nodes
-    trackCommentNodes(view, allCommentPositions, node, pos);
+    trackCommentNodes(view, allCommentPositions, decorations, node, pos);
 
     // Try to track any tracked changes nodes
-    trackTrackedChangeNodes(view, allCommentPositions, node, pos);
+    // trackTrackedChangeNodes(view, allCommentPositions, node, pos);
+
   });
 
-  return allCommentPositions;
+  return {
+    commentPositions: allCommentPositions,
+    decorations,
+  };
 };
 
 /**
