@@ -116,6 +116,7 @@ export class SuperDoc extends EventEmitter {
     this.isDev = this.config.isDev || false;
 
     this.activeEditor = null;
+    this.comments = [];
 
     this.app.mount(this.config.selector);
 
@@ -179,17 +180,38 @@ export class SuperDoc extends EventEmitter {
       url: collaborationModuleConfig.url,
     });
 
-    // Initialize global superdoc sync - for comments, etc.
-    // TODO: Leaving it in here for reference as this will be complete soon.
-    // this.ydoc = new YDoc();
-    // const options = {
-    //   config: collaborationModuleConfig,
-    //   ydoc: this.ydoc,
-    //   user: this.config.user,
-    //   documentId: this.superdocId
-    // };
-    // this.provider = createProvider(options);
-    // this.log('[superdoc] Provider:', options);
+    // Initialize global superdoc sync - for comments, view, etc.
+    const superdocCollaborationOptions = {
+      config: collaborationModuleConfig,
+      user: this.config.user,
+      documentId: `${this.config.superdocId}-superdoc`,
+      socket: this.socket,
+      superdocInstance: this,
+    };
+    const { provider: superdocProvider, ydoc: superdocYdoc } = createProvider(superdocCollaborationOptions);
+    this.ydoc = superdocYdoc;
+    this.provider = superdocProvider;
+
+    // Set up collaboration comments
+    const yComments = superdocYdoc.getArray('comments');
+    const comments = [];
+    yComments.observe((event) => {
+      const yCommentsArray = yComments.toArray();
+      const newComments = yCommentsArray.filter((c) => {
+        return !this.comments.find((yC) => yC.id === c.id);
+      });
+
+      newComments.forEach((c) => {
+        const currentDoc = this.superdocStore.documents.find((d) => d.id === c.documentId);
+        currentDoc.conversations.push(c);
+        console.debug('\n\n NEW COMMENT', c, currentDoc, '\n\n');
+      });
+      comments.push(...newComments);
+      console.debug('\n\n COMMENTS UPDATE', comments, '\n\n');
+      this.comments = [...this.comments, ...comments];
+      console.debug('\n\n THIS COMMENTS', this.comments, '\n\n');
+
+    });
 
     // Initialize individual document sync
     const processedDocuments = [];
@@ -258,8 +280,13 @@ export class SuperDoc extends EventEmitter {
   }
 
   broadcastComments(type, data) {
-    this.log('[comments] Broadcasting:', type, data);
-    this.emit('comments-update', type, data);
+    if (this.ydoc && type === 'add-comment') {
+      console.debug('\n\nInserting comment in ydoc:', type, data, '\n\n');
+      const yComments = this.ydoc.getArray('comments');
+      yComments.push([{ ...data }]);
+    };
+    // this.log('[comments] Broadcasting:', type, data);
+    // this.emit('comments-update', type, data);
   }
 
   broadcastSidebarToggle(isOpened) {

@@ -103,14 +103,17 @@ const addComment = () => {
     skipSelectionUpdate.value = true;
 
     const editor = proxy.$superdoc.activeEditor;
-    if (editor) createNewEditorComment({ conversation: newConversation, editor });
+    if (editor) {
+      createNewEditorComment({ conversation: newConversation, editor });
+      newConversation.suppressHighlight = true;
+    };
 
     newConversation.isInternal = isInternal.value;
-    props.currentDocument.conversations.push(newConversation);
-    proxy.$superdoc.broadcastComments(COMMENT_EVENTS.ADD, props.data.getValues());
+    // props.currentDocument.conversations.push(newConversation);
+    proxy.$superdoc.broadcastComments(COMMENT_EVENTS.ADD, newConversation);
   } else {
-    props.data.comments.push(comment);
-    proxy.$superdoc.broadcastComments(COMMENT_EVENTS.ADD, props.data.getValues());
+    // props.data.comments.push(comment);
+    // proxy.$superdoc.broadcastComments(COMMENT_EVENTS.ADD, props.data.getValues());
   }
 
   currentComment.value = '';

@@ -39,12 +39,17 @@ export const useCommentsStore = defineStore('comments', () => {
   };
 
   const showAddComment = () => {
+  
     // Need to fully unref the selection before applying it to the new object
     const selection = { ...superdocStore.activeSelection };
     selection.selectionBounds = { ...selection.selectionBounds };
 
     superdocStore.selectionPosition.source = null;
     pendingComment.value = getPendingComment(selection);
+
+    if (pendingComment.value.selection.source === 'super-editor') {
+      superdocStore.selectionPosition.source = 'super-editor';
+    }
     activeComment.value = pendingComment.value.conversationId;
   };
 

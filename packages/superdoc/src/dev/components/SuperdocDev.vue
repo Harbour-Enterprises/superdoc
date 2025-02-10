@@ -13,6 +13,7 @@ import { toolbarIcons } from '../../../../super-editor/src/components/toolbar/to
 let superdoc = shallowRef(null);
 let activeEditor = shallowRef(null);
 
+const title = ref('initial title');
 const currentFile = ref(null);
 
 const handleNewFile = async (file) => {
@@ -62,10 +63,10 @@ const init = async () => {
       'hrbr-fields': {},
 
       // To test this dev env with collaboration you must run a local collaboration server here.
-      // collaboration: {
-      //   url: 'ws://localhost:3050/docs/superdoc-id',
-      //   token: 'token',
-      // }
+      collaboration: {
+        url: 'ws://localhost:3050/docs/superdoc-id',
+        token: 'token',
+      }
     },
     onEditorCreate,
     onContentError,
@@ -75,6 +76,18 @@ const init = async () => {
   };
 
   superdoc.value = new SuperDoc(config);
+
+  const ydoc = superdoc.value.ydoc;
+  const metaMap = ydoc.getMap('meta');
+  metaMap.observe((event) => {
+    const { keysChanged } = event;
+    keysChanged.forEach((key) => {
+      if (key === 'title') {
+        title.value = metaMap.get('title');
+      }
+    });
+    console.debug('Meta changed', event);
+  });
 };
 
 const onContentError = ({ editor, error, documentId, file }) => {
@@ -103,6 +116,15 @@ const onEditorCreate = ({ editor }) => {
   });
 };
 
+const handleTitleChange = (e) => {
+  title.value = e.target.innerText;
+
+  const ydoc = superdoc.value.ydoc;
+  const metaMap = ydoc.getMap('meta');
+  metaMap.set('title', title.value);
+  console.debug('Title changed', metaMap.toJSON());
+};
+
 onMounted(async () => {
   handleNewFile(await getFileObject(BlankDOCX, 'test.docx', DOCX));
 });
@@ -129,6 +151,7 @@ onMounted(async () => {
       <div id="toolbar" class="sd-toolbar"></div>
 
       <div class="dev-app__main">
+        Document title: <div contenteditable="true" @blur="handleTitleChange">{{ title }}</div>
         <div class="dev-app__view">
           <div class="dev-app__content" v-if="currentFile">
             <div class="dev-app__content-container">
