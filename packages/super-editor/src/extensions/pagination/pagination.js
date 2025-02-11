@@ -2,7 +2,7 @@ import { Plugin, EditorState } from 'prosemirror-state';
 import { EditorView } from "prosemirror-view";
 import { Extension } from '@core/Extension.js';
 import { Decoration, DecorationSet } from 'prosemirror-view';
-import { PaginationPluginKey } from './pagination-helpers.js';
+import { PaginationPluginKey } from './pagination-plugin-key';
 import { CollaborationPluginKey } from '@extensions/collaboration/collaboration.js';
 import { ImagePlaceholderPluginKey } from '@extensions/image/imageHelpers/imagePlaceholderPlugin.js';
 
@@ -24,7 +24,10 @@ export const Pagination = Extension.create({
         return commands.insertContent({
           type: 'hardBreak',
         });
-      }
+      },
+      getPaginationState: () => ({ editor }) => {
+        return PaginationPluginKey.getState(editor.view.state)?.decorations;
+      },
     }
   },
 

@@ -25,6 +25,8 @@
     "pack": "npm --prefix ./packages/superdoc run pack"
   },
   "devDependencies": {
+    "@playwright/test": "^1.50.1",
+    "@types/node": "^22.13.1",
     "rollup-plugin-visualizer": "^5.12.0",
     "prettier": "3.3.3",
     "rollup": "^4.26.0",
