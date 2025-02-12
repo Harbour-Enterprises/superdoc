@@ -21,8 +21,10 @@ const {
   floatingCommentsOffset,
   suppressInternalExternal,
   skipSelectionUpdate,
+  currentCommentText,
 } = storeToRefs(commentsStore);
 const { areDocumentsReady, getDocument } = superdocStore;
+const { addComment } = commentsStore;
 const { selectionPosition, activeZoom, documentScroll } = storeToRefs(superdocStore);
 const { proxy } = getCurrentInstance();
 
@@ -53,72 +55,10 @@ const emit = defineEmits(['click-outside', 'ready', 'dialog-exit']);
 const currentElement = ref(null);
 const isInternal = ref(props.data.isInternal);
 const isEditing = ref(false);
-const currentComment = ref('');
 const isFocused = ref(false);
 
-const addComment = () => {
-  const value = currentComment.value;
-  if (!value) return;
-
-  // create the new comment for the conversation
-  const comment = useComment({
-    user: {
-      email: props.user.email,
-      name: props.user.name,
-    },
-    timestamp: new Date(),
-    comment: value,
-  });
-
-  // If this conversation is pending addition, add to the document first
-  if (pendingComment.value && pendingComment.value.conversationId === props.data.conversationId) {
-    const newConversation = { ...pendingComment.value };
-
-    const parentBounds = props.parent.getBoundingClientRect();
-
-    const selection = pendingComment.value.selection.getValues();
-    selection.selectionBounds.top = selection.selectionBounds.top; // - parentBounds.top;
-    selection.selectionBounds.bottom = selection.selectionBounds.bottom; // - parentBounds.top;
-
-    const bounds = selection.selectionBounds;
-    if (bounds.top > bounds.bottom) {
-      const temp = bounds.top;
-      bounds.top = bounds.bottom;
-      bounds.bottom = temp;
-    }
-    if (bounds.left > bounds.right) {
-      const temp = bounds.left;
-      bounds.left = bounds.right;
-      bounds.right = temp;
-    }
-    newConversation.selection = useSelection(selection);
-    newConversation.comments.push(comment);
-
-    // Suppress click if the selection was made by the super-editor
-    newConversation.suppressClick = isSuppressClick(pendingComment.value.selection);
-    newConversation.thread = newConversation.conversationId;
-
-    // Remove the pending comment
-    pendingComment.value = null;
-    skipSelectionUpdate.value = true;
-
-    const editor = proxy.$superdoc.activeEditor;
-    if (editor) {
-      createNewEditorComment({ conversation: newConversation, editor });
-      newConversation.suppressHighlight = true;
-    };
-
-    newConversation.isInternal = isInternal.value;
-    // props.currentDocument.conversations.push(newConversation);
-    proxy.$superdoc.broadcastComments(COMMENT_EVENTS.ADD, newConversation);
-  } else {
-    // props.data.comments.push(comment);
-    // proxy.$superdoc.broadcastComments(COMMENT_EVENTS.ADD, props.data.getValues());
-  }
-
-  currentComment.value = '';
-  emit('dialog-exit');
-  activeComment.value = null;
+const createNewComment = () => {
+  addComment(props.currentDocument, proxy);
 };
 
 const createNewEditorComment = ({ conversation, editor }) => {
@@ -248,7 +188,7 @@ const handleOverflowSelection = (index, item, key) => {
 };
 
 const handleEdit = (item) => {
-  currentComment.value = item.comment;
+  currentCommentText.value = item.comment;
   isEditing.value = item;
 };
 
@@ -271,11 +211,11 @@ const handleQuote = () => {
 };
 
 const updateComment = (item) => {
-  item.comment = currentComment.value;
-  currentComment.value = '';
-  const convo = getCurrentConvo();
-  proxy.$superdoc.broadcastComments(COMMENT_EVENTS.UPDATE, convo.getValues());
-  isEditing.value = false;
+  // item.comment = currentCommentText.value;
+  // currentCommentText.value = '';
+  // const convo = getCurrentConvo();
+  // proxy.$superdoc.broadcastComments(COMMENT_EVENTS.UPDATE, convo.getValues());
+  // isEditing.value = false;
 };
 
 const showButtons = computed(() => {
@@ -404,7 +344,7 @@ onMounted(() => {
             <SuperInput
               class="superdoc-field"
               placeholder="Add a comment"
-              v-model="currentComment"
+              v-model="currentCommentText"
               :users="superdocStore.users"
               @focus="isFocused = true"
               @blur="isFocused = false"
@@ -436,7 +376,7 @@ onMounted(() => {
         <SuperInput
           class="superdoc-field"
           placeholder="Add a comment"
-          v-model="currentComment"
+          v-model="currentCommentText"
           :users="superdocStore.users"
           @focus="isFocused = true"
           @blur="isFocused = false"
@@ -452,7 +392,7 @@ onMounted(() => {
     <!-- footer buttons -->
     <div class="comment-footer" v-if="showButtons && !getConfig.readOnly">
       <button class="sd-button" @click.stop.prevent="cancelComment">Cancel</button>
-      <button class="sd-button primary" @click.stop.prevent="addComment">Comment</button>
+      <button class="sd-button primary" @click.stop.prevent="createNewComment">Comment</button>
     </div>
   </div>
 </template>

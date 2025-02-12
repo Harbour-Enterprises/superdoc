@@ -8,10 +8,14 @@ import { HocuspocusProviderWebsocket } from '@hocuspocus/provider';
 
 import { DOCX, PDF, HTML } from '@harbour-enterprises/common';
 import { SuperToolbar } from '@harbour-enterprises/super-editor';
-import { createAwarenessHandler, createProvider } from './collaboration/collaboration';
 import { createSuperdocVueApp } from './create-app';
 import { shuffleArray } from '@harbour-enterprises/common/collaboration/awareness.js';
 import { Telemetry } from '@harbour-enterprises/common/Telemetry.js';
+import {
+  initSuperdocYdoc,
+  initCollaborationComments,
+  makeDocumentsCollaborative,
+} from './collaboration/helpers.js';
 
 /**
  * @typedef {Object} SuperdocUser The current user of this superdoc
@@ -48,7 +52,9 @@ export class SuperDoc extends EventEmitter {
 
     modules: {}, // Optional: Modules to load
 
+    conversations: [],
     pagination: false, // Optional: Whether to show pagination in SuperEditors
+    isCollaborative: false,
 
     // toolbar config
     toolbar: null, // Optional DOM element to render the toolbar in
@@ -169,73 +175,31 @@ export class SuperDoc extends EventEmitter {
     this.on('exception', this.config.onException);
   }
 
-  /* **
+  /**
    * Initialize collaboration if configured
    * @param {Object} config
+   * @returns {Promise<Array>} The processed documents with collaboration enabled
    */
   async #initCollaboration({ collaboration: collaborationModuleConfig } = {}) {
     if (!collaborationModuleConfig) return this.config.documents;
 
+    // Flag this superdoc as collaborative
+    this.isCollaborative = true;
+
+    // Start a socket for all documents and general metaMap for this SuperDoc
     this.socket = new HocuspocusProviderWebsocket({
       url: collaborationModuleConfig.url,
     });
 
     // Initialize global superdoc sync - for comments, view, etc.
-    const superdocCollaborationOptions = {
-      config: collaborationModuleConfig,
-      user: this.config.user,
-      documentId: `${this.config.superdocId}-superdoc`,
-      socket: this.socket,
-      superdocInstance: this,
-    };
-    const { provider: superdocProvider, ydoc: superdocYdoc } = createProvider(superdocCollaborationOptions);
-    this.ydoc = superdocYdoc;
-    this.provider = superdocProvider;
+    initSuperdocYdoc(this);
 
-    // Set up collaboration comments
-    const yComments = superdocYdoc.getArray('comments');
-    const comments = [];
-    yComments.observe((event) => {
-      const yCommentsArray = yComments.toArray();
-      const newComments = yCommentsArray.filter((c) => {
-        return !this.comments.find((yC) => yC.id === c.id);
-      });
+    // Initialize comments sync, if enabled
+    initCollaborationComments(this);
 
-      newComments.forEach((c) => {
-        const currentDoc = this.superdocStore.documents.find((d) => d.id === c.documentId);
-        currentDoc.conversations.push(c);
-        console.debug('\n\n NEW COMMENT', c, currentDoc, '\n\n');
-      });
-      comments.push(...newComments);
-      console.debug('\n\n COMMENTS UPDATE', comments, '\n\n');
-      this.comments = [...this.comments, ...comments];
-      console.debug('\n\n THIS COMMENTS', this.comments, '\n\n');
-
-    });
-
-    // Initialize individual document sync
-    const processedDocuments = [];
-    this.config.documents.forEach((doc) => {
-      this.config.user.color = this.colors[0];
-      const options = {
-        config: collaborationModuleConfig,
-        user: this.config.user,
-        documentId: doc.id,
-        socket: this.socket,
-        superdocInstance: this,
-      };
-
-      const { provider, ydoc } = createProvider(options);
-      doc.provider = provider;
-      doc.socket = this.socket;
-      doc.ydoc = ydoc;
-      doc.role = this.config.role;
-      provider.on('awarenessUpdate', ({ states }) => createAwarenessHandler(this, states));
-      processedDocuments.push(doc);
-    });
-
-    return processedDocuments;
-  }
+    // Initialize collaboration for documents
+    return makeDocumentsCollaborative(this);
+  };
 
   /**
    * Initialize telemetry service.
@@ -280,11 +244,6 @@ export class SuperDoc extends EventEmitter {
   }
 
   broadcastComments(type, data) {
-    if (this.ydoc && type === 'add-comment') {
-      console.debug('\n\nInserting comment in ydoc:', type, data, '\n\n');
-      const yComments = this.ydoc.getArray('comments');
-      yComments.push([{ ...data }]);
-    };
     // this.log('[comments] Broadcasting:', type, data);
     // this.emit('comments-update', type, data);
   }

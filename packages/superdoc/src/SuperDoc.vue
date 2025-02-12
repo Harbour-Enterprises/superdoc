@@ -52,7 +52,8 @@ const {
   documentsWithConverations,
   pendingComment,
   activeComment,
-  skipSelectionUpdate
+  skipSelectionUpdate,
+  commentsByDocument
 } = storeToRefs(commentsStore);
 const { initialCheck, showAddComment } = commentsStore;
 const { proxy } = getCurrentInstance();
@@ -428,6 +429,7 @@ const handlePdfClick = (e) => {
 
 <template>
   <div class="superdoc" :class="{ 'superdoc--with-sidebar': showCommentsSidebar }">
+    xx: {{ commentsByDocument }}
     <div class="superdoc__layers layers" ref="layers">
 
       <!-- Floating tools menu (shows up when user has text selection)-->
