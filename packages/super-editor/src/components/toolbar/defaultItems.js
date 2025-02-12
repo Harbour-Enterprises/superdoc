@@ -9,6 +9,8 @@ import AlignmentButtons from './AlignmentButtons.vue';
 import LinkInput from './LinkInput.vue';
 import DocumentMode from './DocumentMode.vue';
 import LinkedStyle from './LinkedStyle.vue';
+import TableGrid from './TableGrid.vue';
+import TableActions from './TableActions.vue';
 
 const closeDropdown = (dropdown) => {
   dropdown.expand.value = false;
@@ -357,6 +359,120 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth, role,
     tooltip: 'Image',
     disabled: false,
   });
+
+  // table
+  const tableItem = useToolbarItem({
+    type: 'dropdown',
+    name: 'table',
+    icon: toolbarIcons.table,
+    hideLabel: true,
+    labelAttr: 'table',
+    active: false,
+    tooltip: 'Insert table',
+    command: 'insertTable',
+    suppressActiveHighlight: true,
+    options: [
+      {
+        key: 'table',
+        type: 'render',
+        render: () => renderTableGrid(tableItem),
+      },
+    ],
+  });
+
+  function renderTableGrid(tableItem) {
+    const handleSelect = (e) => {
+      superToolbar.emitCommand({ item: tableItem, argument: e });
+      closeDropdown(tableItem);
+    };
+
+    return h('div', {}, [
+      h(TableGrid, {
+        onSelect: handleSelect,
+      }),
+    ]);
+  }
+
+  // table actions
+  const tableActionsItem = useToolbarItem({
+    type: 'dropdown',
+    name: 'tableActions',
+    command: 'executeTableCommand',
+    icon: toolbarIcons.tableActions,
+    hideLabel: true,
+    disabled: true,
+    options: [
+      {
+        type: 'render',
+        render: () => renderTableActions(tableActionsItem),
+      },
+    ],
+  });
+
+  const tableActionsOptions = [
+    { 
+      label: 'Insert row above',
+      command: 'addRowBefore',
+      icon: toolbarIcons.addRowBefore,
+    },
+    { 
+      label: 'Insert row below',
+      command: 'addRowAfter',
+      icon: toolbarIcons.addRowAfter,
+    },
+    { 
+      label: 'Insert column left',
+      command: 'addColumnBefore',
+      icon: toolbarIcons.addColumnBefore,
+    },
+    { 
+      label: 'Insert column right',
+      command: 'addColumnAfter',
+      icon: toolbarIcons.addColumnAfter,
+    },
+    { 
+      label: 'Delete row',
+      command: 'deleteRow',
+      icon: toolbarIcons.deleteRow,
+    },
+    { 
+      label: 'Delete column',
+      command: 'deleteColumn',
+      icon: toolbarIcons.deleteColumn,
+    },
+    { 
+      label: 'Delete table',
+      command: 'deleteTable',
+      icon: toolbarIcons.deleteTable,
+    },
+    { 
+      label: 'Merge cells',
+      command: 'mergeCells',
+      icon: toolbarIcons.mergeCells,
+    },
+    { 
+      label: 'Split cell',
+      command: 'splitCell',
+      icon: toolbarIcons.splitCell,
+    },
+    { 
+      label: 'Fix tables',
+      command: 'fixTables',
+      icon: toolbarIcons.fixTables,
+    },
+  ];
+
+  function renderTableActions(tableActionsItem) {
+    const optionsAfterRole = getDocumentOptionsAfterRole(role, tableActionsOptions);
+    return h(TableActions, {
+      options: optionsAfterRole,
+      onSelect: (event) => {
+        closeDropdown(tableActionsItem);
+        const { command } = event;
+        superToolbar.emitCommand({ item: tableActionsItem, argument: { command } });
+      },
+    });
+  };
 
   // alignment
   const alignment = useToolbarItem({
@@ -790,6 +906,8 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth, role,
     separator,
     link,
     image,
+    tableItem,
+    tableActionsItem,
     separator,
     alignment,
     bulletedList,
