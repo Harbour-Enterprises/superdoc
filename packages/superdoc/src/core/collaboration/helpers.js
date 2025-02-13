@@ -14,20 +14,16 @@ export const initCollaborationComments = (superdoc) => {
   const commentsMap = superdoc.ydoc.getMap('comments');
 
   // Observe changes to the comments map
-  commentsMap.observeDeep((events) => {
+  commentsMap.observe((event) => {
+    // Ignore events if triggered by the current user
+    const currentUser = superdoc.config.user;
+    const { user = {} } = event.transaction.origin;
+    if (currentUser.name === user.name && currentUser.email === user.email) return;
 
-    for (const event of events) {
-      // Ignore events if triggered by the current user
-      const currentUser = superdoc.config.user;
-      const { user = {} } = event.transaction.origin || {};
-  
-      if (currentUser.name === user.name && currentUser.email === user.email) continue;
-  
-      // Update conversations
-      const comments = commentsMap.get('comments');
-      console.debug('Comments updated:', comments);
-      superdoc.commentsStore.commentsList = comments.map((c) => useComment(c));
-    };
+    // Update conversations
+    const comments = commentsMap.get('comments');
+    console.debug('Comments updated:', comments);
+    superdoc.commentsStore.commentsList = comments.map((c) => useComment(c));
   });
 };
 

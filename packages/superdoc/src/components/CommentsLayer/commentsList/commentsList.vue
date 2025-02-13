@@ -29,8 +29,6 @@ const comments = computed(() => {
   const resolvedComments = [];
   const childCommentMap = new Map();
 
-  console.debug('\n\n list', commentsList.value, '\n\n')
-
   commentsList.value.forEach((comment) => {
     // Track resolved comments
     if (comment.resolvedTime) {

@@ -28,8 +28,6 @@ const props = defineProps({
 const { proxy } = getCurrentInstance();
 const superdocStore = useSuperdocStore();
 const commentsStore = useCommentsStore();
-const { comment } = toRefs(props);
-console.debug('comment', comment.value.isInternal);
 
 /* Comments store refs */
 const { addComment, cancelComment, deleteComment, removePendingComment, } = commentsStore;
