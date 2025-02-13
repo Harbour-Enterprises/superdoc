@@ -134,10 +134,10 @@ const init = async () => {
       'hrbr-fields': {},
 
       // To test this dev env with collaboration you must run a local collaboration server here.
-      collaboration: {
-        url: 'ws://localhost:3050/docs/superdoc-id',
-        token: 'token',
-      }
+      // collaboration: {
+      //   url: 'ws://localhost:3050/docs/superdoc-id',
+      //   token: 'token',
+      // }
     },
     onEditorCreate,
     onContentError,
@@ -149,17 +149,16 @@ const init = async () => {
 
   superdoc.value = new SuperDoc(config);
 
-  const ydoc = superdoc.value.ydoc;
-  const metaMap = ydoc.getMap('meta');
-  metaMap.observe((event) => {
-    const { keysChanged } = event;
-    keysChanged.forEach((key) => {
-      if (key === 'title') {
-        title.value = metaMap.get('title');
-      }
-    });
-    console.debug('Meta changed', event);
-  });
+  // const ydoc = superdoc.value.ydoc;
+  // const metaMap = ydoc.getMap('meta');
+  // metaMap.observe((event) => {
+  //   const { keysChanged } = event;
+  //   keysChanged.forEach((key) => {
+  //     if (key === 'title') {
+  //       title.value = metaMap.get('title');
+  //     }
+  //   });
+  // });
 };
 
 const onCommentsUpdate = (updateData) => {
