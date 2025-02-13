@@ -4,7 +4,6 @@ import { comments_module_events } from '@harbour-enterprises/common';
 import { useSuperdocStore } from '@/stores/superdoc-store';
 import { syncCommentsToClients } from '../core/collaboration/helpers.js';
 import useComment from '@/components/CommentsLayer/use-comment';
-import useConversation from '../components/CommentsLayer/use-conversation';
 
 export const useCommentsStore = defineStore('comments', () => {
   const superdocStore = useSuperdocStore();
@@ -21,8 +20,10 @@ export const useCommentsStore = defineStore('comments', () => {
   const commentDialogs = ref([]);
   const overlappingComments = ref([]);
   const overlappedIds = new Set([]);
-  const suppressInternalExternal = ref(false);
+  const suppressInternalExternal = ref(true);
   const currentCommentText = ref('');
+  const commentsList = ref([]);
+  const isCommentsListVisible = ref(false);
 
   // Floating comments
   const floatingCommentsOffset = ref(0);
@@ -31,24 +32,34 @@ export const useCommentsStore = defineStore('comments', () => {
   const skipSelectionUpdate = ref(false);
 
   const pendingComment = ref(null);
-  const getPendingComment = (selection) => {
-    return useConversation({
-      documentId: selection.documentId,
-      creatorEmail: superdocStore.user.email,
-      creatorName: superdocStore.user.name,
-      comments: [],
-      selection,
-    });
+
+  /**
+   * Initialize the store
+   * 
+   * @param {Object} config The comments module config from SuperDoc
+   * @returns {void}
+   */
+  const init = (config = {}) => {
+    const updatedConfig = {...commentsConfig, ...config};
+    Object.assign(commentsConfig, updatedConfig);
+  
+    suppressInternalExternal.value = commentsConfig.suppressInternalExternal || false;
+
+    // Map initial comments state
+    if (config.comments && config.comments.length) {
+      commentsList.value = config.comments?.map((c) => useComment(c)) || [];
+    };
   };
 
-  const showAddComment = () => {
-  
-    // Need to fully unref the selection before applying it to the new object
+  const showAddComment = (superdoc) => {    
     const selection = { ...superdocStore.activeSelection };
     selection.selectionBounds = { ...selection.selectionBounds };
 
-    superdocStore.selectionPosition.source = null;
-    pendingComment.value = getPendingComment(selection);
+    if (superdocStore.selectionPosition?.source) {
+      superdocStore.selectionPosition.source = null;
+    };
+
+    pendingComment.value = getPendingComment({ selection, documentId: selection.documentId, parentCommentId: null });
 
     if (pendingComment.value.selection.source === 'super-editor') {
       superdocStore.selectionPosition.source = 'super-editor';
@@ -62,10 +73,7 @@ export const useCommentsStore = defineStore('comments', () => {
   });
 
   const getConfig = computed(() => {
-    return {
-      ...commentsConfig,
-      ...superdocStore.modules?.comments,
-    };
+    return commentsConfig;
   });
 
   const getCommentLocation = (selection, parent) => {
@@ -171,68 +179,112 @@ export const useCommentsStore = defineStore('comments', () => {
     }
   };
 
-  const addConversation = (activeDocument, initialComment) => {
-    console.log('addConversation', activeDocument, initialComment);
-    const newConversation = { ...pendingComment.value };
-    commentsByDocument[activeDocument.id] = [];
-    commentsByDocument[activeDocument.id].push(newConversation);
+  // const addConversation = (activeDocument, initialComment) => {
+  //   console.log('addConversation', activeDocument, initialComment);
+  //   const newConversation = { ...pendingComment.value };
+  //   commentsByDocument[activeDocument.id] = [];
+  //   commentsByDocument[activeDocument.id].push(newConversation);
 
-    //   const parentBounds = props.parent.getBoundingClientRect();
+  //   //   const parentBounds = props.parent.getBoundingClientRect();
 
-    //   const selection = pendingComment.value.selection.getValues();
-    //   selection.selectionBounds.top = selection.selectionBounds.top; // - parentBounds.top;
-    //   selection.selectionBounds.bottom = selection.selectionBounds.bottom; // - parentBounds.top;
+  //   //   const selection = pendingComment.value.selection.getValues();
+  //   //   selection.selectionBounds.top = selection.selectionBounds.top; // - parentBounds.top;
+  //   //   selection.selectionBounds.bottom = selection.selectionBounds.bottom; // - parentBounds.top;
 
-    //   const bounds = selection.selectionBounds;
-    //   if (bounds.top > bounds.bottom) {
-    //     const temp = bounds.top;
-    //     bounds.top = bounds.bottom;
-    //     bounds.bottom = temp;
-    //   }
-    //   if (bounds.left > bounds.right) {
-    //     const temp = bounds.left;
-    //     bounds.left = bounds.right;
-    //     bounds.right = temp;
-    //   }
-    //   newConversation.selection = useSelection(selection);
-    //   newConversation.comments.push(comment);
+  //   //   const bounds = selection.selectionBounds;
+  //   //   if (bounds.top > bounds.bottom) {
+  //   //     const temp = bounds.top;
+  //   //     bounds.top = bounds.bottom;
+  //   //     bounds.bottom = temp;
+  //   //   }
+  //   //   if (bounds.left > bounds.right) {
+  //   //     const temp = bounds.left;
+  //   //     bounds.left = bounds.right;
+  //   //     bounds.right = temp;
+  //   //   }
+  //   //   newConversation.selection = useSelection(selection);
+  //   //   newConversation.comments.push(comment);
     
-    console.debug('activeDocument', activeDocument.conversations.length, newConversation);
-    activeDocument.conversations.push(newConversation);
-    console.debug('activeDocument after', activeDocument.conversations.length);
+  //   console.debug('activeDocument', activeDocument.conversations.length, newConversation);
+  //   activeDocument.conversations.push(newConversation);
+  //   console.debug('activeDocument after', activeDocument.conversations.length);
+  // };
+
+  /**
+   * Get a new pending comment
+   * 
+   * @param {Object} param0 
+   * @param {Object} param0.selection The selection object
+   * @param {String} param0.documentId The document ID
+   * @param {String} param0.parentCommentId The parent comment
+   * @returns {Object} The new comment object
+   */
+  const getPendingComment = ({ selection, documentId, parentCommentId, ...options }) => {
+    return _getNewcomment({ selection, documentId, parentCommentId, ...options });
   };
 
-  const _getNewcomment = (activeDocument) => {
+  /**
+   * Get the new comment object
+   * 
+   * @param {Object} param0 
+   * @param {Object} param0.selection The selection object
+   * @param {String} param0.documentId The document ID
+   * @param {String} param0.parentCommentId The parent comment ID
+   * @returns {Object} The new comment object
+   */
+  const _getNewcomment = ({ selection, documentId, parentCommentId, ...options }) => {
+    let activeDocument;
+    if (documentId) activeDocument = superdocStore.getDocument(documentId);
+    else if (selection) activeDocument = superdocStore.getDocument(selection.documentId);
+
     return useComment({
-      documentId: activeDocument.id,
-      user: {
-        email: superdocStore.user.email,
-        name: superdocStore.user.name,
-      },
-      timestamp: new Date(),
-      comment: currentCommentText.value,
-    });
+      ...options,
+      fileId: activeDocument.id,
+      fileType: activeDocument.type,
+      parentCommentId,
+      creatorEmail: superdocStore.user.email,
+      creatorName: superdocStore.user.name,
+      commentText: currentCommentText.value,
+      selection,
+   });
   };
 
+  /**
+   * Remove the pending comment
+   * 
+   * @returns {void}
+   */
   const removePendingComment = () => {
     currentCommentText.value = '';
     pendingComment.value = null;
+    activeComment.value = null;
   };
 
-  const addComment = (activeDocument, proxy) => {
-    // Get the current conversation, if it exists
-    let conversation = activeDocument.conversations.find((c) => c.conversationId === activeComment.value);
+  /**
+   * Add a new comment to the document
+   * 
+   * @param {Object} param0 
+   * @param {Object} param0.superdoc The SuperDoc instance
+   * @returns {void}
+   */
+  const addComment = ({ superdoc, comment }) => {    
+    let parentComment = commentsList.value.find((c) => c.commentId === activeComment.value);
+    if (!parentComment) parentComment = comment;
+  
+    comment.commentText = currentCommentText.value;
+    const newComment = useComment(comment.getValues());
 
-    // If this conversation is pending addition, add to the document first
-    if (!!pendingComment.value && !conversation) {
-      conversation = { ...pendingComment.value };
-      activeDocument.conversations.push(conversation);
-    }
+    // Add the new comments to our global list
+    commentsList.value.push(newComment);
 
-    const newComment = _getNewcomment(activeDocument);
-    conversation.comments.push(newComment);
-    syncCommentsToClients(proxy.$superdoc);
+    // If collaboration is enabled, sync the comments to all clients
+    syncCommentsToClients(superdoc);
+
+    // Clean up the pending comment
     removePendingComment();
+
+    // Emit event for end users
+    superdoc.emit('comments-update', { type: COMMENT_EVENTS.ADD, comment: newComment.getValues() });
 
     //   // Suppress click if the selection was made by the super-editor
     //   newConversation.suppressClick = isSuppressClick(pendingComment.value.selection);
@@ -262,6 +314,32 @@ export const useCommentsStore = defineStore('comments', () => {
     // activeComment.value = null;
   };
 
+  const deleteComment = ({ commentId: commentIdToDelete, superdoc }) => {
+    const commentIndex = commentsList.value.findIndex((c) => c.commentId === commentIdToDelete);
+    const comment = commentsList.value[commentIndex];
+    const { commentId } = comment;
+    const { fileId } = comment;
+
+    commentsList.value.splice(commentIndex, 1);
+
+    const emitData = {
+      type: COMMENT_EVENTS.DELETED,
+      comment: comment.getValues(),
+      changes: [{ key: 'deleted', commentId, fileId }],
+    };
+    superdoc.emit('comments-update', emitData);
+    syncCommentsToClients(superdoc);
+  };
+
+  /**
+   * Cancel the pending comment
+   * 
+   * @returns {void}
+   */
+  const cancelComment = () => {
+    removePendingComment();
+  };
+
   return {
     COMMENT_EVENTS,
     hasInitializedComments,
@@ -272,6 +350,8 @@ export const useCommentsStore = defineStore('comments', () => {
     suppressInternalExternal,
     pendingComment,
     currentCommentText,
+    commentsList,
+    isCommentsListVisible,
 
     // Floating comments
     floatingCommentsOffset,
@@ -287,6 +367,7 @@ export const useCommentsStore = defineStore('comments', () => {
     getAllGroups,
 
     // Actions
+    init,
     getCommentLocation,
     hasOverlapId,
     checkOverlaps,
@@ -294,5 +375,8 @@ export const useCommentsStore = defineStore('comments', () => {
     getPendingComment,
     showAddComment,
     addComment,
+    cancelComment,
+    deleteComment,
+    removePendingComment,
   };
 });

@@ -1,5 +1,4 @@
 import { createAwarenessHandler, createProvider } from '../collaboration/collaboration';
-import useConversation from '../../components/CommentsLayer/use-conversation';
 import useComment from '../../components/CommentsLayer/use-comment';
 
 /**
@@ -15,21 +14,20 @@ export const initCollaborationComments = (superdoc) => {
   const commentsMap = superdoc.ydoc.getMap('comments');
 
   // Observe changes to the comments map
-  commentsMap.observe((event) => {
-    const currentUser = superdoc.config.user;
-    const { user = {} } = event.transaction.origin;
-    // if (currentUser.name === user.name && currentUser.email === user.email) return;
+  commentsMap.observeDeep((events) => {
 
-    // Update conversations
-    const conversations = commentsMap.get('conversations');
-    superdoc.superdocStore.documents.forEach((doc) => {
-      const allConvos = conversations.filter((c) => c.documentId === doc.id);
-      doc.conversations = allConvos.map((c) => {
-        console.debug('convers', c, '\n\n');
-        return useConversation(c)
-      });
-    });
-
+    for (const event of events) {
+      // Ignore events if triggered by the current user
+      const currentUser = superdoc.config.user;
+      const { user = {} } = event.transaction.origin || {};
+  
+      if (currentUser.name === user.name && currentUser.email === user.email) continue;
+  
+      // Update conversations
+      const comments = commentsMap.get('comments');
+      console.debug('Comments updated:', comments);
+      superdoc.commentsStore.commentsList = comments.map((c) => useComment(c));
+    };
   });
 };
 
@@ -83,24 +81,19 @@ export const makeDocumentsCollaborative = (superdoc) => {
   return processedDocuments;
 };
 
+/**
+ * Sync local comments with ydoc and other clients if in collaboration mode and comments module is enabled
+ * 
+ * @param {Object} superdoc 
+ * @returns {void}
+ */
 export const syncCommentsToClients = (superdoc) => {
-  if (superdoc.isCollaborative) {
-    superdoc.conversations = superdoc.superdocStore.documents
-      .map((doc) => {
-        const conversations = doc.conversations.map((convo) => {
-          const comments = convo.comments.map((comment) => comment.getValues());
-          return {
-            ...convo.getValues(),
-            comments,
-          };
-        });
-        return conversations;
-      })
-      .flat();
+  if (superdoc.isCollaborative && superdoc.config.modules.comments) {
 
+    const list = superdoc.commentsStore.commentsList;
     const yComments = superdoc.ydoc.getMap('comments');
     superdoc.ydoc.transact(() => {
-      yComments.set('conversations', superdoc.conversations);
+      yComments.set('comments', list);
     }, { user: superdoc.user });
   };
-}
+};

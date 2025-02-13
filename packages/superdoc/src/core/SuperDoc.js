@@ -8,6 +8,7 @@ import { HocuspocusProviderWebsocket } from '@hocuspocus/provider';
 
 import { DOCX, PDF, HTML } from '@harbour-enterprises/common';
 import { SuperToolbar } from '@harbour-enterprises/super-editor';
+import { SuperComments } from '../components/CommentsLayer/commentsList/super-comments-list.js';
 import { createSuperdocVueApp } from './create-app';
 import { shuffleArray } from '@harbour-enterprises/common/collaboration/awareness.js';
 import { Telemetry } from '@harbour-enterprises/common/Telemetry.js';
@@ -134,6 +135,9 @@ export class SuperDoc extends EventEmitter {
 
     // If a toolbar element is provided, render a toolbar
     this.addToolbar(this);
+  
+    // If comments module contains a selector, we can render comments list
+    this.addCommentsList(this);
   }
 
   get requiredNumberOfEditors() {
@@ -148,7 +152,7 @@ export class SuperDoc extends EventEmitter {
   }
 
   #initVueApp() {
-    const { app, pinia, superdocStore } = createSuperdocVueApp(this);
+    const { app, pinia, superdocStore, commentsStore } = createSuperdocVueApp(this);
     this.app = app;
     this.pinia = pinia;
     this.app.config.globalProperties.$config = this.config;
@@ -156,8 +160,10 @@ export class SuperDoc extends EventEmitter {
 
     this.app.config.globalProperties.$superdoc = this;
     this.superdocStore = superdocStore;
+    this.commentsStore = commentsStore;
     this.version = this.config.version;
     this.superdocStore.init(this.config);
+    this.commentsStore.init(this.config.modules.comments);
   }
 
   #initListeners() {
@@ -244,12 +250,12 @@ export class SuperDoc extends EventEmitter {
   }
 
   broadcastComments(type, data) {
-    // this.log('[comments] Broadcasting:', type, data);
-    // this.emit('comments-update', type, data);
+    this.log('[comments] Broadcasting:', type, data);
+    this.emit('comments-update', type, data);
   }
 
   broadcastSidebarToggle(isOpened) {
-    this.emit('sidebar-toggle', isOpened);
+    this.emit('sidebar-toggle', isOpened); 
   }
 
   log(...args) {
@@ -273,6 +279,14 @@ export class SuperDoc extends EventEmitter {
 
     this.toolbar = new SuperToolbar(config);
     this.toolbar.on('superdoc-command', this.onToolbarCommand.bind(this));
+  }
+
+  addCommentsList() {
+    const selector = this.config.modules?.comments?.selector;
+    console.debug('🦋 [superdoc] Adding comments list to:', selector);
+    if (!selector) return;
+
+    this.commentsList = new SuperComments(this.config.modules?.comments, this);
   }
 
   onToolbarCommand({ item, argument }) {

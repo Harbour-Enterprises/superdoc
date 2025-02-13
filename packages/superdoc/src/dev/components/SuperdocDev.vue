@@ -10,11 +10,16 @@ import BlankDOCX from '@harbour-enterprises/common/data/blank.docx?url';
 import { toolbarIcons } from '../../../../super-editor/src/components/toolbar/toolbarIcons';
 
 /* For local dev */
-let superdoc = shallowRef(null);
-let activeEditor = shallowRef(null);
+const superdoc = shallowRef(null);
+const activeEditor = shallowRef(null);
 
 const title = ref('initial title');
 const currentFile = ref(null);
+
+const user = {
+  name: `SuperDoc ${Math.floor(1000 + Math.random() * 9000)}`,
+  email: 'user@harbourshare.com',
+};
 
 const handleNewFile = async (file) => {
   // Generate a file url
@@ -26,11 +31,80 @@ const handleNewFile = async (file) => {
   });
 };
 
+const sampleComments = [
+  {
+    "uid": "123",
+    "commentId": "2ed4f843-2618-4c69-ab20-ab35e593fc88",
+    "fileId": "document-123",
+    "fileType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "creatorEmail": "test@harbourshare.com",
+    "creatorName": "SuperDoc 6379",
+    "isInternal": true,
+    "commentText": "<p>first comment</p>",
+    "selection": {
+        "documentId": "document-123",
+        "page": 1,
+        "selectionBounds": {
+            "top": 1,
+            "left": 2,
+            "right": 721,
+            "bottom": 115.390625
+        }
+    },
+    "resolvedTime": 123456,
+    "resolvedByEmail": null,
+    "resolvedByName": null
+  },
+  {
+    "uid": "abc",
+    "commentId": "2ed4f843-2618-4c69-ab20-abc",
+    "parentCommentId": "2ed4f843-2618-4c69-ab20-ab35e593fc88",
+    "fileId": "document-123",
+    "fileType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "creatorEmail": "test@harbourshare.com",
+    "creatorName": "SuperDoc 6379",
+    "isInternal": true,
+    "commentText": "<p>I am a subcomment</p>",
+    "selection": {
+        "documentId": "document-123",
+        "page": 1,
+        "selectionBounds": {
+            "top": 1,
+            "left": 2,
+            "right": 721,
+            "bottom": 115.390625
+        }
+    },
+    "resolvedTime": null,
+    "resolvedByEmail": null,
+    "resolvedByName": null
+  },
+  {
+    "uid": "1basd",
+    "commentId": "2ed4f843-2618-4c69-ab20-xx",
+    "fileId": "document-123",
+    "fileType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "creatorEmail": "test@harbourshare.com",
+    "creatorName": "SuperDoc 6379",
+    "isInternal": true,
+    "commentText": "<p>second comment</p>",
+    "selection": {
+        "documentId": "document-123",
+        "page": 1,
+        "selectionBounds": {
+            "top": 1,
+            "left": 2,
+            "right": 721,
+            "bottom": 115.390625
+        }
+    },
+    "resolvedTime": null,
+    "resolvedByEmail": null,
+    "resolvedByName": null
+  },
+];
+
 const init = async () => {
-  const user = {
-    name: 'Super Document Jr.',
-    email: 'user@harbourshare.com',
-  };
 
   let testId = 'document-123';
   // const testId = "document_6a9fb1e0725d46989bdbb3f9879e9e1b";
@@ -44,10 +118,7 @@ const init = async () => {
     toolbarGroups: ['left', 'center', 'right'],
     pagination: true,
     // isDev: true,
-    user: {
-      name: `SuperDoc ${Math.floor(1000 + Math.random() * 9000)}`,
-      email: 'user@harbourshare.com',
-    },
+    user,
     documents: [
       {
         data: currentFile.value,
@@ -57,8 +128,8 @@ const init = async () => {
     ],
     modules: {
       comments: {
-        // readOnly: true,
-        // allowResolve: false,
+        comments: sampleComments,
+        selector: 'comments-panel',
       },
       'hrbr-fields': {},
 
@@ -73,6 +144,7 @@ const init = async () => {
     // handleImageUpload: async (file) => url,
     // Override icons.
     toolbarIcons: {},
+    onCommentsUpdate,
   };
 
   superdoc.value = new SuperDoc(config);
@@ -88,6 +160,10 @@ const init = async () => {
     });
     console.debug('Meta changed', event);
   });
+};
+
+const onCommentsUpdate = (updateData) => {
+  console.debug('[END USER] Comments updated', updateData);
 };
 
 const onContentError = ({ editor, error, documentId, file }) => {
@@ -151,8 +227,9 @@ onMounted(async () => {
       <div id="toolbar" class="sd-toolbar"></div>
 
       <div class="dev-app__main">
-        Document title: <div contenteditable="true" @blur="handleTitleChange">{{ title }}</div>
         <div class="dev-app__view">
+          <div class="comments-panel" id="comments-panel"></div>
+
           <div class="dev-app__content" v-if="currentFile">
             <div class="dev-app__content-container">
               <div id="superdoc"></div>
@@ -189,6 +266,19 @@ onMounted(async () => {
 </style>
 
 <style scoped>
+.temp-comment {
+  margin: 5px;
+  border: 1px solid black;
+  display: flex;
+  flex-direction: column;
+}
+.comments-panel {
+  position: absolute;
+  right: 0;
+  height: 100%;
+  background-color: #FAFAFA;
+  z-index: 100;
+}
 .dev-app {
   --header-height: 154px;
   --toolbar-height: 39px;

@@ -27,7 +27,6 @@ import { useCommentsStore } from '@/stores/comments-store';
 import { DOCX, PDF, HTML } from '@harbour-enterprises/common';
 import { SuperEditor } from '@harbour-enterprises/super-editor';
 import HtmlViewer from './components/HtmlViewer/HtmlViewer.vue';
-import useConversation from './components/CommentsLayer/use-conversation';
 import useComment from './components/CommentsLayer/use-comment';
 
 // Stores
@@ -82,7 +81,7 @@ const handleDocumentReady = (documentId, container) => {
 
 const handleToolClick = (tool) => {
   const toolOptions = {
-    comments: showAddComment,
+    comments: () => showAddComment(proxy.$superdoc),
   };
 
   if (tool in toolOptions) {
@@ -99,17 +98,18 @@ const handleDocumentMouseDown = (e) => {
 
 const handleHighlightClick = () => (toolsMenuPosition.top = null);
 const cancelPendingComment = (e) => {
-  if (e.target.classList.contains('n-dropdown-option-body__label')) return;
+  commentsStore.removePendingComment();
 };
 
 const onCommentsLoaded = ({ comments }) => {
-  proxy.$superdoc.log('[superdoc] onCommentsLoaded', comments);
-  comments.forEach((c) => {
-    const convo = useConversation(c);
-    const doc = getDocument(c.documentId);
-    doc.conversations.push(convo);
-  });
-  isReady.value = true;
+  // TODO
+  // proxy.$superdoc.log('[superdoc] onCommentsLoaded', comments);
+  // comments.forEach((c) => {
+  //   const convo = useConversation(c);
+  //   const doc = getDocument(c.documentId);
+  //   doc.conversations.push(convo);
+  // });
+  // isReady.value = true;
 };
 
 const onEditorBeforeCreate = ({ editor }) => {
@@ -172,12 +172,12 @@ const onEditorSelectionChange = ({ editor, transaction }) => {
   handleSelectionChange(selection);
 
   // TODO: Figure out why the selection is being undone here and we need the delay
-  setTimeout(() => {
-    const { activeThreadId } = transaction.getMeta('commentsPluginState') || {};
-    const document = getDocument(documentId);
-    const convo = document.conversations.find((c) => c.thread == activeThreadId);
-    activeComment.value = convo?.conversationId;
-  }, 250);
+  // setTimeout(() => {
+  //   const { activeThreadId } = transaction.getMeta('commentsPluginState') || {};
+  //   const document = getDocument(documentId);
+  //   const convo = document.conversations.find((c) => c.thread == activeThreadId);
+  //   activeComment.value = convo?.conversationId;
+  // }, 250);
 };
 
 function getSelectionBoundingBox() {
@@ -429,7 +429,6 @@ const handlePdfClick = (e) => {
 
 <template>
   <div class="superdoc" :class="{ 'superdoc--with-sidebar': showCommentsSidebar }">
-    xx: {{ commentsByDocument }}
     <div class="superdoc__layers layers" ref="layers">
 
       <!-- Floating tools menu (shows up when user has text selection)-->
@@ -511,10 +510,8 @@ const handlePdfClick = (e) => {
     <div class="superdoc__right-sidebar right-sidebar" v-if="showCommentsSidebar">
       <CommentDialog
         v-if="pendingComment"
-        :data="pendingComment"
-        :current-document="getDocument(pendingComment.documentId)"
-        :user="user"
-        :parent="layers"
+        :comment="pendingComment"
+        :auto-focus="true"
         v-click-outside="cancelPendingComment"
       />
 

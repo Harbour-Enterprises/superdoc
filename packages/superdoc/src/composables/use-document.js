@@ -1,7 +1,7 @@
 import { ref, shallowRef, toRaw } from 'vue';
 import { useField } from './use-field';
 import { documentTypes } from '@harbour-enterprises/common';
-import useConversation from '@/components/CommentsLayer/use-conversation';
+import useComment from '@/components/CommentsLayer/use-comment';
 
 export default function useDocument(params, superdocConfig) {
   const id = params.id;
@@ -62,8 +62,9 @@ export default function useDocument(params, superdocConfig) {
   const conversationsBackup = ref(conversations.value);
 
   function initConversations() {
+    // TODO: CHECK HERE
     if (!config.modules.comments) return [];
-    return params.conversations?.map((c) => useConversation(c)) || [];
+    return params.conversations?.map((c) => useComment(c)) || [];
   }
 
   const core = ref(null);
