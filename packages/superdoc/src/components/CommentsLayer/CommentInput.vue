@@ -46,11 +46,6 @@ const handleFocusChange = (focused) => emit('focus', focused);
         @blur="handleFocusChange(false)"
       />
     </div>
-    <!-- <InternalDropdown
-      class="internal-dropdown initial-internal-dropdown"
-      v-if="pendingComment && !suppressInternalExternal"
-      @select="setConversationInternal($event)"
-    /> -->
   </div>
 </template>
 
