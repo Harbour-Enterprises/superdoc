@@ -17,7 +17,9 @@ export default function useComment(params) {
   const parentCommentId = params.parentCommentId;
   const fileId = params.fileId;
   const fileType = params.fileType;
+  const createdAtVersionNumber = params.createdAtVersionNumber;
   const isInternal = ref(params.isInternal !== undefined ? params.isInternal : true);
+  const mentions = ref([]);
 
   const commentElement = ref(null);
   const isFocused = ref(params.isFocused || false);
@@ -83,14 +85,45 @@ export default function useComment(params) {
    * @param {Object} param0.superdoc The SuperDoc instance
    * @returns {void}
    */
-  const setText = ({ text, superdoc }) => {
+  const setText = ({ text, superdoc, suppressUpdate }) => {
     commentText.value = text;
+
+    // Track mentions
+    mentions.value = extractMentions(text);;
+  
+    if (suppressUpdate) return;
+
     const emitData = {
       type: comments_module_events.UPDATE,
       changes: [{ key: 'text', value: text }],
       comment: getValues()
     };
     propagateUpdate(superdoc, emitData);
+  };
+
+  const extractMentions = (htmlString) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlString, 'text/html');
+
+    const mentionElements = [...doc.querySelectorAll('span[data-type="mention"]')];
+
+    const uniqueMentions = [];
+    mentionElements.forEach((span) => {
+      const alreadyExists = uniqueMentions.some((m) => {
+        const hasEmail = m.email === span.getAttribute('email');
+        const hasName = m.name === span.getAttribute('name');
+        return hasEmail && hasName;
+      });
+      
+      if (!alreadyExists) {
+        uniqueMentions.push({
+          name: span.getAttribute('name'),
+          email: span.getAttribute('email'),
+        });
+      };
+    });
+
+    return uniqueMentions;
   };
 
   /**
@@ -117,6 +150,8 @@ export default function useComment(params) {
       parentCommentId,
       fileId,
       fileType,
+      mentions: mentions.value,
+      createdAtVersionNumber,
       creatorEmail,
       creatorName,
       createdTime,
@@ -136,6 +171,7 @@ export default function useComment(params) {
     parentCommentId,
     fileId,
     fileType,
+    mentions,
     commentElement,
     isFocused,
     creatorEmail,

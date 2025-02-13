@@ -271,8 +271,8 @@ export const useCommentsStore = defineStore('comments', () => {
     let parentComment = commentsList.value.find((c) => c.commentId === activeComment.value);
     if (!parentComment) parentComment = comment;
   
-    comment.commentText = currentCommentText.value;
     const newComment = useComment(comment.getValues());
+    newComment.setText({ text: currentCommentText.value, suppressUpdate: true });
 
     // Add the new comments to our global list
     commentsList.value.push(newComment);
@@ -329,7 +329,7 @@ export const useCommentsStore = defineStore('comments', () => {
     };
     superdoc.emit('comments-update', emitData);
     syncCommentsToClients(superdoc);
-  };
+  }
 
   /**
    * Cancel the pending comment
@@ -338,7 +338,24 @@ export const useCommentsStore = defineStore('comments', () => {
    */
   const cancelComment = () => {
     removePendingComment();
-  };
+  }
+
+  const processLoadedDocxComments = ({ comments, documentId }) => {
+    const document = superdocStore.getDocument(documentId);
+
+    const processedComments = [];
+    comments.forEach((comment) => {
+      const newComment = useComment({
+        fileId: documentId,
+        fileType: document.type,
+        creatorEmail: comment.creatorEmail,
+        creatorName: comment.creatorName,
+        commentText: comment.textJson[0].text,
+      });
+
+      commentsList.value.push(newComment);
+    });
+  }
 
   return {
     COMMENT_EVENTS,
@@ -378,5 +395,6 @@ export const useCommentsStore = defineStore('comments', () => {
     cancelComment,
     deleteComment,
     removePendingComment,
+    processLoadedDocxComments,
   };
 });

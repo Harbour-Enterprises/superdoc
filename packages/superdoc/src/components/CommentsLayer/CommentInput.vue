@@ -11,6 +11,11 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  users: {
+    type: Array,
+    required: false,
+    default: () => [],
+  },
   config: {
     type: Object,
     required: true,
@@ -41,7 +46,7 @@ const handleFocusChange = (focused) => emit('focus', focused);
         class="superdoc-field"
         placeholder="Add a comment"
         v-model="currentCommentText"
-        :users="superdocStore.users"
+        :users="users"
         @focus="handleFocusChange(true)"
         @blur="handleFocusChange(false)"
       />

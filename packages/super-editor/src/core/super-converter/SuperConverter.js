@@ -73,6 +73,7 @@ class SuperConverter {
     this.media = params?.media || {};
 
     this.addedMedia = {};
+    this.comments = [];
 
     // XML inputs
     this.xml = params?.xml;
@@ -275,6 +276,7 @@ class SuperConverter {
     if (result) {
       this.savedTagsToRestore.push({ ...result.savedTagsToRestore });
       this.pageStyles = result.pageStyles;
+      this.comments = result.comments;
       return result.pmDoc;
     } else {
       return null;

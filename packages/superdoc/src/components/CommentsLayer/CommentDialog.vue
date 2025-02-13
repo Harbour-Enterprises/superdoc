@@ -93,7 +93,7 @@ const allowResolve = computed(() => (comment) => {
   const isResolved = comment.resolvedTime;
   const isParentComment = !comment.parentCommentId;
   return allowedInConfig
-    && isParentCommentUser
+    && (isParentCommentUser || !comment.creatorEmail)
     && isParentComment
     && !isResolved;
 });
@@ -223,6 +223,7 @@ onMounted(() => {
         <div v-else class="comment-editing">
           <CommentInput
             :user="superdocStore.user"
+            :users="proxy.$superdoc.users"
             :config="getConfig"
             :include-header="false"
           />
@@ -245,6 +246,7 @@ onMounted(() => {
       <CommentInput
         ref="commentInput"
         :user="superdocStore.user"
+        :users="proxy.$superdoc.users"
         :config="getConfig"
       />
 

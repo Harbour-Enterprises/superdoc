@@ -62,12 +62,17 @@ const editorOptions = computed(() => {
     user,
     onCreate,
     onCommentClicked,
+    onCommentsLoaded,
     suppressSkeletonLoader: true,
     users: [], // For comment @-mentions, only users that have access to the document
     pagination: true,
     telemetry: telemetry.value,
   }
 });
+
+const onCommentsLoaded = ({ comments }) => {
+  console.debug('💬 [Dev] Comments loaded', comments);
+};
 
 const exportDocx = async () => {
   const result = await activeEditor?.exportDocx();

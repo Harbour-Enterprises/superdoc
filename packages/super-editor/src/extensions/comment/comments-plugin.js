@@ -63,18 +63,17 @@ export const CommentsPlugin = Extension.create({
           //   editor.emit('commentsUpdate', { editor, transaction: tr });
           // }
 
-          tr.mapping.maps.forEach((stepMap, i) => {
-            stepMap.forEach((oldStart, oldEnd, newStart, newEnd) => {
-              let node = newEditorState.doc.nodeAt(newStart);
-              if (node && node.type.name === "commentRangeEnd") {
-                const params = {
-                  type: 'new',
-                  id: node.attrs['w:id'],
-                };
-                // editor.emit('commentsUpdate', params);
-              }
-            });
-          });
+          // tr.mapping.maps.forEach((stepMap, i) => {
+          //   stepMap.forEach((oldStart, oldEnd, newStart, newEnd) => {
+          //     let node = newEditorState.doc.nodeAt(newStart);
+          //     if (node && node.type.name === "commentRangeEnd") {
+          //       const params = {
+          //         type: 'new',
+          //         id: node.attrs['w:id'],
+          //       };
+          //     }
+          //   });
+          // });
           
           const { commentPositions, decorations } = processDocumentComments(editor, doc) || {};
           return {
@@ -177,12 +176,15 @@ const updatePositions = (view, pos, currentPos) => {
  * @param {Number} pos The position of the node
  * @returns {void} allCommentPositions is modified in place
  */
-const trackCommentNodes = (view, allCommentPositions, decorations, node, pos) => {
+const trackCommentNodes = ({ allCommentPositions, decorations, node, pos, editor }) => {
   const commentIds = new Set();
   const threadId = node.attrs['w:id'];
 
   if (threadId && node.type.name === 'commentRangeStart') {
     commentIds.add(threadId);
+
+    const commentData = getCommentData(editor);
+
     allCommentPositions[threadId] = {
       threadId,
       start: pos,
@@ -202,6 +204,17 @@ const trackCommentNodes = (view, allCommentPositions, decorations, node, pos) =>
   };
 };
 
+const getCommentData = (editor) => {
+  const converter = editor.converter;
+  if (!converter) return;
+
+  const docx = converter.convertedXml;
+  const comments = docx['word/comments.xml'];
+  
+  return comments;
+};
+
+
 /**
  * Iterate through the document to track comment and tracked changes nodes
  * @param {*} editor The current editor instance
@@ -216,7 +229,9 @@ const processDocumentComments = (editor, doc) => {
   // Both of the funcitons below alter coordinates in allCommentPositions
   doc.descendants((node, pos) => {
     // Try to track comment nodes
-    trackCommentNodes(view, allCommentPositions, decorations, node, pos);
+    trackCommentNodes({
+      view, allCommentPositions, decorations, node, pos, editor,
+    });
 
     // Try to track any tracked changes nodes
     // trackTrackedChangeNodes(view, allCommentPositions, node, pos);

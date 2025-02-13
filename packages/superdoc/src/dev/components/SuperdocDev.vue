@@ -119,6 +119,10 @@ const init = async () => {
     pagination: true,
     // isDev: true,
     user,
+    users: [
+      { name: 'Nick Bernal', email: 'nick@harbourshare.com' },
+      { name: 'Eric Doversberger', email: 'eric@harbourshare.com' },
+    ],
     documents: [
       {
         data: currentFile.value,
@@ -128,16 +132,16 @@ const init = async () => {
     ],
     modules: {
       comments: {
-        comments: sampleComments,
+        // comments: sampleComments,
         selector: 'comments-panel',
       },
       'hrbr-fields': {},
 
       // To test this dev env with collaboration you must run a local collaboration server here.
-      // collaboration: {
-      //   url: 'ws://localhost:3050/docs/superdoc-id',
-      //   token: 'token',
-      // }
+      collaboration: {
+        url: 'ws://localhost:3050/docs/superdoc-id',
+        token: 'token',
+      }
     },
     onEditorCreate,
     onContentError,
@@ -170,7 +174,8 @@ const onContentError = ({ editor, error, documentId, file }) => {
 };
 
 const exportDocx = async () => {
-  const result = await activeEditor.value?.exportDocx();
+  const comments = superdoc.value.commentsStore?.commentsList || [];
+  const result = await activeEditor.value?.exportDocx({ comments });
   const blob = new Blob([result], { type: DOCX });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

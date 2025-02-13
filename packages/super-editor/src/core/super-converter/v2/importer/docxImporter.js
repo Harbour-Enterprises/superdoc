@@ -45,6 +45,7 @@ export const createDocumentJson = (docx, converter, editor) => {
     const node = bodyNode;
     const ignoreNodes = ['w:sectPr'];
     const content = node.elements?.filter((n) => !ignoreNodes.includes(n.name)) ?? [];
+    const comments = importCommentData({ docx, nodeListHandler, converter, editor });
 
     const parsedContent = nodeListHandler.handler({
       nodes: content, nodeListHandler, docx, converter, editor
@@ -64,16 +65,18 @@ export const createDocumentJson = (docx, converter, editor) => {
         converter?.documentId,
         'document_import', 
         {
-        documentType: 'docx',
-        internalId: converter?.documentInternalId,
-        timestamp: new Date().toISOString()
-      });
+          documentType: 'docx',
+          internalId: converter?.documentInternalId,
+          timestamp: new Date().toISOString()
+        },
+      );
     }
     
     return {
       pmDoc: result,
       savedTagsToRestore: node,
       pageStyles: getDocumentStyles(node, docx, converter, editor),
+      comments,
     };
   }
   return null;
@@ -397,4 +400,38 @@ function getHeaderFooter(el, elementType, docx, converter, editor) {
 
   storage[rId] = { type: 'doc', content: [...schema] };
   storageIds[sectionType] = rId;
+};
+
+function importCommentData({ docx, nodeListHandler, converter, editor }) {
+  const comments =  docx['word/comments.xml'];
+  if (!comments) return;
+
+  const { elements } = comments;
+  if (!elements || !elements.length) return;
+
+  const { elements: allComments } = elements[0];
+  const parsedComments = [];
+  allComments.forEach((el) => {
+    const { attributes } = el;
+    const commentId = attributes['w:id'];
+    const authorName = attributes['w:author'];
+    const initials = attributes['w:initials'];
+    const date = attributes['w:date'];
+
+    const { elements } = el;
+    const commentData = elements[0];
+
+    const { elements: commentElements } = commentData;
+    const parsedComment = nodeListHandler.handler({
+      nodes: commentElements, nodeListHandler, docx, converter, editor
+    });
+    parsedComments.push({
+      id: commentId,
+      creatorName: authorName,
+      createdTime: date,
+      textJson: parsedComment,
+    });
+  });
+
+  return parsedComments;
 };

@@ -391,7 +391,7 @@ export class SuperDoc extends EventEmitter {
     this.superdocStore.documents.forEach((doc) => {
       const editor = doc.getEditor();
       if (editor) {
-        docxPromises.push(editor.exportDocx());
+        docxPromises.push(editor.exportDocx({ comments: this.commentsList }));
       }
     });
     return await Promise.all(docxPromises);

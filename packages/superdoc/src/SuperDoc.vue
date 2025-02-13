@@ -101,7 +101,9 @@ const cancelPendingComment = (e) => {
   commentsStore.removePendingComment();
 };
 
-const onCommentsLoaded = ({ comments }) => {
+const onCommentsLoaded = ({ editor, comments }) => {
+  commentsStore.processLoadedDocxComments({ comments, documentId: editor.options.documentId });
+
   // TODO
   // proxy.$superdoc.log('[superdoc] onCommentsLoaded', comments);
   // comments.forEach((c) => {
@@ -221,6 +223,7 @@ const editorOptions = (doc) => {
     pagination: proxy.$superdoc.config.pagination,
     documentId: doc.id,
     user: proxy.$superdoc.user,
+    users: proxy.$superdoc.users,
     colors: proxy.$superdoc.colors,
     role: proxy.$superdoc.config.role,
     documentMode: proxy.$superdoc.config.documentMode,
@@ -233,7 +236,7 @@ const editorOptions = (doc) => {
     onCollaborationReady: onEditorCollaborationReady,
     onContentError: onEditorContentError,
     onException: onEditorException,
-    // onCommentsLoaded,
+    onCommentsLoaded,
     // onCommentClicked,
     // onCommentsUpdate: onEditorCommentsUpdate,
     ydoc: doc.ydoc,

@@ -35,8 +35,6 @@ export class Editor extends EventEmitter {
 
   #css;
 
-  #comments;
-
   options = {
     element: null,
     isHeadless: false,
@@ -44,6 +42,7 @@ export class Editor extends EventEmitter {
     mockWindow: null,
     content: '', // XML content
     user: null,
+    users: [],
     media: {},
     mediaFiles: {},
     fonts: {},
@@ -141,7 +140,7 @@ export class Editor extends EventEmitter {
     this.on('locked', this.options.onDocumentLocked);
     this.on('collaborationReady', this.#onCollaborationReady);
 
-    // this.#loadComments();
+    this.#loadComments();
     this.initializeCollaborationData();
 
     // Init pagination only if we are not in collaborative mode. Otherwise
@@ -794,13 +793,8 @@ export class Editor extends EventEmitter {
    * Load the document comments.
    */
   #loadComments() {
-    this.#comments = initComments(this, this.converter, this.options.documentId);
-
-    this.emit('commentsLoaded', { comments: this.#comments });
-  }
-
-  getComment(id) {
-    return this.#comments.find((c) => c.thread == id);
+    if (!this.converter.comments) return;
+    this.emit('commentsLoaded', { editor: this, comments: this.converter.comments });
   }
 
   /**
@@ -854,7 +848,7 @@ export class Editor extends EventEmitter {
   /**
    * Export the editor document to DOCX.
    */
-  async exportDocx({ isFinalDoc = false } = {}) {
+  async exportDocx({ isFinalDoc = false, comments = [] } = {}) {
     const json = this.getJSON();
     const documentXml = await this.converter.exportToDocx(json, this.schema, this.storage.image.media, isFinalDoc);
     const relsData = this.converter.convertedXml['word/_rels/document.xml.rels'];
