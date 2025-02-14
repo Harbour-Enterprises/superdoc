@@ -9,9 +9,10 @@
   "scripts": {
     "test": "vitest --root ./packages/super-editor",
     "unzip": "bash packages/super-editor/src/tests/helpers/unzip.sh",
-    "dev": "npm run build:super-editor && npm run dev:superdoc",
+    "dev": "concurrently \"npm run watch:super-editor\" \"npm run dev:superdoc\"",
     "dev:superdoc": "npm run dev --workspace=packages/superdoc",
     "dev:super-editor": "npm run dev --workspace=packages/super-editor",
+    "watch:super-editor": "npm run build:watch --workspace=packages/super-editor",
     "build:superdoc": "npm run build --workspace=packages/superdoc",
     "build:super-editor": "npm run build --workspace=packages/super-editor",
     "build": "npm run build:super-editor && npm run build:superdoc",
@@ -25,9 +26,10 @@
     "pack": "npm --prefix ./packages/superdoc run pack"
   },
   "devDependencies": {
-    "rollup-plugin-visualizer": "^5.12.0",
+    "concurrently": "^9.1.2",
     "prettier": "3.3.3",
     "rollup": "^4.26.0",
+    "rollup-plugin-visualizer": "^5.12.0",
     "xml-js": "^1.6.11"
   }
 }

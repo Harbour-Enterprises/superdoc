@@ -158,7 +158,7 @@ export default function useComment(params) {
       isInternal: isInternal.value,
       commentText: commentText.value,
       selection: selection ? selection.getValues() : null,
-      trackedChange: toRaw(trackedChange),
+      trackedChange: trackedChange.value,
       resolvedTime: resolvedTime.value,
       resolvedByEmail: resolvedByEmail.value,
       resolvedByName: resolvedByName.value,

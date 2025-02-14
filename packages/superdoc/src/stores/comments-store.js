@@ -3,6 +3,8 @@ import { ref, reactive, computed, unref } from 'vue';
 import { comments_module_events } from '@harbour-enterprises/common';
 import { useSuperdocStore } from '@/stores/superdoc-store';
 import { syncCommentsToClients } from '../core/collaboration/helpers.js';
+import { Editor, } from '@harbour-enterprises/super-editor';
+import { getRichTextExtensions } from '@harbour-enterprises/super-editor';
 import useComment from '@/components/CommentsLayer/use-comment';
 
 export const useCommentsStore = defineStore('comments', () => {
@@ -340,22 +342,79 @@ export const useCommentsStore = defineStore('comments', () => {
     removePendingComment();
   }
 
+  /**
+   * Initialize loaded comments into SuperDoc by mapping the imported 
+   * comment data to SuperDoc useComment objects.
+   * 
+   * Updates the commentsList ref with the new comments.
+   * 
+   * @param {Object} param0 
+   * @param {Array} param0.comments The comments to be loaded
+   * @param {String} param0.documentId The document ID
+   * @returns {void}
+   */
   const processLoadedDocxComments = ({ comments, documentId }) => {
     const document = superdocStore.getDocument(documentId);
-
-    const processedComments = [];
     comments.forEach((comment) => {
+      const importedName = `${comment.creatorName} (imported)`;
       const newComment = useComment({
         fileId: documentId,
         fileType: document.type,
+        commentId: comment.id,
+        parentCommentId: comment.parentCommentId,
         creatorEmail: comment.creatorEmail,
-        creatorName: comment.creatorName,
-        commentText: comment.textJson[0].text,
+        creatorName: `${comment.creatorName} (imported)`,
+        commentText: getHTmlFromComment(comment.textJson),
+        resolvedTime: comment.isDone ? Date.now() : null,
+        resolvedByEmail: comment.isDone ? comment.creatorEmail : null,
+        resolvedByName: comment.isDone ? importedName : null,
       });
-
       commentsList.value.push(newComment);
     });
   }
+
+  const prepareCommentsForExport = () => {
+    const processedComments = []
+    commentsList.value.forEach((comment) => {
+      const values = comment.getValues();
+      const richText = values.commentText;
+      const schema = convertHtmlToSchema(richText);
+      processedComments.push({
+        ...values,
+        commentJSON: schema,
+      });
+    });
+    return processedComments;
+  };
+
+  const convertHtmlToSchema = (commentHTML) => {
+    const div = document.createElement('div');
+    div.innerHTML = commentHTML;
+    const editor = new Editor({
+      mode: 'text',
+      isHeadless: true,
+      content: div,
+      extensions: getRichTextExtensions(),
+    });
+    return editor.getJSON().content[0];
+  };
+
+  /**
+   * Get HTML content from the comment text JSON (which uses DOCX schema)
+   * 
+   * @param {Object} commentTextJson The comment text JSON
+   * @returns {string} The HTML content
+   */
+  const getHTmlFromComment = (commentTextJson) => {
+    const editor = new Editor({
+      mode: 'text',
+      isHeadless: true,
+      content: commentTextJson,
+      loadFromSchema: true,
+      extensions: getRichTextExtensions(),
+    });
+    return editor.getHTML();
+  };
 
   return {
     COMMENT_EVENTS,
@@ -396,5 +455,6 @@ export const useCommentsStore = defineStore('comments', () => {
     deleteComment,
     removePendingComment,
     processLoadedDocxComments,
+    prepareCommentsForExport,
   };
 });

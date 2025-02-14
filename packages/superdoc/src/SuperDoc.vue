@@ -153,6 +153,7 @@ const onEditorSelectionChange = ({ editor, transaction }) => {
     updateSelection({ x: null, y: null, x2: null, y2: null, source: 'super-editor' });
   }
 
+  if (!layers.value) return;
   const layerBounds = layers.value.getBoundingClientRect();
   const bounds = getSelectionBoundingBox();
   if (!bounds || !layerBounds) return;

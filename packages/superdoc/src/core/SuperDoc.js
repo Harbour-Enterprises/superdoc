@@ -12,6 +12,7 @@ import { SuperComments } from '../components/CommentsLayer/commentsList/super-co
 import { createSuperdocVueApp } from './create-app';
 import { shuffleArray } from '@harbour-enterprises/common/collaboration/awareness.js';
 import { Telemetry } from '@harbour-enterprises/common/Telemetry.js';
+import { createDownload, cleanName } from './helpers/export.js';
 import {
   initSuperdocYdoc,
   initCollaborationComments,
@@ -52,7 +53,7 @@ export class SuperDoc extends EventEmitter {
     users: [], // Optional: All users of this superdoc (can be used for @-mentions)
 
     modules: {}, // Optional: Modules to load
-
+    title: 'SuperDoc',
     conversations: [],
     pagination: false, // Optional: Whether to show pagination in SuperEditors
     isCollaborative: false,
@@ -385,13 +386,37 @@ export class SuperDoc extends EventEmitter {
     this.emit('locked', { isLocked, lockedBy });
   }
 
+  async export(exportType = ['docx']) {
+    // Get the docx files first
+    const baseFileName = cleanName(this.config.title);
+    const docxFiles = await this.exportEditorsToDOCX();
+    const blobsToZip = [];
+    const filenames = [];
+
+    // If we are exporting docx files, add them to the zip
+    if (exportType.includes('docx')) {
+      docxFiles.forEach((blob, index) => {
+        blobsToZip.push(blob);
+        filenames.push(`${baseFileName}.docx`);
+      });
+    }
+
+    // If we only have one blob, just download it. Otherwise, zip them up.
+    if (blobsToZip.length === 1) {
+      createDownload(blobsToZip[0], baseFileName, exportType[0]);
+    } else {
+      const zip = await createZip(blobsToZip, filenames);
+      createDownload(zip, baseFileName, 'zip');
+    }
+  };
+
   async exportEditorsToDOCX() {
-    console.debug('🦋 [superdoc] Exporting editors to DOCX');
+    const comments = this.commentsStore?.prepareCommentsForExport();
     const docxPromises = [];
     this.superdocStore.documents.forEach((doc) => {
       const editor = doc.getEditor();
       if (editor) {
-        docxPromises.push(editor.exportDocx({ comments: this.commentsList }));
+        docxPromises.push(editor.exportDocx({ comments }));
       }
     });
     return await Promise.all(docxPromises);

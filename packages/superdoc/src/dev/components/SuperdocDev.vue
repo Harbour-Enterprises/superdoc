@@ -119,6 +119,7 @@ const init = async () => {
     pagination: true,
     // isDev: true,
     user,
+    title: 'Test document',
     users: [
       { name: 'Nick Bernal', email: 'nick@harbourshare.com' },
       { name: 'Eric Doversberger', email: 'eric@harbourshare.com' },
@@ -174,14 +175,7 @@ const onContentError = ({ editor, error, documentId, file }) => {
 };
 
 const exportDocx = async () => {
-  const comments = superdoc.value.commentsStore?.commentsList || [];
-  const result = await activeEditor.value?.exportDocx({ comments });
-  const blob = new Blob([result], { type: DOCX });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'exported.docx';
-  a.click();
+  await superdoc.value.export();
 };
 
 const onEditorCreate = ({ editor }) => {

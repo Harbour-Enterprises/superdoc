@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { DocxExporter, exportSchemaToJson } from './exporter';
 import { createDocumentJson } from './v2/importer/docxImporter.js';
 import { getArrayBufferFromUrl } from './helpers.js';
+import { getCommentDefinition, updateCommentsXml } from './v2/exporter/commentsExporter.js';
 import { DEFAULT_CUSTOM_XML, SETTINGS_CUSTOM_XML } from './exporter-docx-defs.js';
 
 class SuperConverter {
@@ -288,8 +289,15 @@ class SuperConverter {
     return exporter.schemaToXml(data);
   }
 
-  async exportToDocx(jsonData, editorSchema, documentMedia, isFinalDoc = false) {
+  async exportToDocx(
+    jsonData,
+    editorSchema,
+    documentMedia,
+    isFinalDoc = false,
+    comments = []
+  ) {
     const bodyNode = this.savedTagsToRestore.find((el) => el.name === 'w:body');
+    const commentDefinitions = comments.map((c, index) => getCommentDefinition(c, index));
     const [result, params] = exportSchemaToJson({
       node: jsonData,
       bodyNode,
@@ -299,6 +307,8 @@ class SuperConverter {
       isFinalDoc,
       editorSchema,
       pageStyles: this.pageStyles,
+      comments,
+      exportedCommentDefs: commentDefinitions,
     });
     const exporter = new DocxExporter(this);
     const xml = exporter.schemaToXml(result);
@@ -313,10 +323,20 @@ class SuperConverter {
     // Update the rels table
     this.#exportProcessNewRelationships(params.relationships);
 
+    // Update the comments.xml file
+    this.#updateCommentsFiles(params.exportedCommentDefs);
+  
     // Store the SuperDoc version
     storeSuperdocVersion(this.convertedXml);
     
     return xml;
+  }
+
+  #updateCommentsFiles(exportedCommentDefs) {
+    if (!exportedCommentDefs?.length) return;
+    const commentsXml = this.convertedXml['word/comments.xml'];
+    const updatedCommentsXml = updateCommentsXml(exportedCommentDefs, commentsXml);
+    this.convertedXml['word/comments.xml'] = updatedCommentsXml;
   }
 
   #exportProcessNewRelationships(rels = []) {

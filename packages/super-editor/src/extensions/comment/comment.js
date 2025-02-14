@@ -15,6 +15,7 @@ export const CommentRangeStart = Node.create({
   },
 
   renderDOM() {
+    console.debug('\n\n\n COMMENT START RENDERED \n\n\n');
     return ['commentRangeStart', 0];
   },
 

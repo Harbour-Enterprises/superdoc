@@ -14,6 +14,7 @@ import { lineBreakNodeHandlerEntity } from './lineBreakImporter.js';
 import { bookmarkNodeHandlerEntity } from './bookmarkNodeImporter.js';
 import { tabNodeEntityHandler } from './tabImporter.js';
 import { listHandlerEntity } from './listImporter.js';
+import { importCommentData } from './documentCommentsImporter.js';
 
 /**
  * @typedef {import()} XmlNode
@@ -400,38 +401,4 @@ function getHeaderFooter(el, elementType, docx, converter, editor) {
 
   storage[rId] = { type: 'doc', content: [...schema] };
   storageIds[sectionType] = rId;
-};
-
-function importCommentData({ docx, nodeListHandler, converter, editor }) {
-  const comments =  docx['word/comments.xml'];
-  if (!comments) return;
-
-  const { elements } = comments;
-  if (!elements || !elements.length) return;
-
-  const { elements: allComments } = elements[0];
-  const parsedComments = [];
-  allComments.forEach((el) => {
-    const { attributes } = el;
-    const commentId = attributes['w:id'];
-    const authorName = attributes['w:author'];
-    const initials = attributes['w:initials'];
-    const date = attributes['w:date'];
-
-    const { elements } = el;
-    const commentData = elements[0];
-
-    const { elements: commentElements } = commentData;
-    const parsedComment = nodeListHandler.handler({
-      nodes: commentElements, nodeListHandler, docx, converter, editor
-    });
-    parsedComments.push({
-      id: commentId,
-      creatorName: authorName,
-      createdTime: date,
-      textJson: parsedComment,
-    });
-  });
-
-  return parsedComments;
 };
