@@ -10,22 +10,46 @@ import { translateParagraphNode } from '../../exporter.js';
 export function translateCommenNode(params, type) {
   const { node } = params;
   const nodeId = node.attrs['w:id'];
-  const comment = params.exportedCommentDefs.find((comment) => comment.attributes['w:id'] === nodeId);
-  if (!comment) return;
 
   // Check if the comment is resolved
-  const originalComment = params.comments[Number(nodeId)];
+  let originalComment = params.comments[Number(nodeId)];
+  if (!originalComment) {
+    originalComment = params.comments.find((comment) => {
+      return comment.commentId === nodeId
+    });
+  };
+
+  const commentIndex = params.comments.findIndex((comment) => comment.commentId === nodeId);
+  console.debug('---COMMENT', originalComment, commentIndex);
+
   const isResolved = !!originalComment.resolvedTime;
   if (isResolved) return;
 
-  const commentId = comment.attributes['w:id'];
-  let commentSchema = params.exportedCommentDefs.find((c) => c.attributes['w:id'] === commentId);
+  // const comment = params.exportedCommentDefs.find((comment) => comment.attributes['w:id'] === nodeId);
+  // if (!comment) return;
 
+  let commentSchema = getCommentSchema(type, commentIndex);
   if (type === 'End') {
-    const commentReference = { name: 'w:commentReference', attributes: { 'w:id': commentId } };
+    const commentReference = { name: 'w:commentReference', attributes: { 'w:id': String(commentIndex) } };
     commentSchema = [commentSchema, commentReference];
   };
   return commentSchema;
+};
+
+/**
+ * Generate a w:commentRangeStart or w:commentRangeEnd node
+ * 
+ * @param {string} type Must be 'Start' or 'End'
+ * @param {string} commentId The comment ID
+ * @returns {Object} The comment node
+ */
+const getCommentSchema = (type, commentId) => {
+  return {
+    name: `w:commentRange${type}`,
+    attributes: {
+      'w:id': String(commentId),
+    }
+  };
 };
 
 /**
@@ -50,19 +74,7 @@ export const getCommentDefinition = (comment, commentId) => {
       'w:initials': getInitials(comment.creatorName),
       'w:done': comment.resolvedTime ? '1' : '0',
     },
-    elements: [
-      {
-        type: 'element',
-        name: 'w:p',
-        elements: [
-          {
-            type: 'element',
-            name: 'w:r',
-            elements: [translatedText],
-          }
-        ],
-      }
-    ],
+    elements: [translatedText],
   };
 };
 
@@ -103,6 +115,7 @@ export const updateCommentsXml = (commentDefs, commentsXml) => {
   const commentsXmlCopy = commentsXml ? { ...commentsXml } : { ...COMMENTS_XML };
   if (!commentsXmlCopy.elements) commentsXmlCopy.elements = [];
 
+  console.debug('\n\n\ncommentsXmlCopy', commentsXml, '\n\n')
   commentsXmlCopy.elements[0].elements = commentDefs;
   return commentsXmlCopy;
 };

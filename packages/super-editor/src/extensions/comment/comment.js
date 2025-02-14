@@ -15,7 +15,6 @@ export const CommentRangeStart = Node.create({
   },
 
   renderDOM() {
-    console.debug('\n\n\n COMMENT START RENDERED \n\n\n');
     return ['commentRangeStart', 0];
   },
 
@@ -23,7 +22,6 @@ export const CommentRangeStart = Node.create({
     return {
       'w:id': {
         rendered: false,
-        default: () => uuidv4(),
       },
       internal: {
         default: true,
@@ -53,7 +51,7 @@ export const CommentRangeEnd = Node.create({
   addAttributes() {
     return {
       'w:id': {
-        default: () => uuidv4(),
+        rendered: false,
       },
     };
   },

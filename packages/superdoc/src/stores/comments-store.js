@@ -279,6 +279,9 @@ export const useCommentsStore = defineStore('comments', () => {
     // Add the new comments to our global list
     commentsList.value.push(newComment);
 
+    // Add the comment to the active editor
+    superdoc.activeEditor.commands.insertComment(newComment.getValues());
+  
     // If collaboration is enabled, sync the comments to all clients
     syncCommentsToClients(superdoc);
 

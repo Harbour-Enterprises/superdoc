@@ -55,7 +55,6 @@ export const getExportedResult = async (name, comments = []) => {
   const bodyNode = editor.converter.savedTagsToRestore.find((el) => el.name === 'w:body');
 
   const commentDefinitions = comments.map((c, index) => getCommentDefinition(c, index));
-  console.debug('Comment definitions:', commentDefinitions);
   const [result, params] = exportSchemaToJson({
     node: schema,
     bodyNode,

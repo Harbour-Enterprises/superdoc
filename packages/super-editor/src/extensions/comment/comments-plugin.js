@@ -16,8 +16,7 @@ export const CommentsPlugin = Extension.create({
           const { selection } = tr;
           const { $from, $to } = selection;
 
-          const { conversationId: threadId } = conversation;
-
+          const { commentId: threadId } = conversation;
           const commentStartNodeAttrs = {
             'w:id': threadId,
             internal: true,
@@ -183,16 +182,17 @@ const trackCommentNodes = ({ allCommentPositions, decorations, node, pos, editor
   if (threadId && node.type.name === 'commentRangeStart') {
     commentIds.add(threadId);
 
-    const commentData = getCommentData(editor);
-
     allCommentPositions[threadId] = {
       threadId,
       start: pos,
       end: null,
       internal: node.attrs.internal,
     };
+    console.debug('---START', allCommentPositions, threadId)
   } else if (node.type.name === 'commentRangeEnd') {
     const currentItem = allCommentPositions[threadId];
+    console.debug('---THREAD', threadId, currentItem, allCommentPositions);
+    if (!currentItem) return;
     currentItem.end = pos + node.nodeSize;
 
     const deco = Decoration.inline(
@@ -230,7 +230,7 @@ const processDocumentComments = (editor, doc) => {
   doc.descendants((node, pos) => {
     // Try to track comment nodes
     trackCommentNodes({
-      view, allCommentPositions, decorations, node, pos, editor,
+      allCommentPositions, decorations, node, pos, editor,
     });
 
     // Try to track any tracked changes nodes

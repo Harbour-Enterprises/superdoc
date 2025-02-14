@@ -6,6 +6,7 @@ import { createDocumentJson } from './v2/importer/docxImporter.js';
 import { getArrayBufferFromUrl } from './helpers.js';
 import { getCommentDefinition, updateCommentsXml } from './v2/exporter/commentsExporter.js';
 import { DEFAULT_CUSTOM_XML, SETTINGS_CUSTOM_XML } from './exporter-docx-defs.js';
+import { COMMENTS_XML } from './exporter-docx-defs.js';
 
 class SuperConverter {
   static allowedElements = Object.freeze({
@@ -298,6 +299,7 @@ class SuperConverter {
   ) {
     const bodyNode = this.savedTagsToRestore.find((el) => el.name === 'w:body');
     const commentDefinitions = comments.map((c, index) => getCommentDefinition(c, index));
+    console.debug('\n\n\nCOMMENT DEFINITIONS', commentDefinitions, '\n\n\n');
     const [result, params] = exportSchemaToJson({
       node: jsonData,
       bodyNode,
@@ -310,6 +312,7 @@ class SuperConverter {
       comments,
       exportedCommentDefs: commentDefinitions,
     });
+    
     const exporter = new DocxExporter(this);
     const xml = exporter.schemaToXml(result);
 
@@ -335,7 +338,9 @@ class SuperConverter {
   #updateCommentsFiles(exportedCommentDefs) {
     if (!exportedCommentDefs?.length) return;
     const commentsXml = this.convertedXml['word/comments.xml'];
-    const updatedCommentsXml = updateCommentsXml(exportedCommentDefs, commentsXml);
+    const commentsXmlCopy = commentsXml ? { ...commentsXml } : { ...COMMENTS_XML };
+    console.debug('\n\n\ncommentsXmlCopy', commentsXml, '\n\n');
+    // const updatedCommentsXml = updateCommentsXml(exportedCommentDefs, commentsXml);
     this.convertedXml['word/comments.xml'] = updatedCommentsXml;
   }
 
