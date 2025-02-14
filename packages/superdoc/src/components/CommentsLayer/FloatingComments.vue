@@ -133,7 +133,6 @@ const initializeConvos = () => {
   const firstDoc = documentsWithConverations.value[0];
   const conversations = [...firstDoc.conversations];
   sortedConversations.value = conversations.sort(sortByLocation);
-  console.debug('sortedConversations', sortedConversations.value);
   visibleConversations.value.push(useFloatingConversation(sortedConversations.value[0]));
 };
 

@@ -82,6 +82,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .super-editor {
+  box-sizing: border-box;
   width: 100%;
   height: 100%;
   border: 1px solid #999;

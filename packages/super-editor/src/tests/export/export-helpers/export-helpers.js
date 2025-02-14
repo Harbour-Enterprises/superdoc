@@ -4,6 +4,7 @@ import { Editor } from '@core/Editor.js';
 import { getStarterExtensions } from '@extensions/index.js';
 import { exportSchemaToJson } from '@converter/exporter';
 import { annotationsBodyNode, annotationsNodeContent } from '../../data/annotations_doc_content.js';
+import { getCommentDefinition } from '@converter/v2/exporter/commentsExporter.js';
 
 /**
  * Get the (first) text from a node
@@ -36,7 +37,7 @@ const getTestDataAsBuffer = async (name) => {
  * @param {string} name The name of the file in the test data folder
  * @returns {Promise<Object>} The exported result
  */
-export const getExportedResult = async (name) => {
+export const getExportedResult = async (name, comments = []) => {
   const buffer = await getTestDataAsBuffer(name);
   const [docx, media, mediaFiles, fonts] = await Editor.loadXmlData(buffer, true);
 
@@ -52,6 +53,9 @@ export const getExportedResult = async (name) => {
 
   const schema = editor.converter.getSchema();
   const bodyNode = editor.converter.savedTagsToRestore.find((el) => el.name === 'w:body');
+
+  const commentDefinitions = comments.map((c, index) => getCommentDefinition(c, index));
+  console.debug('Comment definitions:', commentDefinitions);
   const [result, params] = exportSchemaToJson({
     node: schema,
     bodyNode,
@@ -60,6 +64,9 @@ export const getExportedResult = async (name) => {
     media: {},
     isFinalDoc: false,
     pageStyles: editor.converter.pageStyles,
+    comments,
+    exportedComments: [],
+    exportedCommentDefs: commentDefinitions,
   });
 
   return result;

@@ -62,9 +62,6 @@ export const useSuperdocStore = defineStore('superdoc', () => {
     // Initialize documents
     await initializeDocuments(configDocs);
 
-    if ('comments' in modules) {
-      commentsStore.suppressInternalExternal = modules.comments.suppressInternalExternal || false;
-    }
     isReady.value = true;
   };
 

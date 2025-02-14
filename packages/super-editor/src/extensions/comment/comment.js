@@ -15,13 +15,19 @@ export const CommentRangeStart = Node.create({
   },
 
   renderDOM() {
+    console.debug('\n\n\n COMMENT START RENDERED \n\n\n');
     return ['commentRangeStart', 0];
   },
 
   addAttributes() {
     return {
       'w:id': {
+        rendered: false,
         default: () => uuidv4(),
+      },
+      internal: {
+        default: true,
+        rendered: false,
       },
     };
   },

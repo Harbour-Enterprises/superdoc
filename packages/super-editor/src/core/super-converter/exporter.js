@@ -7,6 +7,7 @@ import { inchesToTwips, linesToTwips, pixelsToEightPoints, pixelsToEmu, pixelsTo
 import { generateDocxRandomId } from '@helpers/generateDocxRandomId.js';
 import { DEFAULT_DOCX_DEFS } from './exporter-docx-defs.js';
 import { TrackDeleteMarkName, TrackInsertMarkName, TrackFormatMarkName } from '@extensions/track-changes/constants.js';
+import { translateCommenNode } from './v2/exporter/commentsExporter.js';
 
 /**
  * @typedef {Object} ExportParams
@@ -72,6 +73,9 @@ export function exportSchemaToJson(params) {
     tab: translateTab,
     image: translateImageNode,
     hardBreak: translateHardBreak,
+    commentRangeStart: () => translateCommenNode(params, 'Start'),
+    commentRangeEnd: () => translateCommenNode(params, 'End'),
+    commentReference: () => null,
   };
 
   if (!router[type]) {
@@ -105,7 +109,7 @@ function translateBodyNode(params) {
  * @param {ExportParams} node A prose mirror paragraph node
  * @returns {XmlReadyNode} JSON of the XML-ready paragraph node
  */
-function translateParagraphNode(params) {
+export function translateParagraphNode(params) {
   const elements = translateChildNodes(params);
 
   // Replace current paragraph with content of html annotation
@@ -1459,7 +1463,7 @@ function translateFieldAnnotation(params) {
       },
     ],
   };
-}
+};
 
 export function translateHardBreak() {
   return {

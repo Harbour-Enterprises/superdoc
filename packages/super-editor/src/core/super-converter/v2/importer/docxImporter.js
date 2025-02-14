@@ -14,6 +14,7 @@ import { lineBreakNodeHandlerEntity } from './lineBreakImporter.js';
 import { bookmarkNodeHandlerEntity } from './bookmarkNodeImporter.js';
 import { tabNodeEntityHandler } from './tabImporter.js';
 import { listHandlerEntity } from './listImporter.js';
+import { importCommentData } from './documentCommentsImporter.js';
 
 /**
  * @typedef {import()} XmlNode
@@ -45,6 +46,7 @@ export const createDocumentJson = (docx, converter, editor) => {
     const node = bodyNode;
     const ignoreNodes = ['w:sectPr'];
     const content = node.elements?.filter((n) => !ignoreNodes.includes(n.name)) ?? [];
+    const comments = importCommentData({ docx, nodeListHandler, converter, editor });
 
     const parsedContent = nodeListHandler.handler({
       nodes: content, nodeListHandler, docx, converter, editor
@@ -64,16 +66,18 @@ export const createDocumentJson = (docx, converter, editor) => {
         converter?.documentId,
         'document_import', 
         {
-        documentType: 'docx',
-        internalId: converter?.documentInternalId,
-        timestamp: new Date().toISOString()
-      });
+          documentType: 'docx',
+          internalId: converter?.documentInternalId,
+          timestamp: new Date().toISOString()
+        },
+      );
     }
     
     return {
       pmDoc: result,
       savedTagsToRestore: node,
       pageStyles: getDocumentStyles(node, docx, converter, editor),
+      comments,
     };
   }
   return null;
