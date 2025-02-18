@@ -276,9 +276,9 @@ class SuperConverter {
       this.savedTagsToRestore.push({ ...result.savedTagsToRestore });
       this.pageStyles = result.pageStyles;
       return result.pmDoc;
-    } else {
-      return null;
     }
+    
+    return null;
   }
 
   schemaToXml(data) {

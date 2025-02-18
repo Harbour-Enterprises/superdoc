@@ -220,9 +220,10 @@ export class SuperDoc extends EventEmitter {
   #initTelemetry() {
     this.telemetry = new Telemetry({
       enabled: this.config.telemetry?.enabled ?? true,
-      licenceKey: this.config.telemetry?.licenceKey,
+      licenseKey: this.config.telemetry?.licenseKey,
       endpoint: this.config.telemetry?.endpoint,
       superdocId: this.superdocId,
+      superdocVersion: this.version,
     });
   }
 

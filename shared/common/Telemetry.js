@@ -1,47 +1,14 @@
-/**
- * @typedef {Object} BaseEvent
- * @property {string} id - Unique event identifier
- * @property {string} timestamp - ISO timestamp of the event
- * @property {string} sessionId - Current session identifier
- * @property {string} superdocId - SuperDoc ID
- * @property {Object} document - Document information
- * @property {string} [document.id] - Reference ID
- * @property {string} [document.type] - Document type
- * @property {string} [document.internalId] - Internal document ID
- * @property {string} [document.hash] - Document CRC32 hash
- * @property {string} [document.lastModified] - Last modified timestamp
- */
-
-/**
- * @typedef {Object} UsageEvent
- * @param {File} fileSource - File object
- * @param {string} documentId - document id
- * @property {string} name - Name of the usage event
- * @property {Object.<string, *>} properties - Event properties
- */
-
-/**
- * @typedef {Object} ParsingEvent
- * @param {File} fileSource - File object
- * @param {string} documentId - document id
- * @property {'mark'|'element'} category - Category of the parsed item
- * @property {string} name - Name of the parsed item
- * @property {string} path - Document path where item was found
- * @property {Object.<string, *>} [metadata] - Additional context
- */
-
-/** @typedef {(UsageEvent & BaseEvent) | (ParsingEvent & BaseEvent)} TelemetryEvent */
+import { randomBytes } from 'crypto';
+import crc32 from 'buffer-crc32';
 
 /**
  * @typedef {Object} TelemetryConfig
- * @property {string} [licenceKey] - Licence key for telemetry service
+ * @property {string} [licenseKey] - License key for telemetry service
  * @property {boolean} [enabled=true] - Whether telemetry is enabled
- * @property {string} endpoint - service endpoint
- * @property {string} superdocId - SuperDoc id
+ * @property {string} [endpoint] - Service endpoint
+ * @property {string} superdocId - SuperDoc instance ID
+ * @property {string} superdocVersion - SuperDoc version
  */
-
-import crc32 from 'buffer-crc32';
-import { randomBytes } from 'crypto';
 
 class Telemetry {
   /** @type {boolean} */
@@ -49,6 +16,9 @@ class Telemetry {
 
   /** @type {string} */
   superdocId;
+
+  /** @type {string} */
+  superdocVersion;
 
   /** @type {string} */
   licenseKey;
@@ -59,7 +29,24 @@ class Telemetry {
   /** @type {string} */
   sessionId;
 
-  /** @type {TelemetryEvent[]} */
+  /** @type {Object} */
+  statistics = {
+    nodeTypes: {},
+    markTypes: {},
+    styleTypes: {},
+    unknownElements: [],
+    errorCount: 0,
+  };
+
+  /** @type {Object} */
+  fileStructure = {
+    totalFiles: 0,
+    maxDepth: 0,
+    totalNodes: 0,
+    files: [],
+  };
+
+  /** @type {Array} */
   events = [];
 
   /** @type {number|undefined} */
@@ -69,7 +56,7 @@ class Telemetry {
   static BATCH_SIZE = 50;
 
   /** @type {number} */
-  static FLUSH_INTERVAL = 10000; // 30 seconds
+  static FLUSH_INTERVAL = 10000; // 10 seconds
 
   /** @type {string} */
   static COMMUNITY_LICENSE_KEY = 'community-and-eval-agplv3';
@@ -83,11 +70,10 @@ class Telemetry {
    */
   constructor(config = {}) {
     this.enabled = config.enabled ?? true;
-
-    this.licenseKey = config.licenceKey ?? Telemetry.COMMUNITY_LICENSE_KEY;
+    this.licenseKey = config.licenseKey ?? Telemetry.COMMUNITY_LICENSE_KEY;
     this.endpoint = config.endpoint ?? Telemetry.DEFAULT_ENDPOINT;
     this.superdocId = config.superdocId;
-
+    this.superdocVersion = config.superdocVersion;
     this.sessionId = this.generateId();
 
     if (this.enabled) {
@@ -96,15 +82,17 @@ class Telemetry {
   }
 
   /**
-   * Create source payload for request
+   * Get browser environment information
+   * @returns {Object} Browser information
    */
-  getSourceData() {
+  getBrowserInfo() {
+    
     return {
       userAgent: window.navigator.userAgent,
-      url: window.location.href,
-      host: window.location.host,
-      referrer: document.referrer,
-      screen: {
+      currentUrl: window.location.href,
+      hostname: window.location.hostname,
+      referrerUrl: document.referrer,
+      screenSize: {
         width: window.screen.width,
         height: window.screen.height,
       },
@@ -112,34 +100,67 @@ class Telemetry {
   }
 
   /**
-   * Track feature usage
-   * @param {File} fileSource - File object
-   * @param {string} documentId - document id
-   * @param {string} name - Name of the feature/event
-   * @param {Object.<string, *>} [properties] - Additional properties
+   * Track document parsing event
+   * @param {File} fileSource - Document file
+   * @param {string} documentId - Document identifier
+   * @param {'mark'|'element'|'node'|'handler'} category - Event category
+   * @param {string} name - Event name
+   * @param {string} path - Document path
+   * @param {Object} metadata - Additional metadata
+   */
+  async trackParsing(fileSource, documentId, category, name, path, metadata = {}) {
+    
+    if (!this.enabled) return;
+
+    const docInfo = await this.processDocument(fileSource, {
+      id: documentId,
+      internalId: metadata.internalId,
+    });
+
+    const event = {
+      id: this.generateId(),
+      type: 'parsing',
+      timestamp: new Date().toISOString(),
+      sessionId: this.sessionId,
+      superdocId: this.superdocId,
+      superdocVersion: this.superdocVersion,
+      document: docInfo,
+      browser: this.getBrowserInfo(),
+      category,
+      name,
+      path,
+      statistics: this.statistics,
+      fileStructure: this.fileStructure,
+      metadata,
+    };
+
+    this.queueEvent(event);
+  }
+
+  /**
+   * Track document usage event
+   * @param {File} fileSource - Document file
+   * @param {string} documentId - Document identifier
+   * @param {string} name - Event name
+   * @param {Object} properties - Additional properties
    */
   async trackUsage(fileSource, documentId, name, properties = {}) {
     if (!this.enabled) return;
 
-    if (!fileSource) {
-      console.warn('Telemetry: missing file source');
-      return;
-    }
-
-    const processedDoc = await this.processDocument(fileSource, {
+    const docInfo = await this.processDocument(fileSource, {
       id: documentId,
       internalId: properties.internalId,
     });
 
-    /** @type {UsageEvent & BaseEvent} */
     const event = {
       id: this.generateId(),
       type: 'usage',
       timestamp: new Date().toISOString(),
       sessionId: this.sessionId,
       superdocId: this.superdocId,
-      source: this.getSourceData(),
-      document: processedDoc,
+      superdocVersion: this.superdocVersion,
+      document: docInfo,
+      browser: this.getBrowserInfo(),
       name,
       properties,
     };
@@ -148,65 +169,71 @@ class Telemetry {
   }
 
   /**
-   * Track parsing events
-   * @param {File} fileSource - File object
-   * @param {string} documentId - document id
-   * @param {'mark'|'element'} category - Category of parsed item
-   * @param {string} name - Name of the item
-   * @param {string} path - Document path where item was found
-   * @param {Object.<string, *>} [metadata] - Additional context
+   * Track parsing statistics
+   * @param {string} category - Statistic category
+   * @param {string|Object} data - Statistic data
    */
-  async trackParsing(fileSource, documentId, category, name, path, metadata) {
-    if (!this.enabled) return;
+  trackStatistic(category, data) {
     
-    if (!fileSource) {
-      console.warn('Telemetry: missing file source');
-      return;
+    if (category === 'node') {
+      this.statistics.nodeTypes[data] = (this.statistics.nodeTypes[data] || 0) + 1;
+      this.fileStructure.totalNodes++;
+    } else if (category === 'mark') {
+      this.statistics.markTypes[data] = (this.statistics.markTypes[data] || 0) + 1;
+    } else if (category === 'style') {
+      const { type, value } = data;
+      if (!this.statistics.styleTypes[type]) {
+        this.statistics.styleTypes[type] = {};
+      }
+      this.statistics.styleTypes[type][value] = (this.statistics.styleTypes[type][value] || 0) + 1;
+    } else if (category === 'unknown') {
+      this.statistics.unknownElements.push(data);
+    } else if (category === 'error') {
+      this.statistics.errorCount++;
     }
+  }
 
-    const processedDoc = await this.processDocument(fileSource, {
-      id: documentId,
-      internalId: metadata.internalId,
-    });
-
-    /** @type {ParsingEvent & BaseEvent} */
-    const event = {
-      id: this.generateId(),
-      type: 'parsing',
-      timestamp: new Date().toISOString(),
-      sessionId: this.sessionId,
-      superdocId: this.superdocId,
-      source: this.getSourceData(),
-      category,
-      document: processedDoc,
-      name,
-      path,
-      ...(metadata && { metadata }),
+  /**
+   * Track file structure
+   * @param {Object} structure - File structure information
+   */
+  trackFileStructure(structure) {
+    
+    this.fileStructure = {
+      ...this.fileStructure,
+      ...structure,
+      files: [...this.fileStructure.files, ...structure.files],
     };
-
-    this.queueEvent(event);
   }
 
   /**
    * Process document metadata
    * @param {File} file - Document file
-   * @param {Object} options - Additional metadata options
+   * @param {Object} options - Additional options
    * @returns {Promise<Object>} Document metadata
    */
   async processDocument(file, options = {}) {
+    
+    if (!file) {
+      console.warn('Telemetry: missing file source');
+      return {};
+    }
+
     let hash = '';
     try {
       hash = await this.generateCrc32Hash(file);
     } catch (error) {
-      console.error('Failed to retrieve file hash:', error);
+      console.error('Failed to generate file hash:', error);
     }
-    
+
     return {
       id: options.id,
-      type: options.type || file.type,
-      internalId: options.internalId,
-      hash,
+      name: file.name,
+      size: file.size,
+      crc32: hash,
       lastModified: file.lastModified ? new Date(file.lastModified).toISOString() : null,
+      type: file.type || 'docx',
+      internalId: options.internalId,
     };
   }
 
@@ -220,13 +247,12 @@ class Telemetry {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const hashBuffer = crc32(buffer);
-    const hashArray = Array.from(hashBuffer);
-    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+    return hashBuffer.toString('hex');
   }
 
   /**
    * Queue event for sending
-   * @param {TelemetryEvent} event
+   * @param {Object} event - Event to queue
    * @private
    */
   queueEvent(event) {
@@ -246,7 +272,7 @@ class Telemetry {
 
     const eventsToSend = [...this.events];
     this.events = [];
-    
+
     try {
       const response = await fetch(this.endpoint, {
         method: 'POST',
@@ -278,22 +304,43 @@ class Telemetry {
       }
     }, Telemetry.FLUSH_INTERVAL);
   }
-  
+
   /**
    * Generate unique identifier
-   * @returns {string}
+   * @returns {string} Unique ID
    * @private
    */
   generateId() {
-    const randomValue = randomBytes(4).toString('hex');
-    return `${Date.now()}-${randomValue}`;
+    const timestamp = Date.now();
+    const random = randomBytes(4).toString('hex');
+    return `${timestamp}-${random}`;
+  }
+
+  /**
+   * Reset statistics
+   */
+  resetStatistics() {
+    this.statistics = {
+      nodeTypes: {},
+      markTypes: {},
+      styleTypes: {},
+      unknownElements: [],
+      errorCount: 0,
+    };
+
+    this.fileStructure = {
+      totalFiles: 0,
+      maxDepth: 0,
+      totalNodes: 0,
+      files: [],
+    };
   }
 
   /**
    * Clean up telemetry service
    * @returns {Promise<void>}
    */
-  destroy() {
+  async destroy() {
     if (this.flushInterval) {
       clearInterval(this.flushInterval);
     }

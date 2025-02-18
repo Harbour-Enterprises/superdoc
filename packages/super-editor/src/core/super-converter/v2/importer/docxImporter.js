@@ -38,17 +38,41 @@ export const createDocumentJson = (docx, converter, editor) => {
   const json = carbonCopy(getInitialJSON(docx));
   if (!json) return null;
 
-  const nodeListHandler = defaultNodeListHandler();
+  // Track initial document structure
+  if (converter?.telemetry) {
+    const files = Object.keys(docx).map((filePath) => {
+      const parts = filePath.split('/');
+      return {
+        filePath,
+        fileDepth: parts.length,
+        fileType: filePath.split('.').pop(),
+      };
+    });
 
+    converter.telemetry.trackFileStructure({
+      totalFiles: files.length,
+      maxDepth: Math.max(...files.map((f) => f.fileDepth)),
+      totalNodes: 0,
+      files,
+    });
+  }
+
+  const nodeListHandler = defaultNodeListHandler();
   const bodyNode = json.elements[0].elements.find((el) => el.name === 'w:body');
+
   if (bodyNode) {
     const node = bodyNode;
     const ignoreNodes = ['w:sectPr'];
     const content = node.elements?.filter((n) => !ignoreNodes.includes(n.name)) ?? [];
 
     const parsedContent = nodeListHandler.handler({
-      nodes: content, nodeListHandler, docx, converter, editor
+      nodes: content,
+      nodeListHandler,
+      docx,
+      converter,
+      editor,
     });
+
     const result = {
       type: 'doc',
       content: parsedContent,
@@ -56,20 +80,25 @@ export const createDocumentJson = (docx, converter, editor) => {
         attributes: json.elements[0].attributes,
       },
     };
-    
-    // Not empty document
-    if (result.content.length > 1) {
-      converter?.telemetry?.trackUsage(
+
+    if (result.content.length === 0) {
+      converter?.telemetry?.trackParsing(
         converter?.fileSource,
         converter?.documentId,
-        'document_import', 
+        'document',
+        'parse_empty',
+        'word/document.xml',
         {
-        documentType: 'docx',
-        internalId: converter?.documentInternalId,
-        timestamp: new Date().toISOString()
-      });
+          documentType: 'docx',
+          internalId: converter?.documentInternalId,
+          timestamp: new Date().toISOString(),
+          contentLength: 0,
+          statistics: converter?.telemetry?.statistics,
+          fileStructure: converter?.telemetry?.fileStructure,
+        },
+      );
     }
-    
+
     return {
       pmDoc: result,
       savedTagsToRestore: node,
@@ -119,7 +148,7 @@ const createNodeListHandler = (nodeHandlers) => {
       return {
         elementIndex: index,
         error: 'index_out_of_bounds',
-        arrayLength: elements?.length
+        arrayLength: elements?.length,
       };
     }
 
@@ -129,39 +158,28 @@ const createNodeListHandler = (nodeHandlers) => {
       elementName: element?.name,
       elementAttributes: element?.attributes,
       hasElements: !!element?.elements,
-      elementCount: element?.elements?.length
+      elementCount: element?.elements?.length,
     };
   };
 
   const nodeListHandlerFn = ({ nodes: elements, docx, insideTrackChange, converter, editor, filename }) => {
     if (!elements || !elements.length) return [];
-    
+
     const processedElements = [];
     const unhandledNodes = [];
-    
+
     try {
       for (let index = 0; index < elements.length; index++) {
         try {
           const nodesToHandle = elements.slice(index);
           if (!nodesToHandle || nodesToHandle.length === 0) {
-            converter?.telemetry?.trackParsing(
-              converter?.fileSource,
-              converter?.documentId,
-              'node', 
-              'empty_slice', 
-              `/word/${filename || 'document.xml'}`, 
-              {
-              index,
-              internalId: converter?.documentInternalId,
-              totalElements: elements.length,
-            });
             continue;
           }
 
           const { nodes, consumed, unhandled } = nodeHandlers.reduce(
             (res, handler) => {
               if (res.consumed > 0) return res;
-              
+
               return handler.handler({
                 nodes: nodesToHandle,
                 docx,
@@ -169,97 +187,54 @@ const createNodeListHandler = (nodeHandlers) => {
                 insideTrackChange,
                 converter,
                 editor,
-                filename
+                filename,
               });
             },
-            { nodes: [], consumed: 0 }
+            { nodes: [], consumed: 0 },
           );
 
-          // Track unhandled nodes with safe context
+          // Only track unhandled nodes that should have been handled
           if (unhandled) {
             const context = getSafeElementContext(elements, index);
             if (!context.elementName) continue;
 
-            unhandledNodes.push({
-              name: context.elementName,
-              attributes: context.elementAttributes
-            });
-
-            converter?.telemetry?.trackParsing(
-              converter?.fileSource,
-              converter?.documentId,
-              'node', 
-              'unhandled', 
-              `/word/${filename || 'document.xml'}`, 
-              {
-              context,
-              internalId: converter?.documentInternalId,
-            });
-            
-            continue;
-          }
-          
-          // Bounds check before incrementing index
-          if (consumed > 0) {
-            index += consumed - 1;
-            if (index < 0) {
+            const ignoredElements = ['w:sectPr', 'w:lastRenderedPageBreak'];
+            if (!ignoredElements.includes(context.elementName)) {
               converter?.telemetry?.trackParsing(
                 converter?.fileSource,
                 converter?.documentId,
-                'node', 
-                'invalid_index', 
-                `/word/${filename || 'document.xml'}`, 
+                'node',
+                'unhandled',
+                `/word/${filename || 'document.xml'}`,
                 {
-                  originalIndex: index - (consumed - 1),
-                  consumed,
-                  resultingIndex: index,
-                  internalId: converter?.documentInternalId, 
-                }
-              );
-              index = 0; // Reset to safe value
-            }
-          }
-          
-          // Process valid nodes
-          for (let node of (nodes || [])) {
-            if (node?.type) {
-              const ignore = ['runProperties'];
-              
-              if (node.type === 'text' && Array.isArray(node.content) && !node.content.length) {
-                
-                converter?.telemetry?.trackParsing(
-                  converter?.fileSource,
-                  converter?.documentId,
-                  'node', 
-                  'empty_text', 
-                  `/word/${filename || 'document.xml'}`, 
-                  {
-                  context: node.attrs,
+                  context,
                   internalId: converter?.documentInternalId,
-                });
-                continue;
-              }
+                },
+              );
+            }
+            continue;
+          }
 
-              if (!ignore.includes(node.type)) {
+          // Process and store nodes (no tracking needed for success)
+          if (nodes) {
+            nodes.forEach((node) => {
+              if (node?.type && !['runProperties'].includes(node.type)) {
+                if (node.type === 'text' && Array.isArray(node.content) && !node.content.length) {l
+                  return;
+                }
                 processedElements.push(node);
               }
-            }
+            });
           }
         } catch (error) {
           editor?.emit('exception', { error });
-          
-          const context = getSafeElementContext(elements, index);
-          if (error.details) {
-            context.elementAttributes = error.details;
-          }
-          
-          // Track individual element processing errors with safe context
+
           converter?.telemetry?.trackParsing(
             converter?.fileSource,
             converter?.documentId,
-            'element', 
-            'processing_error', 
-            `/word/${filename || 'document.xml'}`, 
+            'element',
+            'processing_error',
+            `/word/${filename || 'document.xml'}`,
             {
               error: {
                 message: error.message,
@@ -267,8 +242,8 @@ const createNodeListHandler = (nodeHandlers) => {
                 stack: error.stack,
               },
               internalId: converter?.documentInternalId,
-              context 
-            }
+              context: getSafeElementContext(elements, index),
+            },
           );
         }
       }
@@ -276,33 +251,31 @@ const createNodeListHandler = (nodeHandlers) => {
       return processedElements;
     } catch (error) {
       editor?.emit('exception', { error });
-      
-      // Track catastrophic errors in the node list handler
+
+      // Track only catastrophic handler failures
       converter?.telemetry?.trackParsing(
         converter?.fileSource,
         converter?.documentId,
-        'handler', 
-        'nodeListHandler', 
+        'handler',
+        'fatal_error',
         `/word/${filename || 'document.xml'}`,
         {
-          status: 'error',
           error: {
             message: error.message,
             name: error.name,
-            stack: error.stack
+            stack: error.stack,
           },
           internalId: converter?.documentInternalId,
           context: {
             totalElements: elements?.length || 0,
             processedCount: processedElements.length,
             unhandledCount: unhandledNodes.length,
-          }
-        }
+          },
+        },
       );
       throw error;
     }
   };
-
   return nodeListHandlerFn;
 };
 
@@ -382,7 +355,7 @@ function getHeaderFooter(el, elementType, docx, converter, editor) {
     docx,
     converter,
     editor,
-    filename: currentFileName
+    filename: currentFileName,
   });
 
   let storage, storageIds;
@@ -397,4 +370,4 @@ function getHeaderFooter(el, elementType, docx, converter, editor) {
 
   storage[rId] = { type: 'doc', content: [...schema] };
   storageIds[sectionType] = rId;
-};
+}
