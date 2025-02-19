@@ -8,6 +8,7 @@ import IconGrid from './IconGrid.vue';
 import AlignmentButtons from './AlignmentButtons.vue';
 import LinkInput from './LinkInput.vue';
 import DocumentMode from './DocumentMode.vue';
+import LinkedStyle from './LinkedStyle.vue';
 
 const closeDropdown = (dropdown) => {
   dropdown.expand.value = false;
@@ -719,6 +720,35 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth, role,
     tooltip: 'Show or hide ruler',
   });
 
+  const linkedStyles = useToolbarItem({
+    type: 'dropdown',
+    name: 'linkedStyles',
+    command: 'setLinkedStyle',
+    hasCaret: true,
+    isWide: true,
+    style: { width: '120px' },
+    suppressActiveHighlight: true,
+    options: [
+      {
+        type: 'render',
+        key: 'linkedStyle',
+        render: () => {
+          const handleSelect = (e) => {
+            console.debug('Linked style selected', e);
+          };
+
+          console.debug('--linke dsttyle', superToolbar.activeEditor);
+          return h('div', {}, [
+            h(LinkedStyle, {
+              editor: superToolbar.activeEditor,
+              onSelect: handleSelect,
+            })
+          ])
+        }
+      }
+    ]
+  });
+
   // Responsive toolbar calculations
   const itemsToHide = ['zoom', 'fontFamily', 'fontSize', 'redo'];
   const hideWideItemsEndpoint = 600;
@@ -738,6 +768,7 @@ export const makeDefaultItems = (superToolbar, isDev = false, windowWidth, role,
 
     zoom,
     separator,
+    linkedStyles,
     fontButton,
     separator,
     fontSize,

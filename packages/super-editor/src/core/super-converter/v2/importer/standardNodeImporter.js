@@ -13,7 +13,6 @@ export const handleStandardNode = (params) => {
   const node = nodes[0];
   const { name } = node;
   const { attributes, elements, marks = [] } = parseProperties(node, docx);
-  
   if (!getElementName(node)) {
     return { 
       nodes: [{
@@ -46,9 +45,8 @@ export const handleStandardNode = (params) => {
     type: getElementName(node),
     content,
     attrs: { ...attributes },
-    marks: [],
+    marks,
   };
-
   return { nodes: [resultNode], consumed: 1 };
 };
 

@@ -2,6 +2,7 @@ import { twipsToInches, twipsToPixels, twipsToLines } from '../../helpers.js';
 import { testForList } from './listImporter.js';
 import { carbonCopy } from '../../../utilities/carbonCopy.js';
 import { mergeTextNodes } from './mergeTextNodes.js';
+import { parseMarks } from './markImporter.js';
 
 /**
  * Special cases of w:p based on paragraph properties
@@ -50,18 +51,18 @@ export const handleParagraphNode = (params) => {
   if (styleTag) {
     schemaNode.attrs['styleId'] = styleTag.attributes['w:val'];
 
-    const { textAlign, firstLine, leftIndent, rightIndent } = getDefaultStyleDefinition(
-      styleTag.attributes['w:val'],
-      docx,
-    );
-    schemaNode.attrs['textAlign'] = textAlign;
+    // const { textAlign, firstLine, leftIndent, rightIndent } = getDefaultStyleDefinition(
+    //   styleTag.attributes['w:val'],
+    //   docx,
+    // );
+    // schemaNode.attrs['textAlign'] = textAlign;
 
-    schemaNode.attrs['indent'] = {
-      left: leftIndent,
-      right: rightIndent,
-      firstLine: firstLine,
-    };
-  }
+    // schemaNode.attrs['indent'] = {
+    //   left: leftIndent,
+    //   right: rightIndent,
+    //   firstLine: firstLine,
+    // };
+  };
 
   const indent = pPr?.elements?.find((el) => el.name === 'w:ind');
   if (indent && indent.attributes) {
@@ -165,7 +166,7 @@ export const paragraphNodeHandlerEntity = {
  * @param {string} defaultStyleId
  * @param {ParsedDocx} docx
  */
-function getDefaultStyleDefinition(defaultStyleId, docx) {
+export function getDefaultStyleDefinition(defaultStyleId, docx) {
   const result = { lineSpaceBefore: null, lineSpaceAfter: null };
   if (!defaultStyleId) return result;
 
@@ -181,11 +182,21 @@ function getDefaultStyleDefinition(defaultStyleId, docx) {
   const firstMatch = elementsWithId[0];
   if (!firstMatch) return result;
 
+  let name;
+  const qFormat = elementsWithId.find((el) => {
+    const qFormat = el.elements.find((innerEl) => innerEl.name === 'w:qFormat');
+    const wName = el.elements.find((innerEl) => innerEl.name === 'w:name');
+    if (wName) name = wName.attributes['w:val'];
+    return qFormat;
+  });
+
+  // pPr
   const pPr = firstMatch.elements.find((el) => el.name === 'w:pPr');
+  if (!pPr || !pPr.elements) return result;
+
   const spacing = pPr?.elements.find((el) => el.name === 'w:spacing');
   const justify = pPr?.elements.find((el) => el.name === 'w:jc');
   const indent = pPr?.elements.find((el) => el.name === 'w:ind');
-  if (!spacing && !justify && !indent) return result;
 
   const lineSpaceBefore = spacing?.attributes['w:before'];
   const lineSpaceAfter = spacing?.attributes['w:after'];
@@ -195,7 +206,36 @@ function getDefaultStyleDefinition(defaultStyleId, docx) {
   const rightIndent = twipsToPixels(indent?.attributes['w:right']);
   const firstLine = twipsToPixels(indent?.attributes['w:firstLine']);
 
-  return { lineSpaceBefore, lineSpaceAfter, line, textAlign, leftIndent, rightIndent, firstLine };
+  const keepNext = pPr?.elements.find((el) => el.name === 'w:keepNext');
+  const keepLines = pPr?.elements.find((el) => el.name === 'w:keepLines');
+
+  const outlineLevel = pPr?.elements.find((el) => el.name === 'w:outlineLvl');
+  const outlineLvlValue = outlineLevel?.attributes['w:val'];
+
+  const pageBreakBefore = pPr?.elements.find((el) => el.name === 'w:pageBreakBefore');
+  const pageBreakAfter = pPr?.elements.find((el) => el.name === 'w:pageBreakAfter');
+
+  const parsedAttrs = {
+    name: name[0].toUpperCase() + name.slice(1),
+    qFormat: qFormat ? true : false,
+    spacing: { lineSpaceAfter, lineSpaceBefore, line },
+    textAlign,
+    indent: { leftIndent, rightIndent, firstLine },
+    keepNext: keepNext ? true : false,
+    keepLines: keepLines ? true : false,
+    outlineLevel: outlineLevel ? parseInt(outlineLvlValue) : null,
+    pageBreakBefore: pageBreakBefore ? true : false,
+    pageBreakAfter: pageBreakAfter ? true : false,
+    marks: {},
+  };
+  
+
+  // rPr
+  const rPr = firstMatch.elements.find((el) => el.name === 'w:rPr');
+  const parsedMarks = parseMarks(rPr, [], docx);
+  parsedAttrs.marks = parsedMarks;
+
+  return parsedAttrs;
 }
 
 /**
