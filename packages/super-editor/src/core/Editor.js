@@ -123,7 +123,6 @@ export class Editor extends EventEmitter {
     this.on('exception', this.options.onException);
 
     this.#createView();
-    this.#initLinkedStyles();
     this.initDefaultStyles();
     this.setDocumentMode(options.documentMode);
 
@@ -541,11 +540,6 @@ export class Editor extends EventEmitter {
     }
   
     return doc;
-  }
-
-  #initLinkedStyles() {
-    const plugin = LinkedStylesPluginKey.getState(this.state);
-    console.debug('Linked Styles', LinkedStylesPluginKey, plugin);
   }
 
   /**
