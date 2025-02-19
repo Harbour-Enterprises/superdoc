@@ -51,18 +51,6 @@ export const handleParagraphNode = (params) => {
   const styleTag = pPr?.elements?.find((el) => el.name === 'w:pStyle');
   if (styleTag) {
     schemaNode.attrs['styleId'] = styleTag.attributes['w:val'];
-
-    // const { textAlign, firstLine, leftIndent, rightIndent } = getDefaultStyleDefinition(
-    //   styleTag.attributes['w:val'],
-    //   docx,
-    // );
-    // schemaNode.attrs['textAlign'] = textAlign;
-
-    // schemaNode.attrs['indent'] = {
-    //   left: leftIndent,
-    //   right: rightIndent,
-    //   firstLine: firstLine,
-    // };
   };
 
   const indent = pPr?.elements?.find((el) => el.name === 'w:ind');

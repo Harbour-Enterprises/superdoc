@@ -5,6 +5,7 @@ import { Decoration, DecorationSet } from 'prosemirror-view';
 import { PaginationPluginKey } from './pagination-helpers.js';
 import { CollaborationPluginKey } from '@extensions/collaboration/collaboration.js';
 import { ImagePlaceholderPluginKey } from '@extensions/image/imageHelpers/imagePlaceholderPlugin.js';
+import { LinkedStylesPluginKey } from '@extensions/linked-styles/linked-styles.js';
 
 const isDebugging = false;
 
@@ -287,10 +288,14 @@ function generateInternalPageBreaks(doc, view, editor, sectionData) {
     let shouldAddPageBreak = coords.bottom > pageHeightThreshold;
     const isHardBreakNode = node.type.name === 'hardBreak';
 
-    // TODO: FIX THIS
-    if (node.type.name === 'paragraph') {
-      // const pageBreakBefore = hasPageBreak(node.attrs.styleId, editor);
-      // if (pageBreakBefore) shouldAddPageBreak = true;
+    if (node.type.name === 'paragraph' && node.attrs.styleId) {
+      const linkedStyles = LinkedStylesPluginKey.getState(editor.state)?.styles;
+      const style = linkedStyles.find((style) => style.id === node.attrs.styleId);
+      if (style) {
+        const { definition = {} } = style;
+        const { pageBreakBefore, pageBreakAfter } = definition.attrs || {};
+        if (pageBreakBefore || pageBreakAfter) shouldAddPageBreak = true;
+      }
     };
 
     if (isHardBreakNode || shouldAddPageBreak) {

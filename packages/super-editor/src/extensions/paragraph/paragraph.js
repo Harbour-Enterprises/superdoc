@@ -76,13 +76,3 @@ export const Paragraph = Node.create({
     return ['p', mergedAttrs, 0];
   },
 });
-
-// export const hasPageBreak = (styleId, editor) => {
-//   const linkedStyles = editor.converter?.linkedStyles || [];
-//   if (styleId && linkedStyles.length) {
-//     const linkedStyle = linkedStyles.find((style) => style.id === styleId);
-//     const pageBreak = linkedStyle.style.pageBreakBefore;
-//     const isPageBreak = pageBreak && pageBreak.attributes?.['w:val'] != 0;
-//     return isPageBreak;
-//   };
-// };
