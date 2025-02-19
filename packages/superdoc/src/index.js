@@ -1,10 +1,4 @@
-<<<<<<< Updated upstream
 import { SuperConverter, Editor, getRichTextExtensions, createZip } from '@harbour-enterprises/super-editor';
-=======
-import { SuperDoc } from './core/index.js';
-import { SuperConverter, Editor, getRichTextExtensions, createZip } from '@harbour-enterprises/super-editor';
-
->>>>>>> Stashed changes
 import {
   helpers as superEditorHelpers,
   fieldAnnotationHelpers,

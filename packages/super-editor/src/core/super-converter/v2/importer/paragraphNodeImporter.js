@@ -3,6 +3,7 @@ import { testForList } from './listImporter.js';
 import { carbonCopy } from '../../../utilities/carbonCopy.js';
 import { mergeTextNodes } from './mergeTextNodes.js';
 import { parseMarks } from './markImporter.js';
+import { kebabCase } from '@harbour-enterprises/common';
 
 /**
  * Special cases of w:p based on paragraph properties
@@ -226,16 +227,28 @@ export function getDefaultStyleDefinition(defaultStyleId, docx) {
     outlineLevel: outlineLevel ? parseInt(outlineLvlValue) : null,
     pageBreakBefore: pageBreakBefore ? true : false,
     pageBreakAfter: pageBreakAfter ? true : false,
-    marks: {},
   };
-  
 
   // rPr
   const rPr = firstMatch.elements.find((el) => el.name === 'w:rPr');
-  const parsedMarks = parseMarks(rPr, [], docx);
-  parsedAttrs.marks = parsedMarks;
+  const parsedMarks = parseMarks(rPr, [], docx) || {};
+  const parsedStyles = {};
+  parsedMarks.forEach((mark) => {
+    const { type, attrs } = mark;
+    if (type === 'textStyle') {
+      Object.entries(attrs).forEach(([key, value]) => {
+        parsedStyles[kebabCase(key)] = value
+      });
+      return;
+    };
 
-  return parsedAttrs;
+    parsedStyles[type] = attrs;
+  });
+
+  return {
+    attrs: parsedAttrs,
+    styles: parsedStyles,
+  };
 }
 
 /**

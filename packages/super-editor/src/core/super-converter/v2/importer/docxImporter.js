@@ -394,7 +394,7 @@ function getStyleDefinitions(docx) {
     const importedStyle = {
       id: style.attributes['w:styleId'],
       type: style.attributes['w:type'],
-      style: parsedStyle,
+      definition: parsedStyle,
       attributes: {},
     };
 
