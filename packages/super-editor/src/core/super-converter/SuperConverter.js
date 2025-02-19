@@ -274,7 +274,7 @@ class SuperConverter {
   getSchema(editor) {
     this.getDocumentInternalId();
     const result = createDocumentJson({...this.convertedXml, media: this.media }, this, editor);
-      
+  
     if (result) {
       this.savedTagsToRestore.push({ ...result.savedTagsToRestore });
       this.pageStyles = result.pageStyles;

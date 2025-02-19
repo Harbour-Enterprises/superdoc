@@ -73,21 +73,21 @@ export const Paragraph = Node.create({
     const { styleId } = attrs;
 
     const linkedStyle = getLinkedStyle(styleId, node, this.editor);
-    if (linkedStyle) {
-      const linkedStyleString = Object.entries(linkedStyle).map(([key, value]) => {
-        if (key === 'textStyle') {
-          return Object.entries(value).map(([k, v]) => {
-            let newKey = kebabCase(k);
-            return `${newKey}: ${v};`
-          }).join(' ');
-        }
+    // if (linkedStyle) {
+    //   const linkedStyleString = Object.entries(linkedStyle).map(([key, value]) => {
+    //     if (key === 'textStyle') {
+    //       return Object.entries(value).map(([k, v]) => {
+    //         let newKey = kebabCase(k);
+    //         return `${newKey}: ${v};`
+    //       }).join(' ');
+    //     }
 
-        return `${key}: ${value};`;
-      }).join(' ');
+    //     return `${key}: ${value};`;
+    //   }).join(' ');
 
-      if (!htmlAttributes.style) htmlAttributes.style = '';
-      htmlAttributes.style += linkedStyleString;
-    }
+    //   if (!htmlAttributes.style) htmlAttributes.style = '';
+    //   htmlAttributes.style += linkedStyleString;
+    // }
 
     const mergedAttrs = Attribute.mergeAttributes(this.options.htmlAttributes, htmlAttributes);
     return ['p', mergedAttrs, 0];

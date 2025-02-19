@@ -15,6 +15,7 @@ import { trackedTransaction } from '@extensions/track-changes/trackChangesHelper
 import { TrackChangesBasePluginKey } from '@extensions/track-changes/plugins/index.js';
 import { initPaginationData, PaginationPluginKey } from '@extensions/pagination/pagination-helpers';
 import { getNecessaryMigrations } from '@core/migrations/index.js';
+import { LinkedStylesPluginKey } from '@extensions/linked-styles/index.js';
 import DocxZipper from '@core/DocxZipper.js';
 
 /**
@@ -122,6 +123,7 @@ export class Editor extends EventEmitter {
     this.on('exception', this.options.onException);
 
     this.#createView();
+    this.#initLinkedStyles();
     this.initDefaultStyles();
     this.setDocumentMode(options.documentMode);
 
@@ -539,6 +541,11 @@ export class Editor extends EventEmitter {
     }
   
     return doc;
+  }
+
+  #initLinkedStyles() {
+    const plugin = LinkedStylesPluginKey.getState(this.state);
+    console.debug('Linked Styles', LinkedStylesPluginKey, plugin);
   }
 
   /**
