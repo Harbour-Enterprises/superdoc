@@ -1,5 +1,8 @@
 name: Pre-commit
 
+on:
+  workflow_call: # No inputs needed, but this needs to be here to be called by other workflows
+
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
