@@ -358,6 +358,8 @@ class SuperConverter {
     // If there were no original comments, and we're exporting a clean document, we don't need to do anything
     if (!originalXml && commentsExportType === 'clean') return;
 
+    if (!this.convertedXml['word/comments.xml']) this.convertedXml['word/comments.xml'] = { ...COMMENTS_XML };
+  
     // If we had previous comments, but exporting clean, we need to remove them
     const commentsXml = { ...this.convertedXml['word/comments.xml'] };
     if (commentsXml && commentsExportType === 'clean') {

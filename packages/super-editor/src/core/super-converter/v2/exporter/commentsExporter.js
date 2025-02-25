@@ -110,7 +110,7 @@ export const toIsoNoFractional = (unixMillis) => {
  * @param {Object} convertedXml - The entire XML object representing the docx file structure.
  * @returns {Object} - The updated portion of the comments XML structure.
  */
-export const updateCommentsXml = (commentDefs, commentsXml) => {
+export const updateCommentsXml = (commentDefs = [], commentsXml) => {
   const newCommentsXml = carbonCopy(commentsXml);
 
   // Re-build the comment definitions
