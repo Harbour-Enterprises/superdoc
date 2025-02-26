@@ -23,7 +23,7 @@ const initServer = async () => {
   app.get('/', async (req, res) => {
     try {
       // Load the default document
-      const documentData = await fs.readFile('./default.docx');
+      const documentData = await fs.readFile('./document.docx');
       // Initialize the editor
       const editor = await getEditor(documentData);
 
