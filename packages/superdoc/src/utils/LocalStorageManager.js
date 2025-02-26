@@ -72,8 +72,9 @@ export class LocalStorageManager {
   }
 
   /**
-   * Get all superdoc settings as an object
-   * @returns {Object} Settings object
+   * Get a setting from the settings object
+   * @param {string} key - The key to get (without prefix)
+   * @returns {any} The parsed value or null if not found
    */
   static getSetting(key) {
     const value = this.get('settings') || {};
