@@ -13,11 +13,8 @@ import { createSuperdocVueApp } from './create-app';
 import { shuffleArray } from '@harbour-enterprises/common/collaboration/awareness.js';
 import { Telemetry } from '@harbour-enterprises/common/Telemetry.js';
 import { createDownload, cleanName } from './helpers/export.js';
-import {
-  initSuperdocYdoc,
-  initCollaborationComments,
-  makeDocumentsCollaborative,
-} from './collaboration/helpers.js';
+import { initSuperdocYdoc, initCollaborationComments, makeDocumentsCollaborative } from './collaboration/helpers.js';
+import { LocalStorageManager } from '../utils/LocalStorageManager';
 
 /**
  * @typedef {Object} User The current user of this superdoc
@@ -32,7 +29,6 @@ import {
  * @property {string} [licenceKey] The licence key for telemetry
  * @property {string} [endpoint] The endpoint for telemetry
  */
-
 
 /**
  * @typedef {Object} Document
@@ -156,6 +152,15 @@ export class SuperDoc extends EventEmitter {
     this.superdocId = config.superdocId || uuidv4();
     this.colors = this.config.colors;
 
+    // Initialize ruler state from localStorage or default to true
+    const savedRulerState = LocalStorageManager.getSetting('rulers');
+    this.config.rulers = savedRulerState !== null ? savedRulerState : true;
+
+    // If this is the first time, save the default state
+    if (savedRulerState === null) {
+      LocalStorageManager.merge('settings', { rulers: true });
+    }
+
     // Initialize collaboration if configured
     await this.#initCollaboration(this.config.modules);
 
@@ -185,7 +190,6 @@ export class SuperDoc extends EventEmitter {
 
     // If a toolbar element is provided, render a toolbar
     this.addToolbar(this);
-  
   }
 
   get requiredNumberOfEditors() {
@@ -253,7 +257,7 @@ export class SuperDoc extends EventEmitter {
 
     // Initialize collaboration for documents
     return makeDocumentsCollaborative(this);
-  };
+  }
 
   /**
    * Initialize telemetry service.
@@ -304,7 +308,7 @@ export class SuperDoc extends EventEmitter {
   }
 
   broadcastSidebarToggle(isOpened) {
-    this.emit('sidebar-toggle', isOpened); 
+    this.emit('sidebar-toggle', isOpened);
   }
 
   log(...args) {
@@ -318,7 +322,7 @@ export class SuperDoc extends EventEmitter {
 
   /**
    * Toggle the ruler visibility for SuperEditors
-   * 
+   *
    * @returns {void}
    */
   toggleRuler() {
@@ -326,6 +330,8 @@ export class SuperDoc extends EventEmitter {
     this.superdocStore.documents.forEach((doc) => {
       doc.rulers = this.config.rulers;
     });
+    // Persist ruler state
+    LocalStorageManager.merge('settings', { rulers: this.config.rulers });
   }
 
   addToolbar() {
@@ -475,13 +481,13 @@ export class SuperDoc extends EventEmitter {
       const zip = await createZip(blobsToZip, filenames);
       createDownload(zip, baseFileName, 'zip');
     }
-  };
+  }
 
-  async exportEditorsToDOCX({ commentsType } = {}) {    
+  async exportEditorsToDOCX({ commentsType } = {}) {
     const comments = [];
     if (commentsType !== 'clean') {
       comments.push(...this.commentsStore?.prepareCommentsForExport());
-    };
+    }
 
     const docxPromises = [];
     this.superdocStore.documents.forEach((doc) => {
@@ -491,7 +497,7 @@ export class SuperDoc extends EventEmitter {
       }
     });
     return await Promise.all(docxPromises);
-  };
+  }
 
   /**
    * Request an immediate save from all collaboration documents
@@ -532,7 +538,7 @@ export class SuperDoc extends EventEmitter {
   }
 
   destroy() {
-    if (!this.app) return; 
+    if (!this.app) return;
     this.log('[superdoc] Unmounting app');
 
     this.config.documents.forEach((doc) => {
