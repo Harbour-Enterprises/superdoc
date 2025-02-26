@@ -49,6 +49,7 @@ const { handlePageReady, modules, user, getDocument } = superdocStore;
 const {
   getConfig,
   documentsWithConverations,
+  commentsList,
   pendingComment,
   activeComment,
   skipSelectionUpdate,
@@ -219,6 +220,8 @@ const editorOptions = (doc) => {
     documentMode: proxy.$superdoc.config.documentMode,
     rulers: doc.rulers,
     isInternal: proxy.$superdoc.config.isInternal,
+    annotations: proxy.$superdoc.config.annotations,
+    isCommentsEnabled: proxy.$superdoc.config.modules?.comments,
     onBeforeCreate: onEditorBeforeCreate,
     onCreate: onEditorCreate,
     onDestroy: onEditorDestroy,
@@ -274,7 +277,13 @@ const isCommentsEnabled = computed(() => 'comments' in modules);
 const showCommentsSidebar = computed(() => {
   return (
     pendingComment.value ||
-    (documentsWithConverations.value.length > 0 && layers.value && isReady.value && isCommentsEnabled.value)
+    (
+      commentsList.value?.length > 0
+        && layers.value
+        && isReady.value
+        && isCommentsEnabled.value
+        && !isCommentsListVisible.value
+    )
   );
 });
 
@@ -536,7 +545,7 @@ const handlePdfClick = (e) => {
       </div>
     </div>
 
-    <div class="superdoc__right-sidebar right-sidebar">
+    <div class="superdoc__right-sidebar right-sidebar" v-if="showCommentsSidebar">
       <CommentDialog
         v-if="pendingComment"
         :comment="pendingComment"
@@ -544,7 +553,7 @@ const handlePdfClick = (e) => {
         :is-floating="true"
         v-click-outside="cancelPendingComment"
       />
-      
+
       <FloatingComments
         class="floating-comments"
         v-if="isReady && isFloatingCommentsReady && !isCommentsListVisible"
