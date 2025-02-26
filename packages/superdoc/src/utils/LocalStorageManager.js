@@ -78,6 +78,6 @@ export class LocalStorageManager {
    */
   static getSetting(key) {
     const value = this.get('settings') || {};
-    return value[key];
+    return key in value ? value[key] : null;
   }
 }
